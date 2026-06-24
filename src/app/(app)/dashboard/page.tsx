@@ -157,7 +157,7 @@ export default async function DashboardPage() {
             </Card>
           </div>
 
-          {/* Templates + Community */}
+          {/* Templates + Feed */}
           <div className="grid gap-5 md:grid-cols-2">
             <Card className="p-5">
               <div className="mb-3 flex items-center justify-between">
@@ -178,6 +178,28 @@ export default async function DashboardPage() {
                   </li>
                 ))}
               </ul>
+            </Card>
+
+            {/* Feed card */}
+            <Card className="flex flex-col border-moss/20 bg-sage/30 p-5">
+              <div className="mb-3">
+                <span className="text-2xl">🌱</span>
+                <h2 className="mt-2 font-serif text-lg font-bold text-pine">
+                  Learning Together
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-ink/70">
+                  <span className="font-jp"><Furigana text="他(ほか)の学習者(がくしゃ)の日記(にっき)を読(よ)んで、つながろう。" /></span>
+                  <span className="mt-1 block text-muted">See what others are writing — get inspired and connect.</span>
+                </p>
+              </div>
+              <div className="mt-auto">
+                <Link
+                  href="/feed"
+                  className="flex items-center justify-center gap-2 rounded-full border border-moss/40 bg-paper px-4 py-2.5 text-sm font-semibold text-pine transition-colors hover:border-moss hover:bg-mint/50"
+                >
+                  Feed を見る <Icon.arrow className="h-4 w-4" />
+                </Link>
+              </div>
             </Card>
           </div>
         </div>
