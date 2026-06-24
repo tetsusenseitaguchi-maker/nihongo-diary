@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, Badge, LinkButton } from "@/components/ui";
 import { Avatar } from "@/components/ObiePhoto";
 import { LogoutButton } from "@/components/LogoutButton";
+import { UserSearch } from "@/components/UserSearch";
 import { computeStats, type DiaryRow } from "@/lib/diary";
 
 export const dynamic = "force-dynamic";
@@ -62,8 +63,8 @@ export default async function ProfilePage() {
           <Stat label="Streak" value={stats.currentStreak} />
           <Stat label="Total" value={stats.total} />
           <Stat label="This month" value={stats.thisMonthCount} />
-          <Stat label="Followers" value={followers ?? 0} />
-          <Stat label="Following" value={followingCount ?? 0} />
+          <Stat label="Followers" value={followers ?? 0} href="/profile/followers" />
+          <Stat label="Following" value={followingCount ?? 0} href="/profile/following" />
         </div>
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -76,6 +77,18 @@ export default async function ProfilePage() {
           <span className="ml-auto"><LogoutButton /></span>
         </div>
       </Card>
+
+      {/* Feed link */}
+      <Card className="flex items-center justify-between gap-4 p-5">
+        <div>
+          <p className="font-serif font-bold text-pine">🌱 Learning Together</p>
+          <p className="mt-0.5 text-sm text-muted">みんなの学習活動を見る · See what others are writing</p>
+        </div>
+        <LinkButton href="/feed" size="sm" variant="secondary">Feed を見る</LinkButton>
+      </Card>
+
+      {/* Find friends */}
+      <UserSearch />
 
       {/* Privacy settings */}
       <Card className="p-6">
@@ -91,11 +104,13 @@ export default async function ProfilePage() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-xl bg-mint/40 p-3 text-center">
+function Stat({ label, value, href }: { label: string; value: number; href?: string }) {
+  const inner = (
+    <div className={`rounded-xl bg-mint/40 p-3 text-center ${href ? "transition-colors hover:bg-mint/70" : ""}`}>
       <p className="font-serif text-xl font-bold text-pine">{value}</p>
       <p className="text-[11px] text-muted">{label}</p>
     </div>
   );
+  if (href) return <Link href={href}>{inner}</Link>;
+  return inner;
 }
