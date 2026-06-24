@@ -1,0 +1,131 @@
+export type Level = "N5" | "N4" | "N3" | "Natural";
+export type CorrectionStyle = "Light" | "Natural" | "Native";
+export type Weather = "sunny" | "cloudy" | "rainy";
+
+export type DrillType = "fill-in" | "particle-choice" | "desu-masu" | "reorder" | "rewrite";
+
+export interface PracticeDrill {
+  type: DrillType;
+  question: string;
+  questionRuby: string;
+  choices: string[];
+  answer: string;
+  answerRuby: string;
+  englishExplanation: string;
+}
+
+export interface VocabItem {
+  word: string;
+  reading?: string;
+  meaning: string;
+  example?: string;
+}
+
+export interface MistakeItem {
+  before: string;
+  after: string;
+  note: string;
+}
+
+export interface MiniLessonPoint {
+  text: string;
+  example?: string;
+}
+
+export interface MiniLesson {
+  id: number;
+  order: number;
+  title: string;
+  shortExplanation: string;
+  visualImage: string;
+  points: MiniLessonPoint[];
+  exampleJapanese: string;
+  exampleJapaneseRuby: string;
+  exampleEnglish: string;
+  shortNote: string;
+}
+
+export interface Correction {
+  original: string;
+  corrected: string;
+  natural: string;
+  explanation: string;
+  correctionNote?: string;
+  mistakes: MistakeItem[];
+  vocabulary: VocabItem[];
+  practice: { jp: string; en: string };
+  relatedMiniLesson?: MiniLesson | null;
+  practiceDrills?: PracticeDrill[];
+}
+
+export interface DiaryEntry {
+  id: string;
+  date: string; // ISO date
+  level: Level;
+  weather: Weather;
+  title: string;
+  preview: string;
+  body: string;
+  correction: Correction;
+}
+
+export type TemplateCategory = "Daily Life" | "Travel" | "School" | "Work";
+
+export interface Template {
+  id: string;
+  title: string;
+  description: string;
+  starter: string;
+  category: TemplateCategory;
+  starred: boolean;
+}
+
+export interface NavItem {
+  label: string;
+  href: string;
+  icon: string;
+}
+
+export interface FeedItem {
+  id: string;
+  name: string;
+  initials: string;
+  action: string;
+  time: string;
+  body?: string;
+  badge?: string;
+}
+
+export interface SuggestedUser {
+  name: string;
+  initials: string;
+  level: string;
+}
+
+export interface FriendProgress {
+  name: string;
+  initials: string;
+  streak: number;
+  days: boolean[]; // last 14 days
+}
+
+/** A row from the Supabase `diary_entries` table. */
+export interface DiaryRow {
+  id: string;
+  user_id: string;
+  diary_date: string;
+  original_text: string;
+  corrected_japanese: string | null;
+  natural_japanese: string | null;
+  english_explanation: string | null;
+  key_mistakes: MistakeItem[] | null;
+  useful_vocabulary: VocabItem[] | null;
+  practice_sentence: string | null;
+  level: string | null;
+  correction_style: string | null;
+  is_public: boolean;
+  image_path: string | null;
+  audio_path: string | null;
+  created_at: string;
+  updated_at: string;
+}

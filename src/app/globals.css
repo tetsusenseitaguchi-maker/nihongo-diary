@@ -1,0 +1,202 @@
+@import "tailwindcss";
+
+@theme {
+  /* Palette — deep forest green / cream / sage */
+  --color-cream: #faf8f2;
+  --color-sand: #f0e8d8;
+  --color-paper: #ffffff;
+  --color-mint: #e8efe7;
+  --color-sage: #d3e0d3;
+  --color-moss: #5b8a6f;
+  --color-moss-600: #497760;
+  --color-pine: #233d30;
+  --color-pine-700: #1a2e24;
+  --color-ink: #25302b;
+  --color-muted: #6e7b73;
+  --color-apricot: #e0915c;
+  --color-line: #e8e2d5;
+
+  /* Correction-row tints */
+  --color-tint-green: #eaf2ec;
+  --color-tint-sage: #f0f4ee;
+  --color-tint-blue: #eef1f6;
+  --color-tint-pink: #f8edee;
+  --color-tint-violet: #f1eef6;
+  --color-tint-sand: #f3ecdc;
+
+  /* Type */
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-noto-serif-jp), ui-serif, Georgia, serif;
+  --font-jp: var(--font-noto-jp), var(--font-jakarta), sans-serif;
+
+  /* Shape */
+  --radius-card: 1.25rem;
+  --radius-pill: 999px;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+  ::selection {
+    background-color: color-mix(in srgb, var(--color-moss) 30%, transparent);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-moss);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  /* Signature: genkō yōshi — Japanese manuscript-paper grid */
+  .genkou {
+    background-image:
+      linear-gradient(to right, rgba(35, 61, 48, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(35, 61, 48, 0.07) 1px, transparent 1px);
+    background-size: 26px 26px;
+  }
+  .genkou-soft {
+    background-image:
+      linear-gradient(to right, rgba(35, 61, 48, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(35, 61, 48, 0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+  .font-jp {
+    font-family: var(--font-jp);
+  }
+  .font-serif {
+    font-family: var(--font-serif);
+  }
+  /* inline correction highlight */
+  .hl {
+    background-color: color-mix(in srgb, var(--color-moss) 22%, transparent);
+    border-radius: 0.25rem;
+    padding: 0 0.15em;
+    font-weight: 600;
+    color: var(--color-pine);
+  }
+  .shadow-card {
+    box-shadow:
+      0 1px 1px rgba(38, 48, 43, 0.04),
+      0 2px 6px -2px rgba(38, 48, 43, 0.08),
+      0 12px 32px -16px rgba(38, 48, 43, 0.18);
+  }
+  .shadow-lift {
+    box-shadow:
+      0 2px 4px rgba(38, 48, 43, 0.05),
+      0 18px 44px -16px rgba(38, 48, 43, 0.22);
+  }
+
+  /* Glossy surfaces — subtle "lit from above" sheen for a premium feel */
+  .gloss {
+    background-image:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 42%);
+  }
+  .gloss-card {
+    position: relative;
+    background-image:
+      linear-gradient(180deg, #ffffff 0%, var(--color-paper) 60%, var(--color-cream) 100%);
+    border: 1px solid color-mix(in srgb, var(--color-pine) 9%, transparent);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.7),
+      0 1px 2px rgba(38, 48, 43, 0.04),
+      0 10px 30px -14px rgba(38, 48, 43, 0.22);
+  }
+  /* Tinted glossy panel — pass the tint via --tint */
+  .gloss-panel {
+    position: relative;
+    background-image:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0) 38%),
+      linear-gradient(180deg, var(--tint, var(--color-tint-sage)) 0%, color-mix(in srgb, var(--tint, var(--color-tint-sage)) 70%, #ffffff) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.65),
+      0 1px 2px rgba(38, 48, 43, 0.04),
+      0 14px 32px -18px rgba(38, 48, 43, 0.22);
+  }
+  /* Deep-green glossy banner (Obie / hero accents) */
+  .gloss-green {
+    background-image:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 36%),
+      radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--color-moss) 55%, var(--color-pine)) 0%, var(--color-pine) 55%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      0 14px 36px -16px rgba(35, 61, 48, 0.55);
+  }
+  /* Glossy primary button sheen */
+  .gloss-btn {
+    background-image:
+      linear-gradient(180deg, color-mix(in srgb, var(--color-moss) 38%, var(--color-pine)) 0%, var(--color-pine) 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      0 1px 2px rgba(38, 48, 43, 0.2),
+      0 10px 22px -10px rgba(35, 61, 48, 0.5);
+  }
+
+  /* Notebook paper — horizontal ruled lines with a left margin rule */
+  .notebook {
+    background-image:
+      linear-gradient(to right, rgba(224, 145, 92, 0.35) 1px, transparent 1px),
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 33px,
+        rgba(35, 61, 48, 0.12) 33px,
+        rgba(35, 61, 48, 0.12) 34px
+      );
+    background-position: 44px 0, 0 0;
+  }
+
+  /* Spiral binding rings down the left edge */
+  .spiral {
+    background-image: radial-gradient(
+      circle at center,
+      transparent 0,
+      transparent 4px,
+      rgba(35, 61, 48, 0.25) 4px,
+      rgba(35, 61, 48, 0.25) 5.5px,
+      transparent 5.5px
+    );
+    background-size: 100% 30px;
+    background-repeat: repeat-y;
+  }
+
+  /* Sticky note (slightly rotated washi-tape feel handled per element) */
+  .sticky-note {
+    background-color: #fdf6e3;
+    box-shadow: 0 6px 16px -8px rgba(38, 48, 43, 0.3);
+  }
+
+  /* Teacher's stamp */
+  .stamp {
+    border: 2px solid currentColor;
+    border-radius: 999px;
+  }
+
+  ruby {
+    ruby-align: center;
+    ruby-position: over;
+  }
+  ruby rt {
+    font-size: 0.55em;
+    font-weight: 400;
+    color: var(--color-muted);
+    letter-spacing: 0;
+    line-height: 1;
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
