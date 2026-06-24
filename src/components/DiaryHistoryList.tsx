@@ -30,7 +30,7 @@ export function DiaryHistoryList({ initialEntries }: { initialEntries: Entry[] }
   const [entries, setEntries] = useState<Entry[]>(initialEntries);
 
   if (entries.length === 0) {
-    return <p className="py-8 text-center text-sm text-muted">日記がありません。</p>;
+    return <p className="py-8 text-center text-sm text-muted">No diaries yet.</p>;
   }
 
   return (

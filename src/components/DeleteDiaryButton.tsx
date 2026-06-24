@@ -22,7 +22,7 @@ export function DeleteDiaryButton({ diaryId, redirectAfter = false, onDeleted }:
       const res = await fetch(`/api/diary/${diaryId}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) {
-        setError(data?.error ?? "削除に失敗しました。");
+        setError(data?.error ?? "Deletion failed. Please try again.");
         setLoading(false);
         return;
       }
@@ -33,7 +33,7 @@ export function DeleteDiaryButton({ diaryId, redirectAfter = false, onDeleted }:
         onDeleted?.();
       }
     } catch {
-      setError("ネットワークエラーです。接続を確認してください。");
+      setError("Network error. Check your connection.");
       setLoading(false);
     }
   }
@@ -45,12 +45,12 @@ export function DeleteDiaryButton({ diaryId, redirectAfter = false, onDeleted }:
         type="button"
         onClick={() => { setError(null); setShowConfirm(true); }}
         className="inline-flex items-center gap-1.5 rounded-full border border-line bg-paper px-3 py-1.5 text-xs font-semibold text-ink/60 transition-colors hover:border-apricot/50 hover:text-apricot"
-        aria-label="日記を削除"
+        aria-label="Delete diary"
       >
         <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" />
         </svg>
-        削除
+        Delete
       </button>
 
       {/* Error (shown outside modal, e.g. after modal closes on error) */}
@@ -65,10 +65,10 @@ export function DeleteDiaryButton({ diaryId, redirectAfter = false, onDeleted }:
           onClick={(e) => { if (e.target === e.currentTarget && !loading) setShowConfirm(false); }}
         >
           <div className="w-full max-w-sm rounded-2xl bg-paper p-6 shadow-xl">
-            <h2 className="font-serif text-lg font-bold text-pine">日記を削除しますか？</h2>
+            <h2 className="font-serif text-lg font-bold text-pine">Delete this diary?</h2>
             <p className="mt-2 text-sm leading-relaxed text-ink/70">
-              この日記と添付ファイルを削除します。<br />
-              <strong className="text-apricot">元に戻すことはできません。</strong>
+              This will delete the diary and any attached files.<br />
+              <strong className="text-apricot">This cannot be undone.</strong>
             </p>
 
             {error && (
@@ -84,7 +84,7 @@ export function DeleteDiaryButton({ diaryId, redirectAfter = false, onDeleted }:
                 disabled={loading}
                 className="flex-1 rounded-full border border-line bg-paper px-4 py-2.5 text-sm font-semibold text-ink hover:bg-mint/50 disabled:opacity-50"
               >
-                キャンセル
+                Cancel
               </button>
               <button
                 type="button"
@@ -95,10 +95,10 @@ export function DeleteDiaryButton({ diaryId, redirectAfter = false, onDeleted }:
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-cream/30 border-t-cream" />
-                    削除中…
+                    Deleting…
                   </span>
                 ) : (
-                  "削除する"
+                  "Delete"
                 )}
               </button>
             </div>

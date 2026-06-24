@@ -232,7 +232,7 @@ export default function SupportPage() {
                       <p className="text-xs text-muted">
                         Visual image, key points &amp; examples —{" "}
                         <a href="/upgrade" className="font-semibold text-moss-600 hover:text-pine">
-                          Plus で読む →
+                          Unlock with Plus →
                         </a>
                       </p>
                     </div>

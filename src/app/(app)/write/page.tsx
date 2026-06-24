@@ -143,7 +143,7 @@ export default function WritePage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setCorrectError(data?.error || "添削に失敗しました。もう一度お試しください。");
+        setCorrectError(data?.error || "Correction failed. Please try again.");
         if (data?.upgrade) setShowUpgrade(true);
         setLoading(false);
         return;
@@ -189,7 +189,7 @@ export default function WritePage() {
       };
       setResult(correction);
     } catch {
-      setCorrectError("ネットワークエラーです。接続を確認してもう一度お試しください。");
+      setCorrectError("Network error. Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -245,7 +245,7 @@ export default function WritePage() {
         .upload(storagePath, photoFile, { contentType: photoFile.type });
       if (upErr) {
         await supabase.from("diary_entries").delete().eq("id", data.id);
-        setSaveError(`写真のアップロードに失敗しました: ${upErr.message}`);
+        setSaveError(`Photo upload failed: ${upErr.message}`);
         setSaving(false);
         return;
       }
@@ -261,7 +261,7 @@ export default function WritePage() {
       if (upErr) {
         if (imagePath) await supabase.storage.from("diary-images").remove([imagePath]);
         await supabase.from("diary_entries").delete().eq("id", data.id);
-        setSaveError(`音声のアップロードに失敗しました: ${upErr.message}`);
+        setSaveError(`Audio upload failed: ${upErr.message}`);
         setSaving(false);
         return;
       }
@@ -320,10 +320,10 @@ export default function WritePage() {
       {showUpgrade && (
         <div className="gloss-panel flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] p-4" style={{ ["--tint" as string]: "var(--color-tint-sand)" } as CSSProperties}>
           <p className="text-sm text-ink/80">
-            プランの上限に達しました。アップグレードすると、もっと長く・もっとたくさん添削できます。
+            You&apos;ve reached your daily limit. Upgrade for more corrections and longer entries.
           </p>
           <a href="/upgrade" className="gloss-btn rounded-full px-4 py-2 text-sm font-semibold text-cream hover:brightness-105">
-            プランを見る
+            See plans
           </a>
         </div>
       )}
@@ -395,7 +395,7 @@ export default function WritePage() {
 
               <div className="mt-3 flex items-center justify-between">
                 <span className={`text-sm ${overLimit ? "font-semibold text-apricot" : "text-muted"}`}>
-                  <Furigana text="文字数(もじすう)" />: {len} / {maxChars}
+                  Characters: {len} / {maxChars}
                 </span>
                 <button
                   onClick={() => setText(sampleDraft)}
@@ -430,17 +430,17 @@ export default function WritePage() {
                 </Button>
                 <Button onClick={handleCorrect} disabled={!text.trim() || overLimit || loading || remaining <= 0}>
                   {loading ? (
-                    <Furigana text="Obie が読(よ)んでいます…" />
+                    "Obie is reading…"
                   ) : remaining <= 0 ? (
                     "Daily limit reached"
                   ) : (
-                    <><Icon.sparkle className="h-4 w-4" /> <Furigana text="添削(てんさく)してもらう" /></>
+                    <><Icon.sparkle className="h-4 w-4" /> Correct my writing</>
                   )}
                 </Button>
               </div>
               {overLimit && (
                 <p className="mt-2 text-right text-sm text-apricot">
-                  あなたのプランでは {maxChars} 文字までです。少し短くしてね。
+                  Your plan allows up to {maxChars} characters. Please shorten your text.
                 </p>
               )}
               {correctError && (
@@ -517,11 +517,11 @@ export default function WritePage() {
             </div>
             {saving ? (
               <span className="inline-flex items-center gap-2 rounded-full bg-mint px-4 py-2 text-sm font-semibold text-pine">
-                <Furigana text="保存中(ほぞんちゅう)…" />
+                Saving…
               </span>
             ) : (
               <Button onClick={handleSave}>
-                <Icon.check className="h-4 w-4" /> <Furigana text="日記(にっき)を保存(ほぞん)" />
+                <Icon.check className="h-4 w-4" /> Save diary
               </Button>
             )}
           </div>
