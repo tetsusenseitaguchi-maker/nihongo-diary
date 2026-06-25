@@ -41,7 +41,7 @@ Return this JSON structure:
   "englishExplanation": "",
   "correctionNote": "",
   "keyMistakes": [
-    { "mistake": "", "correctionRuby": "", "explanation": "" }
+    { "mistake": "", "mistakeRuby": "", "correctionRuby": "", "explanation": "" }
   ],
   "usefulVocabulary": [
     { "word": "", "reading": "", "meaning": "", "exampleRuby": "" }
@@ -57,7 +57,7 @@ Rules:
 
 1. All explanations must be in English (grammar, mistakes, vocabulary meanings). Never explain grammar in Japanese.
 
-2. Furigana: add furigana to ALL kanji in correctedJapaneseRuby, naturalJapaneseRuby, correctionRuby, wordRuby, exampleRuby, and practiceSentenceRuby. Use this exact format:
+2. Furigana: add furigana to ALL kanji in correctedJapaneseRuby, naturalJapaneseRuby, mistakeRuby, correctionRuby, exampleRuby, and practiceSentenceRuby. Use this exact format:
 <ruby>漢字<rt>かんじ</rt></ruby>
 CRITICAL furigana rules:
 - Put ONLY the kanji inside <ruby>, and put the kanji's reading inside <rt>. Okurigana (the hiragana that follows a kanji) MUST stay OUTSIDE the ruby tag.
@@ -263,6 +263,7 @@ export async function POST(request: Request) {
     keyMistakes: Array.isArray(parsed.keyMistakes)
       ? parsed.keyMistakes.map((m: Record<string, unknown>) => ({
           mistake: str(m?.mistake),
+          mistakeRuby: str(m?.mistakeRuby),
           correctionRuby: str(m?.correctionRuby),
           explanation: str(m?.explanation),
         }))

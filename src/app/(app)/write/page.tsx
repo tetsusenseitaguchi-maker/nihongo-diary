@@ -174,8 +174,8 @@ export default function WritePage() {
         explanation: data.englishExplanation ?? "",
         correctionNote: data.correctionNote ?? "",
         mistakes: (data.keyMistakes ?? []).map(
-          (m: { mistake?: string; correction?: string; correctionRuby?: string; explanation?: string }) => ({
-            before: m.mistake ?? "",
+          (m: { mistake?: string; mistakeRuby?: string; correction?: string; correctionRuby?: string; explanation?: string }) => ({
+            before: m.mistakeRuby || m.mistake || "",
             after: m.correctionRuby || m.correction || "",
             note: m.explanation ?? "",
           }),

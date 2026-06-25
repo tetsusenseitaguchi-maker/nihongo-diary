@@ -9,21 +9,46 @@ function tint(v: string): CSSProperties {
 }
 
 /**
- * Build the text string passed to <Furigana> for a vocabulary headword.
+ * Builds 漢字（よみ）okurigana notation that Furigana renders as ruby.
+ * Detects okurigana by comparing the trailing characters of word and reading.
+ *
+ * "公園","こうえん" → "公園（こうえん）"   → <ruby>公園<rt>こうえん</rt></ruby>
+ * "行く","いく"    → "行（い）く"          → <ruby>行<rt>い</rt></ruby>く
+ * "楽しい","たのしい" → "楽（たの）しい"   → <ruby>楽<rt>たの</rt></ruby>しい
+ * "雨","あめ"      → "雨（あめ）"          → <ruby>雨<rt>あめ</rt></ruby>
+ */
+function buildRubyNotation(word: string, reading: string): string {
+  const wc = [...word];
+  const rc = [...reading];
+  let okuLen = 0;
+  while (
+    okuLen < wc.length &&
+    okuLen < rc.length &&
+    wc[wc.length - 1 - okuLen] === rc[rc.length - 1 - okuLen]
+  ) okuLen++;
+  const kanjiBase = wc.slice(0, wc.length - okuLen).join("");
+  const okurigana = okuLen > 0 ? wc.slice(-okuLen).join("") : "";
+  const kanjiReading = okuLen > 0 ? rc.slice(0, -okuLen).join("") : reading;
+  if (!kanjiBase || !kanjiReading) return word;
+  return `${kanjiBase}（${kanjiReading}）${okurigana}`;
+}
+
+/**
+ * Returns the display string for a vocabulary headword, always passing through Furigana.
  *
  * Priority:
- *  1. word + reading (new entries) → "公園（こうえん）" or "歩く（あるく）"
- *     Furigana renders pure-kanji words as ruby; words with okurigana as parentheses.
- *  2. word already has <ruby> or （） markup → pass through unchanged.
- *  3. Old concatenated format "公園こうえん" → split into "公園（こうえん）".
- *     Heuristic: string is entirely [kanji]+ then [hiragana]+ with nothing else.
+ *  1. word + reading (new API) → buildRubyNotation → correct okurigana split
+ *  2. Already has <ruby> or （） markup → pass through unchanged
+ *  3. Old concatenated "公園こうえん" (2+ kanji required to avoid okurigana being
+ *     misread as a reading) → split and wrap in （）
  */
 function vocabWordText(word: string, reading?: string): string {
-  if (reading) return `${word}（${reading}）`;
   if (!word) return "";
+  if (reading) return buildRubyNotation(word, reading);
   if (word.includes("<ruby>") || word.includes("（") || word.includes("(")) return word;
-  // Detect "公園こうえん" style: leading kanji run + trailing hiragana run, nothing else
-  const m = word.match(/^([一-鿿々-〇ヶヷ]+)([ぁ-ゖ]+)$/u);
+  // Old concatenated format — only safe when 2+ leading kanji (single-kanji words like
+  // 行く would produce wrong ruby if okurigana were mistaken for the reading)
+  const m = word.match(/^([一-鿿々〆ヶ]{2,})([ぁ-ゖ]+)$/u);
   if (m) return `${m[1]}（${m[2]}）`;
   return word;
 }
@@ -99,7 +124,7 @@ export function CorrectionResult({
             <ul className="space-y-3 text-sm">
               {correction.mistakes.map((m, i) => (
                 <li key={i} className="rounded-xl bg-paper/60 p-3">
-                  <span className="font-jp text-ink/45 line-through">{m.before}</span>
+                  <Furigana text={m.before} className="font-jp text-ink/45 line-through" />
                   <span className="mx-1.5 text-moss">→</span>
                   <Furigana text={m.after} className="font-jp font-semibold text-pine" />
                   <span className="mt-0.5 block text-ink/65">{m.note}</span>
