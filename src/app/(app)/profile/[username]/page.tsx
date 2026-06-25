@@ -7,6 +7,7 @@ import { FollowButton } from "@/components/FollowButton";
 import { TagChips } from "@/components/TagChips";
 import { computeStats, type DiaryRow } from "@/lib/diary";
 import { formatShort } from "@/lib/dates";
+import { getServerT } from "@/lib/i18n-server";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +68,8 @@ export default async function PublicProfilePage({
     .order("diary_date", { ascending: false })
     .limit(10);
 
+  const t = await getServerT();
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <Card className="p-6">
@@ -87,7 +90,7 @@ export default async function PublicProfilePage({
               </div>
               {isSelf ? (
                 <Link href="/profile" className="rounded-full border border-line bg-paper px-4 py-2 text-sm font-semibold text-pine hover:border-moss">
-                  Edit profile
+                  {t("profile.editProfile")}
                 </Link>
               ) : (
                 <FollowButton targetUserId={profile.id} initialFollowing={Boolean(rel)} />
@@ -101,19 +104,19 @@ export default async function PublicProfilePage({
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
-          <Stat label="Streak" value={`${stats.currentStreak}`} />
-          <Stat label="Total" value={`${stats.total}`} />
-          <Stat label="This month" value={`${stats.thisMonthCount}`} />
-          <Stat label="Followers" value={`${followers ?? 0}`} />
-          <Stat label="Following" value={`${followingCount ?? 0}`} />
+          <Stat label={t("profile.stats.streak")} value={`${stats.currentStreak}`} />
+          <Stat label={t("profile.stats.total")} value={`${stats.total}`} />
+          <Stat label={t("profile.stats.thisMonth")} value={`${stats.thisMonthCount}`} />
+          <Stat label={t("profile.stats.followers")} value={`${followers ?? 0}`} />
+          <Stat label={t("profile.stats.following")} value={`${followingCount ?? 0}`} />
         </div>
       </Card>
 
       <div>
-        <h2 className="mb-3 font-serif text-xl font-bold text-pine">Public diaries</h2>
+        <h2 className="mb-3 font-serif text-xl font-bold text-pine">{t("profile.publicDiaries")}</h2>
         {(publicDiaries ?? []).length === 0 ? (
           <Card className="p-6 text-center text-sm text-muted">
-            No public diaries yet. {isSelf && "You can make a diary public from its detail page."}
+            {t("profile.noPublicDiaries")} {isSelf && t("profile.makePublicHint")}
           </Card>
         ) : (
           <ul className="space-y-3">

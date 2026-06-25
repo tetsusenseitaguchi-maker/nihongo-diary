@@ -7,7 +7,7 @@ import { Card, Button } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { SUPPORTED_LANGUAGES } from "@/lib/languages";
 import { LOCALE_COOKIE } from "@/lib/i18n";
-import { useLocale } from "@/contexts/locale";
+import { useLocale, useT } from "@/contexts/locale";
 import type { Locale } from "@/lib/i18n";
 
 const levels = ["N5", "N4", "N3", "N2", "N1"];
@@ -16,6 +16,7 @@ export default function ProfileSetupPage() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const { setLocale } = useLocale();
+  const t = useT();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -168,9 +169,9 @@ export default function ProfileSetupPage() {
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
               >
-                <Icon.camera className="h-4 w-4" /> {uploading ? "Uploading…" : "Upload photo"}
+                <Icon.camera className="h-4 w-4" /> {uploading ? t("profileSetup.uploading") : t("profileSetup.uploadPhoto")}
               </Button>
-              <p className="mt-1.5 text-xs text-muted">PNG / JPG. Square looks best.</p>
+              <p className="mt-1.5 text-xs text-muted">{t("profileSetup.photoHint")}</p>
             </div>
           </div>
 
@@ -199,11 +200,11 @@ export default function ProfileSetupPage() {
             </div>
           </label>
 
-          <Field label="Display name" value={displayName} onChange={setDisplayName} />
-          <Field label="Username" value={username} onChange={setUsername} />
+          <Field label={t("profileSetup.displayName")} value={displayName} onChange={setDisplayName} />
+          <Field label={t("profileSetup.username")} value={username} onChange={setUsername} />
 
           <label className="block">
-            <span className="mb-1.5 block text-sm font-semibold text-ink">Level</span>
+            <span className="mb-1.5 block text-sm font-semibold text-ink">{t("profileSetup.levelLabel")}</span>
             <div className="flex flex-wrap gap-2">
               {levels.map((l) => (
                 <button
@@ -221,12 +222,12 @@ export default function ProfileSetupPage() {
           </label>
 
           <label className="block">
-            <span className="mb-1.5 block text-sm font-semibold text-ink">Bio</span>
+            <span className="mb-1.5 block text-sm font-semibold text-ink">{t("profileSetup.bioLabel")}</span>
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={3}
-              placeholder="Learning Japanese, one diary at a time."
+              placeholder={t("profileSetup.bioPlaceholder")}
               className="w-full resize-none rounded-xl border border-line bg-paper px-4 py-2.5 text-ink outline-none focus:border-moss"
             />
           </label>
@@ -235,7 +236,7 @@ export default function ProfileSetupPage() {
 
           <div className="flex gap-3">
             <Button type="submit" disabled={saving || uploading}>
-              {saving ? "Saving…" : "Save and continue"}
+              {saving ? t("profileSetup.saving") : t("profileSetup.saveBtn")}
             </Button>
           </div>
         </form>

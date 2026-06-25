@@ -10,6 +10,7 @@ import { MINI_LESSONS } from "@/lib/lessons";
 import { MiniLessonReview } from "@/components/MiniLessonReview";
 import { createClient } from "@/lib/supabase/client";
 import { normalizePlan, limitsFor, type Plan } from "@/lib/plans";
+import { useT } from "@/contexts/locale";
 
 type Tab = "templates" | "ideas" | "lessons" | "review";
 
@@ -37,14 +38,15 @@ const KEY_IDEAS: { emoji: string; title: string; explanation: string }[] = [
 ];
 
 export default function SupportPage() {
+  const t = useT();
   const [tab, setTab] = useState<Tab>("templates");
   const [plan, setPlan] = useState<Plan | null>(null);
   const [openLessonId, setOpenLessonId] = useState<number | null>(null);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
-    const t = new URLSearchParams(window.location.search).get("tab");
-    if (t === "lessons" || t === "ideas" || t === "templates" || t === "review") setTab(t);
+    const tabParam = new URLSearchParams(window.location.search).get("tab");
+    if (tabParam === "lessons" || tabParam === "ideas" || tabParam === "templates" || tabParam === "review") setTab(tabParam);
   }, []);
 
   useEffect(() => {
@@ -62,9 +64,9 @@ export default function SupportPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-medium text-muted">Learning support</p>
-        <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-pine">Templates &amp; Key Ideas</h1>
-        <p className="mt-1 text-ink/70">Learn how Japanese works while you write. 🌸</p>
+        <p className="text-sm font-medium text-muted">{t("support.subtitle")}</p>
+        <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-pine">{t("support.title")}</h1>
+        <p className="mt-1 text-ink/70">{t("support.desc")}</p>
       </div>
 
       {/* Obie banner */}
@@ -73,12 +75,12 @@ export default function SupportPage() {
           <ObiePhoto size={84} className="ring-4 ring-cream/20" />
           <div>
             <Badge tone="apricot" className="mb-2">
-              <Icon.sparkle className="h-3.5 w-3.5" /> Obie says
+              <Icon.sparkle className="h-3.5 w-3.5" /> {t("support.obieSays")}
             </Badge>
             <p className="font-serif text-xl font-bold leading-snug text-cream sm:text-2xl">
-              Pick a pattern, write one line, and I&apos;ll help you grow.
+              {t("support.obieMotivation")}
             </p>
-            <p className="mt-1 text-cream/80">Not just correction — teaching, guiding, and growing together.</p>
+            <p className="mt-1 text-cream/80">{t("support.obieSubtext")}</p>
           </div>
         </div>
       </Card>
@@ -87,16 +89,16 @@ export default function SupportPage() {
       <div className="overflow-x-auto">
         <div className="inline-flex rounded-full border border-line bg-paper p-1 whitespace-nowrap">
           {([
-            ["templates", "Templates"],
-            ["ideas",     "Key Ideas"],
-            ["lessons",   "Mini Lessons"],
-            ["review",    "📝 Review"],
-          ] as [Tab, string][]).map(([t, label]) => (
+            ["templates", t("support.tabTemplates")],
+            ["ideas",     t("support.tabKeyIdeas")],
+            ["lessons",   t("support.tabLessons")],
+            ["review",    t("support.tabReview")],
+          ] as [Tab, string][]).map(([tabKey, label]) => (
             <button
-              key={t}
-              onClick={() => startTransition(() => setTab(t))}
+              key={tabKey}
+              onClick={() => startTransition(() => setTab(tabKey))}
               className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-                tab === t ? "bg-pine text-cream" : "text-pine hover:bg-mint"
+                tab === tabKey ? "bg-pine text-cream" : "text-pine hover:bg-mint"
               }`}
             >
               {label}
@@ -108,20 +110,20 @@ export default function SupportPage() {
       {/* TEMPLATES */}
       {tab === "templates" && (
         <div className="grid gap-4 sm:grid-cols-2">
-          {TEMPLATES.map((t) => (
-            <Card key={t.insert} className="flex flex-col p-5">
-              <Furigana text={t.pattern} className="font-jp text-xl font-bold text-pine" />
-              <p className="mt-1 text-sm font-medium text-ink/70">{t.meaning}</p>
+          {TEMPLATES.map((tmpl) => (
+            <Card key={tmpl.insert} className="flex flex-col p-5">
+              <Furigana text={tmpl.pattern} className="font-jp text-xl font-bold text-pine" />
+              <p className="mt-1 text-sm font-medium text-ink/70">{tmpl.meaning}</p>
               <div className="mt-3 rounded-xl bg-mint/50 px-3 py-2.5">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-moss-600">Example</p>
-                <Furigana text={t.example} className="font-jp text-[15px] text-ink" />
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-moss-600">{t("support.templateExample")}</p>
+                <Furigana text={tmpl.example} className="font-jp text-[15px] text-ink" />
               </div>
               <LinkButton
-                href={`/write?starter=${encodeURIComponent(t.insert)}`}
+                href={`/write?starter=${encodeURIComponent(tmpl.insert)}`}
                 size="sm"
                 className="mt-4 self-start"
               >
-                <Icon.pen className="h-4 w-4" /> Use this template
+                <Icon.pen className="h-4 w-4" /> {t("support.useTemplate")}
               </LinkButton>
             </Card>
           ))}
@@ -167,7 +169,7 @@ export default function SupportPage() {
       {tab === "lessons" && (
         <div className="space-y-3">
           <p className="text-sm text-ink/70">
-            📚 Mini Lesson Library — your step-by-step path. The order is always the same.
+            {t("support.lessonLibrary")}
           </p>
 
           {/* Upgrade banner for Free users */}
@@ -176,15 +178,15 @@ export default function SupportPage() {
               <div className="flex items-center gap-3">
                 <span className="text-xl">🔒</span>
                 <p className="text-sm font-medium text-pine">
-                  Full lesson content is available on <strong>Plus and above</strong>.
-                  <span className="ml-1 text-ink/70">Titles and short previews are visible below.</span>
+                  {t("support.lessonLocked")}
+                  <span className="ml-1 text-ink/70">{t("support.lessonLockedSub")}</span>
                 </p>
               </div>
               <a
                 href="/upgrade"
                 className="shrink-0 rounded-full bg-pine px-4 py-2 text-xs font-bold text-cream hover:opacity-90"
               >
-                See plans →
+                {t("support.seePlans")}
               </a>
             </div>
           )}

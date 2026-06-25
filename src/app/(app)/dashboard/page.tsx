@@ -156,13 +156,13 @@ export default async function DashboardPage() {
                 <>
                   <div className="mt-3 rounded-xl bg-paper p-3">
                     <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-moss-600">
-                      Corrected · <Furigana text="直(なお)した日本語(にほんご)" />
+                      {t("dashboard.correctedLabel")} · <Furigana text="直(なお)した日本語(にほんご)" />
                     </p>
                     <p className="font-jp text-sm leading-relaxed text-ink"><Furigana text={stats.today.corrected_japanese} /></p>
                   </div>
                   {stats.today.english_explanation && (
                     <div className="mt-3">
-                      <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-moss-600">Explanation</p>
+                      <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-moss-600">{t("dashboard.explanationLabel")}</p>
                       <p className="line-clamp-3 text-sm leading-relaxed text-ink/75">{stats.today.english_explanation}</p>
                     </div>
                   )}
@@ -245,7 +245,7 @@ export default async function DashboardPage() {
               <div className="absolute right-3 top-3 max-w-[60%] rounded-2xl rounded-tr-sm bg-paper/95 px-3 py-2 shadow-card">
                 <p className="font-jp text-xs font-semibold leading-snug text-ink">
                   <Furigana text="小(ちい)さな一歩(いっぽ)を、毎日(まいにち)。" />
-                  <span className="mt-0.5 block text-[11px] font-normal text-muted">A small step, every day.</span>
+                  <span className="mt-0.5 block text-[11px] font-normal text-muted">{t("dashboard.smallStep")}</span>
                 </p>
               </div>
             </div>

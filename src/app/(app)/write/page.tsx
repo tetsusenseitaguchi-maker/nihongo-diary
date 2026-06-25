@@ -32,8 +32,8 @@ const styleJP: Record<CorrectionStyle, string> = {
   Natural: "です・ます体",
   Native: "ナチュラル",
 };
-const moods = ["😊 Happy", "🙂 Okay", "😌 Calm", "😴 Tired", "😣 Tough"];
-const weathers = ["☀️ Sunny", "☁️ Cloudy", "🌧️ Rainy"];
+const DEFAULT_MOODS = ["😊 Happy", "🙂 Okay", "😌 Calm", "😴 Tired", "😣 Tough"];
+const DEFAULT_WEATHERS = ["☀️ Sunny", "☁️ Cloudy", "🌧️ Rainy"];
 
 const tips = [
   { jp: "使(つか)った単語(たんご)をチェックしよう", en: "Check the words you used" },
@@ -112,6 +112,8 @@ export default function WritePage() {
   const [usedToday, setUsedToday] = useState(0);
   const router = useRouter();
   const t = useT();
+  const moods = (t("write.moods") || DEFAULT_MOODS.join("|")).split("|");
+  const weathers = (t("write.weathers") || DEFAULT_WEATHERS.join("|")).split("|");
 
   const limits = limitsFor(plan);
   const remaining = Math.max(0, limits.corrections - usedToday);
@@ -206,7 +208,7 @@ export default function WritePage() {
       };
       setResult(correction);
     } catch {
-      setCorrectError("Network error. Check your connection and try again.");
+      setCorrectError(t("write.networkError"));
     } finally {
       setLoading(false);
     }
@@ -329,22 +331,22 @@ export default function WritePage() {
         <h1 className="font-serif text-3xl font-bold tracking-tight text-pine">
           <Furigana text="日記(にっき)を書(か)く" />
         </h1>
-        <span className="text-sm font-medium text-muted">Write Diary</span>
+        <span className="text-sm font-medium text-muted">{t("write.writeDiary")}</span>
         <span className="text-xl">🌸</span>
       </div>
 
       {/* Plan + remaining */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-full border border-line bg-paper px-4 py-2 text-sm">
-        <span className="font-semibold text-pine">{PLAN_LABELS[plan]} plan</span>
+        <span className="font-semibold text-pine">{t("write.planLabel", { plan: PLAN_LABELS[plan] })}</span>
         <span className="text-line">·</span>
         <span className={remaining > 0 ? "text-ink/70" : "font-semibold text-apricot"}>
           {remaining > 0
-            ? `Today's corrections: ${remaining} / ${limits.corrections} left`
-            : "No corrections left today"}
+            ? t("write.correctionsLeft", { remaining, total: limits.corrections })
+            : t("write.noCorrectionsLeft")}
         </span>
         {plan === "free" && (
           <a href="/upgrade" className="ml-auto font-semibold text-moss-600 hover:text-pine">
-            Upgrade →
+            {t("write.upgradeLink")}
           </a>
         )}
       </div>
@@ -352,10 +354,10 @@ export default function WritePage() {
       {showUpgrade && (
         <div className="gloss-panel flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] p-4" style={{ ["--tint" as string]: "var(--color-tint-sand)" } as CSSProperties}>
           <p className="text-sm text-ink/80">
-            You&apos;ve reached your daily limit. Upgrade for more corrections and longer entries.
+            {t("write.dailyLimitMsg")}
           </p>
           <a href="/upgrade" className="gloss-btn rounded-full px-4 py-2 text-sm font-semibold text-cream hover:brightness-105">
-            See plans
+            {t("write.seePlans")}
           </a>
         </div>
       )}
