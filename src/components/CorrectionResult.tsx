@@ -1,8 +1,11 @@
+"use client";
+
 import type { CSSProperties } from "react";
 import type { Correction } from "@/lib/types";
 import { ObiePhoto } from "@/components/ObiePhoto";
 import { Furigana } from "@/components/Furigana";
 import { PracticeDrills } from "@/components/PracticeDrills";
+import { useT } from "@/contexts/locale";
 
 function tint(v: string): CSSProperties {
   return { ["--tint" as string]: `var(${v})` } as CSSProperties;
@@ -69,13 +72,15 @@ export function CorrectionResult({
   correction: Correction;
   showOriginal?: boolean;
 }) {
+  const t = useT();
+
   return (
     <div className="space-y-4">
       {/* Original + Natural */}
       <div className="grid gap-4 md:grid-cols-2">
         {showOriginal && (
           <div className="gloss-card rounded-[var(--radius-card)] p-6">
-            <Label en="Original Text" jp="元(もと)の文(ぶん)" />
+            <Label en={t("correction.originalText")} jp="元(もと)の文(ぶん)" />
             <p className="font-jp text-[15px] leading-loose text-ink/70">
               {correction.original}
             </p>
@@ -84,7 +89,7 @@ export function CorrectionResult({
 
         {correction.natural && (
           <div className="gloss-panel relative rounded-[var(--radius-card)] p-6" style={tint("--color-tint-sage")}>
-            <Label en="Natural Japanese" jp="自然(しぜん)な日本語(にほんご)" />
+            <Label en={t("correction.naturalJapanese")} jp="自然(しぜん)な日本語(にほんご)" />
             <p className="font-jp text-[15px] leading-loose text-ink">
               <Furigana text={correction.natural} />
             </p>
@@ -99,7 +104,7 @@ export function CorrectionResult({
 
       {/* English Explanation */}
       <div className="gloss-panel rounded-[var(--radius-card)] p-6" style={tint("--color-tint-blue")}>
-        <Label en="English Explanation" jp="英語(えいご)での説明(せつめい)" />
+        <Label en={t("correction.englishExplanation")} jp="英語(えいご)での説明(せつめい)" />
         <p className="text-sm leading-relaxed text-ink/80">{correction.explanation}</p>
       </div>
 
@@ -108,7 +113,7 @@ export function CorrectionResult({
         <div className="gloss-panel flex items-start gap-3 rounded-[var(--radius-card)] p-6" style={tint("--color-tint-sand")}>
           <span className="text-lg">💡</span>
           <div>
-            <Label en="Teacher's Note" jp="ひとことメモ" />
+            <Label en={t("correction.teachersNote")} jp="ひとことメモ" />
             <p className="text-sm leading-relaxed text-ink/80">{correction.correctionNote}</p>
           </div>
         </div>
@@ -117,7 +122,7 @@ export function CorrectionResult({
       {/* Key Mistakes + Useful Vocabulary */}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="gloss-panel rounded-[var(--radius-card)] p-6" style={tint("--color-tint-pink")}>
-          <Label en="Key Mistakes" jp="よくある間違(まちが)い" />
+          <Label en={t("correction.keyMistakes")} jp="よくある間違(まちが)い" />
           {correction.mistakes.length === 0 ? (
             <p className="text-sm text-ink/70"><Furigana text="今回(こんかい)は間違(まちが)いなし。よく書(か)けています！" /></p>
           ) : (
@@ -135,7 +140,7 @@ export function CorrectionResult({
         </div>
 
         <div className="gloss-panel rounded-[var(--radius-card)] p-6" style={tint("--color-tint-green")}>
-          <Label en="Useful Vocabulary" jp="使(つか)える単語(たんご)" />
+          <Label en={t("correction.usefulVocabulary")} jp="使(つか)える単語(たんご)" />
           <ul className="space-y-3 text-sm">
             {correction.vocabulary.map((v, i) => (
               <li key={i} className="rounded-xl bg-paper/60 p-3">
@@ -152,7 +157,7 @@ export function CorrectionResult({
 
       {/* Practice Sentence */}
       <div className="gloss-panel rounded-[var(--radius-card)] p-6" style={tint("--color-tint-violet")}>
-        <Label en="Practice Sentence" jp="練習文(れんしゅうぶん)" />
+        <Label en={t("correction.practiceSentence")} jp="練習文(れんしゅうぶん)" />
         <p className="font-jp text-[15px] leading-loose text-ink"><Furigana text={correction.practice.jp} /></p>
         {correction.practice.en && (
           <p className="mt-1 text-sm text-muted">{correction.practice.en}</p>
@@ -163,22 +168,22 @@ export function CorrectionResult({
       {correction.relatedMiniLesson && (
         <div className="gloss-card overflow-hidden rounded-[var(--radius-card)]">
           <div className="flex items-center justify-between gap-2 bg-pine px-5 py-3">
-            <p className="font-serif text-base font-bold text-cream">📘 Mini Lesson Preview</p>
+            <p className="font-serif text-base font-bold text-cream">📘 {t("correction.miniLesson")}</p>
             <a href="/support?tab=lessons" className="text-xs font-semibold text-cream/80 hover:text-cream">
-              📚 See all
+              📚 {t("correction.seeAll")}
             </a>
           </div>
           <div className="space-y-3 p-5">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-moss-600">
-                Lesson {correction.relatedMiniLesson.order}
+                {t("correction.lesson", { n: correction.relatedMiniLesson.order })}
               </p>
               <h3 className="font-serif text-lg font-bold text-pine">{correction.relatedMiniLesson.title}</h3>
               <p className="mt-1 text-sm leading-relaxed text-ink/80">{correction.relatedMiniLesson.shortExplanation}</p>
             </div>
 
             <div className="rounded-xl bg-mint/50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-wide text-moss-600">🧠 Visual Image</p>
+              <p className="text-[11px] font-bold uppercase tracking-wide text-moss-600">🧠 {t("correction.visualImage")}</p>
               <p className="mt-0.5 text-sm leading-relaxed text-ink/85">{correction.relatedMiniLesson.visualImage}</p>
             </div>
 

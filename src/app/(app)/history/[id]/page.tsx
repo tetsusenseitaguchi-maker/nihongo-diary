@@ -5,6 +5,7 @@ import { Icon } from "@/components/icons";
 import { CorrectionResult } from "@/components/CorrectionResult";
 import { diaryEntries } from "@/lib/mock-data";
 import { formatLong } from "@/lib/dates";
+import { getServerT } from "@/lib/i18n-server";
 
 export function generateStaticParams() {
   return diaryEntries.map((e) => ({ id: e.id }));
@@ -19,13 +20,15 @@ export default async function DiaryDetailPage({
   const entry = diaryEntries.find((e) => e.id === id);
   if (!entry) notFound();
 
+  const t = await getServerT();
+
   return (
     <div className="space-y-6">
       <Link
         href="/history"
         className="inline-flex items-center gap-1.5 text-sm font-semibold text-moss-600 hover:text-pine"
       >
-        <Icon.arrow className="h-4 w-4 rotate-180" /> Back to history
+        <Icon.arrow className="h-4 w-4 rotate-180" /> {t("diary.backToHistory")}
       </Link>
 
       <div className="flex flex-wrap items-center gap-3">

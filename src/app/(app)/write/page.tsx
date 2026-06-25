@@ -494,7 +494,7 @@ export default function WritePage() {
                 </span>
                 <span className="leading-tight">
                   <Furigana text="書(か)いた文字(もじ)に合(あ)わせる" className="font-jp font-semibold" />
-                  <span className="ml-1.5 text-xs text-muted">Match my writing (kanji/kana)</span>
+                  <span className="ml-1.5 text-xs text-muted">{t("write.matchScript")}</span>
                 </span>
               </button>
 
@@ -509,13 +509,13 @@ export default function WritePage() {
 
               <div className="mt-3 flex items-center justify-between">
                 <span className={`text-sm ${overLimit ? "font-semibold text-apricot" : "text-muted"}`}>
-                  Characters: {len} / {maxChars}
+                  {t("write.charCount", { len, max: maxChars })}
                 </span>
                 <button
                   onClick={() => setText(sampleDraft)}
                   className="text-xs font-semibold text-moss-600 hover:text-pine"
                 >
-                  <Furigana text="サンプルを入(い)れる" /> · Load a sample
+                  <Furigana text="サンプルを入(い)れる" /> · {t("write.loadSample")}
                 </button>
               </div>
 
@@ -540,7 +540,7 @@ export default function WritePage() {
               {/* actions */}
               <div className="mt-5 flex flex-wrap items-center justify-end gap-3">
                 <Button variant="secondary">
-                  <Icon.book className="h-4 w-4" /> Save draft
+                  <Icon.book className="h-4 w-4" /> {t("write.saveDraft")}
                 </Button>
                 <Button onClick={handleCorrect} disabled={!text.trim() || overLimit || loading || remaining <= 0}>
                   {loading ? (
@@ -554,7 +554,7 @@ export default function WritePage() {
               </div>
               {overLimit && (
                 <p className="mt-2 text-right text-sm text-apricot">
-                  Your plan allows up to {maxChars} characters. Please shorten your text.
+                  {t("write.charLimit", { max: maxChars })}
                 </p>
               )}
               {correctError && (
@@ -638,7 +638,7 @@ export default function WritePage() {
           <div className="flex items-center gap-4 rounded-[var(--radius-card)] border border-line bg-paper p-5 shadow-card">
             <GoalRing value={goalPct} size={60} />
             <div>
-              <p className="font-serif font-bold text-pine">Today&apos;s goal</p>
+              <p className="font-serif font-bold text-pine">{t("write.todaysGoal")}</p>
               <p className="font-jp text-sm text-ink/70"><Furigana text="日記(にっき)を書(か)こう（50文字(もじ)〜）" /></p>
               <p className="text-xs text-muted">Write a diary (50+ characters)</p>
             </div>
@@ -646,14 +646,14 @@ export default function WritePage() {
 
           {/* Writing tips */}
           <div className="rounded-[var(--radius-card)] border border-line bg-paper p-5 shadow-card">
-            <p className="mb-1 font-serif font-bold text-pine">Writing tips</p>
+            <p className="mb-1 font-serif font-bold text-pine">{t("write.writingTips")}</p>
             <ul className="mt-2 space-y-3">
-              {tips.map((t) => (
-                <li key={t.en} className="flex items-start gap-2.5 text-sm text-ink/80">
+              {tips.map((tip) => (
+                <li key={tip.en} className="flex items-start gap-2.5 text-sm text-ink/80">
                   <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md bg-mint text-moss-600">
                     <Icon.check className="h-3.5 w-3.5" />
                   </span>
-                  <Bilingual jp={t.jp} en={t.en} />
+                  <Bilingual jp={tip.jp} en={tip.en} />
                 </li>
               ))}
             </ul>
@@ -664,7 +664,7 @@ export default function WritePage() {
             <div className="absolute -top-2 left-1/2 h-4 w-16 -translate-x-1/2 rounded-sm bg-pine/15" aria-hidden />
             <div className="flex items-center gap-2">
               <span className="text-lg">🐾</span>
-              <p className="text-sm font-bold text-pine">Obie&apos;s tip</p>
+              <p className="text-sm font-bold text-pine">{t("dashboard.obieTip")}</p>
             </div>
             <div className="mt-1 text-sm leading-relaxed text-ink/80">
               <Bilingual
@@ -704,7 +704,7 @@ export default function WritePage() {
           )}
           <CorrectionResult correction={result} />
           <p className="pt-1 text-center text-xs text-muted">
-            AI corrections may not be perfect. Please use them as learning support.
+            {t("write.aiDisclaimer")}
           </p>
         </section>
       )}

@@ -9,7 +9,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { createClient } from "@/lib/supabase/server";
 import { LocaleProvider } from "@/contexts/locale";
 import { normaliseLocale } from "@/lib/i18n";
-import { getInitialMessages } from "@/lib/i18n-server";
+import { getInitialMessages, getServerT } from "@/lib/i18n-server";
 
 export default async function AppLayout({
   children,
@@ -102,16 +102,17 @@ export default async function AppLayout({
   );
 }
 
-function AppFooter() {
+async function AppFooter() {
+  const t = await getServerT();
   return (
     <footer className="mt-12 border-t border-line pt-6 text-center text-xs leading-relaxed text-muted">
-      <p>AI corrections may not be perfect. Please use them as learning support.</p>
+      <p>{t("footer.disclaimer")}</p>
       <p className="mt-1">
-        Nihongo Diary · public beta ·{" "}
-        <a href="/upgrade" className="font-semibold text-moss-600 hover:text-pine">Plans</a> · By using this app you agree to our Terms &amp; Privacy. Your diaries stay private unless you make them public.
+        {t("footer.beta")} ·{" "}
+        <a href="/upgrade" className="font-semibold text-moss-600 hover:text-pine">{t("nav.upgrade")}</a> · {t("footer.terms")}
       </p>
       <p className="mt-1">
-        Created by{" "}
+        {t("footer.createdBy")}{" "}
         <a href="https://www.youtube.com/@tetsusenseidesuyo" target="_blank" rel="noopener noreferrer" className="font-semibold hover:text-pine">Tetsu Sensei</a>
         {" "}·{" "}
         <a href="https://www.youtube.com/@tetsusenseidesuyo" target="_blank" rel="noopener noreferrer" className="hover:text-pine">YouTube</a>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar } from "@/components/ObiePhoto";
 import { relativeTime } from "@/lib/activity";
+import { useT } from "@/contexts/locale";
 
 type CommentProfile = {
   username: string | null;
@@ -48,6 +49,7 @@ export function CommentsSection({
   const [error, setError] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const supabase = createClient();
+  const t = useT();
 
   async function fetchComments() {
     const { data } = await supabase
@@ -80,7 +82,7 @@ export function CommentsSection({
     });
     setSubmitting(false);
     if (err) {
-      setError("コメントを投稿できませんでした。/ Could not post comment.");
+      setError(t("comments.error"));
     } else {
       setBody("");
       textareaRef.current?.blur();
@@ -97,8 +99,7 @@ export function CommentsSection({
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <span>💬</span>
-        <h2 className="font-serif text-xl font-bold text-pine">Comments</h2>
-        <span className="text-sm font-medium text-muted">コメント</span>
+        <h2 className="font-serif text-xl font-bold text-pine">{t("comments.title")}</h2>
         {comments.length > 0 && (
           <span className="ml-1 rounded-full bg-mint px-2 py-0.5 text-xs font-semibold text-pine">
             {comments.length}
@@ -109,7 +110,7 @@ export function CommentsSection({
       {/* Comment list */}
       {comments.length === 0 ? (
         <p className="rounded-2xl bg-sand/30 py-6 text-center text-sm text-muted">
-          No comments yet — be the first to cheer! 🌸
+          {t("comments.empty")}
         </p>
       ) : (
         <ul className="space-y-3">
@@ -165,7 +166,7 @@ export function CommentsSection({
           ref={textareaRef}
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          placeholder="応援コメントをどうぞ / Leave a comment…"
+          placeholder={t("comments.placeholder")}
           rows={2}
           maxLength={500}
           className="flex-1 resize-none rounded-2xl border border-line bg-paper px-4 py-3 text-sm text-ink placeholder:text-muted focus:border-moss focus:outline-none"
@@ -175,7 +176,7 @@ export function CommentsSection({
           disabled={!body.trim() || submitting}
           className="rounded-full bg-pine px-4 py-2.5 text-sm font-semibold text-cream transition-colors hover:bg-pine/90 disabled:opacity-40"
         >
-          {submitting ? "…" : "Post"}
+          {submitting ? "…" : t("comments.post")}
         </button>
       </form>
       {error && <p className="text-xs text-red-500">{error}</p>}

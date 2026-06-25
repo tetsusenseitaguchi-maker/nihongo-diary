@@ -7,6 +7,7 @@ import { ObiePhoto } from "@/components/ObiePhoto";
 import { MiniCalendar } from "@/components/MiniCalendar";
 import { computeStats, type DiaryRow } from "@/lib/diary";
 import { monthLabel, formatShort } from "@/lib/dates";
+import { getServerT } from "@/lib/i18n-server";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ export default async function CalendarPage() {
 
   const entries = (data ?? []) as DiaryRow[];
   const stats = computeStats(entries);
+  const t = await getServerT();
 
   const now = new Date();
   const year = now.getFullYear();
@@ -47,7 +49,7 @@ export default async function CalendarPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-serif text-3xl font-bold tracking-tight text-pine">カレンダー</h1>
-        <p className="mt-1 text-ink/70"><span className="font-medium">Calendar</span> · 続けた日がひと目でわかります</p>
+        <p className="mt-1 text-ink/70"><span className="font-medium">{t("calendar.header")}</span> · 続けた日がひと目でわかります</p>
       </div>
 
       {/* Stat strip */}

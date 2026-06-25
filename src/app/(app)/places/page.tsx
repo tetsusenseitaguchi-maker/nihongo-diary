@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, LinkButton } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { PlacesMapView } from "@/components/PlacesMapView";
+import { getServerT } from "@/lib/i18n-server";
 import type { MapPin } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -14,11 +15,14 @@ export default async function PlacesPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data } = await supabase
-    .from("diary_places")
-    .select("id, lat, lng, place_name, diary_entry_id, diary_entries(diary_date, title)")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  const [{ data }, t] = await Promise.all([
+    supabase
+      .from("diary_places")
+      .select("id, lat, lng, place_name, diary_entry_id, diary_entries(diary_date, title)")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+    getServerT(),
+  ]);
 
   type PlaceRow = {
     id: string;
@@ -50,11 +54,11 @@ export default async function PlacesPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-muted">My Journey</p>
+          <p className="text-sm font-medium text-muted">{t("places.journey")}</p>
           <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-pine">
             訪れた場所
           </h1>
-          <p className="mt-1 text-ink/70">My Places Map</p>
+          <p className="mt-1 text-ink/70">{t("places.mapTitle")}</p>
         </div>
         <LinkButton href="/write">
           <Icon.pen className="h-4 w-4" /> 日記を書く
@@ -67,7 +71,7 @@ export default async function PlacesPage() {
         <div>
           <p className="font-serif text-4xl font-bold">{count}</p>
           <p className="text-sm opacity-80">
-            {count === 0 ? "場所がまだありません" : `ヶ所を訪れました · ${count} place${count === 1 ? "" : "s"} visited`}
+            {count === 0 ? "場所がまだありません" : t("places.visited", { count })}
           </p>
         </div>
       </div>
@@ -91,7 +95,7 @@ export default async function PlacesPage() {
 
           {/* Recent places list */}
           <div>
-            <h2 className="mb-3 font-serif text-lg font-bold text-pine">最近の場所 · Recent places</h2>
+            <h2 className="mb-3 font-serif text-lg font-bold text-pine">{t("places.recentPlaces")}</h2>
             <div className="grid gap-2 sm:grid-cols-2">
               {pins.slice(0, 10).map((pin) => (
                 <a

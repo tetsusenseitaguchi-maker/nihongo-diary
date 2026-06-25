@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar } from "@/components/ObiePhoto";
 import { Icon } from "@/components/icons";
+import { useT } from "@/contexts/locale";
 
 interface Profile {
   id: string;
@@ -25,6 +26,7 @@ export function UserSearch() {
   const [result, setResult] = useState<Profile | null | "not-found">(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useT();
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -64,19 +66,16 @@ export function UserSearch() {
   return (
     <div className="rounded-[var(--radius-card)] border border-line bg-paper p-5 shadow-card">
       <h2 className="mb-1 font-serif text-lg font-bold text-pine">
-        🔎 Find User
+        🔎 {t("usersearch.title")}
       </h2>
-      <p className="mb-3 text-xs text-muted">
-        Search by username (ID) to find a learner.
-      </p>
 
       {/* Search form */}
-      <form onSubmit={handleSearch} className="flex gap-2">
+      <form onSubmit={handleSearch} className="flex gap-2 mt-3">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="username"
+          placeholder={t("usersearch.placeholder")}
           autoComplete="off"
           autoCapitalize="off"
           spellCheck={false}
@@ -92,7 +91,7 @@ export function UserSearch() {
           ) : (
             <Icon.search className="h-3.5 w-3.5" />
           )}
-          Search
+          {t("usersearch.button")}
         </button>
       </form>
 
@@ -107,10 +106,10 @@ export function UserSearch() {
       {result === "not-found" && (
         <div className="mt-3 flex items-center justify-between rounded-xl bg-sand/50 px-4 py-3">
           <p className="text-sm text-ink/70">
-            No user found for <span className="font-semibold text-ink">@{query.trim()}</span>
+            {t("usersearch.notFound", { q: query.trim() })}
           </p>
           <button type="button" onClick={handleClear} className="text-xs font-medium text-muted hover:text-pine">
-            Clear
+            {t("usersearch.clear")}
           </button>
         </div>
       )}
@@ -145,12 +144,12 @@ export function UserSearch() {
                 href={`/profile/${result.username}`}
                 className="inline-flex items-center gap-1 rounded-full border border-line bg-paper px-3 py-1.5 text-xs font-semibold text-pine hover:border-moss hover:bg-mint/50"
               >
-                View profile
+                {t("usersearch.viewProfile")}
                 <Icon.arrow className="h-3 w-3" />
               </Link>
             )}
             <button type="button" onClick={handleClear} className="text-[10px] text-muted hover:text-pine">
-              Clear
+              {t("usersearch.clear")}
             </button>
           </div>
         </div>

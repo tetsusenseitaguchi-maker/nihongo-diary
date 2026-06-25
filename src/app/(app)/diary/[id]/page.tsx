@@ -13,6 +13,7 @@ import { DiaryPlaceMap } from "@/components/DiaryPlaceMap";
 import { TranslateButton } from "@/components/TranslateButton";
 import { Avatar } from "@/components/ObiePhoto";
 import { formatLong } from "@/lib/dates";
+import { getServerT } from "@/lib/i18n-server";
 import type { Correction, MistakeItem, VocabItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -71,6 +72,7 @@ export default async function DiaryDetailPage({
     .single();
   const preferredLanguage = (viewerProfile?.preferred_language as string) || "en";
   const entryTranslations = (entry.translations as Record<string, string> | null) ?? {};
+  const t = await getServerT();
 
   const correction: Correction = {
     original: entry.original_text,
@@ -102,14 +104,14 @@ export default async function DiaryDetailPage({
           href="/history"
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-moss-600 hover:text-pine"
         >
-          <Icon.arrow className="h-4 w-4 rotate-180" /> 過去の日記にもどる
+          <Icon.arrow className="h-4 w-4 rotate-180" /> {t("diary.backToHistory")}
         </Link>
       ) : (
         <Link
           href="/feed"
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-moss-600 hover:text-pine"
         >
-          <Icon.arrow className="h-4 w-4 rotate-180" /> Learning Feed に戻る
+          <Icon.arrow className="h-4 w-4 rotate-180" /> {t("diary.backToFeed")}
         </Link>
       )}
 
@@ -125,7 +127,7 @@ export default async function DiaryDetailPage({
             <Avatar initials={authorInitials} size={40} />
           )}
           <div className="min-w-0">
-            <p className="text-sm text-muted">Diary by</p>
+            <p className="text-sm text-muted">{t("diary.diaryBy")}</p>
             {authorProfile.username ? (
               <Link
                 href={`/profile/${authorProfile.username}`}
@@ -160,7 +162,7 @@ export default async function DiaryDetailPage({
 
       {isOwner && (
         <p className="-mt-3 text-xs text-muted">
-          Public diaries can appear on your profile and in followers&apos; feeds. Private diaries are only visible to you.
+          {t("diary.publicNote")}
         </p>
       )}
 
@@ -209,7 +211,7 @@ export default async function DiaryDetailPage({
       <div className="flex items-center gap-2">
         <span>🌸</span>
         <h2 className="font-serif text-xl font-bold text-pine">添削結果</h2>
-        <span className="text-sm font-medium text-muted">Correction Result</span>
+        <span className="text-sm font-medium text-muted">{t("write.resultTitle")}</span>
       </div>
 
       <DiaryAttachments imageUrl={imageUrl} audioUrl={audioUrl} />

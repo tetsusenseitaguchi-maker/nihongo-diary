@@ -57,9 +57,7 @@ export default async function DashboardPage() {
             <div className="max-w-xs">
               <p className="font-jp text-sm font-semibold text-moss-600">おかえり、{displayName}さん 🌸</p>
               <h1 className="mt-1 font-serif text-3xl font-bold leading-[1.15] text-pine">
-                Write Japanese every day.
-                <br />
-                Build your habit.
+                {t("dashboard.tagline")}
               </h1>
               <p className="mt-3 text-sm text-ink/70">
                 <Furigana text="小(ちい)さな一歩(いっぽ)を、毎日(まいにち)。" />
