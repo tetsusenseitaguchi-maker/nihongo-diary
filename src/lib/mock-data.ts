@@ -22,7 +22,7 @@ export const mobileNavItems: NavItem[] = [
   { label: "Write", href: "/write", icon: "pen" },
   { label: "Feed", href: "/feed", icon: "feed" },
   { label: "History", href: "/history", icon: "history" },
-  { label: "Calendar", href: "/calendar", icon: "calendar" },
+  { label: "Support", href: "/support", icon: "support" },
 ];
 
 /* ------------------------------------------------------------------ */

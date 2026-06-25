@@ -12,7 +12,7 @@ const MOB_KEYS: Record<string, string> = {
   Write: "nav.write",
   Feed: "nav.feed",
   History: "nav.history",
-  Calendar: "nav.calendar",
+  Support: "nav.support",
 };
 
 export function BottomNav() {
