@@ -184,18 +184,15 @@ export async function POST(request: Request) {
     );
   }
 
-  // Today's usage
+  // Atomically claim one correction slot (check + increment in a single DB round-trip).
+  // Returns false when the daily limit is already reached — no race-condition bypass possible.
   const today = new Date().toISOString().slice(0, 10);
-  const { data: usage } = await supabase
-    .from("usage_limits")
-    .select("correction_count")
-    .eq("user_id", user.id)
-    .eq("usage_date", today)
-    .maybeSingle();
-  const correctionCount = usage?.correction_count ?? 0;
-
-  // Correction count limit
-  if (correctionCount >= limits.corrections) {
+  const { data: allowed, error: rpcError } = await supabase.rpc("try_use_correction", {
+    p_user_id: user.id,
+    p_date: today,
+    p_limit: limits.corrections,
+  });
+  if (rpcError || !allowed) {
     return NextResponse.json(
       {
         error: `今日のAI添削の上限（${limits.corrections}回）に達しました。明日また使えます。もっと使うにはアップグレードしてね。`,
@@ -302,17 +299,6 @@ export async function POST(request: Request) {
         }))
       : [],
   };
-
-  // Record usage (best-effort): increment today's counters
-  await supabase.from("usage_limits").upsert(
-    {
-      user_id: user.id,
-      usage_date: today,
-      correction_count: correctionCount + 1,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id,usage_date" },
-  );
 
   return NextResponse.json(result);
 }
