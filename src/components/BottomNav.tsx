@@ -9,8 +9,8 @@ import { useT } from "@/contexts/locale";
 /** Map English mobile nav labels to i18n keys. */
 const MOB_KEYS: Record<string, string> = {
   Home: "nav.home",
-  Write: "nav.write",
   Feed: "nav.feed",
+  Write: "nav.write",
   History: "nav.history",
   Support: "nav.support",
 };

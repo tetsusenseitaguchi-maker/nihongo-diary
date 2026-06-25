@@ -19,8 +19,8 @@ export const navItems: NavItem[] = [
 /** Bottom-tab navigation for mobile. */
 export const mobileNavItems: NavItem[] = [
   { label: "Home", href: "/dashboard", icon: "home" },
-  { label: "Write", href: "/write", icon: "pen" },
   { label: "Feed", href: "/feed", icon: "feed" },
+  { label: "Write", href: "/write", icon: "pen" },
   { label: "History", href: "/history", icon: "history" },
   { label: "Support", href: "/support", icon: "support" },
 ];
