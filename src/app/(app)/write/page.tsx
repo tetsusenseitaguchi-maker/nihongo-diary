@@ -181,9 +181,9 @@ export default function WritePage() {
           }),
         ),
         vocabulary: (data.usefulVocabulary ?? []).map(
-          (v: { word?: string; wordRuby?: string; meaning?: string; example?: string; exampleRuby?: string }) => ({
-            word: v.wordRuby || v.word || "",
-            reading: "",
+          (v: { word?: string; reading?: string; wordRuby?: string; meaning?: string; example?: string; exampleRuby?: string }) => ({
+            word: v.word || (v.wordRuby ? v.wordRuby.replace(/<[^>]*>/g, "") : "") || "",
+            reading: v.reading || "",
             meaning: v.meaning ?? "",
             example: v.exampleRuby || v.example || "",
           }),

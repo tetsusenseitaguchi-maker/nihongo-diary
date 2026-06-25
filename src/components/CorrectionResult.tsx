@@ -8,6 +8,26 @@ function tint(v: string): CSSProperties {
   return { ["--tint" as string]: `var(${v})` } as CSSProperties;
 }
 
+/**
+ * Build the text string passed to <Furigana> for a vocabulary headword.
+ *
+ * Priority:
+ *  1. word + reading (new entries) → "公園（こうえん）" or "歩く（あるく）"
+ *     Furigana renders pure-kanji words as ruby; words with okurigana as parentheses.
+ *  2. word already has <ruby> or （） markup → pass through unchanged.
+ *  3. Old concatenated format "公園こうえん" → split into "公園（こうえん）".
+ *     Heuristic: string is entirely [kanji]+ then [hiragana]+ with nothing else.
+ */
+function vocabWordText(word: string, reading?: string): string {
+  if (reading) return `${word}（${reading}）`;
+  if (!word) return "";
+  if (word.includes("<ruby>") || word.includes("（") || word.includes("(")) return word;
+  // Detect "公園こうえん" style: leading kanji run + trailing hiragana run, nothing else
+  const m = word.match(/^([一-鿿々-〇ヶヷ]+)([ぁ-ゖ]+)$/u);
+  if (m) return `${m[1]}（${m[2]}）`;
+  return word;
+}
+
 function Label({ en, jp }: { en: string; jp: string }) {
   return (
     <p className="mb-2 flex flex-wrap items-baseline gap-x-2">
@@ -94,7 +114,7 @@ export function CorrectionResult({
           <ul className="space-y-3 text-sm">
             {correction.vocabulary.map((v, i) => (
               <li key={i} className="rounded-xl bg-paper/60 p-3">
-                <Furigana text={v.word} className="font-jp text-[15px] font-semibold text-ink" />
+                <Furigana text={vocabWordText(v.word, v.reading)} className="font-jp text-[15px] font-semibold text-ink" />
                 <span className="block text-ink/70">{v.meaning}</span>
                 {v.example && (
                   <span className="mt-0.5 block font-jp text-xs text-ink/55">例: <Furigana text={v.example} /></span>

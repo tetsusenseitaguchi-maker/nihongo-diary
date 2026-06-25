@@ -44,7 +44,7 @@ Return this JSON structure:
     { "mistake": "", "correctionRuby": "", "explanation": "" }
   ],
   "usefulVocabulary": [
-    { "wordRuby": "", "meaning": "", "exampleRuby": "" }
+    { "word": "", "reading": "", "meaning": "", "exampleRuby": "" }
   ],
   "practiceSentenceRuby": "",
   "relatedMiniLesson": { "id": 1, "shortExplanation": "", "exampleJapaneseRuby": "", "exampleEnglish": "", "shortNote": "" },
@@ -94,7 +94,7 @@ Every Japanese field above ends in "Ruby" and must contain furigana in this form
 
 9. keyMistakes: include only important mistakes. If there are none, return an empty array. Tiny style preferences are NOT mistakes — mention those in correctionNote instead.
 
-10. usefulVocabulary: pick words from or related to the diary, at the learner's level; meaning in English; example sentence at their level with ruby. practiceSentence: one short sentence based on the topic/mistake, at their level, with ruby.
+10. usefulVocabulary: pick words from or related to the diary, at the learner's level. "word": plain dictionary form of the word with kanji as written (e.g. "公園", "歩く", "天気"). "reading": complete hiragana reading including okurigana (e.g. "こうえん", "あるく", "てんき"). "meaning": English definition. "exampleRuby": example sentence with ruby tags on all kanji. practiceSentence: one short sentence based on the topic/mistake, at their level, with ruby.
 
 11. practiceDrills: generate exactly 2 to 3 short practice drills based on the learner's mistakes or the relatedMiniLesson topic.
 - Types (use the exact string): "fill-in" (blank fill — mark the blank as ___), "particle-choice" (choose the correct particle), "desu-masu" (choose です or ます), "reorder" (reorder the given words into a correct sentence; put the shuffled words in choices), "rewrite" (rewrite the given phrase more naturally; no choices needed).
@@ -269,7 +269,8 @@ export async function POST(request: Request) {
       : [],
     usefulVocabulary: Array.isArray(parsed.usefulVocabulary)
       ? parsed.usefulVocabulary.map((v: Record<string, unknown>) => ({
-          wordRuby: str(v?.wordRuby),
+          word: str(v?.word),
+          reading: str(v?.reading),
           meaning: str(v?.meaning),
           exampleRuby: str(v?.exampleRuby),
         }))
