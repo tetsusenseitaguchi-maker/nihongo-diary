@@ -11,11 +11,13 @@ interface MiniCalendarProps {
   dayLinks?: Record<number, string>;
 }
 
-// Inline grid styles bypass Tailwind v4 class-generation quirks entirely.
+// minmax(0, 1fr) — NOT 1fr — so columns can shrink below their content min-width.
+// Without the 0 minimum, CSS Grid uses auto (= content min-width) and 7 columns
+// can overflow the screen on narrow phones.
 const GRID_7 = {
   display: "grid",
-  gridTemplateColumns: "repeat(7, 1fr)",
-  gap: "4px",
+  gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+  gap: "2px",
 } as const;
 
 export function MiniCalendar({
@@ -29,16 +31,18 @@ export function MiniCalendar({
   const cells = buildMonthGrid(year, month);
   const active = new Set(activeDays);
   const sm = size === "sm";
-  const cellH = sm ? "h-8 text-xs" : "h-10 text-sm";
+  // h-9 on mobile (36px) keeps tap targets comfortable while fitting 7 cols.
+  // text-xs (12px) ensures two-digit numbers don't overflow narrow cells.
+  const cellH = sm ? "h-7 text-[11px]" : "h-9 text-xs sm:h-10 sm:text-sm";
 
   return (
-    <div className="w-full">
-      {/* Weekday labels */}
-      <div style={GRID_7} className="mb-1">
+    <div className="w-full overflow-hidden">
+      {/* Weekday labels — same grid so columns align with date cells */}
+      <div style={GRID_7} className="mb-0.5">
         {weekdayLabels.map((d, i) => (
           <div
             key={i}
-            className="flex h-6 items-center justify-center text-[10px] font-semibold text-muted"
+            className="flex h-6 min-w-0 items-center justify-center text-[10px] font-semibold text-muted"
           >
             {d}
           </div>
@@ -57,7 +61,7 @@ export function MiniCalendar({
           const href = dayLinks?.[cell.day];
 
           const cls = [
-            "relative flex items-center justify-center rounded-lg font-medium transition-colors",
+            "relative flex min-w-0 items-center justify-center rounded font-medium transition-colors",
             cellH,
             isActive
               ? "bg-moss text-cream hover:brightness-110"
