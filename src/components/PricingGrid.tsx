@@ -69,6 +69,24 @@ export const TIERS: Tier[] = [
   },
 ];
 
+export type PricingLabels = {
+  mostPopular: string;
+  comingSoon: string;
+  currentPlan: string;
+  startFree: string;
+  upgradeSoon: string;
+  betaNotice: string;
+};
+
+const DEFAULT_LABELS: PricingLabels = {
+  mostPopular: "Most popular",
+  comingSoon: "Coming soon",
+  currentPlan: "Current plan",
+  startFree: "Start for free",
+  upgradeSoon: "Upgrade soon",
+  betaNotice: "Payments aren't live yet — this is a public beta. Pricing may change before launch.",
+};
+
 /**
  * Shared pricing grid used on both the landing page and /upgrade.
  *
@@ -76,55 +94,60 @@ export const TIERS: Tier[] = [
  *                   No "current plan" detection (user may not be logged in).
  * mode="upgrade"  — All CTAs are disabled buttons. Pass currentPlan to
  *                   highlight the user's active tier.
+ *
+ * Pass `labels` (from getServerT on the upgrade page) for translated UI chrome.
+ * The landing page omits labels and shows English defaults.
  */
 export function PricingGrid({
   currentPlan,
   mode = "landing",
+  labels = DEFAULT_LABELS,
 }: {
   currentPlan?: Plan;
   mode?: "landing" | "upgrade";
+  labels?: PricingLabels;
 }) {
   return (
     <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {TIERS.map((t) => {
-          const isCurrent = mode === "upgrade" && currentPlan === t.id;
-          const isComingSoon = t.comingSoon === true;
+        {TIERS.map((tier) => {
+          const isCurrent = mode === "upgrade" && currentPlan === tier.id;
+          const isComingSoon = tier.comingSoon === true;
 
           return (
             <Card
-              key={t.id}
+              key={tier.id}
               className={[
                 "relative flex flex-col p-6",
-                t.highlight ? "ring-2 ring-moss" : "",
+                tier.highlight ? "ring-2 ring-moss" : "",
                 isComingSoon ? "opacity-70" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
             >
-              {t.highlight && (
+              {tier.highlight && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-pine px-3 py-1 text-[11px] font-bold text-cream">
-                  Most popular
+                  {labels.mostPopular}
                 </span>
               )}
               {isComingSoon && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-muted px-3 py-1 text-[11px] font-bold text-cream">
-                  Coming soon
+                  {labels.comingSoon}
                 </span>
               )}
 
-              <h2 className="font-serif text-xl font-bold text-pine">{t.name}</h2>
+              <h2 className="font-serif text-xl font-bold text-pine">{tier.name}</h2>
               <p className="mt-1">
                 <span className="font-serif text-3xl font-bold text-pine">
-                  {t.price}
+                  {tier.price}
                 </span>
-                {t.cadence && (
-                  <span className="text-sm text-muted">{t.cadence}</span>
+                {tier.cadence && (
+                  <span className="text-sm text-muted">{tier.cadence}</span>
                 )}
               </p>
 
               <ul className="mt-4 flex-1 space-y-2">
-                {t.features.map((f) => (
+                {tier.features.map((f) => (
                   <li
                     key={f}
                     className="flex items-start gap-2 text-sm text-ink/80"
@@ -145,28 +168,28 @@ export function PricingGrid({
                     disabled
                     className="w-full rounded-full border border-line bg-paper px-4 py-2.5 text-sm font-semibold text-muted"
                   >
-                    Coming soon
+                    {labels.comingSoon}
                   </button>
                 ) : isCurrent ? (
                   <button
                     disabled
                     className="w-full rounded-full border border-line bg-mint/50 px-4 py-2.5 text-sm font-semibold text-pine"
                   >
-                    Current plan
+                    {labels.currentPlan}
                   </button>
-                ) : mode === "landing" && t.id === "free" ? (
+                ) : mode === "landing" && tier.id === "free" ? (
                   <Link
                     href="/signup"
                     className="block w-full rounded-full bg-pine px-4 py-2.5 text-center text-sm font-semibold text-cream transition-colors hover:bg-pine/90"
                   >
-                    Start for free
+                    {labels.startFree}
                   </Link>
                 ) : (
                   <button
                     disabled
                     className="w-full rounded-full border border-line bg-paper px-4 py-2.5 text-sm font-semibold text-muted"
                   >
-                    Upgrade soon
+                    {labels.upgradeSoon}
                   </button>
                 )}
               </div>
@@ -176,8 +199,7 @@ export function PricingGrid({
       </div>
 
       <p className="text-center text-xs text-muted">
-        Payments aren&apos;t live yet — this is a public beta. Pricing may
-        change before launch.
+        {labels.betaNotice}
       </p>
     </div>
   );

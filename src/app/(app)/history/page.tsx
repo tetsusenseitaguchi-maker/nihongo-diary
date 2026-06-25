@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, LinkButton } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { DiaryHistoryList } from "@/components/DiaryHistoryList";
+import { getServerT } from "@/lib/i18n-server";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,7 @@ export default async function HistoryPage() {
     .order("created_at", { ascending: false });
 
   const entries = (data ?? []) as Row[];
+  const t = await getServerT();
 
   return (
     <div className="space-y-6">
@@ -42,7 +44,7 @@ export default async function HistoryPage() {
             過去の日記
           </h1>
           <p className="mt-1 text-ink/70">
-            <span className="font-medium">History</span> ·{" "}
+            <span className="font-medium">{t("history.subtitle")}</span> ·{" "}
             {entries.length > 0
               ? `これまで ${entries.length} 件の日記`
               : "まだ日記はありません"}

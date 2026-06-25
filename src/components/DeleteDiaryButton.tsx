@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useT } from "@/contexts/locale";
 
 interface Props {
   diaryId: string;
@@ -14,6 +15,7 @@ export function DeleteDiaryButton({ diaryId, redirectAfter = false, onDeleted }:
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const t = useT();
 
   async function handleDelete() {
     setLoading(true);
@@ -22,7 +24,7 @@ export function DeleteDiaryButton({ diaryId, redirectAfter = false, onDeleted }:
       const res = await fetch(`/api/diary/${diaryId}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) {
-        setError(data?.error ?? "Deletion failed. Please try again.");
+        setError(data?.error ?? t("delete.failedMsg"));
         setLoading(false);
         return;
       }
@@ -33,7 +35,7 @@ export function DeleteDiaryButton({ diaryId, redirectAfter = false, onDeleted }:
         onDeleted?.();
       }
     } catch {
-      setError("Network error. Check your connection.");
+      setError(t("delete.networkError"));
       setLoading(false);
     }
   }
@@ -45,12 +47,12 @@ export function DeleteDiaryButton({ diaryId, redirectAfter = false, onDeleted }:
         type="button"
         onClick={() => { setError(null); setShowConfirm(true); }}
         className="inline-flex items-center gap-1.5 rounded-full border border-line bg-paper px-3 py-1.5 text-xs font-semibold text-ink/60 transition-colors hover:border-apricot/50 hover:text-apricot"
-        aria-label="Delete diary"
+        aria-label={t("delete.aria")}
       >
         <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 001 1h6a1 1 0 001-1l1-9" />
         </svg>
-        Delete
+        {t("delete.button")}
       </button>
 
       {/* Error (shown outside modal, e.g. after modal closes on error) */}
@@ -65,10 +67,10 @@ export function DeleteDiaryButton({ diaryId, redirectAfter = false, onDeleted }:
           onClick={(e) => { if (e.target === e.currentTarget && !loading) setShowConfirm(false); }}
         >
           <div className="w-full max-w-sm rounded-2xl bg-paper p-6 shadow-xl">
-            <h2 className="font-serif text-lg font-bold text-pine">Delete this diary?</h2>
+            <h2 className="font-serif text-lg font-bold text-pine">{t("delete.title")}</h2>
             <p className="mt-2 text-sm leading-relaxed text-ink/70">
-              This will delete the diary and any attached files.<br />
-              <strong className="text-apricot">This cannot be undone.</strong>
+              {t("delete.desc")}<br />
+              <strong className="text-apricot">{t("delete.warning")}</strong>
             </p>
 
             {error && (
@@ -84,7 +86,7 @@ export function DeleteDiaryButton({ diaryId, redirectAfter = false, onDeleted }:
                 disabled={loading}
                 className="flex-1 rounded-full border border-line bg-paper px-4 py-2.5 text-sm font-semibold text-ink hover:bg-mint/50 disabled:opacity-50"
               >
-                Cancel
+                {t("delete.cancel")}
               </button>
               <button
                 type="button"
@@ -95,10 +97,10 @@ export function DeleteDiaryButton({ diaryId, redirectAfter = false, onDeleted }:
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-cream/30 border-t-cream" />
-                    Deleting…
+                    {t("delete.deleting")}
                   </span>
                 ) : (
-                  "Delete"
+                  t("delete.button")
                 )}
               </button>
             </div>

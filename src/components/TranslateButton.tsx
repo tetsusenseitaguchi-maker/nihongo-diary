@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { SUPPORTED_LANGUAGES } from "@/lib/languages";
+import { useT } from "@/contexts/locale";
 
 interface Props {
   diaryEntryId: string;
@@ -21,6 +22,7 @@ export function TranslateButton({ diaryEntryId, translations, preferredLanguage 
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useT();
 
   async function handleToggle() {
     if (show) {
@@ -41,13 +43,13 @@ export function TranslateButton({ diaryEntryId, translations, preferredLanguage 
       });
       const data: { translation?: string; error?: string; message?: string } = await res.json();
       if (!res.ok) {
-        setError(data.message || data.error || "Translation failed. Please try again.");
+        setError(data.message || data.error || t("translate.failed"));
         return;
       }
       setTranslation(data.translation ?? null);
       setShow(true);
     } catch {
-      setError("Network error. Please check your connection and try again.");
+      setError(t("translate.networkError"));
     } finally {
       setLoading(false);
     }
@@ -69,12 +71,12 @@ export function TranslateButton({ diaryEntryId, translations, preferredLanguage 
         {loading ? (
           <>
             <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-moss border-t-transparent" />
-            翻訳中… Translating
+            翻訳中… {t("translate.translating")}
           </>
         ) : show ? (
-          <>🌐 翻訳を隠す · Hide</>
+          <>🌐 翻訳を隠す · {t("translate.hide")}</>
         ) : (
-          <>🌐 {targetLabel} 訳を見る · Show translation</>
+          <>🌐 {targetLabel} 訳を見る · {t("translate.show")}</>
         )}
       </button>
 
@@ -86,7 +88,7 @@ export function TranslateButton({ diaryEntryId, translations, preferredLanguage 
       {show && translation && (
         <div className="rounded-2xl border border-sand/60 bg-sand/20 px-5 py-4">
           <p className="mb-2.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-ink/40">
-            <span>🌐</span> {targetLabel} Translation
+            <span>🌐</span> {t("translate.label", { lang: targetLabel })}
           </p>
           <p className="leading-relaxed text-ink/85">{translation}</p>
         </div>

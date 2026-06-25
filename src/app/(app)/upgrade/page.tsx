@@ -33,7 +33,18 @@ export default async function UpgradePage() {
         </div>
       </div>
 
-      <PricingGrid currentPlan={plan} mode="upgrade" />
+      <PricingGrid
+        currentPlan={plan}
+        mode="upgrade"
+        labels={{
+          mostPopular: t("pricing.mostPopular"),
+          comingSoon: t("pricing.comingSoon"),
+          currentPlan: t("pricing.currentPlan"),
+          startFree: t("pricing.startFree"),
+          upgradeSoon: t("pricing.upgradeSoon"),
+          betaNotice: t("pricing.betaNotice"),
+        }}
+      />
     </div>
   );
 }

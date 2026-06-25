@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Icon } from "@/components/icons";
+import { useT } from "@/contexts/locale";
 
 export function PublicToggle({
   diaryId,
@@ -15,6 +16,7 @@ export function PublicToggle({
   const [isPublic, setIsPublic] = useState(initialPublic);
   const [busy, setBusy] = useState(false);
   const router = useRouter();
+  const t = useT();
 
   async function toggle() {
     if (busy) return;
@@ -44,7 +46,7 @@ export function PublicToggle({
       }`}
     >
       {isPublic ? <Icon.check className="h-4 w-4" /> : <Icon.book className="h-4 w-4" />}
-      {isPublic ? "Public — others can read this" : "Private (only you)"}
+      {isPublic ? t("public.publicLabel") : t("public.privateLabel")}
     </button>
   );
 }

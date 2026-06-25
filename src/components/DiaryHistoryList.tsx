@@ -7,6 +7,7 @@ import { Icon } from "@/components/icons";
 import { DeleteDiaryButton } from "@/components/DeleteDiaryButton";
 import { TagChips } from "@/components/TagChips";
 import { formatLong } from "@/lib/dates";
+import { useT } from "@/contexts/locale";
 import type { ReactNode } from "react";
 
 function AttachmentDot({ icon }: { icon: ReactNode }) {
@@ -32,6 +33,7 @@ interface Entry {
 export function DiaryHistoryList({ initialEntries }: { initialEntries: Entry[] }) {
   const [entries, setEntries] = useState<Entry[]>(initialEntries);
   const [filterTag, setFilterTag] = useState<string | null>(null);
+  const t = useT();
 
   const allTags = Array.from(new Set(entries.flatMap((e) => e.tags ?? [])));
   const displayed = filterTag
@@ -39,7 +41,7 @@ export function DiaryHistoryList({ initialEntries }: { initialEntries: Entry[] }
     : entries;
 
   if (entries.length === 0) {
-    return <p className="py-8 text-center text-sm text-muted">No diaries yet.</p>;
+    return <p className="py-8 text-center text-sm text-muted">{t("history.noEntries")}</p>;
   }
 
   return (

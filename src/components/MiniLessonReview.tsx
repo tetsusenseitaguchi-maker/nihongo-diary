@@ -5,6 +5,7 @@ import { limitsFor, type Plan } from "@/lib/plans";
 import { MINI_LESSONS } from "@/lib/lessons";
 import { DrillList } from "@/components/PracticeDrills";
 import { Icon } from "@/components/icons";
+import { useT } from "@/contexts/locale";
 import type { PracticeDrill } from "@/lib/types";
 
 const LEVELS = ["N5", "N4", "N3", "Natural"] as const;
@@ -18,6 +19,7 @@ export function MiniLessonReview({ plan }: { plan: Plan | null }) {
   const [lessonTitle, setLessonTitle] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useT();
 
   const isSupportUser = plan !== null && limitsFor(plan).reviewDrills;
 
@@ -33,13 +35,13 @@ export function MiniLessonReview({ plan }: { plan: Plan | null }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data?.error ?? "問題の生成に失敗しました。もう一度お試しください。");
+        setError(data?.error ?? t("review.generateFailed"));
         return;
       }
       setLessonTitle(data.lessonTitle ?? "");
       setDrills(data.drills ?? []);
     } catch {
-      setError("ネットワークエラーです。接続を確認してもう一度お試しください。");
+      setError(t("review.generateNetworkError"));
     } finally {
       setLoading(false);
     }
@@ -49,7 +51,7 @@ export function MiniLessonReview({ plan }: { plan: Plan | null }) {
   if (plan === null) {
     return (
       <div className="flex items-center justify-center py-12 text-sm text-muted">
-        Loading…
+        {t("review.loading")}
       </div>
     );
   }
@@ -64,12 +66,12 @@ export function MiniLessonReview({ plan }: { plan: Plan | null }) {
             <span className="text-3xl">📘</span>
             <div className="min-w-0 flex-1">
               <h3 className="font-serif text-lg font-bold text-pine">
-                Mini Lesson Review Drills
+                {t("review.title")}
               </h3>
               <p className="mt-1 text-sm leading-relaxed text-ink/75">
                 {isPlus
-                  ? "AI-generated review drills for each Mini Lesson are available on the Pro plan."
-                  : "Pick any Mini Lesson and Obie generates 5 targeted practice drills just for you."}
+                  ? t("review.descPro")
+                  : t("review.descFree")}
               </p>
 
               {/* Preview of what it looks like */}
@@ -91,9 +93,9 @@ export function MiniLessonReview({ plan }: { plan: Plan | null }) {
               <div className="mt-5 flex items-center gap-3 rounded-xl bg-sand/60 px-4 py-3">
                 <span className="text-lg">🔒</span>
                 <p className="text-sm font-medium text-ink/80">
-                  {isPlus ? "Available on " : "Available on "}
+                  {t("review.availableOn")}
                   <a href="/upgrade" className="font-semibold text-moss-600 hover:text-pine">
-                    Pro plan and above →
+                    {t("review.proAndAbove")}
                   </a>
                 </p>
               </div>
@@ -108,7 +110,7 @@ export function MiniLessonReview({ plan }: { plan: Plan | null }) {
   return (
     <div className="space-y-5">
       <p className="text-sm text-ink/70">
-        Choose a Mini Lesson and your level — Obie will generate 5 review drills just for you.
+        {t("review.instructions")}
       </p>
 
       {/* Controls */}
@@ -147,12 +149,12 @@ export function MiniLessonReview({ plan }: { plan: Plan | null }) {
           {loading ? (
             <>
               <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-cream/30 border-t-cream" />
-              Generating…
+              {t("review.generating")}
             </>
           ) : (
             <>
               <Icon.sparkle className="h-4 w-4" />
-              Generate drills
+              {t("review.generate")}
             </>
           )}
         </button>
@@ -172,7 +174,7 @@ export function MiniLessonReview({ plan }: { plan: Plan | null }) {
             <h3 className="font-serif text-lg font-bold text-pine">
               📘 {lessonTitle}
             </h3>
-            <span className="text-xs text-muted">{level} · {drills.length} drills</span>
+            <span className="text-xs text-muted">{level} · {t("review.drillsCount", { n: drills.length })}</span>
           </div>
           <DrillList drills={drills} />
         </div>
@@ -182,8 +184,8 @@ export function MiniLessonReview({ plan }: { plan: Plan | null }) {
       {!loading && drills.length === 0 && !error && (
         <div className="flex flex-col items-center gap-2 rounded-[var(--radius-card)] border border-dashed border-line py-10 text-center">
           <span className="text-2xl">📘</span>
-          <p className="text-sm font-medium text-pine">Pick a lesson and hit Generate</p>
-          <p className="text-xs text-muted">Obie will create 5 tailored drills for you.</p>
+          <p className="text-sm font-medium text-pine">{t("review.emptyTitle")}</p>
+          <p className="text-xs text-muted">{t("review.emptyDesc")}</p>
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useT } from "@/contexts/locale";
 
 export function FollowButton({
   targetUserId,
@@ -16,6 +17,7 @@ export function FollowButton({
   const [following, setFollowing] = useState(initialFollowing);
   const [busy, setBusy] = useState(false);
   const router = useRouter();
+  const t = useT();
 
   async function toggle() {
     if (busy) return;
@@ -57,7 +59,7 @@ export function FollowButton({
           : "gloss-btn text-cream hover:brightness-105"
       }`}
     >
-      {following ? "Following" : "Follow"}
+      {following ? t("follow.following") : t("follow.follow")}
     </button>
   );
 }
