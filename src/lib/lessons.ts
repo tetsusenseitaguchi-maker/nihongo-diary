@@ -14,22 +14,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "The 5 vowels: a(あ) i(い) u(う) e(え) o(お) — every syllable ends in one of these.",
         example: "あいうえお",
+        examples: [
+          { jp: "あ・い・う・え・お", en: "The five core vowels — the building blocks of every Japanese sound." },
+          { jp: "あおい（青(あお)い）", en: "Blue — uses three different vowels in a row." },
+        ],
       },
       {
         text: "Consonant rows: each row adds a consonant before a vowel. The か-row = ka ki ku ke ko.",
         example: "かきくけこ、さしすせそ、たちつてと",
+        examples: [
+          { jp: "かきくけこ → か(ka) き(ki) く(ku) け(ke) こ(ko)", en: "The か-row. Each character = one full syllable." },
+          { jp: "さしすせそ → さ(sa) し(shi) す(su) せ(se) そ(so)", en: "Notice し = 'shi', not 'si' — Japanese has a few irregular sounds." },
+        ],
       },
       {
         text: "Voiced sounds: add ゛(dakuten) to get the voiced version — か→が, さ→ざ, た→だ, は→ば. Add ゜for p-sounds: は→ぱ.",
         example: "がぎぐげご、ぱぴぷぺぽ",
+        examples: [
+          { jp: "かく(書(か)く) → がっこう(学校(がっこう))", en: "か and が look similar but sound completely different — one tiny mark changes everything." },
+          { jp: "はな(花(はな)) vs ぱな — ぱ sounds like 'pa' in 'pasta'", en: "The ゜mark creates the p-sound, which is rare in Japanese." },
+        ],
       },
       {
         text: "Combination sounds (拗音): small ゃゅょ after an い-row sound creates a new syllable.",
         example: "きゃく、しゅくだい、ちょっと",
+        examples: [
+          { jp: "しゅくだい(宿題(しゅくだい))", en: "Homework — し + small ゅ = 'shu', one syllable not two." },
+          { jp: "きょうと(京都(きょうと))", en: "Kyoto — き + small ょ = 'kyo'. Two syllables total: kyo・to." },
+        ],
       },
       {
         text: "Long vowels (おかあさん) and the double consonant っ — a tiny っ means a short pause before the next consonant.",
         example: "おかあさん、きって、ざっし",
+        examples: [
+          { jp: "きって(切手(きって))", en: "Stamp — the tiny っ creates a short stop: ki-TTE. Without it, きて = 'please come'." },
+          { jp: "おかあさん(お母(かあ)さん)", en: "Mother — the extra あ stretches the vowel. One long 'aa' sound, not two separate sounds." },
+        ],
       },
     ],
     exampleJapanese: "日本語の勉強をします。",
@@ -38,6 +58,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "I study Japanese.",
     shortNote:
       "Start with the 5 vowels — they never change, and every other sound in Japanese builds on them.",
+    commonMistakes: [
+      {
+        wrong: "は(particle) を読(よ)む「わ」と読(よ)むのを忘(わす)れる",
+        right: "は as a particle is always pronounced 'wa', not 'ha'.",
+        note: "The particle は looks like hiragana 'ha' but is always read 'wa' when used as a topic marker. This trips up almost every beginner.",
+      },
+      {
+        wrong: "っ(small) と つ(big) を混(ま)ぜる — 「きつて」",
+        right: "きって (切手(きって)) — small っ makes a pause, not a 'tsu' sound.",
+        note: "Small っ is a pause/doubled consonant, not the syllable 'tsu'. Writing big つ changes the word entirely.",
+      },
+      {
+        wrong: "ぬ と め、り と い を混(ま)ぜる",
+        right: "ぬ = 'nu', め = 'me' — they look similar but are different characters.",
+        note: "Several hiragana pairs look very alike (ぬ/め, り/い, わ/れ). Write them slowly at first and pay attention to the small curve differences.",
+      },
+    ],
   },
   {
     id: 2,
@@ -51,22 +88,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "Same 46 sounds as hiragana, just written with angular strokes: ア(a) イ(i) ウ(u) エ(e) オ(o).",
         example: "アイスクリーム、コーヒー",
+        examples: [
+          { jp: "ア・イ・ウ・エ・オ", en: "Same five vowel sounds as hiragana — the writing looks different, the sounds are identical." },
+          { jp: "アイスクリーム(ice cream)、オレンジ(orange)", en: "Once you know the sounds, you can often guess what the foreign word is." },
+        ],
       },
       {
         text: "Foreign loanwords (外来語): most words borrowed from other languages are written in katakana.",
         example: "テレビ、スマホ、パソコン",
+        examples: [
+          { jp: "テレビ = television、スマホ = smartphone", en: "Japanese adapts the sound, not the spelling. テレビ comes from 'tele-vi(sion)'." },
+          { jp: "アメリカ(America)、フランス(France)、イギリス(England)", en: "Country names written in katakana — except Japan itself: 日本(にほん)." },
+        ],
       },
       {
         text: "The long vowel mark ー stretches the previous vowel sound.",
         example: "ケーキ、スーパー、コーヒー",
+        examples: [
+          { jp: "コーヒー(coffee) vs コヒ — without ー it sounds clipped and wrong", en: "The ー mark is crucial. 'Ko-o-hi-i' — each ー adds one beat to the vowel before it." },
+          { jp: "スーパー(supermarket)、ケーキ(cake)、ラーメン(ramen)", en: "Common everyday words — all use ー to mark stretched vowels." },
+        ],
       },
       {
         text: "Special combinations for foreign sounds not in hiragana: ファ、ティ、ウィ etc.",
         example: "ファン、パーティー、ウィーク",
+        examples: [
+          { jp: "ファッション(fashion)、ティッシュ(tissue)", en: "ファ = 'fa', ティ = 'ti/chi' — sounds that do not exist in standard hiragana rows." },
+          { jp: "ウィーク(week)、フィルム(film)", en: "These are newer additions to handle sounds from English and other languages." },
+        ],
       },
       {
         text: "Also used for: emphasis (like italics), animal and plant names in science, and onomatopoeia.",
         example: "ネコ、ワンワン、ドキドキ",
+        examples: [
+          { jp: "ワンワン(dog bark)、ドキドキ(heartbeat/nervous)", en: "Sound effects and onomatopoeia almost always use katakana for extra impact." },
+          { jp: "サクラ(cherry blossom) in a biology textbook vs 桜(さくら) in a poem", en: "Scientific plant/animal names use katakana; literary uses use kanji or hiragana." },
+        ],
       },
     ],
     exampleJapanese: "コーヒーとケーキを注文しました。",
@@ -75,6 +132,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "I ordered coffee and cake.",
     shortNote:
       "The long vowel mark ー only appears in katakana. In hiragana, long vowels are written out in full (おかあさん).",
+    commonMistakes: [
+      {
+        wrong: "ソ と ン、シ と ツ を混(ま)ぜる",
+        right: "ソ = 'so', ン = 'n' — ン has a tiny bend; ソ is more diagonal. シ = 'shi', ツ = 'tsu'.",
+        note: "These four characters look very similar and confuse almost everyone. Compare them side-by-side slowly. ン/ソ differ in stroke angle; シ/ツ differ in stroke direction.",
+      },
+      {
+        wrong: "長音(ちょうおん)を書(か)くとき ー ではなく おお や うう を使(つか)う",
+        right: "In katakana, always use ー for long vowels. ✗ コオヒイ → ✓ コーヒー",
+        note: "In hiragana you write out the vowel (おかあさん), but in katakana you ALWAYS use ー. Never write the vowel letter twice in katakana.",
+      },
+      {
+        wrong: "外来語(がいらいご)の発音(はつおん)を英語(えいご)のまま使(つか)う",
+        right: "Adapt to Japanese sounds: 'McDonald's' → マクドナルド, not the English pronunciation.",
+        note: "Japanese loanwords are adapted to fit Japanese sounds, not copied directly. The katakana spelling tells you the Japanese pronunciation.",
+      },
+    ],
   },
   {
     id: 3,
@@ -88,22 +162,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "Basic order: Topic → Time/Place → Object → Verb. Everything builds toward the verb at the end.",
         example: "わたしは　きのう　こうえんで　ほんを　よみました。",
+        examples: [
+          { jp: "わたしは　きのう　こうえんで　ほんを　よみました。", en: "I read a book at the park yesterday. — Topic → Time → Place → Object → Verb." },
+          { jp: "いもうとは　まいあさ　がっこうで　にほんごを　べんきょうします。", en: "My little sister studies Japanese at school every morning. — Same structure, longer sentence." },
+        ],
       },
       {
         text: "The verb always closes the sentence — no exceptions in standard Japanese.",
         example: "いぬが　にわで　あそんでいます。",
+        examples: [
+          { jp: "いぬが　にわで　あそんでいます。", en: "The dog is playing in the yard. — Verb (あそんでいます) at the very end." },
+          { jp: "ともだちは　きのう　すしを　たべました。", en: "My friend ate sushi yesterday. — Always end with the verb, no matter how long the sentence gets." },
+        ],
       },
       {
         text: "The subject is often dropped when it is already understood from context.",
         example: "（わたしは）がくせいです。",
+        examples: [
+          { jp: "（わたしは）がくせいです。", en: "I am a student. — わたしは is understood from context, so it is usually omitted." },
+          { jp: "A：今日(きょう)どこに行(い)く？ B：としょかんに行(い)く。", en: "A: Where are you going today? B: To the library. — 'I' is dropped because it is obvious." },
+        ],
       },
       {
         text: "Adjectives always come directly before the noun they describe.",
         example: "おいしいラーメン、きれいなはな",
+        examples: [
+          { jp: "おいしいラーメン、たかい山(やま)、きれいなはな", en: "Delicious ramen, tall mountain, beautiful flower — adjective always sits before the noun." },
+          { jp: "これは　たのしい　えいがです。", en: "This is a fun movie. — たのしい modifies えいが directly." },
+        ],
       },
       {
         text: "Add か at the end to turn any statement into a question — no word order change needed.",
         example: "いきますか？　がくせいですか？",
+        examples: [
+          { jp: "にほんごを　べんきょうします。→ にほんごを　べんきょうしますか？", en: "I study Japanese. → Do you study Japanese? — Just add か. Word order stays the same." },
+          { jp: "これは　ほんですか？", en: "Is this a book? — In English you flip the word order; in Japanese you just add か." },
+        ],
       },
     ],
     exampleJapanese: "私は昨日図書館で本を読みました。",
@@ -112,6 +206,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "I read a book at the library yesterday.",
     shortNote:
       "If you get lost in a long sentence, jump to the end and find the verb — that tells you what is happening.",
+    commonMistakes: [
+      {
+        wrong: "動詞(どうし)を文(ぶん)の最後(さいご)に置(お)かない — 「わたしは食(た)べましたラーメンを。」",
+        right: "わたしはラーメンを食(た)べました。— Verb always at the end.",
+        note: "English speakers instinctively put the verb after the subject. In Japanese, the verb MUST be last. Rearranging even slightly will sound unnatural.",
+      },
+      {
+        wrong: "目的語(もくてきご)を動詞(どうし)の後(あと)に置(お)く — 「食(た)べました　ラーメンを」",
+        right: "ラーメンを食(た)べました。— Object before verb.",
+        note: "The object (what you act on) always comes BEFORE the verb. Think: 'ramen [を] ate' not 'ate ramen'.",
+      },
+      {
+        wrong: "疑問文(ぎもんぶん)で語順(ごじゅん)を変(か)える — 「ですか　がくせい　あなたは？」",
+        right: "あなたはがくせいですか？— Word order does not change for questions.",
+        note: "Unlike English, Japanese questions have the exact same word order as statements. Only か at the end marks a question.",
+      },
+    ],
   },
   {
     id: 4,
@@ -125,22 +236,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "は marks the topic: 'As for X...' — the sentence then makes a comment about X.",
         example: "ねこは　かわいいです。",
+        examples: [
+          { jp: "ねこは　かわいいです。", en: "As for cats, they are cute. — は sets 'cats' as the topic; the rest comments on it." },
+          { jp: "とうきょうは　おおきいまちです。", en: "As for Tokyo, it is a big city. — は introduces what we are talking about." },
+        ],
       },
       {
         text: "Usually one は per sentence — it sets the main topic for what follows.",
         example: "わたしは　がくせいです。",
+        examples: [
+          { jp: "わたしは　にほんごの　がくせいです。", en: "I am a Japanese student. — は sets the topic (me), then we say what is true about me." },
+          { jp: "このほんは　むずかしいです。", en: "This book is difficult. — このほん is the topic; むずかしい is the comment." },
+        ],
       },
       {
         text: "は can replace が or を to bring that word into topic position.",
         example: "コーヒーは　すきです。（コーヒーが → は）",
+        examples: [
+          { jp: "コーヒーは　すきです。（← コーヒーが すきです）", en: "As for coffee, I like it. — は replaces が to make 'coffee' the topic of conversation." },
+          { jp: "このえいがは　もうみました。（← このえいがを みました）", en: "As for this movie, I already watched it. — は replaces を to shift focus." },
+        ],
       },
       {
         text: "Contrast: using は...は highlights a comparison between two things.",
         example: "さかなは　すきですが、にくは　きらいです。",
+        examples: [
+          { jp: "さかなは　すきですが、にくは　きらいです。", en: "I like fish, but I don't like meat. — Two は marks signal a contrast." },
+          { jp: "なつは　あついですが、ふゆは　さむいです。", en: "Summer is hot, but winter is cold. — は...は pattern for comparing two topics." },
+        ],
       },
       {
         text: "Once a topic is established, it can be dropped in the sentences that follow.",
         example: "わたしはがくせいです。まいにちにほんごをべんきょうしています。",
+        examples: [
+          { jp: "わたしはがくせいです。まいにちにほんごをべんきょうしています。", en: "I am a student. (I) study Japanese every day. — 'I' is dropped in the second sentence because it is already known." },
+          { jp: "このレストランは　おいしいです。やすいし、きれいです。", en: "This restaurant is delicious. It's also cheap and clean. — The topic (this restaurant) is set once, then dropped." },
+        ],
       },
     ],
     exampleJapanese: "私は毎朝コーヒーを飲みます。",
@@ -149,6 +280,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "I drink coffee every morning.",
     shortNote:
       "は marks the topic, not necessarily the grammatical subject. The subject and topic are often different.",
+    commonMistakes: [
+      {
+        wrong: "新(あたら)しい情報(じょうほう)に は を使(つか)う — 「だれが来(き)た？→ やまださんは来(き)た。」",
+        right: "やまださんが来(き)ました。— New information uses が, not は.",
+        note: "When answering 'who?' or introducing new info, use が. は assumes the topic is already known. Using は here sounds like 'as for Yamada-san...' which is evasive.",
+      },
+      {
+        wrong: "感情(かんじょう)や能力(のうりょく)に は を使(つか)う — 「にほんごは　できます。」",
+        right: "にほんごが　できます。— Feelings and abilities always use が.",
+        note: "Verbs like すき, きらい, できる, わかる, ほしい always pair with が for the thing you like/can do/want. Using は changes the nuance to a contrast ('as for Japanese…').",
+      },
+      {
+        wrong: "すべての文(ぶん)に は を入(い)れる — 「わたしはきのうはこうえんはいきました。」",
+        right: "わたしはきのうこうえんにいきました。— One は per sentence is usually enough.",
+        note: "Stacking multiple は in one sentence is unnatural. は sets ONE main topic. Use other particles (に, で, を) for everything else.",
+      },
+    ],
   },
   {
     id: 5,
@@ -162,22 +310,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "を = the target of the action — the thing the verb acts on.",
         example: "ほんを　よむ。パンを　たべる。",
+        examples: [
+          { jp: "コーヒーを　のみます。", en: "I drink coffee. — コーヒー is what the drinking action lands on." },
+          { jp: "にほんごを　べんきょうします。", en: "I study Japanese. — を marks Japanese as the direct object of studying." },
+        ],
       },
       {
         text: "に = destination — where you are heading or arriving.",
         example: "がっこうに　いく。うちに　かえる。",
+        examples: [
+          { jp: "がっこうに　いきます。", en: "I go to school. — に marks the destination you are heading toward." },
+          { jp: "うちに　かえります。", en: "I return home. — に pins the endpoint of movement." },
+        ],
       },
       {
         text: "に = time pin — attaches the action to a specific moment.",
         example: "さんじに　おきます。にちようびに　あいます。",
+        examples: [
+          { jp: "しちじに　おきます。", en: "I wake up at 7 o'clock. — に attaches the action to a specific time point." },
+          { jp: "どようびに　えいがをみます。", en: "I watch a movie on Saturday. — に marks specific day/time." },
+        ],
       },
       {
         text: "で = stage — the location where the action takes place.",
         example: "こうえんで　あそぶ。がっこうで　べんきょうする。",
+        examples: [
+          { jp: "としょかんで　ほんを　よみます。", en: "I read a book at the library. — で marks where the reading happens." },
+          { jp: "こうえんで　ともだちと　あそびました。", en: "I played with my friend at the park. — で = stage/venue for the action." },
+        ],
       },
       {
         text: "で = tool or means — what you use to do something.",
         example: "バスで　いく。はしで　たべる。えいごで　はなす。",
+        examples: [
+          { jp: "でんしゃで　かいしゃに　いきます。", en: "I go to work by train. — で marks the means of transportation." },
+          { jp: "にほんごで　はなしましょう。", en: "Let's speak in Japanese. — で marks the language/tool used." },
+        ],
       },
     ],
     exampleJapanese: "学校で友だちとパンを食べました。",
@@ -186,6 +354,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "I ate bread with a friend at school.",
     shortNote:
       "に vs で: に is where you arrive or land; で is where the action plays out. 学校に行く (go TO school) vs 学校で勉強する (study AT school).",
+    commonMistakes: [
+      {
+        wrong: "場所(ばしょ)に で の代(か)わりに に を使(つか)う — 「がっこうに　べんきょうする。」",
+        right: "がっこうで　べんきょうする。— Use で for the place an action happens.",
+        note: "に marks destination (arriving somewhere). で marks where an action takes place. If you are doing something there (not just going there), use で.",
+      },
+      {
+        wrong: "移動(いどう)に に の代(か)わりに で を使(つか)う — 「でんしゃで　いえで　かえる。」",
+        right: "でんしゃで　いえに　かえる。— Use に for the destination you return/arrive at.",
+        note: "Two particles in one sentence — でんしゃで (by train = means/tool) and いえに (to home = destination). Each で/に has its own job.",
+      },
+      {
+        wrong: "特定(とくてい)の時間(じかん)に に を忘(わす)れる — 「さんじ　おきます。」",
+        right: "さんじに　おきます。— Specific times need に.",
+        note: "Specific clock times and days (さんじ, にちようび, ごがつ) need に. But relative time words like きのう, まいにち, いま do NOT take に.",
+      },
+    ],
   },
   {
     id: 6,
@@ -199,22 +384,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "へ = heading in a direction — softer and more poetic than に.",
         example: "にほんへ　いきたい。",
+        examples: [
+          { jp: "にほんへ　いきたいです。", en: "I want to go to Japan. — へ feels more dreamlike/directional than the plain に." },
+          { jp: "うみへ　むかいます。", en: "I head toward the sea. — へ = direction, not necessarily the final stop." },
+        ],
       },
       {
         text: "から = starting point in space or time.",
         example: "くじから　べんきょうする。えきから　あるく。",
+        examples: [
+          { jp: "えきから　うちまで　あるきます。", en: "I walk from the station to my house. — から marks the start; まで marks the end." },
+          { jp: "くじから　じゅういちじまで　べんきょうします。", en: "I study from 9 o'clock to 11 o'clock. — から and まで work together for time ranges too." },
+        ],
       },
       {
         text: "から = reason (because) — used after a plain form verb or noun.",
         example: "すきだから、まいにち　れんしゅうします。",
+        examples: [
+          { jp: "にほんごが　すきだから、まいにち　れんしゅうします。", en: "Because I like Japanese, I practice every day. — から after plain form = reason/because." },
+          { jp: "あめだから、いえに　います。", en: "Because it's raining, I'm staying home. — あめ (rain) + だ + から = 'because it's raining'." },
+        ],
       },
       {
         text: "まで = ending point — 'until' or 'as far as.'",
         example: "ごじまで　はたらきます。えきまで　あるく。",
+        examples: [
+          { jp: "ごじまで　はたらきます。", en: "I work until 5 o'clock. — まで marks the endpoint in time." },
+          { jp: "ここから　えきまで　とおいですか？", en: "Is it far from here to the station? — から〜まで = from〜to range." },
+        ],
       },
       {
         text: "と = together with (people) / and (listing things). も = also / too — it swaps in for は, が, or を.",
         example: "ともだちと　えいがをみた。コーヒーも　すきです。",
+        examples: [
+          { jp: "ともだちと　えいがを　みました。", en: "I watched a movie with my friend. — と marks who you did something together with." },
+          { jp: "わたしも　にほんごを　べんきょうしています。", en: "I also study Japanese. — も replaces は/が/を and adds 'also/too' meaning." },
+        ],
       },
     ],
     exampleJapanese: "友達と駅から公園まで歩きました。",
@@ -223,6 +428,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "I walked with my friend from the station to the park.",
     shortNote:
       "から and まで are natural partners — 'from X to Y' = X から Y まで.",
+    commonMistakes: [
+      {
+        wrong: "助詞(じょし)を重(かさ)ねる — 「えきからに　いきます。」",
+        right: "えきから　いきます。/ えきに　いきます。— Use one particle per role.",
+        note: "から and に cannot stack together. から = starting point, に = destination. Choose which role you want to express.",
+      },
+      {
+        wrong: "から（理由(りゆう)）の後(あと)に結果(けっか)を書(か)かない — 「にほんごが　すきだから。」",
+        right: "にほんごが　すきだから、まいにち　べんきょうします。— The result must follow から.",
+        note: "When から means 'because', it must be followed by the result/action. Ending a sentence with だから alone sounds unfinished (used in casual speech only for trailing off).",
+      },
+      {
+        wrong: "と と も を混(ま)ぜる — 「ともだちと　わたしも　いきました。」",
+        right: "ともだちと　いきました。/ わたしも　いきました。— と and も have different jobs.",
+        note: "と = with someone (who you did it with). も = 'also' (adding yourself to others who did it). They cannot stack together for the same purpose.",
+      },
+    ],
   },
   {
     id: 7,
@@ -236,22 +458,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "は = wide spotlight (topic is known or has been set up already).",
         example: "ねこは　かわいいです。",
+        examples: [
+          { jp: "ねこは　かわいいです。", en: "As for cats, they are cute. — は sets 'cats' as something we are now talking about together." },
+          { jp: "この　えいがは　おもしろかったです。", en: "As for this movie, it was interesting. — は introduces the topic of our comment." },
+        ],
       },
       {
         text: "が = focus spotlight (new information, or the specific thing being identified).",
         example: "ねこが　きた！（The cat just appeared — new info.）",
+        examples: [
+          { jp: "あ！ねこが　きた！", en: "Oh! A cat came! — が highlights new, unexpected information entering the scene." },
+          { jp: "だれが　うたいましたか？→ やまださんが　うたいました。", en: "Who sang? → Yamada-san sang. — が identifies the specific person as new information." },
+        ],
       },
       {
         text: "Answers to 'who' or 'what' questions use が.",
         example: "だれが　きましたか？→ やまださんが　きました。",
+        examples: [
+          { jp: "だれが　にほんごを　おしえますか？→ たなかさんが　おしえます。", en: "Who teaches Japanese? → Tanaka-san teaches. — が picks out the specific answer." },
+          { jp: "なにが　おいしいですか？→ ラーメンが　おいしいです。", en: "What is delicious? → Ramen is delicious. — が identifies the answer to なにが." },
+        ],
       },
       {
         text: "Feelings and abilities use が: what you like, want, or can do.",
         example: "にほんごが　すきです。およぐのが　できます。",
+        examples: [
+          { jp: "にほんごが　すきです。", en: "I like Japanese. — が marks what is liked; it is ALWAYS が with すき/きらい." },
+          { jp: "ピアノが　ひけます。", en: "I can play the piano. — が marks what you can do with できる/わかる." },
+        ],
       },
       {
         text: "A sentence can have both は (topic) and が (subject) at the same time.",
         example: "わたしは　ねこが　すきです。",
+        examples: [
+          { jp: "わたしは　ねこが　すきです。", en: "I like cats. — は = topic (me), が = focus (cats is what I like). Both in one sentence." },
+          { jp: "にほんは　ふゆが　さむいです。", en: "In Japan, winter is cold. — は = topic (Japan), が = subject (winter that is cold)." },
+        ],
       },
     ],
     exampleJapanese: "私は日本語が好きです。",
@@ -260,6 +502,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "I like Japanese. (Topic: me — Focus: Japanese)",
     shortNote:
       "When someone asks だれが…? or なにが…?, the answer word takes が — it is the new, focused piece of information.",
+    commonMistakes: [
+      {
+        wrong: "「だれが来(き)た？」の答(こた)えに は を使(つか)う — 「やまださんは来(き)ました。」",
+        right: "やまださんが来(き)ました。— Answering who/what always uses が.",
+        note: "は implies 'as for Yamada-san…' which sounds evasive or like a change of subject. が directly says 'Yamada-san is the one who came' — that is the correct answer pattern.",
+      },
+      {
+        wrong: "好(す)きです・できます に は を使(つか)う — 「にほんごは　すきです。」",
+        right: "にほんごが　すきです。— Feelings and abilities always use が for the thing/skill.",
+        note: "すき, きらい, できる, わかる, ほしい always pair with が for the thing being liked/wanted/understood. Using は sounds like a contrast ('as for Japanese [unlike other things]…').",
+      },
+      {
+        wrong: "新(あたら)しいものに は を使(つか)う — 「むこうに大(おお)きいたてものはあります。」",
+        right: "むこうに大(おお)きいたてものがあります。— New, unexpected information uses が.",
+        note: "When you are pointing out something new ('there is a…'), use が. は would imply 'that big building we were already talking about' — but it was just introduced.",
+      },
+    ],
   },
   {
     id: 8,

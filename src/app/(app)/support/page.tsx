@@ -232,6 +232,18 @@ export default function SupportPage() {
                                       例: <Furigana text={pt.example} />
                                     </span>
                                   )}
+                                  {pt.examples && pt.examples.length > 0 && (
+                                    <div className="mt-2 space-y-1">
+                                      {pt.examples.map((ex, j) => (
+                                        <div key={j} className="rounded-lg bg-mint/25 px-2.5 py-1.5">
+                                          <span className="block font-jp text-xs leading-relaxed text-ink/75">
+                                            <Furigana text={ex.jp} />
+                                          </span>
+                                          <span className="mt-0.5 block text-[11px] italic text-muted">{ex.en}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
                                 </span>
                               </li>
                             ))}
@@ -241,6 +253,20 @@ export default function SupportPage() {
                           <div className="mt-3">
                             <Furigana text={l.exampleJapaneseRuby} className="font-jp text-[15px] text-ink" />
                             <p className="text-xs text-muted">{l.exampleEnglish}</p>
+                          </div>
+                        )}
+                        {l.commonMistakes && l.commonMistakes.length > 0 && (
+                          <div className="mt-4 rounded-xl border border-apricot/20 bg-apricot/5 p-3">
+                            <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-apricot">⚠️ Common Mistakes</p>
+                            <ul className="space-y-3">
+                              {l.commonMistakes.map((m, i) => (
+                                <li key={i}>
+                                  <p className="font-jp text-sm text-ink/80"><span className="mr-1 font-bold text-apricot">✗</span><Furigana text={m.wrong} /></p>
+                                  <p className="font-jp mt-0.5 text-sm text-ink/80"><span className="mr-1 font-bold text-moss-600">✓</span><Furigana text={m.right} /></p>
+                                  <p className="mt-1 text-xs leading-relaxed text-muted">{m.note}</p>
+                                </li>
+                              ))}
+                            </ul>
                           </div>
                         )}
                       </>
