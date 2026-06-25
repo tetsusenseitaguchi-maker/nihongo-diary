@@ -5,6 +5,7 @@ import { Card, Badge, LinkButton } from "@/components/ui";
 import { Avatar } from "@/components/ObiePhoto";
 import { LogoutButton } from "@/components/LogoutButton";
 import { UserSearch } from "@/components/UserSearch";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import { computeStats, type DiaryRow } from "@/lib/diary";
 
 export const dynamic = "force-dynamic";
@@ -89,6 +90,16 @@ export default async function ProfilePage() {
 
       {/* Find friends */}
       <UserSearch />
+
+      {/* Language settings */}
+      <Card className="p-6">
+        <h2 className="mb-1 font-serif text-lg font-bold text-pine">🌐 表示・翻訳言語</h2>
+        <p className="mb-3 text-sm text-muted">
+          日記の英訳・AI説明を表示する言語を選べます。
+          <span className="ml-1 text-xs">· Language for translations and explanations</span>
+        </p>
+        <LanguageSelector initialLanguage={profile?.preferred_language ?? "en"} />
+      </Card>
 
       {/* Privacy settings */}
       <Card className="p-6">

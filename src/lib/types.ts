@@ -151,6 +151,8 @@ export interface DiaryRow {
   corrected_japanese: string | null;
   natural_japanese: string | null;
   english_explanation: string | null;
+  /** Per-language translation cache keyed by BCP-47 code, e.g. {"en": "…", "es": "…"} */
+  translations: Record<string, string> | null;
   key_mistakes: MistakeItem[] | null;
   useful_vocabulary: VocabItem[] | null;
   practice_sentence: string | null;

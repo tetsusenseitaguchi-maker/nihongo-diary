@@ -10,6 +10,7 @@ import { DeleteDiaryButton } from "@/components/DeleteDiaryButton";
 import { CommentsSection } from "@/components/CommentsSection";
 import { TagChips } from "@/components/TagChips";
 import { DiaryPlaceMap } from "@/components/DiaryPlaceMap";
+import { TranslateButton } from "@/components/TranslateButton";
 import { Avatar } from "@/components/ObiePhoto";
 import { formatLong } from "@/lib/dates";
 import type { Correction, MistakeItem, VocabItem } from "@/lib/types";
@@ -61,6 +62,15 @@ export default async function DiaryDetailPage({
     .select("id, lat, lng, place_name")
     .eq("diary_entry_id", id);
   const places = (placesData ?? []) as { id: string; lat: number; lng: number; place_name: string | null }[];
+
+  // Fetch viewer's preferred language for translation
+  const { data: viewerProfile } = await supabase
+    .from("profiles")
+    .select("preferred_language")
+    .eq("id", user.id)
+    .single();
+  const preferredLanguage = (viewerProfile?.preferred_language as string) || "en";
+  const entryTranslations = (entry.translations as Record<string, string> | null) ?? {};
 
   const correction: Correction = {
     original: entry.original_text,
@@ -188,6 +198,13 @@ export default async function DiaryDetailPage({
           />
         </div>
       )}
+
+      {/* Translation toggle — available for both owner and public-diary visitors */}
+      <TranslateButton
+        diaryEntryId={id}
+        translations={entryTranslations}
+        preferredLanguage={preferredLanguage}
+      />
 
       <div className="flex items-center gap-2">
         <span>🌸</span>
