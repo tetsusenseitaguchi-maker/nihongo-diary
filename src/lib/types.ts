@@ -128,6 +128,7 @@ export interface DiaryRow {
   user_id: string;
   diary_date: string;
   title: string | null;
+  tags: string[];
   original_text: string;
   corrected_japanese: string | null;
   natural_japanese: string | null;

@@ -7,6 +7,7 @@ import { ReactionBar } from "@/components/ReactionBar";
 import { FollowButton } from "@/components/FollowButton";
 import { activityMessage, relativeTime, REACTIONS, type ActivityRow } from "@/lib/activity";
 import { UserSearch } from "@/components/UserSearch";
+import { TagChips } from "@/components/TagChips";
 
 export const dynamic = "force-dynamic";
 
@@ -63,18 +64,19 @@ export default async function FeedPage() {
     supabase.from("profiles").select("id, username, display_name, avatar_url, level").limit(20),
     // RLS ensures only public entries (or own entries) are returned here
     diaryEntryIds.length
-      ? supabase.from("diary_entries").select("id, is_public, title, original_text").in("id", diaryEntryIds)
-      : Promise.resolve({ data: [] as { id: string; is_public: boolean; title: string | null; original_text: string }[] }),
+      ? supabase.from("diary_entries").select("id, is_public, title, tags, original_text").in("id", diaryEntryIds)
+      : Promise.resolve({ data: [] as { id: string; is_public: boolean; title: string | null; tags: string[]; original_text: string }[] }),
   ]);
 
   // Map diary_entry_id → { is_public, title, snippet }
-  type DiaryMeta = { isPublic: boolean; title: string | null; snippet: string };
+  type DiaryMeta = { isPublic: boolean; title: string | null; tags: string[]; snippet: string };
   const diaryMeta = new Map<string, DiaryMeta>();
   for (const d of diaryData ?? []) {
     const body = d.original_text ?? "";
     diaryMeta.set(d.id, {
       isPublic: Boolean(d.is_public),
       title: d.title || null,
+      tags: d.tags ?? [],
       snippet: body ? body.slice(0, 80) + (body.length > 80 ? "…" : "") : "",
     });
   }
@@ -142,12 +144,17 @@ export default async function FeedPage() {
                     </div>
                   </div>
 
-                  {/* Public diary: show title + Japanese snippet + read link */}
+                  {/* Public diary: show tags + title + Japanese snippet + read link */}
                   {isPublicDiary && (dm?.title || dm?.snippet) && (
                     <Link
                       href={`/diary/${a.diary_entry_id}`}
                       className="mt-3 block rounded-xl bg-mint/40 px-4 py-3 transition-colors hover:bg-mint/60"
                     >
+                      {(dm?.tags ?? []).length > 0 && (
+                        <div className="mb-1.5">
+                          <TagChips tags={dm.tags} />
+                        </div>
+                      )}
                       {dm?.title && (
                         <p className="mb-1 text-sm font-bold text-pine">{dm.title}</p>
                       )}

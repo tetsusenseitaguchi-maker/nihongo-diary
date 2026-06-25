@@ -10,6 +10,7 @@ interface Row {
   id: string;
   diary_date: string;
   title: string | null;
+  tags: string[];
   original_text: string;
   level: string | null;
   correction_style: string | null;
@@ -26,7 +27,7 @@ export default async function HistoryPage() {
 
   const { data } = await supabase
     .from("diary_entries")
-    .select("id, diary_date, title, original_text, level, correction_style, image_path, audio_path")
+    .select("id, diary_date, title, tags, original_text, level, correction_style, image_path, audio_path")
     .eq("user_id", user.id)
     .order("diary_date", { ascending: false })
     .order("created_at", { ascending: false });

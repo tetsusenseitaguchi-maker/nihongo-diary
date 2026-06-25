@@ -2,6 +2,7 @@ export interface DiaryRow {
   id: string;
   diary_date: string; // YYYY-MM-DD
   title?: string | null;
+  tags?: string[];
   original_text: string;
   corrected_japanese: string | null;
   english_explanation: string | null;

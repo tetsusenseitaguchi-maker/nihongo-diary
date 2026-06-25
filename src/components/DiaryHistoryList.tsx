@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Card, Badge } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { DeleteDiaryButton } from "@/components/DeleteDiaryButton";
+import { TagChips } from "@/components/TagChips";
 import { formatLong } from "@/lib/dates";
 import type { ReactNode } from "react";
 
@@ -20,6 +21,7 @@ interface Entry {
   id: string;
   diary_date: string;
   title: string | null;
+  tags: string[];
   original_text: string;
   level: string | null;
   correction_style: string | null;
@@ -29,6 +31,12 @@ interface Entry {
 
 export function DiaryHistoryList({ initialEntries }: { initialEntries: Entry[] }) {
   const [entries, setEntries] = useState<Entry[]>(initialEntries);
+  const [filterTag, setFilterTag] = useState<string | null>(null);
+
+  const allTags = Array.from(new Set(entries.flatMap((e) => e.tags ?? [])));
+  const displayed = filterTag
+    ? entries.filter((e) => (e.tags ?? []).includes(filterTag))
+    : entries;
 
   if (entries.length === 0) {
     return <p className="py-8 text-center text-sm text-muted">No diaries yet.</p>;
@@ -36,7 +44,40 @@ export function DiaryHistoryList({ initialEntries }: { initialEntries: Entry[] }
 
   return (
     <div className="space-y-3">
-      {entries.map((entry) => (
+      {/* Tag filter bar */}
+      {allTags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 pb-1">
+          <button
+            onClick={() => setFilterTag(null)}
+            className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+              !filterTag
+                ? "bg-pine text-cream"
+                : "border border-line bg-paper text-ink/70 hover:border-moss hover:text-pine"
+            }`}
+          >
+            すべて
+          </button>
+          {allTags.map((t) => (
+            <button
+              key={t}
+              onClick={() => setFilterTag(filterTag === t ? null : t)}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                filterTag === t
+                  ? "bg-pine text-cream"
+                  : "border border-line bg-paper text-ink/70 hover:border-moss hover:text-pine"
+              }`}
+            >
+              #{t}
+            </button>
+          ))}
+        </div>
+      )}
+      {displayed.length === 0 && (
+        <p className="py-6 text-center text-sm text-muted">
+          #{filterTag} のタグが付いた日記はありません。
+        </p>
+      )}
+      {displayed.map((entry) => (
         <Card key={entry.id} className="flex items-center gap-5 p-5 transition-shadow hover:shadow-lift">
           {/* Clickable area → diary detail */}
           <Link href={`/diary/${entry.id}`} className="group flex min-w-0 flex-1 items-center gap-5">
@@ -64,6 +105,11 @@ export function DiaryHistoryList({ initialEntries }: { initialEntries: Entry[] }
                 {entry.image_path && <AttachmentDot icon={<Icon.camera className="h-2.5 w-2.5" />} />}
                 {entry.audio_path && <AttachmentDot icon={<Icon.mic className="h-2.5 w-2.5" />} />}
               </div>
+              {(entry.tags ?? []).length > 0 && (
+                <div className="mt-1">
+                  <TagChips tags={entry.tags ?? []} />
+                </div>
+              )}
             </div>
             <Icon.arrow className="h-5 w-5 shrink-0 text-moss-600 transition-transform group-hover:translate-x-1" />
           </Link>

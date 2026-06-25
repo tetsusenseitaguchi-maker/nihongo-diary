@@ -13,6 +13,7 @@ import { Bilingual } from "@/components/Bilingual";
 import { templates, sampleDraft } from "@/lib/mock-data";
 import type { Level, CorrectionStyle, Correction } from "@/lib/types";
 import { limitsFor, normalizePlan, PLAN_LABELS, type Plan } from "@/lib/plans";
+import { PRESET_TAGS, PRESET_TAG_KEYS } from "@/lib/tags";
 
 const levels: Level[] = ["N5", "N4", "N3", "Natural"];
 const styles: CorrectionStyle[] = ["Light", "Natural", "Native"];
@@ -71,6 +72,8 @@ function Selector({
 export default function WritePage() {
   const [date] = useState(todayISO());
   const [title, setTitle] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [customTagInput, setCustomTagInput] = useState("");
   const [text, setText] = useState("");
   const [level, setLevel] = useState(1);
   const [style, setStyle] = useState(1);
@@ -214,6 +217,7 @@ export default function WritePage() {
         user_id: user.id,
         diary_date: date,
         title: title.trim() || null,
+        tags,
         original_text: result.original,
         corrected_japanese: result.corrected,
         natural_japanese: result.natural,
@@ -359,6 +363,78 @@ export default function WritePage() {
                 placeholder="今日のひとこと（任意）/ A title for today (optional)"
                 className="mb-4 block w-full rounded-lg border border-line bg-mint/30 px-3 py-2 text-sm font-semibold text-pine placeholder:font-normal placeholder:text-muted/60 focus:border-moss focus:outline-none"
               />
+
+              {/* tag selector */}
+              <div className="mb-4">
+                <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-muted">
+                  タグ / Tags <span className="font-normal normal-case">(optional)</span>
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {PRESET_TAGS.map((t) => {
+                    const active = tags.includes(t.key);
+                    return (
+                      <button
+                        key={t.key}
+                        type="button"
+                        onClick={() =>
+                          setTags((prev) =>
+                            active ? prev.filter((x) => x !== t.key) : [...prev, t.key]
+                          )
+                        }
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                          active
+                            ? "bg-pine text-cream"
+                            : "border border-line bg-paper text-ink/70 hover:border-moss hover:text-pine"
+                        }`}
+                      >
+                        #{t.key} <span className={active ? "opacity-70" : "text-muted"}>{t.en}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* custom tag input */}
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={customTagInput}
+                    onChange={(e) => setCustomTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const val = customTagInput.trim().replace(/^#/, "");
+                        if (val && !tags.includes(val) && tags.length < 10) {
+                          setTags((prev) => [...prev, val]);
+                          setCustomTagInput("");
+                        }
+                      }
+                    }}
+                    maxLength={20}
+                    placeholder="カスタムタグ（Enter で追加）"
+                    className="flex-1 rounded-full border border-line bg-paper px-3 py-1 text-[11px] text-ink placeholder:text-muted focus:border-moss focus:outline-none"
+                  />
+                </div>
+                {/* selected custom tags */}
+                {tags.filter((t) => !PRESET_TAG_KEYS.has(t)).length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {tags.filter((t) => !PRESET_TAG_KEYS.has(t)).map((t) => (
+                      <span
+                        key={t}
+                        className="flex items-center gap-1 rounded-full bg-pine px-2.5 py-1 text-[11px] font-semibold text-cream"
+                      >
+                        #{t}
+                        <button
+                          type="button"
+                          onClick={() => setTags((prev) => prev.filter((x) => x !== t))}
+                          className="opacity-60 hover:opacity-100"
+                          aria-label={`Remove tag ${t}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* selectors */}
               <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">

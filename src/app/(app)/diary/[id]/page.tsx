@@ -8,6 +8,7 @@ import { PublicToggle } from "@/components/PublicToggle";
 import { DiaryAttachments } from "@/components/DiaryAttachments";
 import { DeleteDiaryButton } from "@/components/DeleteDiaryButton";
 import { CommentsSection } from "@/components/CommentsSection";
+import { TagChips } from "@/components/TagChips";
 import { Avatar } from "@/components/ObiePhoto";
 import { formatLong } from "@/lib/dates";
 import type { Correction, MistakeItem, VocabItem } from "@/lib/types";
@@ -143,6 +144,11 @@ export default async function DiaryDetailPage({
         <p className="-mt-3 text-xs text-muted">
           Public diaries can appear on your profile and in followers&apos; feeds. Private diaries are only visible to you.
         </p>
+      )}
+
+      {/* Tags */}
+      {(entry.tags ?? []).length > 0 && (
+        <TagChips tags={entry.tags ?? []} />
       )}
 
       {/* Optional title */}
