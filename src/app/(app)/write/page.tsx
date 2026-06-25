@@ -15,6 +15,7 @@ import { templates, sampleDraft } from "@/lib/mock-data";
 import type { Level, CorrectionStyle, Correction, DiaryPlace } from "@/lib/types";
 import { limitsFor, normalizePlan, PLAN_LABELS, type Plan } from "@/lib/plans";
 import { PRESET_TAGS, PRESET_TAG_KEYS } from "@/lib/tags";
+import { useT } from "@/contexts/locale";
 
 const DiaryMapPicker = dynamicLoad(
   () => import("@/components/DiaryMapPicker").then((m) => m.DiaryMapPicker),
@@ -110,6 +111,7 @@ export default function WritePage() {
   const [plan, setPlan] = useState<Plan>("free");
   const [usedToday, setUsedToday] = useState(0);
   const router = useRouter();
+  const t = useT();
 
   const limits = limitsFor(plan);
   const remaining = Math.max(0, limits.corrections - usedToday);
@@ -462,10 +464,10 @@ export default function WritePage() {
 
               {/* selectors */}
               <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <Selector label="Level" value={levels[level]} onClick={() => cycle(setLevel, levels.length)} />
-                <Selector label="Style" value={styleJP[styles[style]]} onClick={() => setStyle((n) => (n+1)%styles.length)} />
-                <Selector label="Mood" value={moods[mood]} onClick={() => cycle(setMood, moods.length)} />
-                <Selector label="Weather" value={weathers[weather]} onClick={() => cycle(setWeather, weathers.length)} />
+                <Selector label={t("write.level")} value={levels[level]} onClick={() => cycle(setLevel, levels.length)} />
+                <Selector label={t("write.style")} value={styleJP[styles[style]]} onClick={() => setStyle((n) => (n+1)%styles.length)} />
+                <Selector label={t("write.mood")} value={moods[mood]} onClick={() => cycle(setMood, moods.length)} />
+                <Selector label={t("write.weather")} value={weathers[weather]} onClick={() => cycle(setWeather, weathers.length)} />
               </div>
 
               {/* match writer's script toggle */}
@@ -542,11 +544,11 @@ export default function WritePage() {
                 </Button>
                 <Button onClick={handleCorrect} disabled={!text.trim() || overLimit || loading || remaining <= 0}>
                   {loading ? (
-                    "Obie is reading…"
+                    t("write.correcting")
                   ) : remaining <= 0 ? (
-                    "Daily limit reached"
+                    t("write.limitTitle")
                   ) : (
-                    <><Icon.sparkle className="h-4 w-4" /> Correct my writing</>
+                    <><Icon.sparkle className="h-4 w-4" /> {t("write.correctBtn")}</>
                   )}
                 </Button>
               </div>
@@ -683,15 +685,15 @@ export default function WritePage() {
               <h2 className="font-serif text-2xl font-bold text-pine">
                 <Furigana text="添削結果(てんさくけっか)" />
               </h2>
-              <span className="text-sm font-medium text-muted">Correction Result</span>
+              <span className="text-sm font-medium text-muted">{t("write.resultTitle")}</span>
             </div>
             {saving ? (
               <span className="inline-flex items-center gap-2 rounded-full bg-mint px-4 py-2 text-sm font-semibold text-pine">
-                Saving…
+                {t("write.saving")}
               </span>
             ) : (
               <Button onClick={handleSave}>
-                <Icon.check className="h-4 w-4" /> Save diary
+                <Icon.check className="h-4 w-4" /> {t("write.saveBtn")}
               </Button>
             )}
           </div>

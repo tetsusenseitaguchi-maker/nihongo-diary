@@ -7,6 +7,7 @@ import { LogoutButton } from "@/components/LogoutButton";
 import { UserSearch } from "@/components/UserSearch";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { computeStats, type DiaryRow } from "@/lib/diary";
+import { getServerT } from "@/lib/i18n-server";
 
 export const dynamic = "force-dynamic";
 
@@ -30,12 +31,13 @@ export default async function ProfilePage() {
     supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", user.id),
   ]);
 
+  const t = await getServerT();
   const name = profile?.display_name || profile?.username || "Learner";
   const initials = name.slice(0, 2).toUpperCase();
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="font-serif text-3xl font-bold tracking-tight text-pine">Profile</h1>
+      <h1 className="font-serif text-3xl font-bold tracking-tight text-pine">{t("profile.title")}</h1>
 
       <Card className="p-6">
         <div className="flex items-center gap-4">
@@ -61,18 +63,18 @@ export default async function ProfilePage() {
         )}
 
         <div className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-5">
-          <Stat label="Streak" value={stats.currentStreak} />
-          <Stat label="Total" value={stats.total} />
-          <Stat label="This month" value={stats.thisMonthCount} />
-          <Stat label="Followers" value={followers ?? 0} href="/profile/followers" />
-          <Stat label="Following" value={followingCount ?? 0} href="/profile/following" />
+          <Stat label={t("profile.stats.streak")} value={stats.currentStreak} />
+          <Stat label={t("profile.stats.total")} value={stats.total} />
+          <Stat label={t("profile.stats.thisMonth")} value={stats.thisMonthCount} />
+          <Stat label={t("profile.stats.followers")} value={followers ?? 0} href="/profile/followers" />
+          <Stat label={t("profile.stats.following")} value={followingCount ?? 0} href="/profile/following" />
         </div>
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
-          <LinkButton href="/profile-setup" variant="secondary">Edit profile</LinkButton>
+          <LinkButton href="/profile-setup" variant="secondary">{t("profile.editProfile")}</LinkButton>
           {profile?.username && (
             <Link href={`/profile/${profile.username}`} className="text-sm font-semibold text-moss-600 hover:text-pine">
-              View public profile →
+              {t("profile.viewPublic")}
             </Link>
           )}
           <span className="ml-auto"><LogoutButton /></span>
@@ -82,7 +84,7 @@ export default async function ProfilePage() {
       {/* Feed link */}
       <Card className="flex items-center justify-between gap-4 p-5">
         <div>
-          <p className="font-serif font-bold text-pine">🌱 Learning Together</p>
+          <p className="font-serif font-bold text-pine">🌱 {t("dashboard.feedSection")}</p>
           <p className="mt-0.5 text-sm text-muted">みんなの学習活動を見る · See what others are writing</p>
         </div>
         <LinkButton href="/feed" size="sm" variant="secondary">Feed を見る</LinkButton>
@@ -93,10 +95,9 @@ export default async function ProfilePage() {
 
       {/* Language settings */}
       <Card className="p-6">
-        <h2 className="mb-1 font-serif text-lg font-bold text-pine">🌐 表示・翻訳言語</h2>
+        <h2 className="mb-1 font-serif text-lg font-bold text-pine">🌐 {t("profile.language.title")}</h2>
         <p className="mb-3 text-sm text-muted">
-          日記の英訳・AI説明を表示する言語を選べます。
-          <span className="ml-1 text-xs">· Language for translations and explanations</span>
+          {t("profile.language.desc")}
         </p>
         <LanguageSelector initialLanguage={profile?.preferred_language ?? "en"} />
       </Card>
@@ -107,7 +108,7 @@ export default async function ProfilePage() {
         <p className="mt-2 text-sm leading-relaxed text-ink/75">
           Your diaries are <span className="font-semibold text-pine">private by default</span>. Only you can read them.
           You can make any single diary public from its detail page — public diaries show on your profile and in your
-          followers&apos; feed. Your learning activity (like “wrote a diary”) is shared with people who follow you, but
+          followers&apos; feed. Your learning activity (like &quot;wrote a diary&quot;) is shared with people who follow you, but
           never the diary text unless you make it public.
         </p>
       </Card>

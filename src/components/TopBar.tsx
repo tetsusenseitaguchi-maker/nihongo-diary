@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Icon } from "@/components/icons";
 import { Avatar } from "@/components/ObiePhoto";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export function TopBar({
   name = "Learner",
@@ -12,7 +13,7 @@ export function TopBar({
   avatarUrl?: string;
 }) {
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-3">
       <label className="flex h-11 flex-1 items-center gap-2.5 rounded-full border border-line bg-paper px-4 text-sm text-muted">
         <Icon.search className="h-5 w-5 text-muted" />
         <input
@@ -21,6 +22,9 @@ export function TopBar({
           className="w-full bg-transparent text-ink outline-none placeholder:text-muted"
         />
       </label>
+
+      {/* Compact language switcher */}
+      <LanguageSwitcher compact />
 
       <Link
         href="/profile"

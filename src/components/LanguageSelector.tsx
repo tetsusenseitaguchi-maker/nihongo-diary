@@ -1,25 +1,30 @@
 "use client";
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { SUPPORTED_LANGUAGES } from "@/lib/languages";
+import { LOCALE_COOKIE } from "@/lib/i18n";
+import { useLocale } from "@/contexts/locale";
+import type { Locale } from "@/lib/i18n";
 
+/**
+ * Full-width language selector for the Profile settings page.
+ * Updates the LocaleContext (instant UI update), the NEXT_LOCALE cookie,
+ * and Supabase profiles.preferred_language.
+ */
 export function LanguageSelector({ initialLanguage }: { initialLanguage: string }) {
+  const { setLocale } = useLocale();
   const [lang, setLang] = useState(initialLanguage || "en");
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
 
   async function handleChange(code: string) {
     setLang(code);
     setStatus("saving");
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      await supabase
-        .from("profiles")
-        .update({ preferred_language: code })
-        .eq("id", user.id);
-    }
+
+    // Update cookie immediately so the server picks it up on the next render
+    document.cookie = `${LOCALE_COOKIE}=${code};path=/;max-age=31536000;SameSite=Lax`;
+
+    // Update LocaleContext (client UI updates instantly, also persists to DB)
+    await setLocale(code as Locale);
+
     setStatus("saved");
     setTimeout(() => setStatus("idle"), 1500);
   }

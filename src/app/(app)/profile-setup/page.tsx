@@ -5,12 +5,17 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, Button } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import { SUPPORTED_LANGUAGES } from "@/lib/languages";
+import { LOCALE_COOKIE } from "@/lib/i18n";
+import { useLocale } from "@/contexts/locale";
+import type { Locale } from "@/lib/i18n";
 
 const levels = ["N5", "N4", "N3", "N2", "N1"];
 
 export default function ProfileSetupPage() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
+  const { setLocale } = useLocale();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -21,6 +26,7 @@ export default function ProfileSetupPage() {
   const [level, setLevel] = useState("N5");
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [preferredLang, setPreferredLang] = useState("en");
 
   useEffect(() => {
     (async () => {
@@ -39,6 +45,7 @@ export default function ProfileSetupPage() {
         setLevel(data.level ?? "N5");
         setBio(data.bio ?? "");
         setAvatarUrl(data.avatar_url ?? "");
+        setPreferredLang(data.preferred_language ?? "en");
       }
       setLoading(false);
     })();
@@ -100,9 +107,15 @@ export default function ProfileSetupPage() {
         level,
         bio,
         avatar_url: avatarUrl ? avatarUrl.split("?")[0] : null,
+        preferred_language: preferredLang,
       },
       { onConflict: "id" },
     );
+
+    // Set cookie so the server immediately renders in the chosen language
+    document.cookie = `${LOCALE_COOKIE}=${preferredLang};path=/;max-age=31536000;SameSite=Lax`;
+    // Update LocaleContext (instant client UI update)
+    await setLocale(preferredLang as Locale);
 
     if (error) {
       setError(friendly(error.message));
@@ -160,6 +173,31 @@ export default function ProfileSetupPage() {
               <p className="mt-1.5 text-xs text-muted">PNG / JPG. Square looks best.</p>
             </div>
           </div>
+
+          {/* Language selection — shown first so new users pick before anything else */}
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-semibold text-ink">🌐 Display language / 表示言語</span>
+            <p className="mb-2 text-xs text-muted">Choose the language for menus and buttons · メニューやボタンの言語を選んでください</p>
+            <div className="flex flex-wrap gap-2">
+              {SUPPORTED_LANGUAGES.map((l) => (
+                <button
+                  type="button"
+                  key={l.code}
+                  onClick={() => {
+                    setPreferredLang(l.code);
+                    // Update cookie immediately so the page already starts reflecting the choice
+                    document.cookie = `${LOCALE_COOKIE}=${l.code};path=/;max-age=31536000;SameSite=Lax`;
+                    setLocale(l.code as Locale);
+                  }}
+                  className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
+                    preferredLang === l.code ? "bg-pine text-cream" : "bg-mint text-pine hover:bg-moss/20"
+                  }`}
+                >
+                  {l.label}
+                </button>
+              ))}
+            </div>
+          </label>
 
           <Field label="Display name" value={displayName} onChange={setDisplayName} />
           <Field label="Username" value={username} onChange={setUsername} />

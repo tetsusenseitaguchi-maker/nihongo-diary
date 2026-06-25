@@ -9,6 +9,7 @@ import { Furigana } from "@/components/Furigana";
 import { templates } from "@/lib/mock-data";
 import { computeStats, type DiaryRow } from "@/lib/diary";
 import { monthLabel, formatShort } from "@/lib/dates";
+import { getServerT } from "@/lib/i18n-server";
 
 export const dynamic = "force-dynamic";
 
@@ -19,18 +20,21 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("display_name, username, avatar_url")
-    .eq("id", user.id)
-    .single();
+  const [{ data: profile }, { data }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("display_name, username, avatar_url")
+      .eq("id", user.id)
+      .single(),
+    supabase
+      .from("diary_entries")
+      .select("id, diary_date, original_text, corrected_japanese, english_explanation, level, correction_style")
+      .eq("user_id", user.id)
+      .order("diary_date", { ascending: false })
+      .order("created_at", { ascending: false }),
+  ]);
 
-  const { data } = await supabase
-    .from("diary_entries")
-    .select("id, diary_date, original_text, corrected_japanese, english_explanation, level, correction_style")
-    .eq("user_id", user.id)
-    .order("diary_date", { ascending: false })
-    .order("created_at", { ascending: false });
+  const t = await getServerT();
 
   const entries = (data ?? []) as DiaryRow[];
   const stats = computeStats(entries);
@@ -57,15 +61,17 @@ export default async function DashboardPage() {
                 <br />
                 Build your habit.
               </h1>
-              <p className="mt-3 text-sm text-ink/70"><Furigana text="小(ちい)さな一歩(いっぽ)を、毎日(まいにち)。" /> <span className="text-muted">A small step, every day.</span></p>
+              <p className="mt-3 text-sm text-ink/70">
+                <Furigana text="小(ちい)さな一歩(いっぽ)を、毎日(まいにち)。" />
+              </p>
               <LinkButton href="/write" className="mt-5">
-                <Icon.pen className="h-4 w-4" /> <Furigana text="日記(にっき)を書(か)く" />
+                <Icon.pen className="h-4 w-4" /> {t("dashboard.writeCTA")}
               </LinkButton>
             </div>
             <Link
               href="/profile-setup"
               className="group relative h-36 w-36 shrink-0 self-center overflow-hidden rounded-2xl bg-paper/70 ring-1 ring-line sm:h-44 sm:w-44"
-              aria-label="Edit your profile photo"
+              aria-label={t("dashboard.changePhoto")}
             >
               {avatarUrl ? (
                 <Image src={avatarUrl} alt={displayName} fill className="object-cover" sizes="(min-width: 640px) 176px, 144px" />
@@ -73,22 +79,34 @@ export default async function DashboardPage() {
                 <Image src="/obie.png" alt="Obie" fill className="object-cover opacity-90" sizes="(min-width: 640px) 176px, 144px" />
               )}
               <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-pine/70 py-1.5 text-[11px] font-semibold text-cream opacity-0 transition-opacity group-hover:opacity-100">
-                <Icon.camera className="h-3.5 w-3.5" /> Change photo
+                <Icon.camera className="h-3.5 w-3.5" /> {t("dashboard.changePhoto")}
               </span>
             </Link>
           </div>
         </Card>
 
         <div className="grid grid-cols-2 gap-4 lg:col-span-5">
-          <StatCard icon="book" label="Total Diaries" value={stats.total} sub="これまで合計(ごうけい)" />
+          <StatCard
+            icon="book"
+            label={t("dashboard.stats.total")}
+            value={stats.total}
+            sub={<Furigana text="これまで合計(ごうけい)" />}
+          />
           <StatCard
             icon="calendar"
-            label="This Month"
+            label={t("dashboard.stats.thisMonth")}
             value={stats.thisMonthCount}
-            sub={`${stats.monthDelta >= 0 ? "+" : ""}${stats.monthDelta} 先月比(せんげつひ)`}
+            sub={`${stats.monthDelta >= 0 ? "+" : ""}${stats.monthDelta}`}
             subAccent
           />
-          <StatCard icon="flame" label="Current Streak" value={`${stats.currentStreak} 日`} sub={`最長(さいちょう): ${stats.longestStreak} 日(にち)`} iconTint="apricot" className="col-span-2" />
+          <StatCard
+            icon="flame"
+            label={t("dashboard.stats.streak")}
+            value={`${stats.currentStreak} 日`}
+            sub={t("dashboard.stats.longestLabel", { n: stats.longestStreak })}
+            iconTint="apricot"
+            className="col-span-2"
+          />
         </div>
       </div>
 
@@ -98,7 +116,7 @@ export default async function DashboardPage() {
           <div className="grid gap-5 md:grid-cols-2">
             {/* Today's diary */}
             <Card className="flex flex-col p-5">
-              <h2 className="font-serif text-lg font-bold text-pine"><Furigana text="今日(きょう)の日記(にっき)" /></h2>
+              <h2 className="font-serif text-lg font-bold text-pine">{t("dashboard.todayDiary")}</h2>
               {stats.today ? (
                 <>
                   <div className="mt-3 flex gap-2 text-xs">
@@ -113,15 +131,19 @@ export default async function DashboardPage() {
                     <p className="font-jp text-sm leading-relaxed text-ink line-clamp-4">{stats.today.original_text}</p>
                   </div>
                   <Link href={`/diary/${stats.today.id}`} className="mt-3 text-right text-sm font-semibold text-moss-600 hover:text-pine">
-                    See correction →
+                    {t("dashboard.seeCorrection")}
                   </Link>
                 </>
               ) : (
                 <div className="mt-3 flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-line py-8 text-center">
                   <span className="text-2xl">🌸</span>
-                  <p className="text-sm text-ink/70"><Furigana text="今日(きょう)の日記(にっき)はまだです。" /><br /><span className="text-muted">No diary yet today — even one sentence counts!</span></p>
+                  <p className="text-sm text-ink/70">
+                    <Furigana text="今日(きょう)の日記(にっき)はまだです。" />
+                    <br />
+                    <span className="text-muted">{t("dashboard.noEntry")}</span>
+                  </p>
                   <LinkButton href="/write" size="sm">
-                    <Icon.pen className="h-4 w-4" /> <Furigana text="日記(にっき)を書(か)く" />
+                    <Icon.pen className="h-4 w-4" /> {t("dashboard.writeCTA")}
                   </LinkButton>
                 </div>
               )}
@@ -130,12 +152,14 @@ export default async function DashboardPage() {
             {/* AI feedback */}
             <Card className="flex flex-col bg-mint/30 p-5">
               <h2 className="flex items-center gap-1.5 font-serif text-lg font-bold text-pine">
-                <Icon.sparkle className="h-4 w-4 text-moss" /> <Furigana text="添削結果(てんさくけっか)" />
+                <Icon.sparkle className="h-4 w-4 text-moss" /> {t("dashboard.aiFeedback")}
               </h2>
               {stats.today?.corrected_japanese ? (
                 <>
                   <div className="mt-3 rounded-xl bg-paper p-3">
-                    <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-moss-600">Corrected · <Furigana text="直(なお)した日本語(にほんご)" /></p>
+                    <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-moss-600">
+                      Corrected · <Furigana text="直(なお)した日本語(にほんご)" />
+                    </p>
                     <p className="font-jp text-sm leading-relaxed text-ink"><Furigana text={stats.today.corrected_japanese} /></p>
                   </div>
                   {stats.today.english_explanation && (
@@ -145,12 +169,12 @@ export default async function DashboardPage() {
                     </div>
                   )}
                   <Link href={`/diary/${stats.today.id}`} className="mt-auto pt-3 text-right text-sm font-semibold text-moss-600 hover:text-pine">
-                    See details →
+                    {t("dashboard.seeDetails")}
                   </Link>
                 </>
               ) : (
                 <p className="mt-3 flex flex-1 items-center justify-center text-center text-sm text-ink/60">
-                  Write and save a diary,<br />and the correction shows up here.
+                  {t("dashboard.emptyFeedback")}
                 </p>
               )}
             </Card>
@@ -160,17 +184,17 @@ export default async function DashboardPage() {
           <div className="grid gap-5 md:grid-cols-2">
             <Card className="p-5">
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="font-serif text-lg font-bold text-pine">テンプレート <span className="text-xs font-medium text-muted">Templates</span></h2>
-                <Link href="/support" className="text-xs font-semibold text-moss-600 hover:text-pine">See all</Link>
+                <h2 className="font-serif text-lg font-bold text-pine">{t("dashboard.templates")}</h2>
+                <Link href="/support" className="text-xs font-semibold text-moss-600 hover:text-pine">{t("common.seeAll")}</Link>
               </div>
               <ul className="space-y-1">
-                {templates.slice(0, 4).map((t) => (
-                  <li key={t.id}>
+                {templates.slice(0, 4).map((tmpl) => (
+                  <li key={tmpl.id}>
                     <Link href="/write" className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-mint/50">
                       <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-mint text-pine">#</span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate font-jp text-sm font-medium text-ink"><Furigana text={t.starter} /></span>
-                        <span className="block truncate text-xs text-muted">{t.description}</span>
+                        <span className="block truncate font-jp text-sm font-medium text-ink"><Furigana text={tmpl.starter} /></span>
+                        <span className="block truncate text-xs text-muted">{tmpl.description}</span>
                       </span>
                       <Icon.arrow className="h-4 w-4 shrink-0 text-muted" />
                     </Link>
@@ -183,12 +207,10 @@ export default async function DashboardPage() {
             <Card className="flex flex-col border-moss/20 bg-sage/30 p-5">
               <div className="mb-3">
                 <span className="text-2xl">🌱</span>
-                <h2 className="mt-2 font-serif text-lg font-bold text-pine">
-                  Learning Together
-                </h2>
+                <h2 className="mt-2 font-serif text-lg font-bold text-pine">{t("dashboard.feedSection")}</h2>
                 <p className="mt-2 text-sm leading-relaxed text-ink/70">
                   <span className="font-jp"><Furigana text="他(ほか)の学習者(がくしゃ)の日記(にっき)を読(よ)んで、つながろう。" /></span>
-                  <span className="mt-1 block text-muted">See what others are writing — get inspired and connect.</span>
+                  <span className="mt-1 block text-muted">{t("dashboard.feedDesc")}</span>
                 </p>
               </div>
               <div className="mt-auto">
@@ -196,7 +218,7 @@ export default async function DashboardPage() {
                   href="/feed"
                   className="flex items-center justify-center gap-2 rounded-full border border-moss/40 bg-paper px-4 py-2.5 text-sm font-semibold text-pine transition-colors hover:border-moss hover:bg-mint/50"
                 >
-                  Feed を見る <Icon.arrow className="h-4 w-4" />
+                  {t("dashboard.feedButton")} <Icon.arrow className="h-4 w-4" />
                 </Link>
               </div>
             </Card>
@@ -207,15 +229,15 @@ export default async function DashboardPage() {
         <div className="min-w-0 space-y-5 lg:col-span-5">
           <Card className="p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-serif text-lg font-bold text-pine">カレンダー <span className="text-xs font-medium text-muted">Calendar</span></h2>
+              <h2 className="font-serif text-lg font-bold text-pine">{t("dashboard.calendar")}</h2>
               <span className="text-sm font-medium text-muted">{monthLabel(year, month)}</span>
             </div>
             <MiniCalendar year={year} month={month} activeDays={stats.activeDaysThisMonth} today={today} />
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
               <span className="flex items-center gap-1.5 text-sm font-medium text-ink/80">
-                <Icon.flame className="h-4 w-4 text-apricot" /> <Furigana text="連続(れんぞく)" /> {stats.currentStreak} <Furigana text="日(にち)" />
+                <Icon.flame className="h-4 w-4 text-apricot" /> {stats.currentStreak} <Furigana text="日(にち)" />
               </span>
-              <Link href="/calendar" className="text-sm font-semibold text-moss-600 hover:text-pine">See calendar →</Link>
+              <Link href="/calendar" className="text-sm font-semibold text-moss-600 hover:text-pine">{t("dashboard.seeCalendar")}</Link>
             </div>
           </Card>
 
@@ -230,19 +252,21 @@ export default async function DashboardPage() {
               </div>
             </div>
             <div className="flex items-center justify-between px-5 py-3">
-              <h2 className="font-serif text-base font-bold text-cream">Obie&apos;s tip</h2>
+              <h2 className="font-serif text-base font-bold text-cream">{t("dashboard.obieTip")}</h2>
               <span className="text-xs font-semibold text-cream/70">🐾</span>
             </div>
           </Card>
 
-          {/* Recent diaries (real) */}
+          {/* Recent diaries */}
           <Card className="p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-serif text-lg font-bold text-pine"><Furigana text="最近(さいきん)の日記(にっき)" /> <span className="text-xs font-medium text-muted">Recent</span></h2>
-              <Link href="/history" className="text-xs font-semibold text-moss-600 hover:text-pine">See all</Link>
+              <h2 className="font-serif text-lg font-bold text-pine">{t("dashboard.recentDiaries")}</h2>
+              <Link href="/history" className="text-xs font-semibold text-moss-600 hover:text-pine">{t("common.seeAll")}</Link>
             </div>
             {recent.length === 0 ? (
-              <p className="py-4 text-center text-sm text-muted"><Furigana text="まだ日記(にっき)がありません。" /><br />No diaries yet.</p>
+              <p className="py-4 text-center text-sm text-muted">
+                <Furigana text="まだ日記(にっき)がありません。" /><br />{t("dashboard.noRecent")}
+              </p>
             ) : (
               <ul className="divide-y divide-line">
                 {recent.map((e) => (
@@ -265,12 +289,32 @@ export default async function DashboardPage() {
   );
 }
 
-function StatCard({ icon, label, value, sub, subAccent, iconTint = "moss", className = "" }: { icon: string; label: string; value: string | number; sub: string; subAccent?: boolean; iconTint?: "moss" | "apricot"; className?: string; }) {
+function StatCard({
+  icon,
+  label,
+  value,
+  sub,
+  subAccent,
+  iconTint = "moss",
+  className = "",
+}: {
+  icon: string;
+  label: string;
+  value: string | number;
+  sub: React.ReactNode;
+  subAccent?: boolean;
+  iconTint?: "moss" | "apricot";
+  className?: string;
+}) {
   return (
     <Card className={`p-4 ${className}`}>
       <div className="flex items-start justify-between">
         <p className="text-xs font-semibold text-muted">{label}</p>
-        <span className={`grid h-8 w-8 place-items-center rounded-full ${iconTint === "apricot" ? "bg-apricot/15 text-apricot" : "bg-mint text-moss-600"}`}>
+        <span
+          className={`grid h-8 w-8 place-items-center rounded-full ${
+            iconTint === "apricot" ? "bg-apricot/15 text-apricot" : "bg-mint text-moss-600"
+          }`}
+        >
           {renderIcon(icon, "h-4 w-4")}
         </span>
       </div>

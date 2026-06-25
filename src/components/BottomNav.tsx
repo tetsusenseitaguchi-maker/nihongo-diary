@@ -4,9 +4,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { renderIcon } from "@/components/icons";
 import { mobileNavItems } from "@/lib/mock-data";
+import { useT } from "@/contexts/locale";
+
+/** Map English mobile nav labels to i18n keys. */
+const MOB_KEYS: Record<string, string> = {
+  Home: "nav.home",
+  Calendar: "nav.calendar",
+  Write: "nav.write",
+  History: "nav.history",
+  Support: "nav.support",
+};
 
 export function BottomNav() {
   const pathname = usePathname();
+  const t = useT();
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper/95 backdrop-blur lg:hidden">
@@ -16,12 +27,13 @@ export function BottomNav() {
             pathname === item.href ||
             (item.href !== "/dashboard" && pathname.startsWith(item.href));
           const isWrite = item.label === "Write";
+          const label = MOB_KEYS[item.label] ? t(MOB_KEYS[item.label]) : item.label;
           if (isWrite) {
             return (
               <li key={item.label} className="flex items-end pb-2">
                 <Link
                   href={item.href}
-                  aria-label="Write diary"
+                  aria-label={label}
                   className="grid h-12 w-12 -translate-y-2 place-items-center rounded-2xl bg-pine text-cream shadow-lift"
                 >
                   {renderIcon(item.icon, "h-6 w-6")}
@@ -38,7 +50,7 @@ export function BottomNav() {
                 }`}
               >
                 {renderIcon(item.icon, "h-5 w-5")}
-                {item.label}
+                {label}
               </Link>
             </li>
           );

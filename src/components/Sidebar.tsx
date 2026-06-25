@@ -5,12 +5,13 @@ import { usePathname } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { ObiePhoto } from "@/components/ObiePhoto";
 import { renderIcon } from "@/components/icons";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { navItems } from "@/lib/mock-data";
+import { useT } from "@/contexts/locale";
 
 const primary = navItems.slice(0, 6);
 const secondary = navItems.slice(6);
 
-// Milestones start at 3 so new users get a quick first win.
 const MILESTONES = [3, 7, 14, 30, 60, 100];
 
 type StreakInfo = { pct: number; next: number | null; remaining: number };
@@ -20,7 +21,6 @@ function streakInfo(streak: number): StreakInfo {
   let prev = 0;
   for (const m of MILESTONES) {
     if (streak < m) {
-      // Progress from prev milestone toward m (0 % on the day prev milestone was reached)
       return {
         pct: Math.round(((streak - prev) / (m - prev)) * 100),
         next: m,
@@ -29,17 +29,32 @@ function streakInfo(streak: number): StreakInfo {
     }
     prev = m;
   }
-  // Past all milestones
   return { pct: 100, next: null, remaining: 0 };
 }
 
+/** Map English nav labels (from mock-data) to i18n keys. */
+const NAV_KEYS: Record<string, string> = {
+  Dashboard: "nav.dashboard",
+  "Write Diary": "nav.writeDiary",
+  Calendar: "nav.calendar",
+  History: "nav.history",
+  Feed: "nav.feed",
+  "My Places": "nav.places",
+  Templates: "nav.support",
+  Support: "nav.support",
+  Profile: "nav.profile",
+  Upgrade: "nav.upgrade",
+};
+
 export function Sidebar({ onNavigate, currentStreak = 0 }: { onNavigate?: () => void; currentStreak?: number }) {
   const pathname = usePathname();
+  const t = useT();
 
   function NavLink({ item }: { item: (typeof navItems)[number] }) {
     const active =
       pathname === item.href ||
       (item.href !== "/dashboard" && pathname.startsWith(item.href));
+    const label = NAV_KEYS[item.label] ? t(NAV_KEYS[item.label]) : item.label;
     return (
       <Link
         href={item.href}
@@ -53,7 +68,7 @@ export function Sidebar({ onNavigate, currentStreak = 0 }: { onNavigate?: () => 
         <span className={active ? "text-pine" : "text-moss-600"}>
           {renderIcon(item.icon, "h-5 w-5")}
         </span>
-        {item.label}
+        {label}
       </Link>
     );
   }
@@ -74,28 +89,25 @@ export function Sidebar({ onNavigate, currentStreak = 0 }: { onNavigate?: () => 
         ))}
       </nav>
 
+      {/* Language switcher */}
+      <LanguageSwitcher />
+
       {/* Obie buddy card */}
       {(() => {
         const info = streakInfo(currentStreak);
-        const labelJa =
+        const streakLabel =
           currentStreak === 0
-            ? "今日から始めよう 🌱"
+            ? t("sidebar.startToday")
             : info.next === null
-            ? `連続${currentStreak}日！すごい 🌟`
-            : `あと${info.remaining}日で${info.next}日連続！`;
-        const labelEn =
-          currentStreak === 0
-            ? "Let's start today!"
-            : info.next === null
-            ? "Building a legend!"
-            : `${info.remaining} more day${info.remaining !== 1 ? "s" : ""} to ${info.next}-day streak`;
+            ? t("sidebar.legend")
+            : t("sidebar.daysTo", { remaining: info.remaining, next: info.next });
         return (
           <div className="rounded-2xl border border-line bg-mint/50 p-3">
             <div className="flex items-center gap-3">
               <ObiePhoto size={44} />
               <div className="min-w-0 leading-tight">
-                <p className="text-sm font-bold text-pine">Keep going!</p>
-                <p className="truncate text-[11px] text-muted">{labelJa}</p>
+                <p className="text-sm font-bold text-pine">{t("sidebar.keepGoing")}</p>
+                <p className="truncate text-[11px] text-muted">{streakLabel}</p>
               </div>
             </div>
             <div className="mt-3">
@@ -108,7 +120,7 @@ export function Sidebar({ onNavigate, currentStreak = 0 }: { onNavigate?: () => 
                   />
                 </div>
               </div>
-              <p className="mt-1 pl-5 text-[10px] text-muted">{labelEn}</p>
+              <p className="mt-1 pl-5 text-[10px] text-muted">{streakLabel}</p>
             </div>
           </div>
         );
