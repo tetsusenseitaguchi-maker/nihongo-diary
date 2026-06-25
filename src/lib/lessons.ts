@@ -1050,22 +1050,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "てください = please do ~ (polite request).",
         example: "ここに名前(なまえ)を書(か)いてください。",
+        examples: [
+          { jp: "ここに名前(なまえ)を書(か)いてください。", en: "Please write your name here. — Direct but polite instruction." },
+          { jp: "もういちど言(い)ってください。", en: "Please say it one more time. — Very useful in class or conversations." },
+        ],
       },
       {
         text: "てもいいですか = may I? / is it okay to do ~?",
         example: "写真(しゃしん)を撮(と)ってもいいですか？",
+        examples: [
+          { jp: "写真(しゃしん)を撮(と)ってもいいですか？", en: "May I take a photo? — Asking permission politely." },
+          { jp: "ここにすわってもいいですか？", en: "Is it okay if I sit here? — てもいい asks; てください tells. Choose based on the situation." },
+        ],
       },
       {
         text: "てはいけない = must not / prohibited.",
         example: "ここでたばこを吸(す)ってはいけません。",
+        examples: [
+          { jp: "ここでたばこを吸(す)ってはいけません。", en: "You must not smoke here. — Strong prohibition." },
+          { jp: "じゅぎょうちゅうにスマホを使(つか)ってはいけない。", en: "You must not use your phone during class. — はいけない is the plain form; はいけません is polite." },
+        ],
       },
       {
         text: "てから = after finishing ~ completely, then do the next thing.",
         example: "ごはんを食(た)べてから、さんぽします。",
+        examples: [
+          { jp: "ごはんを食(た)べてから、さんぽします。", en: "After eating, I'll go for a walk. — てから stresses full completion before starting the next action." },
+          { jp: "シャワーをあびてから、ねます。", en: "I'll take a shower and then go to sleep. — てから = X must be fully done before Y begins." },
+        ],
       },
       {
         text: "Chaining actions: A て B て C = do A, then B, then C in sequence.",
         example: "起(お)きて、シャワーをあびて、がっこうにいきました。",
+        examples: [
+          { jp: "起(お)きて、シャワーをあびて、がっこうにいきました。", en: "I woke up, showered, and went to school. — て links a chain of sequential actions naturally." },
+          { jp: "コーヒーをつくって、パンをたべて、でかけました。", en: "I made coffee, ate bread, and headed out. — て-chaining tells a story step by step." },
+        ],
       },
     ],
     exampleJapanese: "宿題をしてから、ゲームをしてもいいです。",
@@ -1074,6 +1094,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "After doing your homework, you may play games.",
     shortNote:
       "てから means 'after finishing X completely.' It is different from just て, which links two actions in sequence without stressing completion.",
+    commonMistakes: [
+      {
+        wrong: "てください を許可(きょか)を求(もと)めるときに使(つか)う — 「すわってください」(when asking permission)",
+        right: "すわってもいいですか — use てもいいですか to ask permission.",
+        note: "てください is a request or instruction ('please do X'). てもいいですか asks if it is okay to do something. Using てください when you want permission sounds demanding.",
+      },
+      {
+        wrong: "てから と て の区別(くべつ)をしない — 「ごはんをたべて、でかけた」(when completion matters)",
+        right: "ごはんをたべてから、でかけた — use てから to stress X must be fully done first.",
+        note: "て simply sequences actions. てから emphasises that the first action must be completely finished before the next one starts. When order and completion matter, use てから.",
+      },
+      {
+        wrong: "てはいけない の丁寧形(ていねいけい)を間違(まちが)える — 「てはいけないです」",
+        right: "てはいけません — the polite form is はいけません, not はいけないです.",
+        note: "The polite negative of いけない is いけません, not いけないです. In writing or formal speech, always use てはいけません.",
+      },
+    ],
   },
   {
     id: 16,
@@ -1087,22 +1124,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "ている (ongoing action): actively doing right now.",
         example: "おんがくを聞(き)いています。ごはんを食(た)べています。",
+        examples: [
+          { jp: "いまおんがくを聞(き)いています。", en: "I am listening to music right now. — ている for actions currently in progress." },
+          { jp: "かれはへやでべんきょうしています。", en: "He is studying in his room. — The action is ongoing at this very moment." },
+        ],
       },
       {
         text: "ている (resulting state): the action is done, but the result is still here.",
         example: "まどが開(あ)いています。（The window is open — result of opening.）",
+        examples: [
+          { jp: "まどが開(あ)いています。", en: "The window is open. (= it was opened; result remains) — ている for a state that results from an earlier action." },
+          { jp: "かれはめがねをかけています。", en: "He is wearing glasses. — Wearing = a resulting state (he put them on; they're still on)." },
+        ],
       },
       {
         text: "てある (prepared state): someone intentionally did it, and the result is here for a purpose.",
         example: "まどが開(あ)けてあります。（The window has been opened — by someone.）",
+        examples: [
+          { jp: "よやくしてあります。", en: "A reservation has been made (in advance, by someone). — てある = prepared for a reason, by an intentional actor." },
+          { jp: "テーブルにりょうりがおいてあります。", en: "Food has been placed on the table. — Someone set it out purposely; focus is on the ready state." },
+        ],
       },
       {
         text: "ている focuses on the subject / who is acting. てある focuses on the situation.",
         example: "でんきがついている（describing the light） vs でんきをつけてある（someone prepared it）",
+        examples: [
+          { jp: "でんきがついています。(ている)", en: "The light is on. — Describing the current state of the light. Neutral observation." },
+          { jp: "でんきをつけてあります。(てある)", en: "The light has been left on (by someone, for a reason). — Someone intentionally did this." },
+        ],
       },
       {
         text: "Common ている 'state' verbs: 結婚(けっこん)している (married)、知(し)っている (know)、住(す)んでいる (live in).",
         example: "とうきょうに住(す)んでいます。",
+        examples: [
+          { jp: "とうきょうに住(す)んでいます。", en: "I live in Tokyo. — 住む is a movement verb; ている captures the resulting state of having moved there." },
+          { jp: "かれのことを知(し)っています。", en: "I know him. — 知る is a one-time action; 知っている = the state of knowing after learning." },
+        ],
       },
     ],
     exampleJapanese: "テーブルの上にお茶が置いてあります。",
@@ -1111,6 +1168,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "Tea has been placed on the table (someone prepared it).",
     shortNote:
       "ている asks 'who is doing / what is happening?' てある asks 'what has been set up?' Both describe present states but from different angles.",
+    commonMistakes: [
+      {
+        wrong: "ている と てある を混(ま)ぜる — 「よやくがしています」",
+        right: "よやくがしてあります — てある for intentional preparation; ている for ongoing actions.",
+        note: "Use てある when someone has done something in advance and the result matters now. ている is for ongoing actions or resulting states without the 'prepared for a purpose' nuance.",
+      },
+      {
+        wrong: "知(し)る を現在形(げんざいけい)で使(つか)う — 「かれをしります」",
+        right: "かれを知(し)っています — 知る describes the resulting state of having learned something.",
+        note: "知る, 住む, 結婚する and similar 'one-time event' verbs are almost always used with ている in the present, not the plain present form. 知ります sounds unnatural for 'I know'.",
+      },
+      {
+        wrong: "ている を状態(じょうたい)の形容詞(けいようし)の代(か)わりに使(つか)う — 「まどがひらいています」(when の open = adj)",
+        right: "Context matters: まどが開(あ)いています is correct — but check whether a simple adjective fits better.",
+        note: "ている for resulting states is correct, but sometimes a simple adjective is more natural: 部屋(へや)がきれいです (not きれいになっています) for a static state. If no action caused it, use the adjective.",
+      },
+    ],
   },
   {
     id: 17,
@@ -1124,22 +1198,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "てみる = try doing something to see what happens — an experiment.",
         example: "このお菓子(かし)を食(た)べてみてください。",
+        examples: [
+          { jp: "このお菓子(かし)を食(た)べてみてください。", en: "Please try eating this snack. — てみる = try it to see how it is. There is an element of discovery." },
+          { jp: "にほんごでかいてみました。", en: "I tried writing in Japanese (to see if I could). — てみる captures the spirit of attempting something new." },
+        ],
       },
       {
         text: "ておく = do something in advance and leave it ready for later.",
         example: "よやくしておきます。（I'll make a reservation in advance.）",
+        examples: [
+          { jp: "よやくしておきます。", en: "I'll make a reservation (in advance). — ておく = do it now so it's ready when needed." },
+          { jp: "たんごをおぼえておいてください。", en: "Please memorise the vocabulary (before we need it). — ておく tells someone to prepare in advance." },
+        ],
       },
       {
         text: "てしまう = finish completely. With regret: 'I went and did it...'",
         example: "ケーキをぜんぶ食(た)べてしまった…",
+        examples: [
+          { jp: "ケーキをぜんぶ食(た)べてしまった…", en: "I ate all the cake (and I shouldn't have)… — てしまう adds a sense of 'oops, it happened'." },
+          { jp: "しゅくだいをわすれてしまいました。", en: "I (went and) forgot my homework. — てしまう marks an unfortunate, unintended result." },
+        ],
       },
       {
         text: "てしまう also shows something unintended happened.",
         example: "でんしゃに　のりおくれてしまった。（I accidentally missed the train.）",
+        examples: [
+          { jp: "でんしゃにのりおくれてしまった。", en: "I accidentally missed the train. — てしまう for unintended events beyond your control." },
+          { jp: "かぎをなくしてしまいました。", en: "I've lost my key (unfortunately). — てしまいました is the polite form with the same regretful nuance." },
+        ],
       },
       {
         text: "Casual spoken forms: てしまう → ちゃう (after た/て sounds) or じゃう (after で sounds).",
         example: "食(た)べちゃった！飲(の)んじゃった！",
+        examples: [
+          { jp: "食(た)べちゃった！", en: "I totally ate it! — ちゃった is the casual past of ちゃう (from てしまう after て/た endings)." },
+          { jp: "飲(の)んじゃった！", en: "I drank it all! — じゃった is the casual past from んで endings (飲んでしまった → 飲んじゃった)." },
+        ],
       },
     ],
     exampleJapanese: "旅行の前に荷物をまとめておきました。",
@@ -1148,6 +1242,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "I packed my luggage in advance before the trip.",
     shortNote:
       "てみる = testing. ておく = preparing. てしまう = completing (sometimes regretfully). Context decides which feeling is strongest.",
+    commonMistakes: [
+      {
+        wrong: "てみる を結果(けっか)がわかっているときに使(つか)う — 「まいにちべんきょうしてみています」",
+        right: "まいにちべんきょうしています — てみる is for trying to find out; use ている for established habits.",
+        note: "てみる implies uncertainty about the outcome — you are experimenting. For things you do regularly or know well, plain ている is correct. Using てみる for habits sounds like you are still unsure if it works.",
+      },
+      {
+        wrong: "ておく と てある を混(ま)ぜる",
+        right: "ておく = 'I will do it in advance'. てある = 'it has already been done (by someone)'.",
+        note: "ておく is future-oriented: you are about to prepare something. てある is present-result: the preparation is already complete. Timeline differs — ておく looks forward, てある looks at the current done state.",
+      },
+      {
+        wrong: "てしまう のくだけた形(かたち)を書(か)きことばで使(つか)う — 「たべちゃいました」(formal writing)",
+        right: "たべてしまいました — use the full form in formal or written Japanese.",
+        note: "ちゃう/じゃう are spoken casual contractions. In diary writing, emails, or formal speech, always use the full てしまう form.",
+      },
+    ],
   },
   {
     id: 18,
@@ -1161,22 +1272,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "てくる = movement or change that comes toward the speaker or the present moment.",
         example: "あめが降(ふ)ってきた。（It has started raining — coming toward now.）",
+        examples: [
+          { jp: "あめが降(ふ)ってきた。", en: "It started raining (coming toward this moment). — てくる for change that arrives at the present." },
+          { jp: "にほんごがわかってきました。", en: "Japanese has been starting to make sense (up to now). — てくる shows gradual change arriving at the present." },
+        ],
       },
       {
         text: "ていく = movement or change that goes away from the speaker or into the future.",
         example: "だんだんさむくなっていく。（Getting colder — moving forward.）",
+        examples: [
+          { jp: "だんだんさむくなっていく。", en: "It's gradually getting colder (moving into the future). — ていく for change that heads away from now." },
+          { jp: "にほんごをつかいつづけていきます。", en: "I will keep using Japanese going forward. — ていく expresses continuing into the future." },
+        ],
       },
       {
         text: "Physical movement with てくる: go, do something, then come back.",
         example: "かいものしてきます。（I'll go shopping and be back.）",
+        examples: [
+          { jp: "かいものしてきます。", en: "I'll go shopping (and come back). — てきます = go out, do it, return. The speaker is coming back." },
+          { jp: "コーヒーをかってきました。", en: "I went and bought coffee (and brought it back). — てきた = went, did it, returned with the result." },
+        ],
       },
       {
         text: "Physical movement with ていく: go somewhere and continue away.",
         example: "あるいていった。（Walked away.）",
+        examples: [
+          { jp: "バスにのっていきます。", en: "I'll go by bus (away from here). — ていく = moving away from the speaker's position." },
+          { jp: "かれはわらいながらでていった。", en: "He walked out laughing. — ていった = went away (past), continuing in that direction." },
+        ],
       },
       {
         text: "Abstract change: 増(ふ)えてきた = has been increasing up to now. 増(ふ)えていく = will keep increasing.",
         example: "にほんごが上手(じょうず)になってきました！",
+        examples: [
+          { jp: "にほんごが上手(じょうず)になってきました！", en: "My Japanese has been getting better (up to now)! — てくる for progress that has arrived at the present." },
+          { jp: "これからもっとかんじをおぼえていきます。", en: "I'll keep learning more kanji from now on. — ていく for progress continuing into the future." },
+        ],
       },
     ],
     exampleJapanese: "だんだん日本語が上手になってきました。",
@@ -1185,6 +1316,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "My Japanese has been gradually getting better.",
     shortNote:
       "てくる = 'up to now' (looking back). ていく = 'from now on' (looking forward). They are often paired to describe a full arc of change.",
+    commonMistakes: [
+      {
+        wrong: "てくる と ていく の方向(ほうこう)を逆(ぎゃく)にする — 「だんだんうまくなっていきました」(when describing progress up to now)",
+        right: "だんだんうまくなってきました — てくる for change that has arrived at the present.",
+        note: "てくる = looking back at change coming toward now. ていく = looking forward at change going into the future. When describing how your skills have improved, use てくる.",
+      },
+      {
+        wrong: "かいものしてきます の「もどる」の意味(いみ)を忘(わす)れる",
+        right: "してきます implies you will go, do it, and return. If you are not coming back, use していきます.",
+        note: "してきます = go and come back. していきます = go and continue away. Japanese speakers encode the direction of return into the verb itself.",
+      },
+      {
+        wrong: "てくる・ていく を抽象的(ちゅうしょうてき)な変化(へんか)に使(つか)うのをためらう",
+        right: "Abstract uses are very common and natural: わかってきた (starting to understand), へってきた (decreasing lately).",
+        note: "てくる/ていく are not just for physical movement. Using them with change verbs like なる, わかる, ふえる, へる is natural and very common in spoken and written Japanese.",
+      },
+    ],
   },
   {
     id: 19,
@@ -1198,22 +1346,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "から = direct, assertive reason. Natural in casual speech.",
         example: "つかれたから、もうねます。",
+        examples: [
+          { jp: "つかれたから、もうねます。", en: "Because I'm tired, I'm going to sleep now. — から is direct and natural in casual conversation." },
+          { jp: "あめだから、うちにいます。", en: "Because it's raining, I'm staying home. — から makes the reason feel like a personal declaration." },
+        ],
       },
       {
         text: "ので = soft, polite reason. Preferred in formal writing and when making requests.",
         example: "からだの調子(ちょうし)が悪(わる)いので、きょうはやすみます。",
+        examples: [
+          { jp: "からだの調子(ちょうし)が悪(わる)いので、きょうはやすみます。", en: "Since I'm not feeling well, I'll rest today. — ので sounds explanatory and polite, not forceful." },
+          { jp: "しごとがあるので、おさきにしつれいします。", en: "Since I have work, I'll excuse myself first. — ので is the natural choice when leaving or making polite excuses." },
+        ],
       },
       {
         text: "Both follow the plain form of verbs and い-adjectives.",
         example: "あめがふるから / あめがふるので",
+        examples: [
+          { jp: "あめがふるから、かさをもっていく。", en: "Because it will rain, I'll take an umbrella. — Plain form (ふる) before から." },
+          { jp: "あめがふるので、かさをもっていきます。", en: "Since it will rain, I'll take an umbrella. — Same plain form before ので; polite ending matches the softer tone." },
+        ],
       },
       {
         text: "な-adjectives and nouns: use なので (not ですので in the middle of a sentence).",
         example: "しずかなので、よくねむれます。がくせいなので、わりびきがあります。",
+        examples: [
+          { jp: "しずかなので、よくねむれます。", en: "Because it's quiet, I can sleep well. — な-adjective (しずか) + なので." },
+          { jp: "がくせいなので、わりびきがあります。", en: "Because I'm a student, there is a discount. — Noun (がくせい) + なので. NOT ですので mid-sentence." },
+        ],
       },
       {
         text: "Casual から can stand alone at the end of a sentence as a full explanation.",
         example: "いそがしいから。（That's why. / Because I'm busy.）",
+        examples: [
+          { jp: "「なんで来(こ)なかったの？」「いそがしかったから。」", en: "'Why didn't you come?' 'Because I was busy.' — Trailing から as a casual full answer." },
+          { jp: "たべたくない。だって、おなかがいっぱいだから。", en: "I don't want to eat. Because I'm full. — だって〜から is a common casual pattern for giving a reason." },
+        ],
       },
     ],
     exampleJapanese: "明日テストがあるので、今日は早く寝ます。",
@@ -1222,6 +1390,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "I'll go to bed early tonight because I have a test tomorrow.",
     shortNote:
       "ので sounds more objective — it is the safer choice in formal situations or when making a polite request.",
+    commonMistakes: [
+      {
+        wrong: "な形容詞(けいようし)や名詞(めいし)の後(あと)に直接(ちょくせつ) ので をつける — 「しずかので」",
+        right: "しずかなので — な-adjectives need な before ので.",
+        note: "な-adjectives must keep their な when connecting to ので. しずかので sounds unnatural; always write しずかなので. Same for nouns: がくせいなので, not がくせいので.",
+      },
+      {
+        wrong: "フォーマルな場面(ばめん)で から を使(つか)う — メールや手紙(てがみ)で「いそがしいから、むりです」",
+        right: "いそがしいので、むりです — use ので in formal or written contexts.",
+        note: "から sounds assertive and casual. In business emails, formal apologies, or polite requests, ので is always the safer choice. Using から can come across as blunt or rude.",
+      },
+      {
+        wrong: "ので の前(まえ)に です をつける — 「がくせいですので」(mid-sentence)",
+        right: "がくせいなので — use なので for nouns and な-adjectives mid-sentence.",
+        note: "ですので can appear at the start of a formal sentence as a conjunction ('Therefore, …'), but within a sentence, nouns and な-adjectives use なので, not ですので.",
+      },
+    ],
   },
   {
     id: 20,
@@ -1235,22 +1420,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "〜たい = want to do ~ . Attach to the ます-stem (the verb before ます).",
         example: "にほんにいきたいです。ラーメンを食(た)べたい。",
+        examples: [
+          { jp: "にほんにいきたいです。", en: "I want to go to Japan. — いきます → ます-stem いき + たい." },
+          { jp: "にほんごがじょうずになりたいです。", en: "I want to get good at Japanese. — なります → なり + たい." },
+        ],
       },
       {
         text: "たい conjugates like an い-adjective: たくない (don't want to), たかった (wanted to).",
         example: "もっと食(た)べたかった…　いきたくない。",
+        examples: [
+          { jp: "もっとたべたかったです。", en: "I wanted to eat more. — たい → past: たかった (same as い-adjective かった)." },
+          { jp: "きょうはいきたくないです。", en: "I don't want to go today. — たい → negative: たくない (same as い-adjective くない)." },
+        ],
       },
       {
         text: "ましょう = 'Let's …' — a cheerful shared suggestion.",
         example: "いっしょにべんきょうしましょう！",
+        examples: [
+          { jp: "いっしょにべんきょうしましょう！", en: "Let's study together! — ましょう = enthusiastic suggestion, assumes agreement." },
+          { jp: "そろそろでかけましょうか。", en: "Shall we head out soon? — ましょうか = gentler, checking with the other person." },
+        ],
       },
       {
         text: "ませんか = 'Would you like to…?' — a polite, gentle invitation.",
         example: "おちゃを飲(の)みませんか？",
+        examples: [
+          { jp: "おちゃを飲(の)みませんか？", en: "Would you like to have some tea? — ませんか is a soft invitation; it does not pressure the other person." },
+          { jp: "こんどいっしょにたべにいきませんか？", en: "Would you like to go eat together sometime? — Natural way to invite someone without being pushy." },
+        ],
       },
       {
         text: "〜てください = 'Please do …' — a polite request using the て-form.",
         example: "もういちどいってください。ここにすわってください。",
+        examples: [
+          { jp: "もういちどいってください。", en: "Please say it one more time. — Direct and polite request." },
+          { jp: "なまえをここにかいてください。", en: "Please write your name here. — てください for instructions and requests to others." },
+        ],
       },
     ],
     exampleJapanese: "今度いっしょに日本料理を食べに行きませんか？",
@@ -1259,6 +1464,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "Would you like to go eat Japanese food together next time?",
     shortNote:
       "たい is about your own desire. ましょう and ませんか are about doing something together. Use ませんか when you want to sound especially warm and non-pushy.",
+    commonMistakes: [
+      {
+        wrong: "たい を他人(たにん)の希望(きぼう)に使(つか)う — 「かれはすしをたべたいです」(when talking about someone else's desire)",
+        right: "かれはすしをたべたがっています — use たがる for third-person desires.",
+        note: "たい is primarily for your own first-person desire. For someone else's wants, use たがる (たがっている). Saying かれはたべたいです sounds presumptuous — you cannot know another person's inner feelings directly.",
+      },
+      {
+        wrong: "たい を辞書形(じしょけい)につける — 「たべるたい」",
+        right: "たべたい — attach たい to the ます-stem (たべ), not the dictionary form.",
+        note: "たい attaches to the ます-stem: たべます → たべ + たい = たべたい. Never to the dictionary form. A quick check: if you can replace たい with ます, the stem is correct.",
+      },
+      {
+        wrong: "ましょう と ませんか を逆(ぎゃく)に使(つか)う",
+        right: "ましょう = assertive 'Let's!'. ませんか = gentle 'Would you like to…?'",
+        note: "ましょう assumes the other person will agree — it is enthusiastic and leading. ませんか is an open invitation that leaves the choice to the other person. Use ませんか when you want to sound warm and non-pushy.",
+      },
+    ],
   },
 ];
 
