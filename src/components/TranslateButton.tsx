@@ -37,7 +37,7 @@ export function TranslateButton({ diaryEntryId, translations, preferredLanguage 
       const res = await fetch("/api/translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ diaryEntryId }),
+        body: JSON.stringify({ diaryEntryId, language: preferredLanguage }),
       });
       const data: { translation?: string; error?: string; message?: string } = await res.json();
       if (!res.ok) {

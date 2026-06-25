@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePlan, limitsFor } from "@/lib/plans";
-import { languageDisplayName } from "@/lib/languages";
+import { languageDisplayName, SUPPORTED_LANGUAGES } from "@/lib/languages";
+
+const SUPPORTED_CODES = SUPPORTED_LANGUAGES.map((l) => l.code) as string[];
 
 export const runtime = "nodejs";
 
@@ -15,8 +17,9 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let diaryEntryId: string | undefined;
+  let requestedLang: string | undefined;
   try {
-    ({ diaryEntryId } = await req.json());
+    ({ diaryEntryId, language: requestedLang } = await req.json());
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
@@ -53,8 +56,15 @@ export async function POST(req: Request) {
     );
   }
 
-  // Determine target language from user profile (default: en)
-  const targetLang = (prof?.preferred_language as string) || "en";
+  // Prefer the language sent by the client (TranslateButton passes preferredLanguage
+  // explicitly). Fall back to the profile's preferred_language, then to "en".
+  // Validate against the supported list to reject arbitrary strings.
+  const targetLang =
+    (requestedLang && SUPPORTED_CODES.includes(requestedLang) ? requestedLang : null) ??
+    (prof?.preferred_language && SUPPORTED_CODES.includes(prof.preferred_language as string)
+      ? (prof.preferred_language as string)
+      : null) ??
+    "en";
   const targetDisplay = languageDisplayName(targetLang);
 
   // Return cached translation for this language — zero API cost
