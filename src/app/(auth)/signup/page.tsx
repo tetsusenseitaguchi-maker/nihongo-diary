@@ -30,6 +30,9 @@ export default function SignupPage() {
       options: {
         // Passed to the DB trigger so the profile row gets a name + username.
         data: { display_name: displayName, username },
+        // Use window.location.origin so the confirmation link always points to
+        // the correct host — localhost in dev, nihongo-diary.vercel.app in prod.
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 
