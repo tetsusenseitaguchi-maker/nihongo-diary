@@ -5,6 +5,7 @@ import { Logo } from "@/components/Logo";
 import { TopBar } from "@/components/TopBar";
 import { BottomNav } from "@/components/BottomNav";
 import { Avatar } from "@/components/ObiePhoto";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { createClient } from "@/lib/supabase/server";
 import { LocaleProvider } from "@/contexts/locale";
 import { normaliseLocale } from "@/lib/i18n";
@@ -69,14 +70,17 @@ export default async function AppLayout({
         {/* Mobile top header */}
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-line bg-cream/90 px-4 backdrop-blur lg:hidden">
           <Logo href="/dashboard" size="sm" />
-          <Link href="/profile" aria-label="プロフィール" className="overflow-hidden rounded-full ring-1 ring-line hover:ring-moss">
-            {avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatarUrl} alt={name} className="h-9 w-9 object-cover" />
-            ) : (
-              <Avatar initials={initials} size={36} />
-            )}
-          </Link>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher compact />
+            <Link href="/profile" aria-label="プロフィール" className="overflow-hidden rounded-full ring-1 ring-line hover:ring-moss">
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarUrl} alt={name} className="h-9 w-9 object-cover" />
+              ) : (
+                <Avatar initials={initials} size={36} />
+              )}
+            </Link>
+          </div>
         </header>
 
         <div className="lg:pl-[264px]">
