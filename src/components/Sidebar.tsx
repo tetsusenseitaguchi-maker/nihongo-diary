@@ -40,8 +40,7 @@ const NAV_KEYS: Record<string, string> = {
   History: "nav.history",
   Feed: "nav.feed",
   "My Places": "nav.places",
-  Templates: "nav.support",
-  Support: "nav.support",
+  Learn: "nav.learn",
   Profile: "nav.profile",
   Upgrade: "nav.upgrade",
 };
