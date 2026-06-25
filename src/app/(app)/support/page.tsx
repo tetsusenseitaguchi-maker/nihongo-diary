@@ -7,38 +7,40 @@ import { Card, Badge, LinkButton } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { ObiePhoto } from "@/components/ObiePhoto";
 import { MINI_LESSONS } from "@/lib/lessons";
+import { getLessonInLocale } from "@/lib/lesson-i18n";
 import { MiniLessonReview } from "@/components/MiniLessonReview";
 import { createClient } from "@/lib/supabase/client";
 import { normalizePlan, limitsFor, type Plan } from "@/lib/plans";
-import { useT } from "@/contexts/locale";
+import { useT, useLocale } from "@/contexts/locale";
 
 type Tab = "templates" | "ideas" | "lessons" | "review";
 
 const TEMPLATES: {
   pattern: string;
   insert: string;
-  meaning: string;
+  meaningKey: string;
   example: string;
 }[] = [
-  { pattern: "今日(きょう)は〜しました。", insert: "今日は〜しました。", meaning: "Today I did ~.", example: "今日(きょう)は勉強(べんきょう)しました。" },
-  { pattern: "昨日(きのう)は〜しました。", insert: "昨日は〜しました。", meaning: "Yesterday I did ~.", example: "昨日(きのう)は友(とも)だちに会(あ)いました。" },
-  { pattern: "〜に行(い)きました。", insert: "〜に行きました。", meaning: "I went to ~.", example: "公園(こうえん)に行(い)きました。" },
-  { pattern: "〜を食(た)べました。", insert: "〜を食べました。", meaning: "I ate ~.", example: "ラーメンを食(た)べました。" },
-  { pattern: "〜が楽(たの)しかったです。", insert: "〜が楽しかったです。", meaning: "~ was fun.", example: "旅行(りょこう)が楽(たの)しかったです。" },
-  { pattern: "〜したいです。", insert: "〜したいです。", meaning: "I want to ~.", example: "日本(にほん)に行(い)きたいです。" },
-  { pattern: "〜と思(おも)います。", insert: "〜と思います。", meaning: "I think ~.", example: "いい天気(てんき)だと思(おも)います。" },
-  { pattern: "〜について書(か)きます。", insert: "〜について書きます。", meaning: "I'll write about ~.", example: "今日(きょう)の出来事(できごと)について書(か)きます。" },
+  { pattern: "今日(きょう)は〜しました。", insert: "今日は〜しました。", meaningKey: "templates.t0.meaning", example: "今日(きょう)は勉強(べんきょう)しました。" },
+  { pattern: "昨日(きのう)は〜しました。", insert: "昨日は〜しました。", meaningKey: "templates.t1.meaning", example: "昨日(きのう)は友(とも)だちに会(あ)いました。" },
+  { pattern: "〜に行(い)きました。", insert: "〜に行きました。", meaningKey: "templates.t2.meaning", example: "公園(こうえん)に行(い)きました。" },
+  { pattern: "〜を食(た)べました。", insert: "〜を食べました。", meaningKey: "templates.t3.meaning", example: "ラーメンを食(た)べました。" },
+  { pattern: "〜が楽(たの)しかったです。", insert: "〜が楽しかったです。", meaningKey: "templates.t4.meaning", example: "旅行(りょこう)が楽(たの)しかったです。" },
+  { pattern: "〜したいです。", insert: "〜したいです。", meaningKey: "templates.t5.meaning", example: "日本(にほん)に行(い)きたいです。" },
+  { pattern: "〜と思(おも)います。", insert: "〜と思います。", meaningKey: "templates.t6.meaning", example: "いい天気(てんき)だと思(おも)います。" },
+  { pattern: "〜について書(か)きます。", insert: "〜について書きます。", meaningKey: "templates.t7.meaning", example: "今日(きょう)の出来事(できごと)について書(か)きます。" },
 ];
 
-const KEY_IDEAS: { emoji: string; title: string; explanation: string }[] = [
-  { emoji: "🚃", title: "Japanese is like a train.", explanation: "The important part often comes at the end. Keep reading to the last word before you decide what the sentence means." },
-  { emoji: "💭", title: "Think in Japanese, not word-for-word English.", explanation: "Japanese does not always match English word order. Try to build the idea in Japanese instead of translating word by word." },
-  { emoji: "🔗", title: "Particles show relationships.", explanation: "Particles like は, が, を, に, で show how words connect. They are small, but they carry a lot of meaning." },
-  { emoji: "✍️", title: "Short daily writing is powerful.", explanation: "Writing a little every day is better than waiting for perfect Japanese. One sentence today beats a perfect essay someday." },
+const KEY_IDEAS_KEYS: { emoji: string; titleKey: string; explanationKey: string }[] = [
+  { emoji: "🚃", titleKey: "ideas.train.title", explanationKey: "ideas.train.explanation" },
+  { emoji: "💭", titleKey: "ideas.think.title", explanationKey: "ideas.think.explanation" },
+  { emoji: "🔗", titleKey: "ideas.particles.title", explanationKey: "ideas.particles.explanation" },
+  { emoji: "✍️", titleKey: "ideas.daily.title", explanationKey: "ideas.daily.explanation" },
 ];
 
 export default function SupportPage() {
   const t = useT();
+  const { locale } = useLocale();
   const [tab, setTab] = useState<Tab>("templates");
   const [plan, setPlan] = useState<Plan | null>(null);
   const [openLessonId, setOpenLessonId] = useState<number | null>(null);
@@ -113,7 +115,7 @@ export default function SupportPage() {
           {TEMPLATES.map((tmpl) => (
             <Card key={tmpl.insert} className="flex flex-col p-5">
               <Furigana text={tmpl.pattern} className="font-jp text-xl font-bold text-pine" />
-              <p className="mt-1 text-sm font-medium text-ink/70">{tmpl.meaning}</p>
+              <p className="mt-1 text-sm font-medium text-ink/70">{t(tmpl.meaningKey)}</p>
               <div className="mt-3 rounded-xl bg-mint/50 px-3 py-2.5">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-moss-600">{t("support.templateExample")}</p>
                 <Furigana text={tmpl.example} className="font-jp text-[15px] text-ink" />
@@ -133,7 +135,7 @@ export default function SupportPage() {
       {/* KEY IDEAS */}
       {tab === "ideas" && (
         <div className="space-y-4">
-          {KEY_IDEAS.map((idea, i) => (
+          {KEY_IDEAS_KEYS.map((idea, i) => (
             <div key={i} className="flex items-start gap-3 sm:gap-4">
               <ObiePhoto size={56} className="mt-1 shrink-0 ring-2 ring-mint" />
               {/* speech bubble */}
@@ -143,9 +145,9 @@ export default function SupportPage() {
                   <span className="text-xl leading-none">{idea.emoji}</span>
                   <div>
                     <h3 className="font-serif text-lg font-bold leading-snug text-pine">
-                      {i + 1}. {idea.title}
+                      {i + 1}. {t(idea.titleKey)}
                     </h3>
-                    <p className="mt-1.5 text-[15px] leading-relaxed text-ink/80">{idea.explanation}</p>
+                    <p className="mt-1.5 text-[15px] leading-relaxed text-ink/80">{t(idea.explanationKey)}</p>
                   </div>
                 </div>
               </Card>
@@ -191,7 +193,8 @@ export default function SupportPage() {
             </div>
           )}
 
-          {MINI_LESSONS.map((l) => {
+          {MINI_LESSONS.map((rawLesson) => {
+            const l = getLessonInLocale(rawLesson, locale);
             const isOpen = openLessonId === l.id;
             return (
               <Card key={l.id} className="overflow-hidden p-0">
@@ -219,7 +222,7 @@ export default function SupportPage() {
                     {canReadLibrary ? (
                       <>
                         <div className="rounded-xl bg-mint/40 p-3">
-                          <p className="text-[11px] font-semibold uppercase tracking-wide text-moss-600">🧠 Visual Image</p>
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-moss-600">🧠 {t("support.visualImage")}</p>
                           <p className="mt-0.5 text-sm leading-relaxed text-ink/85">{l.visualImage}</p>
                         </div>
                         {l.points && l.points.length > 0 && (
@@ -259,7 +262,7 @@ export default function SupportPage() {
                         )}
                         {l.commonMistakes && l.commonMistakes.length > 0 && (
                           <div className="mt-4 rounded-xl border border-apricot/20 bg-apricot/5 p-3">
-                            <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-apricot">⚠️ Common Mistakes</p>
+                            <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-apricot">⚠️ {t("support.commonMistakes")}</p>
                             <ul className="space-y-3">
                               {l.commonMistakes.map((m, i) => (
                                 <li key={i}>
@@ -276,9 +279,9 @@ export default function SupportPage() {
                       <div className="flex items-center gap-2 rounded-xl border border-dashed border-line bg-sand/30 px-4 py-3">
                         <span className="text-sm">🔒</span>
                         <p className="text-xs text-muted">
-                          Visual image, key points &amp; examples —{" "}
+                          {t("support.lockedContent")} —{" "}
                           <a href="/upgrade" className="font-semibold text-moss-600 hover:text-pine">
-                            Unlock with Plus →
+                            {t("support.seePlans")}
                           </a>
                         </p>
                       </div>

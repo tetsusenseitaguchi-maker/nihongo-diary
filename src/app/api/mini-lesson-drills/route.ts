@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePlan, limitsFor } from "@/lib/plans";
 import { lessonById } from "@/lib/lessons";
+import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
+import { languageDisplayName } from "@/lib/languages";
 
 export const runtime = "nodejs";
 
 const MODEL = "gpt-4.1-mini";
 
-function systemPrompt(level: string): string {
+function systemPrompt(level: string, lang: string): string {
   return `You are a Japanese language drill generator for a learning app.
 Generate exactly 5 practice drills for a specific grammar mini lesson. The student's level is: ${level}.
 
@@ -25,7 +28,7 @@ Rules:
    - question: plain text (no ruby). questionRuby: with <ruby> tags.
    - answer: plain text. answerRuby: with <ruby> tags.
    - choices: plain text strings (no ruby tags).
-3. englishExplanation: one clear English sentence explaining why the answer is correct.
+3. englishExplanation: one clear ${lang} sentence explaining why the answer is correct.
 4. choices: 3–4 options for fill-in/particle-choice/desu-masu; shuffled words for reorder; [] for rewrite.
 5. Keep every drill appropriate for ${level} level. Make them directly test the lesson's grammar point.
 6. Return ONLY valid JSON. No markdown, no text outside the JSON.
@@ -73,10 +76,16 @@ export async function POST(request: Request) {
   // Plan check — reviewDrills flag must be true
   const { data: profile } = await supabase
     .from("profiles")
-    .select("plan")
+    .select("plan, preferred_language")
     .eq("id", user.id)
     .single();
   const plan = normalizePlan(profile?.plan);
+
+  // Cookie-first locale resolution (same as /api/correct)
+  const cookieStore = await cookies();
+  const cookieLang = cookieStore.get(LOCALE_COOKIE)?.value;
+  const langCode = normaliseLocale(cookieLang || profile?.preferred_language || "en");
+  const lang = languageDisplayName(langCode);
   if (!limitsFor(plan).reviewDrills) {
     return NextResponse.json(
       { error: "この機能は Pro プラン以上で使えます。" },
@@ -117,7 +126,7 @@ Generate 5 drills that directly test understanding of this lesson's grammar poin
         max_tokens: 2000,
         response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: systemPrompt(level) },
+          { role: "system", content: systemPrompt(level, lang) },
           { role: "user", content: lessonContext },
         ],
       }),

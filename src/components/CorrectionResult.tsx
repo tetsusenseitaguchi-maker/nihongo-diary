@@ -5,7 +5,8 @@ import type { Correction } from "@/lib/types";
 import { ObiePhoto } from "@/components/ObiePhoto";
 import { Furigana } from "@/components/Furigana";
 import { PracticeDrills } from "@/components/PracticeDrills";
-import { useT } from "@/contexts/locale";
+import { useT, useLocale } from "@/contexts/locale";
+import { getLessonInLocale } from "@/lib/lesson-i18n";
 
 function tint(v: string): CSSProperties {
   return { ["--tint" as string]: `var(${v})` } as CSSProperties;
@@ -73,6 +74,10 @@ export function CorrectionResult({
   showOriginal?: boolean;
 }) {
   const t = useT();
+  const { locale } = useLocale();
+  const miniLesson = correction.relatedMiniLesson
+    ? getLessonInLocale(correction.relatedMiniLesson, locale)
+    : null;
 
   return (
     <div className="space-y-4">
@@ -165,7 +170,7 @@ export function CorrectionResult({
       </div>
 
       {/* Mini Lesson Preview */}
-      {correction.relatedMiniLesson && (
+      {miniLesson && (
         <div className="gloss-card overflow-hidden rounded-[var(--radius-card)]">
           <div className="flex items-center justify-between gap-2 bg-pine px-5 py-3">
             <p className="font-serif text-base font-bold text-cream">📘 {t("correction.miniLesson")}</p>
@@ -176,20 +181,20 @@ export function CorrectionResult({
           <div className="space-y-3 p-5">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-moss-600">
-                {t("correction.lesson", { n: correction.relatedMiniLesson.order })}
+                {t("correction.lesson", { n: miniLesson.order })}
               </p>
-              <h3 className="font-serif text-lg font-bold text-pine">{correction.relatedMiniLesson.title}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-ink/80">{correction.relatedMiniLesson.shortExplanation}</p>
+              <h3 className="font-serif text-lg font-bold text-pine">{miniLesson.title}</h3>
+              <p className="mt-1 text-sm leading-relaxed text-ink/80">{miniLesson.shortExplanation}</p>
             </div>
 
             <div className="rounded-xl bg-mint/50 p-3">
               <p className="text-[11px] font-bold uppercase tracking-wide text-moss-600">🧠 {t("correction.visualImage")}</p>
-              <p className="mt-0.5 text-sm leading-relaxed text-ink/85">{correction.relatedMiniLesson.visualImage}</p>
+              <p className="mt-0.5 text-sm leading-relaxed text-ink/85">{miniLesson.visualImage}</p>
             </div>
 
-            {correction.relatedMiniLesson.points && correction.relatedMiniLesson.points.length > 0 && (
+            {miniLesson.points && miniLesson.points.length > 0 && (
               <ul className="space-y-1.5">
-                {correction.relatedMiniLesson.points.map((pt, i) => (
+                {miniLesson.points.map((pt, i) => (
                   <li key={i} className="flex items-start gap-2 rounded-xl bg-paper/70 px-3 py-2.5 text-sm">
                     <span className="mt-0.5 shrink-0 font-bold text-moss-600">{i + 1}.</span>
                     <span className="min-w-0">
@@ -206,12 +211,12 @@ export function CorrectionResult({
             )}
 
             <div className="rounded-xl border border-line bg-paper p-3">
-              <Furigana text={correction.relatedMiniLesson.exampleJapaneseRuby} className="font-jp text-[15px] text-ink" />
-              <p className="mt-1 text-sm text-muted">{correction.relatedMiniLesson.exampleEnglish}</p>
+              <Furigana text={miniLesson.exampleJapaneseRuby} className="font-jp text-[15px] text-ink" />
+              <p className="mt-1 text-sm text-muted">{miniLesson.exampleEnglish}</p>
             </div>
 
-            {correction.relatedMiniLesson.shortNote && (
-              <p className="text-sm leading-relaxed text-ink/75">💡 {correction.relatedMiniLesson.shortNote}</p>
+            {miniLesson.shortNote && (
+              <p className="text-sm leading-relaxed text-ink/75">💡 {miniLesson.shortNote}</p>
             )}
           </div>
         </div>
