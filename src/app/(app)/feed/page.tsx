@@ -48,7 +48,12 @@ export default async function FeedPage() {
   const activityIds = activities.map((a) => a.id);
   const excluded = new Set([user.id, ...followingIds]);
 
-  const [{ data: authorData }, { data: reactionData }, { data: peopleData }] = await Promise.all([
+  // Collect diary_entry_ids from diary activities to fetch live is_public + snippet
+  const diaryEntryIds = activities
+    .filter((a) => a.diary_entry_id && (a.activity_type === "wrote_diary" || a.activity_type === "shared_diary"))
+    .map((a) => a.diary_entry_id as string);
+
+  const [{ data: authorData }, { data: reactionData }, { data: peopleData }, { data: diaryData }] = await Promise.all([
     authorIds.length
       ? supabase.from("profiles").select("id, username, display_name, avatar_url, level").in("id", authorIds)
       : Promise.resolve({ data: [] as Profile[] }),
@@ -56,7 +61,21 @@ export default async function FeedPage() {
       ? supabase.from("reactions").select("activity_id, reaction_type, user_id").in("activity_id", activityIds)
       : Promise.resolve({ data: [] as { activity_id: string; reaction_type: string; user_id: string }[] }),
     supabase.from("profiles").select("id, username, display_name, avatar_url, level").limit(20),
+    // RLS ensures only public entries (or own entries) are returned here
+    diaryEntryIds.length
+      ? supabase.from("diary_entries").select("id, is_public, original_text").in("id", diaryEntryIds)
+      : Promise.resolve({ data: [] as { id: string; is_public: boolean; original_text: string }[] }),
   ]);
+
+  // Map diary_entry_id → { is_public, snippet }
+  type DiaryMeta = { isPublic: boolean; snippet: string };
+  const diaryMeta = new Map<string, DiaryMeta>();
+  for (const d of diaryData ?? []) {
+    diaryMeta.set(d.id, {
+      isPublic: Boolean(d.is_public),
+      snippet: d.original_text ? d.original_text.slice(0, 80) + (d.original_text.length > 80 ? "…" : "") : "",
+    });
+  }
 
   const authors = new Map((authorData ?? []).map((p) => [p.id, p as Profile]));
   const counts = new Map<string, Record<string, number>>();
@@ -90,10 +109,11 @@ export default async function FeedPage() {
           ) : (
             activities.map((a) => {
               const author = authors.get(a.user_id);
-              const isPublicDiary =
-                (a.activity_type === "wrote_diary" || a.activity_type === "shared_diary") &&
-                Boolean(a.metadata?.is_public) &&
-                a.diary_entry_id;
+              // Use live is_public from diary_entries (not stale activity metadata)
+              const dm = a.diary_entry_id ? diaryMeta.get(a.diary_entry_id) : undefined;
+              const isDiaryActivity =
+                a.activity_type === "wrote_diary" || a.activity_type === "shared_diary";
+              const isPublicDiary = isDiaryActivity && !!a.diary_entry_id && dm?.isPublic;
               return (
                 <Card key={a.id} className="p-5">
                   <div className="flex items-center gap-3">
@@ -120,7 +140,17 @@ export default async function FeedPage() {
                     </div>
                   </div>
 
-                  {isPublicDiary && (
+                  {/* Public diary: show Japanese snippet + read link */}
+                  {isPublicDiary && dm?.snippet && (
+                    <Link
+                      href={`/diary/${a.diary_entry_id}`}
+                      className="mt-3 block rounded-xl bg-mint/40 px-4 py-3 transition-colors hover:bg-mint/60"
+                    >
+                      <p className="font-jp text-sm leading-relaxed text-ink line-clamp-2">{dm.snippet}</p>
+                      <p className="mt-1.5 text-xs font-semibold text-moss-600">Read diary →</p>
+                    </Link>
+                  )}
+                  {isPublicDiary && !dm?.snippet && (
                     <Link
                       href={`/diary/${a.diary_entry_id}`}
                       className="mt-3 inline-block rounded-lg bg-mint/50 px-3 py-2 text-sm font-semibold text-moss-600 hover:text-pine"
