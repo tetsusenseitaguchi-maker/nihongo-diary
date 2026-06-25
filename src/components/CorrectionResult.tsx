@@ -104,7 +104,7 @@ export function CorrectionResult({
 
       {/* English Explanation */}
       <div className="gloss-panel rounded-[var(--radius-card)] p-6" style={tint("--color-tint-blue")}>
-        <Label en={t("correction.englishExplanation")} jp="英語(えいご)での説明(せつめい)" />
+        <Label en={t("correction.explanation")} jp="解説(かいせつ)" />
         <p className="text-sm leading-relaxed text-ink/80">{correction.explanation}</p>
       </div>
 

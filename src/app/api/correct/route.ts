@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePlan, limitsFor } from "@/lib/plans";
 import { lessonById } from "@/lib/lessons";
+import { languageDisplayName } from "@/lib/languages";
 
 export const runtime = "nodejs";
 
 const MODEL = "gpt-4.1-mini";
 
-function systemPrompt(level: string, style: string, matchScript: boolean): string {
+function systemPrompt(level: string, style: string, matchScript: boolean, lang: string): string {
   const scriptRule = matchScript
     ? `
 
@@ -55,7 +56,8 @@ Return this JSON structure:
 
 Rules:
 
-1. All explanations must be in English (grammar, mistakes, vocabulary meanings). Never explain grammar in Japanese.
+1. Write ALL explanatory text in ${lang}. This includes: englishExplanation, correctionNote, every keyMistakes[].explanation, every usefulVocabulary[].meaning, every practiceDrills[].englishExplanation, and relatedMiniLesson shortExplanation / exampleEnglish / shortNote. Never explain grammar in Japanese.
+   Keep ALL Japanese-language fields in Japanese: correctedJapaneseRuby, naturalJapaneseRuby, all *Ruby fields, word, reading, question, answer. Those are learning targets — never translate them.
 
 2. Furigana: add furigana to ALL kanji in correctedJapaneseRuby, naturalJapaneseRuby, mistakeRuby, correctionRuby, exampleRuby, and practiceSentenceRuby. Use this exact format:
 <ruby>漢字<rt>かんじ</rt></ruby>
@@ -98,7 +100,7 @@ Every Japanese field above ends in "Ruby" and must contain furigana in this form
 
 11. practiceDrills: generate exactly 2 to 3 short practice drills based on the learner's mistakes or the relatedMiniLesson topic.
 - Types (use the exact string): "fill-in" (blank fill — mark the blank as ___), "particle-choice" (choose the correct particle), "desu-masu" (choose です or ます), "reorder" (reorder the given words into a correct sentence; put the shuffled words in choices), "rewrite" (rewrite the given phrase more naturally; no choices needed).
-- question: plain text (no ruby tags). questionRuby: same sentence with <ruby> furigana on all kanji. choices: array of strings (3–4 options for fill-in/particle-choice/desu-masu; shuffled words for reorder; empty array [] for rewrite). answer: plain text. answerRuby: with <ruby> furigana. englishExplanation: one sentence in English explaining why.
+- question: plain text (no ruby tags). questionRuby: same sentence with <ruby> furigana on all kanji. choices: array of strings (3–4 options for fill-in/particle-choice/desu-masu; shuffled words for reorder; empty array [] for rewrite). answer: plain text. answerRuby: with <ruby> furigana. englishExplanation: one sentence in ${lang} explaining why.
 - Keep every drill simple and at the learner's level. Vary the types. If there were no mistakes, base drills on the relatedMiniLesson.
 
 12. relatedMiniLesson: choose the ONE most relevant lesson for the learner's main grammar point, by id, from this FIXED list:
@@ -122,7 +124,7 @@ Every Japanese field above ends in "Ruby" and must contain furigana in this form
 18 = 〜てくる & 〜ていく (directional change expressions)
 19 = Reasons: から & ので (reason expressions)
 20 = Wants & Invitations (たい / ましょう / ませんか)
-Return only: id (1-20), shortExplanation (English, tailored to the learner's level), exampleJapaneseRuby (with <ruby> furigana, tailored to level), exampleEnglish, shortNote (English, friendly). If nothing clearly fits, use id 3. Do NOT invent new lessons or change titles.
+Return only: id (1-20), shortExplanation (in ${lang}, tailored to the learner's level), exampleJapaneseRuby (with <ruby> furigana, tailored to level — keep in Japanese), exampleEnglish (in ${lang}), shortNote (in ${lang}, friendly). If nothing clearly fits, use id 3. Do NOT invent new lessons or change titles.
 
 Output must be valid JSON. No markdown, no comments, no trailing commas.`;
 }
@@ -155,10 +157,11 @@ export async function POST(request: Request) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("plan")
+    .select("plan, preferred_language")
     .eq("id", user.id)
     .single();
   const plan = normalizePlan(profile?.plan);
+  const lang = languageDisplayName(profile?.preferred_language ?? "en");
   const limits = limitsFor(plan);
 
   // Character limit
@@ -215,7 +218,7 @@ export async function POST(request: Request) {
         max_tokens: 2400,
         response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: systemPrompt(level, style, matchScript) },
+          { role: "system", content: systemPrompt(level, style, matchScript, lang) },
           { role: "user", content: text },
         ],
       }),
