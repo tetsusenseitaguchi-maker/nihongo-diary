@@ -39,6 +39,16 @@ function FlyTo({ target }: { target: [number, number] | null }) {
   return null;
 }
 
+// Recalculates tile grid after container size settles (collapsible reveal fix)
+function InvalidateSize() {
+  const map = useMap();
+  useEffect(() => {
+    const t = setTimeout(() => map.invalidateSize(), 100);
+    return () => clearTimeout(t);
+  }, [map]);
+  return null;
+}
+
 interface Props {
   places: DiaryPlace[];
   onPlacesChange: (places: DiaryPlace[]) => void;
@@ -196,11 +206,14 @@ export function DiaryMapPicker({ places, onPlacesChange }: Props) {
           style={{ height: "100%", width: "100%" }}
           scrollWheelZoom
         >
+          {/* CARTO Voyager — supports {r} retina placeholder, free, no API key */}
           <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a>'
             maxZoom={19}
+            detectRetina={true}
           />
+          <InvalidateSize />
           <MapClickHandler onAdd={handleMapClick} />
           <FlyTo target={flyTarget} />
           {places.map((p, i) => (
