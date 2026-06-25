@@ -63,17 +63,19 @@ export default async function FeedPage() {
     supabase.from("profiles").select("id, username, display_name, avatar_url, level").limit(20),
     // RLS ensures only public entries (or own entries) are returned here
     diaryEntryIds.length
-      ? supabase.from("diary_entries").select("id, is_public, original_text").in("id", diaryEntryIds)
-      : Promise.resolve({ data: [] as { id: string; is_public: boolean; original_text: string }[] }),
+      ? supabase.from("diary_entries").select("id, is_public, title, original_text").in("id", diaryEntryIds)
+      : Promise.resolve({ data: [] as { id: string; is_public: boolean; title: string | null; original_text: string }[] }),
   ]);
 
-  // Map diary_entry_id → { is_public, snippet }
-  type DiaryMeta = { isPublic: boolean; snippet: string };
+  // Map diary_entry_id → { is_public, title, snippet }
+  type DiaryMeta = { isPublic: boolean; title: string | null; snippet: string };
   const diaryMeta = new Map<string, DiaryMeta>();
   for (const d of diaryData ?? []) {
+    const body = d.original_text ?? "";
     diaryMeta.set(d.id, {
       isPublic: Boolean(d.is_public),
-      snippet: d.original_text ? d.original_text.slice(0, 80) + (d.original_text.length > 80 ? "…" : "") : "",
+      title: d.title || null,
+      snippet: body ? body.slice(0, 80) + (body.length > 80 ? "…" : "") : "",
     });
   }
 
@@ -140,13 +142,18 @@ export default async function FeedPage() {
                     </div>
                   </div>
 
-                  {/* Public diary: show Japanese snippet + read link */}
-                  {isPublicDiary && dm?.snippet && (
+                  {/* Public diary: show title + Japanese snippet + read link */}
+                  {isPublicDiary && (dm?.title || dm?.snippet) && (
                     <Link
                       href={`/diary/${a.diary_entry_id}`}
                       className="mt-3 block rounded-xl bg-mint/40 px-4 py-3 transition-colors hover:bg-mint/60"
                     >
-                      <p className="font-jp text-sm leading-relaxed text-ink line-clamp-2">{dm.snippet}</p>
+                      {dm?.title && (
+                        <p className="mb-1 text-sm font-bold text-pine">{dm.title}</p>
+                      )}
+                      {dm?.snippet && (
+                        <p className="font-jp text-sm leading-relaxed text-ink/80 line-clamp-2">{dm.snippet}</p>
+                      )}
                       <p className="mt-1.5 text-xs font-semibold text-moss-600">Read diary →</p>
                     </Link>
                   )}

@@ -60,7 +60,7 @@ export default async function PublicProfilePage({
   // Public diaries
   const { data: publicDiaries } = await supabase
     .from("diary_entries")
-    .select("id, diary_date, original_text, level")
+    .select("id, diary_date, title, original_text, level")
     .eq("user_id", profile.id)
     .eq("is_public", true)
     .order("diary_date", { ascending: false })
@@ -123,7 +123,13 @@ export default async function PublicProfilePage({
                     <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-mint text-[11px] font-bold text-pine">
                       {formatShort(d.diary_date)}
                     </span>
-                    <span className="min-w-0 flex-1 truncate font-jp text-sm text-ink">{d.original_text}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm text-ink">
+                      {d.title ? (
+                        <span className="font-semibold text-pine">{d.title}</span>
+                      ) : (
+                        <span className="font-jp">{d.original_text}</span>
+                      )}
+                    </span>
                     {d.level && <span className="shrink-0 rounded-full bg-sand px-2 py-0.5 text-xs font-semibold text-ink/70">{d.level}</span>}
                   </Card>
                 </Link>

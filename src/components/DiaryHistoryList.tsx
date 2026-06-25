@@ -19,6 +19,7 @@ function AttachmentDot({ icon }: { icon: ReactNode }) {
 interface Entry {
   id: string;
   diary_date: string;
+  title: string | null;
   original_text: string;
   level: string | null;
   correction_style: string | null;
@@ -48,7 +49,12 @@ export function DiaryHistoryList({ initialEntries }: { initialEntries: Entry[] }
               </span>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="mb-1 truncate font-jp text-[15px] text-ink group-hover:text-pine">
+              {entry.title && (
+                <p className="mb-0.5 truncate text-[13px] font-bold text-pine group-hover:text-moss-600">
+                  {entry.title}
+                </p>
+              )}
+              <p className={`mb-1 truncate font-jp text-[15px] group-hover:text-pine ${entry.title ? "text-ink/60" : "text-ink"}`}>
                 {entry.original_text}
               </p>
               <div className="flex flex-wrap items-center gap-2">

@@ -70,6 +70,7 @@ function Selector({
 
 export default function WritePage() {
   const [date] = useState(todayISO());
+  const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [level, setLevel] = useState(1);
   const [style, setStyle] = useState(1);
@@ -212,6 +213,7 @@ export default function WritePage() {
       .insert({
         user_id: user.id,
         diary_date: date,
+        title: title.trim() || null,
         original_text: result.original,
         corrected_japanese: result.corrected,
         natural_japanese: result.natural,
@@ -347,6 +349,16 @@ export default function WritePage() {
                 </span>
                 <span>🌸</span>
               </div>
+
+              {/* title input */}
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                maxLength={50}
+                placeholder="今日のひとこと（任意）/ A title for today (optional)"
+                className="mb-4 block w-full rounded-lg border border-line bg-mint/30 px-3 py-2 text-sm font-semibold text-pine placeholder:font-normal placeholder:text-muted/60 focus:border-moss focus:outline-none"
+              />
 
               {/* selectors */}
               <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">

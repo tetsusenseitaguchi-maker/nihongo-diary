@@ -145,6 +145,13 @@ export default async function DiaryDetailPage({
         </p>
       )}
 
+      {/* Optional title */}
+      {entry.title && (
+        <p className="rounded-2xl bg-mint/40 px-5 py-3 font-serif text-lg font-bold text-pine">
+          {entry.title}
+        </p>
+      )}
+
       <div className="flex items-center gap-2">
         <span>🌸</span>
         <h2 className="font-serif text-xl font-bold text-pine">添削結果</h2>

@@ -19,7 +19,7 @@ export default async function CalendarPage() {
 
   const { data } = await supabase
     .from("diary_entries")
-    .select("id, diary_date, original_text, corrected_japanese, english_explanation, level, correction_style")
+    .select("id, diary_date, title, original_text, corrected_japanese, english_explanation, level, correction_style")
     .eq("user_id", user.id)
     .order("diary_date", { ascending: false });
 
@@ -117,7 +117,13 @@ export default async function CalendarPage() {
                     <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-mint text-xs font-bold text-pine">
                       {formatShort(entry.diary_date)}
                     </span>
-                    <span className="min-w-0 flex-1 truncate font-jp text-sm text-ink group-hover:text-pine">{entry.original_text}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm text-ink group-hover:text-pine">
+                      {entry.title ? (
+                        <span className="font-semibold">{entry.title}</span>
+                      ) : (
+                        <span className="font-jp">{entry.original_text}</span>
+                      )}
+                    </span>
                     {entry.level && <Badge tone="sand">{entry.level}</Badge>}
                   </Link>
                 </li>
