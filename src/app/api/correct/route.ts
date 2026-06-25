@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePlan, limitsFor } from "@/lib/plans";
 import { lessonById } from "@/lib/lessons";
 import { languageDisplayName } from "@/lib/languages";
+import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
 
 export const runtime = "nodejs";
 
@@ -161,7 +163,14 @@ export async function POST(request: Request) {
     .eq("id", user.id)
     .single();
   const plan = normalizePlan(profile?.plan);
-  const lang = languageDisplayName(profile?.preferred_language ?? "en");
+
+  // Locale resolution mirrors (app)/layout.tsx: cookie-first → DB → "en"
+  // The NEXT_LOCALE cookie is set immediately on every language switch,
+  // so it is always the most up-to-date signal even if the DB write lagged.
+  const cookieStore = await cookies();
+  const cookieLang = cookieStore.get(LOCALE_COOKIE)?.value;
+  const langCode = normaliseLocale(cookieLang || profile?.preferred_language || "en");
+  const lang = languageDisplayName(langCode);
   const limits = limitsFor(plan);
 
   // Character limit
