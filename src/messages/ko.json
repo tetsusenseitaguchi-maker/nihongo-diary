@@ -11,12 +11,10 @@
   "nav.upgrade": "업그레이드",
   "nav.home": "홈",
   "nav.write": "쓰기",
-
   "sidebar.keepGoing": "계속 힘내요!",
   "sidebar.startToday": "오늘부터 시작해요!",
   "sidebar.legend": "전설을 만들어가는 중!",
   "sidebar.daysTo": "{next}일 연속까지 {remaining}일 남았어요",
-
   "dashboard.todayDiary": "오늘의 일기",
   "dashboard.aiFeedback": "AI 첨삭",
   "dashboard.templates": "템플릿",
@@ -34,11 +32,21 @@
   "dashboard.stats.longestLabel": "최장: {n}일",
   "dashboard.feedDesc": "다른 사람들이 무엇을 쓰는지 보세요 — 영감을 얻고 연결되세요.",
   "dashboard.feedButton": "피드 보기",
+  "feed.title": "학습 피드",
+  "feed.subtitle": "서로 응원해요 — 매일 조금씩.",
+  "feed.empty": "피드가 아직 비어있어요",
+  "feed.emptyDesc": "다른 학습자를 팔로우하면 여기서 진행 상황을 볼 수 있어요.",
+  "feed.loadMore": "더 보기",
+  "feed.findLearners": "학습자 찾기",
+  "feed.findLearnersDesc": "사람들을 팔로우해서 피드를 채워보세요.",
+  "feed.noSuggestions": "아직 추천할 사람이 없어요.",
+  "feed.readDiary": "일기 읽기 →",
+  "feed.comment": "댓글",
+  "feed.monthlyCount": "이번달 {n}개",
   "dashboard.seeCalendar": "캘린더 보기 →",
   "dashboard.changePhoto": "사진 변경",
   "dashboard.obieTip": "Obie의 팁",
   "dashboard.noRecent": "아직 일기가 없어요.",
-
   "write.level": "레벨",
   "write.style": "스타일",
   "write.mood": "기분",
@@ -55,7 +63,6 @@
   "write.upgradeBtn": "업그레이드 →",
   "write.savedMsg": "일기가 저장되었습니다! ",
   "write.viewSaved": "보기 →",
-
   "profile.title": "프로필",
   "profile.editProfile": "프로필 편집",
   "profile.viewPublic": "공개 프로필 보기 →",
@@ -69,14 +76,11 @@
   "profile.language.desc": "메뉴, 버튼, 번역에 사용할 언어를 선택하세요.",
   "profile.plan.title": "내 플랜",
   "profile.plan.upgrade": "업그레이드 →",
-
   "common.seeAll": "전체 보기",
   "common.loading": "로딩 중…",
   "common.daysStreak": "{n}일 연속",
   "common.days": "일",
-
   "lang.label": "언어",
-
   "footer.disclaimer": "AI 첨삭은 완벽하지 않을 수 있습니다. 학습 보조 도구로 활용하세요.",
   "footer.beta": "Nihongo Diary · 공개 베타",
   "footer.terms": "이 앱을 사용하면 이용약관 및 개인정보 처리방침에 동의하게 됩니다. 일기는 공개로 설정하지 않는 한 비공개 상태입니다.",

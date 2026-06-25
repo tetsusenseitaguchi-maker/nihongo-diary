@@ -3,15 +3,20 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui";
 import { Avatar } from "@/components/ObiePhoto";
-import { ReactionBar } from "@/components/ReactionBar";
 import { FollowButton } from "@/components/FollowButton";
-import { activityMessage, relativeTime, REACTIONS, type ActivityRow } from "@/lib/activity";
+import { FeedTimeline, type FeedItem } from "@/components/FeedTimeline";
 import { UserSearch } from "@/components/UserSearch";
-import { TagChips } from "@/components/TagChips";
+import { getServerT } from "@/lib/i18n-server";
 
 export const dynamic = "force-dynamic";
 
-type Profile = { id: string; username: string | null; display_name: string | null; avatar_url: string | null; level: string | null };
+type Profile = {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  level: string | null;
+};
 
 function nameOf(p?: Profile) {
   return p?.display_name || p?.username || "Learner";
@@ -20,12 +25,43 @@ function initialsOf(p?: Profile) {
   return nameOf(p).slice(0, 2).toUpperCase();
 }
 
+/** Compute consecutive-day streak from a sorted-desc list of unique diary dates (YYYY-MM-DD). */
+function computeStreak(sortedDesc: string[]): number {
+  if (sortedDesc.length === 0) return 0;
+  const toMs = (d: string) => new Date(d + "T00:00:00").getTime();
+  const DAY = 86400000;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let streak = 0;
+  let cursor = today.getTime();
+  for (const d of sortedDesc) {
+    const ms = toMs(d);
+    if (ms === cursor || ms === cursor - DAY) {
+      streak++;
+      cursor = ms - DAY;
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+function countThisMonth(dates: string[]): number {
+  const now = new Date();
+  const prefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  return dates.filter((d) => d.startsWith(prefix)).length;
+}
+
+const PAGE_SIZE = 20;
+
 export default async function FeedPage() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  const t = await getServerT();
 
   // Who I follow
   const { data: followRows } = await supabase
@@ -35,164 +71,166 @@ export default async function FeedPage() {
   const followingIds = (followRows ?? []).map((r) => r.following_id as string);
   const feedUserIds = [user.id, ...followingIds];
 
-  // Activities from me + people I follow
-  const { data: activityData } = await supabase
-    .from("activity_feed")
-    .select("id, user_id, activity_type, diary_entry_id, metadata, created_at")
-    .in("user_id", feedUserIds)
-    .order("created_at", { ascending: false })
-    .limit(40);
-  const activities = (activityData ?? []) as ActivityRow[];
+  // Compute 60-day window for streak calculation
+  const since = new Date();
+  since.setDate(since.getDate() - 62);
+  const sinceStr = since.toISOString().slice(0, 10);
 
-  // Author profiles, reactions, and suggestions fetched in parallel
-  const authorIds = Array.from(new Set(activities.map((a) => a.user_id)));
-  const activityIds = activities.map((a) => a.id);
-  const excluded = new Set([user.id, ...followingIds]);
-
-  // Collect diary_entry_ids from diary activities to fetch live is_public + snippet
-  const diaryEntryIds = activities
-    .filter((a) => a.diary_entry_id && (a.activity_type === "wrote_diary" || a.activity_type === "shared_diary"))
-    .map((a) => a.diary_entry_id as string);
-
-  const [{ data: authorData }, { data: reactionData }, { data: peopleData }, { data: diaryData }] = await Promise.all([
-    authorIds.length
-      ? supabase.from("profiles").select("id, username, display_name, avatar_url, level").in("id", authorIds)
+  // All parallel fetches
+  const [
+    { data: activityData },
+    { data: authorData },
+    { data: dateData },
+    { data: peopleData },
+  ] = await Promise.all([
+    supabase
+      .from("activity_feed")
+      .select("id, user_id, activity_type, diary_entry_id, metadata, created_at")
+      .in("user_id", feedUserIds)
+      .order("created_at", { ascending: false })
+      .limit(PAGE_SIZE + 1),
+    feedUserIds.length
+      ? supabase
+          .from("profiles")
+          .select("id, username, display_name, avatar_url, level")
+          .in("id", feedUserIds)
       : Promise.resolve({ data: [] as Profile[] }),
-    activityIds.length
-      ? supabase.from("reactions").select("activity_id, reaction_type, user_id").in("activity_id", activityIds)
-      : Promise.resolve({ data: [] as { activity_id: string; reaction_type: string; user_id: string }[] }),
+    // Diary dates for streak + monthly count per user
+    feedUserIds.length
+      ? supabase
+          .from("diary_entries")
+          .select("user_id, diary_date")
+          .in("user_id", feedUserIds)
+          .gte("diary_date", sinceStr)
+          .order("diary_date", { ascending: false })
+      : Promise.resolve({ data: [] as { user_id: string; diary_date: string }[] }),
+    // People to suggest (not already following)
     supabase.from("profiles").select("id, username, display_name, avatar_url, level").limit(20),
-    // RLS ensures only public entries (or own entries) are returned here
-    diaryEntryIds.length
-      ? supabase.from("diary_entries").select("id, is_public, title, tags, original_text").in("id", diaryEntryIds)
-      : Promise.resolve({ data: [] as { id: string; is_public: boolean; title: string | null; tags: string[]; original_text: string }[] }),
   ]);
 
-  // Map diary_entry_id → { is_public, title, snippet }
-  type DiaryMeta = { isPublic: boolean; title: string | null; tags: string[]; snippet: string };
-  const diaryMeta = new Map<string, DiaryMeta>();
-  for (const d of diaryData ?? []) {
-    const body = d.original_text ?? "";
-    diaryMeta.set(d.id, {
-      isPublic: Boolean(d.is_public),
-      title: d.title || null,
-      tags: d.tags ?? [],
-      snippet: body ? body.slice(0, 80) + (body.length > 80 ? "…" : "") : "",
-    });
+  const activities = (activityData ?? []).slice(0, PAGE_SIZE);
+  const hasMore = (activityData ?? []).length > PAGE_SIZE;
+
+  // Build per-user stats
+  const userStats: Record<string, { streak: number; monthlyCount: number }> = {};
+  const datesByUser = new Map<string, string[]>();
+  for (const row of dateData ?? []) {
+    const arr = datesByUser.get(row.user_id) ?? [];
+    arr.push(row.diary_date as string);
+    datesByUser.set(row.user_id, arr);
+  }
+  for (const uid of feedUserIds) {
+    const dates = datesByUser.get(uid) ?? [];
+    const unique = Array.from(new Set(dates)).sort().reverse();
+    userStats[uid] = {
+      streak: computeStreak(unique),
+      monthlyCount: countThisMonth(unique),
+    };
   }
 
+  // Fetch reactions and diary snippets for the first page of activities
+  const activityIds = activities.map((a) => a.id);
+  const diaryIds = activities
+    .filter((a) => a.diary_entry_id)
+    .map((a) => a.diary_entry_id as string);
+
+  const [{ data: reactionData }, { data: diaryData }] = await Promise.all([
+    activityIds.length
+      ? supabase
+          .from("reactions")
+          .select("activity_id, reaction_type, user_id")
+          .in("activity_id", activityIds)
+      : Promise.resolve({ data: [] as { activity_id: string; reaction_type: string; user_id: string }[] }),
+    diaryIds.length
+      ? supabase
+          .from("diary_entries")
+          .select("id, is_public, title, tags, original_text")
+          .in("id", diaryIds)
+      : Promise.resolve({
+          data: [] as {
+            id: string;
+            is_public: boolean;
+            title: string | null;
+            tags: string[];
+            original_text: string;
+          }[],
+        }),
+  ]);
+
+  // Build lookup maps
   const authors = new Map((authorData ?? []).map((p) => [p.id, p as Profile]));
-  const counts = new Map<string, Record<string, number>>();
-  const mine = new Map<string, string[]>();
+
+  type DiaryMeta = { id: string; is_public: boolean; title: string | null; tags: string[]; original_text: string };
+  const diaryMap = new Map<string, DiaryMeta>(
+    (diaryData ?? []).map((d) => [d.id, d as DiaryMeta]),
+  );
+
+  const rxCounts = new Map<string, Record<string, number>>();
+  const rxMine = new Map<string, string[]>();
   for (const r of reactionData ?? []) {
-    const c = counts.get(r.activity_id) ?? {};
+    const c = rxCounts.get(r.activity_id) ?? {};
     c[r.reaction_type] = (c[r.reaction_type] ?? 0) + 1;
-    counts.set(r.activity_id, c);
-    if (r.user_id === user.id) mine.set(r.activity_id, [...(mine.get(r.activity_id) ?? []), r.reaction_type]);
+    rxCounts.set(r.activity_id, c);
+    if (r.user_id === user.id)
+      rxMine.set(r.activity_id, [...(rxMine.get(r.activity_id) ?? []), r.reaction_type]);
   }
-  const suggestions = (peopleData ?? []).filter((p) => !excluded.has(p.id)).slice(0, 6) as Profile[];
+
+  const excluded = new Set([user.id, ...followingIds]);
+  const suggestions = (peopleData ?? [])
+    .filter((p) => !excluded.has(p.id))
+    .slice(0, 6) as Profile[];
+
+  // Build serialisable FeedItem array for client component
+  const initialItems: FeedItem[] = activities.map((a) => {
+    const p = authors.get(a.user_id);
+    const d = a.diary_entry_id ? diaryMap.get(a.diary_entry_id) : undefined;
+    const body = d?.original_text ?? "";
+    const stats = userStats[a.user_id] ?? { streak: 0, monthlyCount: 0 };
+    return {
+      activityId: a.id,
+      userId: a.user_id,
+      activityType: a.activity_type,
+      diaryEntryId: a.diary_entry_id ?? null,
+      createdAt: a.created_at,
+      authorName: nameOf(p),
+      authorUsername: p?.username ?? null,
+      authorAvatar: p?.avatar_url ?? null,
+      diaryIsPublic: Boolean(d?.is_public),
+      diaryTitle: d?.title ?? null,
+      diaryTags: d?.tags ?? [],
+      diarySnippet: body ? body.slice(0, 100) + (body.length > 100 ? "…" : "") : "",
+      streak: stats.streak,
+      monthlyCount: stats.monthlyCount,
+      reactionCounts: rxCounts.get(a.id) ?? {},
+      myReactions: rxMine.get(a.id) ?? [],
+    };
+  });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div>
-        <p className="text-sm font-medium text-muted">Learning Together</p>
-        <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-pine">Learning Feed</h1>
-        <p className="mt-1 text-ink/70">Cheer each other on — a little every day. 🌸</p>
+        <p className="text-sm font-medium text-muted">{t("feed.subtitle")}</p>
+        <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-pine">{t("feed.title")}</h1>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
-        {/* Feed */}
-        <div className="space-y-4">
-          {activities.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="font-serif text-lg font-bold text-pine">Your feed is quiet for now</p>
-              <p className="mx-auto mt-2 max-w-sm text-sm text-ink/70">
-                Follow other learners to see their progress here. Find someone in “Find learners” →
-              </p>
-            </Card>
-          ) : (
-            activities.map((a) => {
-              const author = authors.get(a.user_id);
-              // Use live is_public from diary_entries (not stale activity metadata)
-              const dm = a.diary_entry_id ? diaryMeta.get(a.diary_entry_id) : undefined;
-              const isDiaryActivity =
-                a.activity_type === "wrote_diary" || a.activity_type === "shared_diary";
-              const isPublicDiary = isDiaryActivity && !!a.diary_entry_id && dm?.isPublic;
-              return (
-                <Card key={a.id} className="p-5">
-                  <div className="flex items-center gap-3">
-                    {author?.avatar_url ? (
-                      <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-sage">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={author.avatar_url} alt={nameOf(author)} className="h-full w-full object-cover" />
-                      </span>
-                    ) : (
-                      <Avatar initials={initialsOf(author)} size={40} />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm text-ink">
-                        {author?.username ? (
-                          <Link href={`/profile/${author.username}`} className="font-semibold hover:text-pine">
-                            {nameOf(author)}
-                          </Link>
-                        ) : (
-                          <span className="font-semibold">{nameOf(author)}</span>
-                        )}{" "}
-                        {activityMessage(a)}
-                      </p>
-                      <p className="text-xs text-muted">{relativeTime(a.created_at)}</p>
-                    </div>
-                  </div>
+        {/* Timeline */}
+        <FeedTimeline
+          initialItems={initialItems}
+          feedUserIds={feedUserIds}
+          currentUserId={user.id}
+          userStats={userStats}
+          hasMore={hasMore}
+        />
 
-                  {/* Public diary: show tags + title + Japanese snippet + read link */}
-                  {isPublicDiary && (dm?.title || dm?.snippet) && (
-                    <Link
-                      href={`/diary/${a.diary_entry_id}`}
-                      className="mt-3 block rounded-xl bg-mint/40 px-4 py-3 transition-colors hover:bg-mint/60"
-                    >
-                      {(dm?.tags ?? []).length > 0 && (
-                        <div className="mb-1.5">
-                          <TagChips tags={dm.tags} />
-                        </div>
-                      )}
-                      {dm?.title && (
-                        <p className="mb-1 text-sm font-bold text-pine">{dm.title}</p>
-                      )}
-                      {dm?.snippet && (
-                        <p className="font-jp text-sm leading-relaxed text-ink/80 line-clamp-2">{dm.snippet}</p>
-                      )}
-                      <p className="mt-1.5 text-xs font-semibold text-moss-600">Read diary →</p>
-                    </Link>
-                  )}
-                  {isPublicDiary && !dm?.snippet && (
-                    <Link
-                      href={`/diary/${a.diary_entry_id}`}
-                      className="mt-3 inline-block rounded-lg bg-mint/50 px-3 py-2 text-sm font-semibold text-moss-600 hover:text-pine"
-                    >
-                      Read diary →
-                    </Link>
-                  )}
-
-                  <ReactionBar
-                    activityId={a.id}
-                    initialCounts={counts.get(a.id) ?? {}}
-                    initialMine={mine.get(a.id) ?? []}
-                  />
-                </Card>
-              );
-            })
-          )}
-        </div>
-
-        {/* Right rail */}
+        {/* Right rail (desktop) / Bottom section (mobile) */}
         <div className="space-y-4">
           <UserSearch />
-
           <Card className="p-5">
-            <h2 className="mb-1 font-serif text-lg font-bold text-pine">Find learners</h2>
-            <p className="mb-3 text-xs text-muted">Follow people to fill your feed.</p>
+            <h2 className="mb-1 font-serif text-lg font-bold text-pine">{t("feed.findLearners")}</h2>
+            <p className="mb-3 text-xs text-muted">{t("feed.findLearnersDesc")}</p>
             {suggestions.length === 0 ? (
-              <p className="py-4 text-center text-sm text-muted">No one to suggest yet.</p>
+              <p className="py-4 text-center text-sm text-muted">{t("feed.noSuggestions")}</p>
             ) : (
               <ul className="space-y-3">
                 {suggestions.map((p) => (
@@ -207,7 +245,10 @@ export default async function FeedPage() {
                     )}
                     <div className="min-w-0 flex-1">
                       {p.username ? (
-                        <Link href={`/profile/${p.username}`} className="block truncate text-sm font-semibold text-ink hover:text-pine">
+                        <Link
+                          href={`/profile/${p.username}`}
+                          className="block truncate text-sm font-semibold text-ink hover:text-pine"
+                        >
                           {nameOf(p)}
                         </Link>
                       ) : (
@@ -223,8 +264,10 @@ export default async function FeedPage() {
           </Card>
 
           <Card className="gloss-green p-5">
-            <p className="font-jp text-sm font-medium text-cream">毎日(まいにち)ちょっとずつ、いっしょに。</p>
-            <p className="mt-0.5 text-xs text-cream/75">Reactions: {REACTIONS.map((r) => r.label).join(" · ")}</p>
+            <p className="font-jp text-sm font-medium text-cream">
+              毎日(まいにち)ちょっとずつ、いっしょに。
+            </p>
+            <p className="mt-0.5 text-xs text-cream/75">👍 💪 🔥 🎉</p>
           </Card>
         </div>
       </div>

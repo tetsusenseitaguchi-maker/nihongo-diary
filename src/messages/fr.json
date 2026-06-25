@@ -11,12 +11,10 @@
   "nav.upgrade": "Améliorer",
   "nav.home": "Accueil",
   "nav.write": "Écrire",
-
   "sidebar.keepGoing": "Continue !",
   "sidebar.startToday": "Commençons aujourd'hui !",
   "sidebar.legend": "En route pour la légende !",
   "sidebar.daysTo": "Encore {remaining} jour(s) pour {next} jours consécutifs",
-
   "dashboard.todayDiary": "Journal d'aujourd'hui",
   "dashboard.aiFeedback": "Correction IA",
   "dashboard.templates": "Modèles",
@@ -34,11 +32,21 @@
   "dashboard.stats.longestLabel": "Record : {n} jours",
   "dashboard.feedDesc": "Vois ce que les autres écrivent — inspire-toi et connecte-toi.",
   "dashboard.feedButton": "Voir le fil",
+  "feed.title": "Fil d'Apprentissage",
+  "feed.subtitle": "Encouragez-vous — un peu chaque jour.",
+  "feed.empty": "Votre fil est vide pour l'instant",
+  "feed.emptyDesc": "Suis d'autres apprenants pour voir leur progrès ici.",
+  "feed.loadMore": "Charger plus",
+  "feed.findLearners": "Trouver des apprenants",
+  "feed.findLearnersDesc": "Suis des gens pour remplir ton fil.",
+  "feed.noSuggestions": "Aucune suggestion pour l'instant.",
+  "feed.readDiary": "Lire le journal →",
+  "feed.comment": "Commenter",
+  "feed.monthlyCount": "{n} ce mois",
   "dashboard.seeCalendar": "Voir le calendrier →",
   "dashboard.changePhoto": "Changer la photo",
   "dashboard.obieTip": "Conseil d'Obie",
   "dashboard.noRecent": "Pas encore de journaux.",
-
   "write.level": "Niveau",
   "write.style": "Style",
   "write.mood": "Humeur",
@@ -55,7 +63,6 @@
   "write.upgradeBtn": "Améliorer →",
   "write.savedMsg": "Journal enregistré ! ",
   "write.viewSaved": "Voir →",
-
   "profile.title": "Profil",
   "profile.editProfile": "Modifier le profil",
   "profile.viewPublic": "Voir le profil public →",
@@ -69,14 +76,11 @@
   "profile.language.desc": "Choisissez la langue pour les menus, les boutons et les traductions.",
   "profile.plan.title": "Votre formule",
   "profile.plan.upgrade": "Améliorer →",
-
   "common.seeAll": "Voir tout",
   "common.loading": "Chargement…",
   "common.daysStreak": "{n} jours consécutifs",
   "common.days": "jours",
-
   "lang.label": "Langue",
-
   "footer.disclaimer": "Les corrections IA peuvent ne pas être parfaites. Utilisez-les comme aide à l'apprentissage.",
   "footer.beta": "Nihongo Diary · bêta publique",
   "footer.terms": "En utilisant cette app, vous acceptez nos Conditions et notre Politique de confidentialité. Vos journaux restent privés sauf si vous les rendez publics.",

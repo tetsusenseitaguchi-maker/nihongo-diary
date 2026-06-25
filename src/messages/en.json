@@ -11,12 +11,10 @@
   "nav.upgrade": "Upgrade",
   "nav.home": "Home",
   "nav.write": "Write",
-
   "sidebar.keepGoing": "Keep going!",
   "sidebar.startToday": "Let's start today!",
   "sidebar.legend": "Building a legend!",
   "sidebar.daysTo": "{remaining} more day(s) to {next}-day streak",
-
   "dashboard.todayDiary": "Today's Diary",
   "dashboard.aiFeedback": "AI Feedback",
   "dashboard.templates": "Templates",
@@ -34,11 +32,21 @@
   "dashboard.stats.longestLabel": "Longest: {n} days",
   "dashboard.feedDesc": "See what others are writing — get inspired and connect.",
   "dashboard.feedButton": "View Feed",
+  "feed.title": "Learning Feed",
+  "feed.subtitle": "Cheer each other on — a little every day.",
+  "feed.empty": "Your feed is quiet for now",
+  "feed.emptyDesc": "Follow other learners to see their progress here.",
+  "feed.loadMore": "Load more",
+  "feed.findLearners": "Find learners",
+  "feed.findLearnersDesc": "Follow people to fill your feed.",
+  "feed.noSuggestions": "No one to suggest yet.",
+  "feed.readDiary": "Read diary →",
+  "feed.comment": "Comment",
+  "feed.monthlyCount": "{n} this month",
   "dashboard.seeCalendar": "See calendar →",
   "dashboard.changePhoto": "Change photo",
   "dashboard.obieTip": "Obie's tip",
   "dashboard.noRecent": "No diaries yet.",
-
   "write.level": "Level",
   "write.style": "Style",
   "write.mood": "Mood",
@@ -55,7 +63,6 @@
   "write.upgradeBtn": "Upgrade →",
   "write.savedMsg": "Diary saved! ",
   "write.viewSaved": "View →",
-
   "profile.title": "Profile",
   "profile.editProfile": "Edit profile",
   "profile.viewPublic": "View public profile →",
@@ -69,14 +76,11 @@
   "profile.language.desc": "Choose the language for menus, buttons, and translations.",
   "profile.plan.title": "Your Plan",
   "profile.plan.upgrade": "Upgrade →",
-
   "common.seeAll": "See all",
   "common.loading": "Loading…",
   "common.daysStreak": "{n}-day streak",
   "common.days": "days",
-
   "lang.label": "Language",
-
   "footer.disclaimer": "AI corrections may not be perfect. Please use them as learning support.",
   "footer.beta": "Nihongo Diary · public beta",
   "footer.terms": "By using this app you agree to our Terms & Privacy. Your diaries stay private unless you make them public.",

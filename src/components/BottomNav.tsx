@@ -9,10 +9,10 @@ import { useT } from "@/contexts/locale";
 /** Map English mobile nav labels to i18n keys. */
 const MOB_KEYS: Record<string, string> = {
   Home: "nav.home",
-  Calendar: "nav.calendar",
   Write: "nav.write",
+  Feed: "nav.feed",
   History: "nav.history",
-  Support: "nav.support",
+  Calendar: "nav.calendar",
 };
 
 export function BottomNav() {

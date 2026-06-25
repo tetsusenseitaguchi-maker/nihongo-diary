@@ -11,12 +11,10 @@
   "nav.upgrade": "Upgrade",
   "nav.home": "Startseite",
   "nav.write": "Schreiben",
-
   "sidebar.keepGoing": "Weiter so!",
   "sidebar.startToday": "Fang heute an!",
   "sidebar.legend": "Eine Legende entsteht!",
   "sidebar.daysTo": "Noch {remaining} Tag(e) bis zur {next}-Tage-Serie",
-
   "dashboard.todayDiary": "Heutiges Tagebuch",
   "dashboard.aiFeedback": "KI-Korrektur",
   "dashboard.templates": "Vorlagen",
@@ -34,11 +32,21 @@
   "dashboard.stats.longestLabel": "Rekord: {n} Tage",
   "dashboard.feedDesc": "Sieh, was andere schreiben — lass dich inspirieren und vernetze dich.",
   "dashboard.feedButton": "Feed ansehen",
+  "feed.title": "Lernfeed",
+  "feed.subtitle": "Gegenseitig anfeuern — täglich ein bisschen.",
+  "feed.empty": "Dein Feed ist noch leer",
+  "feed.emptyDesc": "Folge anderen Lernenden, um ihre Fortschritte zu sehen.",
+  "feed.loadMore": "Mehr laden",
+  "feed.findLearners": "Lernende finden",
+  "feed.findLearnersDesc": "Folge Leuten, um deinen Feed zu füllen.",
+  "feed.noSuggestions": "Noch keine Vorschläge.",
+  "feed.readDiary": "Tagebuch lesen →",
+  "feed.comment": "Kommentieren",
+  "feed.monthlyCount": "{n} diesen Monat",
   "dashboard.seeCalendar": "Kalender ansehen →",
   "dashboard.changePhoto": "Foto ändern",
   "dashboard.obieTip": "Obies Tipp",
   "dashboard.noRecent": "Noch keine Einträge.",
-
   "write.level": "Niveau",
   "write.style": "Stil",
   "write.mood": "Stimmung",
@@ -55,7 +63,6 @@
   "write.upgradeBtn": "Upgrade →",
   "write.savedMsg": "Tagebuch gespeichert! ",
   "write.viewSaved": "Ansehen →",
-
   "profile.title": "Profil",
   "profile.editProfile": "Profil bearbeiten",
   "profile.viewPublic": "Öffentliches Profil ansehen →",
@@ -69,14 +76,11 @@
   "profile.language.desc": "Sprache für Menüs, Schaltflächen und Übersetzungen wählen.",
   "profile.plan.title": "Dein Plan",
   "profile.plan.upgrade": "Upgrade →",
-
   "common.seeAll": "Alle ansehen",
   "common.loading": "Wird geladen…",
   "common.daysStreak": "{n} Tage in Folge",
   "common.days": "Tage",
-
   "lang.label": "Sprache",
-
   "footer.disclaimer": "KI-Korrekturen sind möglicherweise nicht perfekt. Bitte als Lernhilfe verwenden.",
   "footer.beta": "Nihongo Diary · öffentliche Beta",
   "footer.terms": "Mit der Nutzung dieser App stimmst du unseren Nutzungsbedingungen und Datenschutzrichtlinien zu.",

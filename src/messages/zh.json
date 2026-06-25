@@ -11,12 +11,10 @@
   "nav.upgrade": "升级",
   "nav.home": "首页",
   "nav.write": "写作",
-
   "sidebar.keepGoing": "继续加油！",
   "sidebar.startToday": "从今天开始吧！",
   "sidebar.legend": "成为传奇中！",
   "sidebar.daysTo": "还差 {remaining} 天达到 {next} 天连续",
-
   "dashboard.todayDiary": "今日日记",
   "dashboard.aiFeedback": "AI 批改",
   "dashboard.templates": "模板",
@@ -34,11 +32,21 @@
   "dashboard.stats.longestLabel": "最长：{n} 天",
   "dashboard.feedDesc": "看看其他人在写什么 — 获得灵感，相互交流。",
   "dashboard.feedButton": "查看动态",
+  "feed.title": "学习动态",
+  "feed.subtitle": "相互加油 — 每天进步一点。",
+  "feed.empty": "你的动态还没有内容",
+  "feed.emptyDesc": "关注其他学习者，在这里看到他们的进步。",
+  "feed.loadMore": "加载更多",
+  "feed.findLearners": "查找学习者",
+  "feed.findLearnersDesc": "关注他人来填充你的动态。",
+  "feed.noSuggestions": "暂无推荐。",
+  "feed.readDiary": "阅读日记 →",
+  "feed.comment": "评论",
+  "feed.monthlyCount": "本月 {n} 篇",
   "dashboard.seeCalendar": "查看日历 →",
   "dashboard.changePhoto": "更换照片",
   "dashboard.obieTip": "Obie 的建议",
   "dashboard.noRecent": "还没有日记。",
-
   "write.level": "级别",
   "write.style": "风格",
   "write.mood": "心情",
@@ -55,7 +63,6 @@
   "write.upgradeBtn": "立即升级 →",
   "write.savedMsg": "日记已保存！",
   "write.viewSaved": "查看 →",
-
   "profile.title": "个人资料",
   "profile.editProfile": "编辑资料",
   "profile.viewPublic": "查看公开主页 →",
@@ -69,14 +76,11 @@
   "profile.language.desc": "选择菜单、按钮和翻译的显示语言。",
   "profile.plan.title": "您的方案",
   "profile.plan.upgrade": "升级 →",
-
   "common.seeAll": "查看全部",
   "common.loading": "加载中…",
   "common.daysStreak": "连续 {n} 天",
   "common.days": "天",
-
   "lang.label": "语言",
-
   "footer.disclaimer": "AI 批改可能并不完美，请将其作为学习辅助工具使用。",
   "footer.beta": "Nihongo Diary · 公开测试版",
   "footer.terms": "使用本应用即表示您同意我们的服务条款和隐私政策。您的日记默认私密，除非您设为公开。",
