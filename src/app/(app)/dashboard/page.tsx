@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -67,11 +68,9 @@ export default async function DashboardPage() {
               aria-label="Edit your profile photo"
             >
               {avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+                <Image src={avatarUrl} alt={displayName} fill className="object-cover" sizes="(min-width: 640px) 176px, 144px" />
               ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src="/obie.png" alt="Obie" className="h-full w-full object-cover opacity-90" />
+                <Image src="/obie.png" alt="Obie" fill className="object-cover opacity-90" sizes="(min-width: 640px) 176px, 144px" />
               )}
               <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-pine/70 py-1.5 text-[11px] font-semibold text-cream opacity-0 transition-opacity group-hover:opacity-100">
                 <Icon.camera className="h-3.5 w-3.5" /> Change photo
@@ -222,8 +221,7 @@ export default async function DashboardPage() {
 
           <Card className="gloss-green relative overflow-hidden p-0">
             <div className="relative h-44">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/obie.png" alt="Obie" className="h-full w-full object-cover" />
+              <Image src="/obie.png" alt="Obie" fill className="object-cover" sizes="(min-width: 1024px) 400px, 100vw" priority />
               <div className="absolute right-3 top-3 max-w-[60%] rounded-2xl rounded-tr-sm bg-paper/95 px-3 py-2 shadow-card">
                 <p className="font-jp text-xs font-semibold leading-snug text-ink">
                   <Furigana text="小(ちい)さな一歩(いっぽ)を、毎日(まいにち)。" />

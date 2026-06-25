@@ -43,18 +43,22 @@ export default async function FeedPage() {
     .limit(40);
   const activities = (activityData ?? []) as ActivityRow[];
 
-  // Author profiles
+  // Author profiles, reactions, and suggestions fetched in parallel
   const authorIds = Array.from(new Set(activities.map((a) => a.user_id)));
-  const { data: authorData } = authorIds.length
-    ? await supabase.from("profiles").select("id, username, display_name, avatar_url, level").in("id", authorIds)
-    : { data: [] as Profile[] };
-  const authors = new Map((authorData ?? []).map((p) => [p.id, p as Profile]));
-
-  // Reactions for these activities
   const activityIds = activities.map((a) => a.id);
-  const { data: reactionData } = activityIds.length
-    ? await supabase.from("reactions").select("activity_id, reaction_type, user_id").in("activity_id", activityIds)
-    : { data: [] as { activity_id: string; reaction_type: string; user_id: string }[] };
+  const excluded = new Set([user.id, ...followingIds]);
+
+  const [{ data: authorData }, { data: reactionData }, { data: peopleData }] = await Promise.all([
+    authorIds.length
+      ? supabase.from("profiles").select("id, username, display_name, avatar_url, level").in("id", authorIds)
+      : Promise.resolve({ data: [] as Profile[] }),
+    activityIds.length
+      ? supabase.from("reactions").select("activity_id, reaction_type, user_id").in("activity_id", activityIds)
+      : Promise.resolve({ data: [] as { activity_id: string; reaction_type: string; user_id: string }[] }),
+    supabase.from("profiles").select("id, username, display_name, avatar_url, level").limit(20),
+  ]);
+
+  const authors = new Map((authorData ?? []).map((p) => [p.id, p as Profile]));
   const counts = new Map<string, Record<string, number>>();
   const mine = new Map<string, string[]>();
   for (const r of reactionData ?? []) {
@@ -63,13 +67,6 @@ export default async function FeedPage() {
     counts.set(r.activity_id, c);
     if (r.user_id === user.id) mine.set(r.activity_id, [...(mine.get(r.activity_id) ?? []), r.reaction_type]);
   }
-
-  // Suggested users to follow (Find learners)
-  const excluded = new Set([user.id, ...followingIds]);
-  const { data: peopleData } = await supabase
-    .from("profiles")
-    .select("id, username, display_name, avatar_url, level")
-    .limit(20);
   const suggestions = (peopleData ?? []).filter((p) => !excluded.has(p.id)).slice(0, 6) as Profile[];
 
   return (

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect, useTransition } from "react";
 import { Furigana } from "@/components/Furigana";
 import { Card, Badge, LinkButton } from "@/components/ui";
@@ -265,13 +266,16 @@ export default function SupportPage() {
       <Card className="overflow-hidden p-0">
         <div className="flex flex-col items-center gap-5 p-6 text-center sm:flex-row sm:items-start sm:p-7 sm:text-left">
           {/* Portrait photo — circular crop focused on face */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/tetsu-sensei.jpg"
-            alt="Tetsu Sensei"
-            className="h-24 w-24 shrink-0 rounded-full object-cover sm:h-28 sm:w-28"
-            style={{ objectPosition: "50% 25%" }}
-          />
+          <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full sm:h-28 sm:w-28">
+            <Image
+              src="/tetsu-sensei.jpg"
+              alt="Tetsu Sensei"
+              fill
+              className="object-cover"
+              style={{ objectPosition: "50% 25%" }}
+              sizes="112px"
+            />
+          </div>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-bold uppercase tracking-wide text-muted">Created by</p>
             <h3 className="mt-0.5 font-serif text-xl font-bold text-pine">Tetsu Sensei</h3>
