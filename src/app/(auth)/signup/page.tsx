@@ -5,9 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, Button } from "@/components/ui";
+import { useT, useLocale } from "@/contexts/locale";
 
 export default function SignupPage() {
   const router = useRouter();
+  const t = useT();
+  const { locale } = useLocale();
 
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
@@ -28,10 +31,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        // Passed to the DB trigger so the profile row gets a name + username.
         data: { display_name: displayName, username },
-        // Use window.location.origin so the confirmation link always points to
-        // the correct host — localhost in dev, nihongo-diary.vercel.app in prod.
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
@@ -44,39 +44,47 @@ export default function SignupPage() {
 
     // If email confirmation is OFF, a session exists immediately.
     if (data.session) {
+      // Sync the pre-login language choice to the user's profile so it
+      // persists across devices (cookie already set by LocaleProvider).
+      if (locale !== "en") {
+        await supabase
+          .from("profiles")
+          .update({ preferred_language: locale })
+          .eq("id", data.session.user.id);
+      }
       router.push("/profile-setup");
       router.refresh();
       return;
     }
 
     // Email confirmation ON — ask the user to verify, then log in.
-    setNotice("Check your email to confirm your account, then log in.");
+    setNotice(t("signup.confirmEmail"));
     setLoading(false);
   }
 
   return (
     <Card className="p-7">
-      <h1 className="font-serif text-2xl font-bold text-pine">Create your account</h1>
-      <p className="mt-1 text-sm text-muted">Start your daily Japanese diary. 🌸</p>
+      <h1 className="font-serif text-2xl font-bold text-pine">{t("signup.title")}</h1>
+      <p className="mt-1 text-sm text-muted">{t("signup.subtitle")}</p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        <Field label="Display name" value={displayName} onChange={setDisplayName} placeholder="Yuki Sato" />
-        <Field label="Username" value={username} onChange={setUsername} placeholder="yuki" />
-        <Field label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
-        <Field label="Password" type="password" value={password} onChange={setPassword} placeholder="At least 6 characters" />
+        <Field label={t("signup.displayName")} value={displayName} onChange={setDisplayName} placeholder="Yuki Sato" />
+        <Field label={t("signup.username")} value={username} onChange={setUsername} placeholder="yuki" />
+        <Field label={t("signup.email")} type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
+        <Field label={t("signup.password")} type="password" value={password} onChange={setPassword} placeholder={t("signup.passwordPlaceholder")} />
 
         {error && <p className="rounded-lg bg-apricot/10 px-3 py-2 text-sm text-apricot">{error}</p>}
         {notice && <p className="rounded-lg bg-mint px-3 py-2 text-sm text-pine">{notice}</p>}
 
         <Button type="submit" size="lg" disabled={loading} className="w-full">
-          {loading ? "Creating…" : "Sign up"}
+          {loading ? t("signup.submitting") : t("signup.submit")}
         </Button>
       </form>
 
       <p className="mt-5 text-center text-sm text-muted">
-        Already have an account?{" "}
+        {t("signup.hasAccount")}{" "}
         <Link href="/login" className="font-semibold text-moss-600 hover:text-pine">
-          Log in
+          {t("signup.loginLink")}
         </Link>
       </p>
     </Card>

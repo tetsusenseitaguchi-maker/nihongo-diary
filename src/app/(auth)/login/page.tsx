@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, Button } from "@/components/ui";
+import { useT } from "@/contexts/locale";
 
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const redirect = params.get("redirect") || "/dashboard";
+  const t = useT();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,24 +35,24 @@ function LoginForm() {
 
   return (
     <Card className="p-7">
-      <h1 className="font-serif text-2xl font-bold text-pine">Welcome back</h1>
-      <p className="mt-1 text-sm text-muted">Log in to keep your streak going.</p>
+      <h1 className="font-serif text-2xl font-bold text-pine">{t("login.title")}</h1>
+      <p className="mt-1 text-sm text-muted">{t("login.subtitle")}</p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        <Field label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
-        <Field label="Password" type="password" value={password} onChange={setPassword} placeholder="••••••••" />
+        <Field label={t("login.email")} type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
+        <Field label={t("login.password")} type="password" value={password} onChange={setPassword} placeholder="••••••••" />
 
         {error && <p className="rounded-lg bg-apricot/10 px-3 py-2 text-sm text-apricot">{error}</p>}
 
         <Button type="submit" size="lg" disabled={loading} className="w-full">
-          {loading ? "Logging in…" : "Log in"}
+          {loading ? t("login.submitting") : t("login.submit")}
         </Button>
       </form>
 
       <p className="mt-5 text-center text-sm text-muted">
-        No account yet?{" "}
+        {t("login.noAccount")}{" "}
         <Link href="/signup" className="font-semibold text-moss-600 hover:text-pine">
-          Sign up
+          {t("login.signupLink")}
         </Link>
       </p>
     </Card>
