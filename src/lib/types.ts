@@ -27,9 +27,21 @@ export interface MistakeItem {
   note: string;
 }
 
+export interface PointExample {
+  jp: string; // Japanese with 漢字(かな) notation — rendered by Furigana component
+  en: string; // English translation / explanation
+}
+
 export interface MiniLessonPoint {
   text: string;
-  example?: string;
+  example?: string;          // existing single example (kept for backward compat)
+  examples?: PointExample[]; // NEW: 2–3 richer examples with English translations
+}
+
+export interface CommonMistake {
+  wrong: string; // ✗ incorrect form
+  right: string; // ✓ correct form
+  note: string;  // short English explanation of why it's wrong
 }
 
 export interface MiniLesson {
@@ -43,6 +55,7 @@ export interface MiniLesson {
   exampleJapaneseRuby: string;
   exampleEnglish: string;
   shortNote: string;
+  commonMistakes?: CommonMistake[]; // NEW
 }
 
 export interface Correction {
