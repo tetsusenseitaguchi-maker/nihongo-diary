@@ -82,21 +82,24 @@ export default async function CalendarPage() {
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-        {/* Month grid */}
-        <Card className="p-6">
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-serif text-lg font-bold text-pine">{monthLabel(year, month)}</h2>
-            <div className="flex items-center gap-4 text-xs text-muted">
-              <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-moss" /> 書いた日</span>
-              <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded ring-2 ring-moss ring-inset" /> 今日</span>
+        {/* Month grid — min-w-0 wrapper prevents grid item from overflowing on mobile */}
+        <div className="min-w-0 overflow-hidden">
+          <Card className="p-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="font-serif text-lg font-bold text-pine">{monthLabel(year, month)}</h2>
+              <div className="flex items-center gap-3 text-xs text-muted">
+                <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-moss" /> 書いた日</span>
+                <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded ring-2 ring-moss ring-inset" /> 今日</span>
+              </div>
             </div>
-          </div>
-          <MiniCalendar year={year} month={month} activeDays={stats.activeDaysThisMonth} today={today} dayLinks={dayLinks} />
-          <p className="mt-3 text-xs text-muted">書いた日（緑）をタップすると、その日の日記がひらきます。Tap a green day to open that diary.</p>
-        </Card>
+            <MiniCalendar year={year} month={month} activeDays={stats.activeDaysThisMonth} today={today} dayLinks={dayLinks} />
+            <p className="mt-3 text-xs text-muted">書いた日（緑）をタップすると、その日の日記がひらきます。</p>
+          </Card>
+        </div>
 
-        {/* Entries this month */}
-        <Card className="p-6">
+        {/* Entries this month — min-w-0 prevents the entries list from overflowing on mobile */}
+        <div className="min-w-0 overflow-hidden">
+          <Card className="p-6">
           <h2 className="mb-4 font-serif text-lg font-bold text-pine">今月の日記</h2>
           {thisMonthEntries.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-8 text-center">
@@ -130,7 +133,8 @@ export default async function CalendarPage() {
                 : "今日からまた一歩。短くても大丈夫です🌸"}
             </p>
           </div>
-        </Card>
+          </Card>
+        </div>
       </div>
     </div>
   );
