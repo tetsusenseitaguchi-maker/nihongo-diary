@@ -3,6 +3,7 @@ import { Logo } from "@/components/Logo";
 import { Obie } from "@/components/Obie";
 import { LinkButton, Card, Badge, SectionLabel } from "@/components/ui";
 import { Icon, renderIcon } from "@/components/icons";
+import { PricingGrid } from "@/components/PricingGrid";
 
 const features = [
   {
@@ -270,59 +271,8 @@ export default function LandingPage() {
             Start free. Upgrade when you&apos;re ready.
           </h2>
         </div>
-        <div className="mx-auto mt-10 grid max-w-3xl gap-5 sm:grid-cols-2">
-          <Card className="p-7">
-            <h3 className="font-serif text-xl font-bold text-pine">Free</h3>
-            <p className="mt-1 text-sm text-muted">For building the habit.</p>
-            <p className="mt-4 font-serif text-4xl font-extrabold text-pine">
-              ¥0
-            </p>
-            <ul className="mt-6 space-y-2.5 text-[15px] text-ink/75">
-              {[
-                "Daily diary writing",
-                "AI corrections & natural rewrites",
-                "Saved history & calendar",
-                "Templates and Obie tips",
-              ].map((t) => (
-                <li key={t} className="flex items-center gap-2.5">
-                  <Icon.check className="h-4 w-4 text-moss" /> {t}
-                </li>
-              ))}
-            </ul>
-            <LinkButton href="/signup" className="mt-7 w-full">
-              Start for free
-            </LinkButton>
-          </Card>
-
-          <Card className="relative border-moss/50 bg-mint/30 p-7">
-            <Badge tone="apricot" className="absolute right-5 top-5">
-              Coming soon
-            </Badge>
-            <h3 className="font-serif text-xl font-bold text-pine">Pro</h3>
-            <p className="mt-1 text-sm text-muted">For serious daily learners.</p>
-            <p className="mt-4 font-serif text-4xl font-extrabold text-pine">
-              ¥—
-            </p>
-            <ul className="mt-6 space-y-2.5 text-[15px] text-ink/75">
-              {[
-                "Everything in Free",
-                "Unlimited corrections",
-                "Deeper feedback & explanations",
-                "Follow other learners (soon)",
-              ].map((t) => (
-                <li key={t} className="flex items-center gap-2.5">
-                  <Icon.check className="h-4 w-4 text-moss" /> {t}
-                </li>
-              ))}
-            </ul>
-            <LinkButton
-              href="/signup"
-              variant="secondary"
-              className="mt-7 w-full"
-            >
-              Join the waitlist
-            </LinkButton>
-          </Card>
+        <div className="mt-10">
+          <PricingGrid mode="landing" />
         </div>
       </section>
 
