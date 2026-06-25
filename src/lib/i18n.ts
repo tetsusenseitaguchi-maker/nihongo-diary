@@ -1,7 +1,7 @@
-export type Locale = "en" | "es" | "fr" | "zh" | "ko" | "pt" | "ja";
+export type Locale = "en" | "es" | "fr" | "zh" | "ko" | "ja" | "de" | "it";
 export type Messages = Record<string, string>;
 
-export const LOCALES: Locale[] = ["en", "es", "fr", "zh", "ko", "pt", "ja"];
+export const LOCALES: Locale[] = ["en", "es", "fr", "zh", "ko", "ja", "de", "it"];
 export const DEFAULT_LOCALE: Locale = "en";
 export const LOCALE_COOKIE = "NEXT_LOCALE";
 
@@ -30,6 +30,7 @@ export const messageLoaders: Record<Locale, () => Promise<Messages>> = {
   fr: () => import("@/messages/fr.json").then((m) => m.default as Messages),
   zh: () => import("@/messages/zh.json").then((m) => m.default as Messages),
   ko: () => import("@/messages/ko.json").then((m) => m.default as Messages),
-  pt: () => import("@/messages/pt.json").then((m) => m.default as Messages),
   ja: () => import("@/messages/ja.json").then((m) => m.default as Messages),
+  de: () => import("@/messages/de.json").then((m) => m.default as Messages),
+  it: () => import("@/messages/it.json").then((m) => m.default as Messages),
 };

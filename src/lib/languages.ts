@@ -4,7 +4,7 @@ export const SUPPORTED_LANGUAGES = [
   { code: "fr", label: "Français",   display: "French" },
   { code: "zh", label: "中文",        display: "Chinese (Simplified)" },
   { code: "ko", label: "한국어",      display: "Korean" },
-  { code: "pt", label: "Português",  display: "Portuguese" },
+  { code: "ja", label: "日本語",      display: "Japanese" },
   { code: "de", label: "Deutsch",    display: "German" },
   { code: "it", label: "Italiano",   display: "Italian" },
 ] as const;

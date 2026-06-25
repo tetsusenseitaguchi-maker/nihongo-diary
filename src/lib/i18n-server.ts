@@ -8,10 +8,11 @@ import es from "@/messages/es.json";
 import fr from "@/messages/fr.json";
 import zh from "@/messages/zh.json";
 import ko from "@/messages/ko.json";
-import pt from "@/messages/pt.json";
 import ja from "@/messages/ja.json";
+import de from "@/messages/de.json";
+import it from "@/messages/it.json";
 
-const ALL_MESSAGES: Record<Locale, Messages> = { en, es, fr, zh, ko, pt, ja } as Record<
+const ALL_MESSAGES: Record<Locale, Messages> = { en, es, fr, zh, ko, ja, de, it } as Record<
   Locale,
   Messages
 >;
