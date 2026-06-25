@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { normalizePlan, limitsFor } from "@/lib/plans";
+import { useState } from "react";
+import { limitsFor, type Plan } from "@/lib/plans";
 import { MINI_LESSONS } from "@/lib/lessons";
 import { DrillList } from "@/components/PracticeDrills";
 import { Icon } from "@/components/icons";
@@ -12,29 +11,13 @@ const LEVELS = ["N5", "N4", "N3", "Natural"] as const;
 
 // ── MiniLessonReview ────────────────────────────────────────────────────────
 
-export function MiniLessonReview() {
-  const [plan, setPlan] = useState<string | null>(null);
+export function MiniLessonReview({ plan }: { plan: Plan | null }) {
   const [lessonId, setLessonId] = useState(1);
   const [level, setLevel] = useState<string>("N4");
   const [drills, setDrills] = useState<PracticeDrill[]>([]);
   const [lessonTitle, setLessonTitle] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Fetch plan once on mount
-  useEffect(() => {
-    (async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setPlan("free"); return; }
-      const { data } = await supabase
-        .from("profiles")
-        .select("plan")
-        .eq("id", user.id)
-        .single();
-      setPlan(normalizePlan(data?.plan));
-    })();
-  }, []);
 
   const isSupportUser = plan !== null && limitsFor(plan).reviewDrills;
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { Furigana } from "@/components/Furigana";
 import { Card, Badge, LinkButton } from "@/components/ui";
 import { Icon } from "@/components/icons";
@@ -37,7 +37,9 @@ const KEY_IDEAS: { emoji: string; title: string; explanation: string }[] = [
 
 export default function SupportPage() {
   const [tab, setTab] = useState<Tab>("templates");
-  const [plan, setPlan] = useState<Plan>("free");
+  const [plan, setPlan] = useState<Plan | null>(null);
+  const [openLessonId, setOpenLessonId] = useState<number | null>(null);
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
     const t = new URLSearchParams(window.location.search).get("tab");
@@ -48,13 +50,13 @@ export default function SupportPage() {
     (async () => {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) { setPlan("free"); return; }
       const { data } = await supabase.from("profiles").select("plan").eq("id", user.id).single();
       setPlan(normalizePlan(data?.plan));
     })();
   }, []);
 
-  const canReadLibrary = limitsFor(plan).lessonLibrary;
+  const canReadLibrary = plan !== null && limitsFor(plan).lessonLibrary;
 
   return (
     <div className="space-y-6">
@@ -91,7 +93,7 @@ export default function SupportPage() {
           ] as [Tab, string][]).map(([t, label]) => (
             <button
               key={t}
-              onClick={() => setTab(t)}
+              onClick={() => startTransition(() => setTab(t))}
               className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                 tab === t ? "bg-pine text-cream" : "text-pine hover:bg-mint"
               }`}
@@ -158,7 +160,7 @@ export default function SupportPage() {
       )}
 
       {/* MINI LESSON REVIEW DRILLS */}
-      {tab === "review" && <MiniLessonReview />}
+      {tab === "review" && <MiniLessonReview plan={plan} />}
 
       {/* MINI LESSON LIBRARY */}
       {tab === "lessons" && (
@@ -186,61 +188,77 @@ export default function SupportPage() {
             </div>
           )}
 
-          {MINI_LESSONS.map((l) => (
-            <Card key={l.id} className="p-5">
-              <div className="flex items-start gap-3">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-pine text-sm font-bold text-cream">
-                  {l.order}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-serif text-lg font-bold text-pine">{l.title}</h3>
-                  <p className="mt-1 text-sm leading-relaxed text-ink/80">{l.shortExplanation}</p>
+          {MINI_LESSONS.map((l) => {
+            const isOpen = openLessonId === l.id;
+            return (
+              <Card key={l.id} className="overflow-hidden p-0">
+                {/* Accordion header — always visible, click to expand */}
+                <button
+                  type="button"
+                  onClick={() => setOpenLessonId(isOpen ? null : l.id)}
+                  className="flex w-full items-start gap-3 p-5 text-left"
+                >
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-pine text-sm font-bold text-cream">
+                    {l.order}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-serif text-lg font-bold text-pine">{l.title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-ink/80">{l.shortExplanation}</p>
+                  </div>
+                  <Icon.arrow
+                    className={`mt-2 h-5 w-5 shrink-0 text-moss-600 transition-transform ${isOpen ? "rotate-90" : ""}`}
+                  />
+                </button>
 
-                  {canReadLibrary ? (
-                    <>
-                      <div className="mt-3 rounded-xl bg-mint/40 p-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-moss-600">🧠 Visual Image</p>
-                        <p className="mt-0.5 text-sm leading-relaxed text-ink/85">{l.visualImage}</p>
-                      </div>
-                      {l.points && l.points.length > 0 && (
-                        <ul className="mt-3 space-y-1.5">
-                          {l.points.map((pt, i) => (
-                            <li key={i} className="flex items-start gap-2 rounded-xl bg-paper/70 px-3 py-2.5 text-sm">
-                              <span className="mt-0.5 shrink-0 font-bold text-moss-600">{i + 1}.</span>
-                              <span className="min-w-0">
-                                <span className="text-ink/85">{pt.text}</span>
-                                {pt.example && (
-                                  <span className="mt-0.5 block font-jp text-xs text-ink/55">
-                                    例: <Furigana text={pt.example} />
-                                  </span>
-                                )}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                      {l.exampleJapaneseRuby && (
-                        <div className="mt-3">
-                          <Furigana text={l.exampleJapaneseRuby} className="font-jp text-[15px] text-ink" />
-                          <p className="text-xs text-muted">{l.exampleEnglish}</p>
+                {/* Accordion body — only rendered when open */}
+                {isOpen && (
+                  <div className="border-t border-line px-5 pb-5 pt-4">
+                    {canReadLibrary ? (
+                      <>
+                        <div className="rounded-xl bg-mint/40 p-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-moss-600">🧠 Visual Image</p>
+                          <p className="mt-0.5 text-sm leading-relaxed text-ink/85">{l.visualImage}</p>
                         </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="mt-3 flex items-center gap-2 rounded-xl border border-dashed border-line bg-sand/30 px-4 py-3">
-                      <span className="text-sm">🔒</span>
-                      <p className="text-xs text-muted">
-                        Visual image, key points &amp; examples —{" "}
-                        <a href="/upgrade" className="font-semibold text-moss-600 hover:text-pine">
-                          Unlock with Plus →
-                        </a>
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Card>
-          ))}
+                        {l.points && l.points.length > 0 && (
+                          <ul className="mt-3 space-y-1.5">
+                            {l.points.map((pt, i) => (
+                              <li key={i} className="flex items-start gap-2 rounded-xl bg-paper/70 px-3 py-2.5 text-sm">
+                                <span className="mt-0.5 shrink-0 font-bold text-moss-600">{i + 1}.</span>
+                                <span className="min-w-0">
+                                  <span className="text-ink/85">{pt.text}</span>
+                                  {pt.example && (
+                                    <span className="mt-0.5 block font-jp text-xs text-ink/55">
+                                      例: <Furigana text={pt.example} />
+                                    </span>
+                                  )}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {l.exampleJapaneseRuby && (
+                          <div className="mt-3">
+                            <Furigana text={l.exampleJapaneseRuby} className="font-jp text-[15px] text-ink" />
+                            <p className="text-xs text-muted">{l.exampleEnglish}</p>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-2 rounded-xl border border-dashed border-line bg-sand/30 px-4 py-3">
+                        <span className="text-sm">🔒</span>
+                        <p className="text-xs text-muted">
+                          Visual image, key points &amp; examples —{" "}
+                          <a href="/upgrade" className="font-semibold text-moss-600 hover:text-pine">
+                            Unlock with Plus →
+                          </a>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Card>
+            );
+          })}
         </div>
       )}
       {/* Tetsu Sensei section — always visible below tabs */}
