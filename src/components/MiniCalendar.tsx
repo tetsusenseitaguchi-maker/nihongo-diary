@@ -11,14 +11,12 @@ interface MiniCalendarProps {
   dayLinks?: Record<number, string>;
 }
 
-// minmax(0, 1fr) — NOT 1fr — so columns can shrink below their content min-width.
-// Without the 0 minimum, CSS Grid uses auto (= content min-width) and 7 columns
-// can overflow the screen on narrow phones.
-const GRID_7 = {
-  display: "grid",
-  gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-  gap: "2px",
-} as const;
+// Group a flat cell array into rows of 7 for table rendering.
+function toRows<T>(arr: T[]): T[][] {
+  const rows: T[][] = [];
+  for (let i = 0; i < arr.length; i += 7) rows.push(arr.slice(i, i + 7));
+  return rows;
+}
 
 export function MiniCalendar({
   year,
@@ -29,73 +27,129 @@ export function MiniCalendar({
   dayLinks,
 }: MiniCalendarProps) {
   const cells = buildMonthGrid(year, month);
+  const rows = toRows(cells);
   const active = new Set(activeDays);
   const sm = size === "sm";
-  // h-9 on mobile (36px) keeps tap targets comfortable while fitting 7 cols.
-  // text-xs (12px) ensures two-digit numbers don't overflow narrow cells.
-  const cellH = sm ? "h-7 text-[11px]" : "h-9 text-xs sm:h-10 sm:text-sm";
+
+  // table-layout:fixed divides the table width evenly among 7 columns.
+  // Unlike CSS Grid fr units, this is immune to containing-block width ambiguity:
+  // width:100% on a table = containing block width, then each column = that / 7.
+  const tableStyle: React.CSSProperties = {
+    width: "100%",
+    tableLayout: "fixed",
+    borderCollapse: "separate",
+    borderSpacing: sm ? "1px" : "2px",
+  };
+
+  const cellH = sm ? 28 : 36; // td height in px
+  const fontSize = sm ? 11 : 12; // px
 
   return (
-    <div className="w-full overflow-hidden">
-      {/* Weekday labels — same grid so columns align with date cells */}
-      <div style={GRID_7} className="mb-0.5">
-        {weekdayLabels.map((d, i) => (
-          <div
-            key={i}
-            className="flex h-6 min-w-0 items-center justify-center text-[10px] font-semibold text-muted"
-          >
-            {d}
-          </div>
-        ))}
-      </div>
-
-      {/* Date cells — grid layout via inline style, appearance via Tailwind */}
-      <div style={GRID_7}>
-        {cells.map((cell, i) => {
-          if (cell.day === null) {
-            return <div key={i} className={cellH} />;
-          }
-
-          const isActive = active.has(cell.day);
-          const isToday = today === cell.day;
-          const href = dayLinks?.[cell.day];
-
-          const cls = [
-            "relative flex min-w-0 items-center justify-center rounded font-medium transition-colors",
-            cellH,
-            isActive
-              ? "bg-moss text-cream hover:brightness-110"
-              : "text-ink/70 hover:bg-mint",
-            isToday && !isActive ? "ring-2 ring-inset ring-moss" : "",
-          ]
-            .filter(Boolean)
-            .join(" ");
-
-          const inner = (
-            <>
-              <span className="leading-none">{cell.day}</span>
-              {isToday && (
-                <span className="absolute -bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-apricot" />
-              )}
-            </>
-          );
-
-          return href ? (
-            <Link
+    <table style={tableStyle}>
+      <thead>
+        <tr>
+          {weekdayLabels.map((d, i) => (
+            <th
               key={i}
-              href={href}
-              className={cls}
-              aria-label={`${cell.day}日の日記`}
+              style={{
+                textAlign: "center",
+                fontWeight: 600,
+                fontSize: 10,
+                color: "var(--color-muted)",
+                padding: "0 0 4px",
+                lineHeight: "24px",
+              }}
             >
-              {inner}
-            </Link>
-          ) : (
-            <div key={i} className={cls}>
-              {inner}
-            </div>
-          );
-        })}
-      </div>
-    </div>
+              {d}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row, ri) => (
+          <tr key={ri}>
+            {row.map((cell, ci) => {
+              if (cell.day === null) {
+                return (
+                  <td
+                    key={ci}
+                    style={{ height: cellH, padding: 0 }}
+                    aria-hidden="true"
+                  />
+                );
+              }
+
+              const isActive = active.has(cell.day);
+              const isToday = today === cell.day;
+              const href = dayLinks?.[cell.day];
+
+              const tdStyle: React.CSSProperties = {
+                height: cellH,
+                padding: 0,
+                textAlign: "center",
+                position: "relative",
+                borderRadius: 8,
+                fontWeight: 500,
+                fontSize,
+                cursor: href ? "pointer" : "default",
+                backgroundColor: isActive ? "var(--color-moss)" : "transparent",
+                color: isActive ? "var(--color-cream)" : "var(--color-ink)",
+                outline:
+                  isToday && !isActive
+                    ? "2px solid var(--color-moss)"
+                    : "none",
+                outlineOffset: "-2px",
+              };
+
+              const dot = isToday ? (
+                <span
+                  style={{
+                    position: "absolute",
+                    bottom: 2,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: 4,
+                    height: 4,
+                    borderRadius: "50%",
+                    backgroundColor: "var(--color-apricot)",
+                    display: "block",
+                  }}
+                />
+              ) : null;
+
+              const innerStyle: React.CSSProperties = {
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+                height: "100%",
+                borderRadius: 8,
+                position: "relative",
+              };
+
+              return (
+                <td key={ci} style={tdStyle}>
+                  {href ? (
+                    <Link
+                      href={href}
+                      aria-label={`${cell.day}日の日記`}
+                      style={innerStyle}
+                    >
+                      {cell.day}
+                      {dot}
+                    </Link>
+                  ) : (
+                    <div style={innerStyle}>
+                      {cell.day}
+                      {dot}
+                    </div>
+                  )}
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
