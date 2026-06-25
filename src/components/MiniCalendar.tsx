@@ -21,48 +21,66 @@ export function MiniCalendar({
 }: MiniCalendarProps) {
   const cells = buildMonthGrid(year, month);
   const active = new Set(activeDays);
-  const cellSize = size === "sm" ? "h-8 w-full text-xs" : "h-10 w-full text-sm";
+  const sm = size === "sm";
 
   return (
-    <div>
+    <div className="w-full">
+      {/* Weekday labels */}
       <div className="mb-1 grid grid-cols-7 gap-1">
         {weekdayLabels.map((d, i) => (
-          <div key={i} className="grid h-6 place-items-center text-[11px] font-semibold text-muted">
+          <div
+            key={i}
+            className="flex h-6 items-center justify-center text-[10px] font-semibold text-muted"
+          >
             {d}
           </div>
         ))}
       </div>
+
+      {/* Date cells — flex items-center justify-center avoids nested-grid width collapse */}
       <div className="grid grid-cols-7 gap-1">
         {cells.map((cell, i) => {
-          if (cell.day === null) return <div key={i} className={cellSize} />;
+          if (cell.day === null) {
+            return (
+              <div key={i} className={sm ? "h-8" : "h-10"} aria-hidden="true" />
+            );
+          }
+
           const isActive = active.has(cell.day);
           const isToday = today === cell.day;
           const href = dayLinks?.[cell.day];
-          const base = `relative grid ${cellSize} place-items-center rounded-lg font-medium transition-colors ${
-            isActive ? "bg-moss text-cream" : "text-ink/70 hover:bg-mint"
-          } ${isToday && !isActive ? "ring-2 ring-moss ring-inset" : ""}`;
+
+          const cls = [
+            "relative flex items-center justify-center rounded-lg font-medium transition-colors",
+            sm ? "h-8 text-xs" : "h-10 text-sm",
+            isActive
+              ? "bg-moss text-cream hover:brightness-110"
+              : "text-ink/70 hover:bg-mint",
+            isToday && !isActive ? "ring-2 ring-inset ring-moss" : "",
+          ]
+            .filter(Boolean)
+            .join(" ");
 
           const inner = (
             <>
-              {cell.day}
-              {isToday && <span className="absolute -bottom-0.5 h-1 w-1 rounded-full bg-apricot" />}
+              <span className="leading-none">{cell.day}</span>
+              {isToday && (
+                <span className="absolute -bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-apricot" />
+              )}
             </>
           );
 
-          if (href) {
-            return (
-              <Link
-                key={i}
-                href={href}
-                className={`${base} cursor-pointer ${isActive ? "hover:brightness-110" : ""}`}
-                aria-label={`${cell.day}日の日記`}
-              >
-                {inner}
-              </Link>
-            );
-          }
-          return (
-            <div key={i} className={base}>
+          return href ? (
+            <Link
+              key={i}
+              href={href}
+              className={cls}
+              aria-label={`${cell.day}日の日記`}
+            >
+              {inner}
+            </Link>
+          ) : (
+            <div key={i} className={cls}>
               {inner}
             </div>
           );
