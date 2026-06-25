@@ -10,6 +10,7 @@ export const navItems: NavItem[] = [
   { label: "Calendar", href: "/calendar", icon: "calendar" },
   { label: "History", href: "/history", icon: "history" },
   { label: "Feed", href: "/feed", icon: "feed" },
+  { label: "My Places", href: "/places", icon: "mapPin" },
   { label: "Templates", href: "/support", icon: "template" },
   { label: "Support", href: "/support", icon: "support" },
   { label: "Profile", href: "/profile", icon: "profile" },

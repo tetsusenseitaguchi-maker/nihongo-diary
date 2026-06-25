@@ -9,6 +9,7 @@ import { DiaryAttachments } from "@/components/DiaryAttachments";
 import { DeleteDiaryButton } from "@/components/DeleteDiaryButton";
 import { CommentsSection } from "@/components/CommentsSection";
 import { TagChips } from "@/components/TagChips";
+import { DiaryPlaceMap } from "@/components/DiaryPlaceMap";
 import { Avatar } from "@/components/ObiePhoto";
 import { formatLong } from "@/lib/dates";
 import type { Correction, MistakeItem, VocabItem } from "@/lib/types";
@@ -53,6 +54,13 @@ export default async function DiaryDetailPage({
       .single();
     authorProfile = data;
   }
+
+  // Fetch location pins for this diary
+  const { data: placesData } = await supabase
+    .from("diary_places")
+    .select("id, lat, lng, place_name")
+    .eq("diary_entry_id", id);
+  const places = (placesData ?? []) as { id: string; lat: number; lng: number; place_name: string | null }[];
 
   const correction: Correction = {
     original: entry.original_text,
@@ -156,6 +164,29 @@ export default async function DiaryDetailPage({
         <p className="rounded-2xl bg-mint/40 px-5 py-3 font-serif text-lg font-bold text-pine">
           {entry.title}
         </p>
+      )}
+
+      {/* Location pins */}
+      {places.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-1.5">
+            {places.map((p) => (
+              <span
+                key={p.id}
+                className="flex items-center gap-1.5 rounded-full bg-mint px-3 py-1.5 text-xs font-semibold text-pine"
+              >
+                <Icon.mapPin className="h-3.5 w-3.5 shrink-0" />
+                {p.place_name || "場所"}
+              </span>
+            ))}
+          </div>
+          <DiaryPlaceMap
+            places={places}
+            diaryEntryId={id}
+            diaryDate={entry.diary_date}
+            diaryTitle={entry.title ?? null}
+          />
+        </div>
       )}
 
       <div className="flex items-center gap-2">

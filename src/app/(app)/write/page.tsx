@@ -2,6 +2,7 @@
 
 import { useState, useEffect, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
+import dynamicLoad from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui";
 import { Icon } from "@/components/icons";
@@ -11,9 +12,17 @@ import { CorrectionResult } from "@/components/CorrectionResult";
 import { Furigana } from "@/components/Furigana";
 import { Bilingual } from "@/components/Bilingual";
 import { templates, sampleDraft } from "@/lib/mock-data";
-import type { Level, CorrectionStyle, Correction } from "@/lib/types";
+import type { Level, CorrectionStyle, Correction, DiaryPlace } from "@/lib/types";
 import { limitsFor, normalizePlan, PLAN_LABELS, type Plan } from "@/lib/plans";
 import { PRESET_TAGS, PRESET_TAG_KEYS } from "@/lib/tags";
+
+const DiaryMapPicker = dynamicLoad(
+  () => import("@/components/DiaryMapPicker").then((m) => m.DiaryMapPicker),
+  {
+    ssr: false,
+    loading: () => <div className="h-72 animate-pulse rounded-2xl bg-mint/30" />,
+  }
+);
 
 const levels: Level[] = ["N5", "N4", "N3", "Natural"];
 const styles: CorrectionStyle[] = ["Light", "Natural", "Native"];
@@ -94,6 +103,8 @@ export default function WritePage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [places, setPlaces] = useState<DiaryPlace[]>([]);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
 
   // Plan + usage
   const [plan, setPlan] = useState<Plan>("free");
@@ -279,6 +290,19 @@ export default function WritePage() {
         .from("diary_entries")
         .update({ image_path: imagePath, audio_path: audioPath })
         .eq("id", data.id);
+    }
+
+    // Save location pins
+    if (places.length > 0) {
+      await supabase.from("diary_places").insert(
+        places.map((p) => ({
+          diary_entry_id: data.id,
+          user_id: user.id,
+          lat: p.lat,
+          lng: p.lng,
+          place_name: p.name || null,
+        }))
+      );
     }
 
     // Record a learning-activity (no diary text — privacy safe)
@@ -546,6 +570,64 @@ export default function WritePage() {
             onPhotoChange={setPhotoFile}
             onAudioChange={setAudioFile}
           />
+
+          {/* location picker */}
+          <div className="rounded-[var(--radius-card)] border border-line bg-paper shadow-card">
+            <button
+              type="button"
+              onClick={() => setShowLocationPicker((v) => !v)}
+              className="flex w-full items-center gap-2.5 px-5 py-4 text-left"
+            >
+              <Icon.mapPin className="h-5 w-5 shrink-0 text-moss-600" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-pine">
+                  場所を追加 · Add location
+                  {places.length > 0 && (
+                    <span className="ml-2 text-xs font-normal text-muted">
+                      {places.length} ヶ所選択中
+                    </span>
+                  )}
+                </p>
+              </div>
+              <span
+                className={`text-muted transition-transform duration-200 ${
+                  showLocationPicker ? "rotate-180" : ""
+                }`}
+              >
+                ▾
+              </span>
+            </button>
+
+            {/* selected place chips */}
+            {places.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 px-5 pb-3">
+                {places.map((p, i) => (
+                  <span
+                    key={`${p.lat}-${p.lng}-${i}`}
+                    className="flex items-center gap-1 rounded-full bg-mint px-2.5 py-1 text-xs font-semibold text-pine"
+                  >
+                    📍 {p.name}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPlaces((prev) => prev.filter((_, j) => j !== i))
+                      }
+                      className="ml-0.5 opacity-60 hover:opacity-100"
+                      aria-label={`Remove ${p.name}`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {showLocationPicker && (
+              <div className="px-5 pb-5">
+                <DiaryMapPicker places={places} onPlacesChange={setPlaces} />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right rail */}

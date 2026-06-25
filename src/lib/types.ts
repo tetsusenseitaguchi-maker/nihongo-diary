@@ -122,6 +122,24 @@ export interface FriendProgress {
   days: boolean[]; // last 14 days
 }
 
+/** A place pin attached to a diary entry. */
+export interface DiaryPlace {
+  lat: number;
+  lng: number;
+  name: string;
+}
+
+/** A pin displayed on the My Places / diary detail map. */
+export interface MapPin {
+  id: string;
+  lat: number;
+  lng: number;
+  name: string | null;
+  diaryEntryId: string;
+  diaryDate: string;
+  diaryTitle: string | null;
+}
+
 /** A row from the Supabase `diary_entries` table. */
 export interface DiaryRow {
   id: string;

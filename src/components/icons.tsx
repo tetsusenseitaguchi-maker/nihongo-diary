@@ -172,6 +172,12 @@ export const Icon = {
       <path d="M5 7h14M10 7V5h4v2M6 7l1 13h10l1-13" />
     </svg>
   ),
+  mapPin: (p: IconProps) => (
+    <svg {...base} {...p}>
+      <path d="M12 2.5c-3.3 0-6 2.7-6 6 0 4.8 6 13 6 13s6-8.2 6-13c0-3.3-2.7-6-6-6z" />
+      <circle cx="12" cy="8.5" r="2.2" />
+    </svg>
+  ),
 };
 
 export const weatherIcon = { sunny: "sun", cloudy: "cloud", rainy: "rain" } as const;
