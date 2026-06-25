@@ -226,7 +226,7 @@ export default function SupportPage() {
                               <li key={i} className="flex items-start gap-2 rounded-xl bg-paper/70 px-3 py-2.5 text-sm">
                                 <span className="mt-0.5 shrink-0 font-bold text-moss-600">{i + 1}.</span>
                                 <span className="min-w-0">
-                                  <span className="text-ink/85">{pt.text}</span>
+                                  <span className="text-ink/85"><Furigana text={pt.text} /></span>
                                   {pt.example && (
                                     <span className="mt-0.5 block font-jp text-xs text-ink/55">
                                       例: <Furigana text={pt.example} />

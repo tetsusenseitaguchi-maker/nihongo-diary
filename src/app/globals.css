@@ -178,18 +178,25 @@
     border-radius: 999px;
   }
 
-  ruby {
-    ruby-align: center;
-    ruby-position: over;
-  }
-  ruby rt {
-    font-size: 0.55em;
-    font-weight: 400;
-    color: var(--color-muted);
-    letter-spacing: 0;
-    line-height: 1;
-    text-align: center;
-  }
+}
+
+/* ── Ruby / furigana ─────────────────────────────────────────────────────────
+   Non-layered (outside @layer) = highest author-CSS priority.
+   Explicit display values ensure <rt> appears ABOVE the base on all browsers,
+   regardless of CSS cascade-layer ordering or browser defaults. */
+ruby {
+  display: ruby;
+  ruby-align: center;
+  ruby-position: over;
+}
+ruby rt {
+  display: ruby-text;
+  font-size: 0.55em;
+  font-weight: 400;
+  color: var(--color-muted);
+  letter-spacing: 0;
+  line-height: 1;
+  text-align: center;
 }
 
 @media (prefers-reduced-motion: reduce) {
