@@ -65,6 +65,14 @@ export default async function AppLayout({
               Nihongo Diary · public beta ·{" "}
               <a href="/upgrade" className="font-semibold text-moss-600 hover:text-pine">Plans</a> · By using this app you agree to our Terms &amp; Privacy. Your diaries stay private unless you make them public.
             </p>
+            <p className="mt-1">
+              Created by{" "}
+              <a href="https://www.youtube.com/@tetsusenseidesuyo" target="_blank" rel="noopener noreferrer" className="font-semibold hover:text-pine">Tetsu Sensei</a>
+              {" "}·{" "}
+              <a href="https://www.youtube.com/@tetsusenseidesuyo" target="_blank" rel="noopener noreferrer" className="hover:text-pine">YouTube</a>
+              {" "}·{" "}
+              <a href="https://www.skool.com/tetsu-senseis-lounge-8620/about" target="_blank" rel="noopener noreferrer" className="hover:text-pine">Skool</a>
+            </p>
           </footer>
         </main>
       </div>
