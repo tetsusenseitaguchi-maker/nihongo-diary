@@ -21,7 +21,7 @@ export function MiniCalendar({
 }: MiniCalendarProps) {
   const cells = buildMonthGrid(year, month);
   const active = new Set(activeDays);
-  const cellSize = size === "sm" ? "h-8 text-xs" : "h-10 text-sm";
+  const cellSize = size === "sm" ? "h-8 w-full text-xs" : "h-10 w-full text-sm";
 
   return (
     <div>

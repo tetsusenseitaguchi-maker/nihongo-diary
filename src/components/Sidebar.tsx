@@ -10,7 +10,19 @@ import { navItems } from "@/lib/mock-data";
 const primary = navItems.slice(0, 6);
 const secondary = navItems.slice(6);
 
-export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+const MILESTONES = [7, 14, 30, 60, 100, 200, 365];
+
+function streakPct(streak: number): number {
+  if (streak <= 0) return 0;
+  let prev = 0;
+  for (const m of MILESTONES) {
+    if (streak <= m) return Math.round(((streak - prev) / (m - prev)) * 100);
+    prev = m;
+  }
+  return 100;
+}
+
+export function Sidebar({ onNavigate, currentStreak = 0 }: { onNavigate?: () => void; currentStreak?: number }) {
   const pathname = usePathname();
 
   function NavLink({ item }: { item: (typeof navItems)[number] }) {
@@ -65,7 +77,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         <div className="mt-3 flex items-center gap-2">
           <span className="text-moss-600">🐾</span>
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-paper">
-            <div className="h-full w-3/4 rounded-full bg-moss" />
+            <div className="h-full rounded-full bg-moss transition-all" style={{ width: `${streakPct(currentStreak)}%` }} />
           </div>
         </div>
       </div>

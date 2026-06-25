@@ -19,22 +19,32 @@ export default async function AppLayout({
   let name = "Learner";
   let initials = "U";
   let avatarUrl = "";
+  let currentStreak = 0;
   if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("display_name, username, avatar_url")
-      .eq("id", user.id)
-      .single();
+    const [{ data: profile }, { data: dateData }] = await Promise.all([
+      supabase.from("profiles").select("display_name, username, avatar_url").eq("id", user.id).single(),
+      supabase.from("diary_entries").select("diary_date").eq("user_id", user.id),
+    ]);
     name = profile?.display_name || profile?.username || user.email?.split("@")[0] || "Learner";
     initials = name.slice(0, 2).toUpperCase();
     avatarUrl = profile?.avatar_url || "";
+
+    const toYMD = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const dateSet = new Set<string>((dateData ?? []).map((r: { diary_date: string }) => r.diary_date));
+    const cursor = new Date();
+    if (!dateSet.has(toYMD(cursor))) cursor.setDate(cursor.getDate() - 1);
+    while (dateSet.has(toYMD(cursor))) {
+      currentStreak++;
+      cursor.setDate(cursor.getDate() - 1);
+    }
   }
 
   return (
     <div className="min-h-screen bg-cream">
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[264px] border-r border-line bg-paper lg:block">
-        <Sidebar />
+        <Sidebar currentStreak={currentStreak} />
       </aside>
 
       {/* Mobile top header */}

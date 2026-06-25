@@ -3,10 +3,8 @@ import { Fragment } from "react";
 // Supports BOTH:
 //   <ruby>漢字<rt>かんじ</rt></ruby>   (AI output)
 //   漢字(かな) / 漢字（かな）           (hand-authored UI strings)
-const TOKEN =
-  /<ruby>([\s\S]*?)<rt>([\s\S]*?)<\/rt><\/ruby>|([\u4e00-\u9fff々〆ヶ]+)[（(]([ぁ-んァ-ヶーゝゞ]+)[）)]/g;
 
-const HAS_KANJI = /[\u4e00-\u9fff々〆ヶ]/;
+const HAS_KANJI = /[一-鿿々〆ヶ]/;
 
 function stripTags(s: string): string {
   return s.replace(/<[^>]*>/g, "");
@@ -26,18 +24,27 @@ export function Furigana({
 }) {
   if (!text) return null;
 
+  // Strip kanji that immediately precede their own <ruby> tag
+  // e.g. AI sometimes outputs 清水寺<ruby>清水寺<rt>... → remove the leading duplicate
+  const processed = text.replace(
+    /([一-鿿々〆ヶ]+)(<ruby>\1<rt>)/g,
+    "$2",
+  );
+
+  // Fresh RegExp per call — module-level /g regex shares lastIndex across concurrent renders
+  const TOKEN =
+    /<ruby>([\s\S]*?)<rt>([\s\S]*?)<\/rt><\/ruby>|([一-鿿々〆ヶ]+)[（(]([ぁ-んァ-ヶーゝゞ]+)[）)]/g;
+
   const nodes: React.ReactNode[] = [];
   let last = 0;
   let m: RegExpExecArray | null;
-  TOKEN.lastIndex = 0;
 
-  while ((m = TOKEN.exec(text)) !== null) {
-    if (m.index > last) nodes.push(stripTags(text.slice(last, m.index)));
+  while ((m = TOKEN.exec(processed)) !== null) {
+    if (m.index > last) nodes.push(stripTags(processed.slice(last, m.index)));
     const base = stripTags(m[1] !== undefined ? m[1] : m[3]);
     const rt = stripTags(m[1] !== undefined ? m[2] : m[4]);
 
     if (!HAS_KANJI.test(base) || rt === base || !rt) {
-      // Don't put furigana over kana / empty / duplicate readings.
       nodes.push(base);
     } else {
       nodes.push(
@@ -49,7 +56,7 @@ export function Furigana({
     }
     last = m.index + m[0].length;
   }
-  if (last < text.length) nodes.push(stripTags(text.slice(last)));
+  if (last < processed.length) nodes.push(stripTags(processed.slice(last)));
 
   return (
     <span className={className}>
