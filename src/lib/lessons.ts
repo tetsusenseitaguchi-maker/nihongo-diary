@@ -532,22 +532,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "Noun + です = 'is / am / are' (polite present).",
         example: "わたしは　がくせいです。これは　ほんです。",
+        examples: [
+          { jp: "わたしは　にほんごの　がくせいです。", en: "I am a Japanese student. — Noun (がくせい) + です = polite 'is/am'." },
+          { jp: "これは　わたしの　ほんです。", en: "This is my book. — Any noun can sit before です." },
+        ],
       },
       {
         text: "Past tense: replace です with でした.",
         example: "きのうは　にちようびでした。",
+        examples: [
+          { jp: "きのうは　にちようびでした。", en: "Yesterday was Sunday. — Just swap です → でした." },
+          { jp: "こどものとき、がくせいでした。", en: "When I was a child, I was a student. — でした for past states." },
+        ],
       },
       {
         text: "Negative: ではありません (formal) or じゃないです (casual).",
         example: "にほんじんでは　ありません。がくせいじゃないです。",
+        examples: [
+          { jp: "わたしは　せんせいでは　ありません。", en: "I am not a teacher. — ではありません is polite and formal." },
+          { jp: "これは　わたしの　かばんじゃないです。", en: "This is not my bag. — じゃないです is natural in everyday speech." },
+        ],
       },
       {
         text: "Question: add か at the end.",
         example: "がくせいですか？　せんせいですか？",
+        examples: [
+          { jp: "にほんじんですか？", en: "Are you Japanese? — Just add か; no word-order change needed." },
+          { jp: "これはえんぴつですか、ボールペンですか？", en: "Is this a pencil or a ballpoint pen? — Two options: A ですか、B ですか." },
+        ],
       },
       {
         text: "ですね seeks gentle agreement ('right?'). ですよ offers new information ('you know').",
         example: "いい　てんきですね！　これは　むずかしいですよ。",
+        examples: [
+          { jp: "いいお天気(てんき)ですね。", en: "Nice weather, isn't it? — ですね invites the listener to agree." },
+          { jp: "このみせ、とてもおいしいですよ。", en: "This shop is really delicious, you know. — ですよ shares info the listener may not know." },
+        ],
       },
     ],
     exampleJapanese: "私は日本語の学生です。",
@@ -556,6 +576,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "I am a Japanese student.",
     shortNote:
       "です is always at the very end. It does not change for I / you / he / she — one form fits all.",
+    commonMistakes: [
+      {
+        wrong: "過去(かこ)の状態(じょうたい)に です を使(つか)う — 「きのうはにちようびです。」",
+        right: "きのうはにちようびでした。— Past states need でした.",
+        note: "です only describes the present. For anything in the past, swap to でした. This applies to all nouns and な-adjectives.",
+      },
+      {
+        wrong: "否定(ひてい)で「ではないです」を二重(にじゅう)にする — 「がくせいではないじゃないです。」",
+        right: "がくせいではありません / がくせいじゃないです — pick one form.",
+        note: "Use either the formal ではありません or casual じゃないです, but never mix them together in the same sentence.",
+      },
+      {
+        wrong: "丁寧(ていねい)な会話(かいわ)で です を省略(しょうりゃく)する — 「わたしはがくせい。」",
+        right: "わたしはがくせいです。— Always include です in polite contexts.",
+        note: "Dropping です is fine in casual speech between close friends, but in formal or written Japanese, です is required. Include it when writing diaries or speaking with teachers.",
+      },
+    ],
   },
   {
     id: 9,
@@ -569,22 +606,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "い-adjectives end in い and modify a noun directly — no extra word needed.",
         example: "おいしいラーメン、たかいやま",
+        examples: [
+          { jp: "おいしいラーメンをたべました。", en: "I ate delicious ramen. — おいしい sits right before the noun, no extra word." },
+          { jp: "これはたかいくつです。", en: "These are expensive shoes. — い-adjective directly before noun." },
+        ],
       },
       {
         text: "な-adjectives need な before a noun.",
         example: "しずかなとしょかん、きれいなはな",
+        examples: [
+          { jp: "しずかなとしょかんでべんきょうします。", en: "I study at a quiet library. — な bridges the adjective to the noun." },
+          { jp: "かれはゆうめいなかしゅです。", en: "He is a famous singer. — ゆうめい is a な-adjective; without な it would be ungrammatical." },
+        ],
       },
       {
         text: "い-adjective past: drop い, add かった.",
         example: "おいしかったです。たのしかった！",
+        examples: [
+          { jp: "きのうのえいがはおもしろかったです。", en: "Yesterday's movie was interesting. — おもしろい → drop い → おもしろか → + った." },
+          { jp: "パーティーはとてもたのしかったです。", en: "The party was a lot of fun. — い-adjectives change themselves for past tense." },
+        ],
       },
       {
         text: "い-adjective negative: drop い, add くない.",
         example: "たかくないです。むずかしくない。",
+        examples: [
+          { jp: "このほんはむずかしくないです。", en: "This book isn't difficult. — むずかしい → drop い → むずかし → + くない." },
+          { jp: "きょうはさむくない。", en: "It's not cold today. — くない is the casual/plain negative form." },
+        ],
       },
       {
         text: "な-adjective past: + でした. Negative: + じゃないです.",
         example: "しずかでした。きれいじゃないです。",
+        examples: [
+          { jp: "そのまちはにぎやかでした。", en: "That town was lively. — な-adjective + でした for past." },
+          { jp: "このへやはきれいじゃないです。", en: "This room isn't clean. — な-adjective + じゃないです for negative." },
+        ],
       },
     ],
     exampleJapanese: "この映画はとても面白かったです。",
@@ -593,6 +650,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "This movie was very interesting.",
     shortNote:
       "い-adjectives NEVER use でした for past tense. The #1 mistake: ✗ たのしいでした → ✓ たのしかったです.",
+    commonMistakes: [
+      {
+        wrong: "い形容詞(けいようし)に でした をつける — 「たのしいでした。」",
+        right: "たのしかったです。— い-adjectives have their own past form: drop い + かった.",
+        note: "This is the single most common adjective mistake. でした only works with nouns and な-adjectives. い-adjectives change their OWN ending — they never need でした.",
+      },
+      {
+        wrong: "な形容詞(けいようし)をい形容詞(けいようし)のように変化(へんか)させる — 「しずかかった。」",
+        right: "しずかでした。— な-adjectives use でした for past, not かった.",
+        note: "な-adjectives look like they could conjugate like い-adjectives, but they cannot. きれい, しずか, ゆうめい — all use でした/じゃないです, never かった/くない.",
+      },
+      {
+        wrong: "な形容詞(けいようし)の否定(ひてい)に くない をつける — 「ゆうめいくない。」",
+        right: "ゆうめいじゃないです / ゆうめいではありません — use じゃない for な-adjectives.",
+        note: "くない is exclusively for い-adjectives. な-adjectives use じゃない(です) or ではありません for negative. Mixing the two patterns is a very common beginner error.",
+      },
+    ],
   },
   {
     id: 10,
@@ -606,22 +680,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "Ichidan (一段 / る-verbs): remove る to get the stem, which never changes.",
         example: "食(た)べる→食(た)べ…、見(み)る→見(み)…",
+        examples: [
+          { jp: "食(た)べる → 食(た)べます / 食(た)べない / 食(た)べて", en: "Stem is always 食べ — just add the ending. Simple and consistent." },
+          { jp: "起(お)きる → 起(お)きます / 起(お)きない / 起(お)きて", en: "Ichidan: vowel before る is always い or え — remove る, stem never changes." },
+        ],
       },
       {
         text: "Godan (五段 / う-verbs): the final u-row sound shifts when conjugating.",
         example: "書(か)く、話(はな)す、読(よ)む、飲(の)む、帰(かえ)る",
+        examples: [
+          { jp: "書(か)く → 書(か)きます / 書(か)かない / 書(か)いて", en: "The final sound (く) shifts: い-row for ます, あ-row for ない, て-form changes to いて." },
+          { jp: "飲(の)む → 飲(の)みます / 飲(の)まない / 飲(の)んで", en: "む shifts: み for ます, ま for ない, んで for て-form." },
+        ],
       },
       {
         text: "The る-trap: some Godan verbs look like Ichidan because they end in る. Check the vowel before る.",
         example: "帰(かえ)る、走(はし)る、切(き)る — all Godan, not Ichidan.",
+        examples: [
+          { jp: "帰(かえ)る(Godan) → 帰(かえ)ります / 帰(かえ)らない", en: "Ends in る but the vowel before る is 'e' — still Godan. Test: does ない use あ-row? Yes → Godan." },
+          { jp: "食(た)べる(Ichidan) → 食(た)べない ✓ vs 走(はし)る(Godan) → 走(はし)らない ✓", en: "Ichidan negative keeps the stem unchanged. Godan negative shifts to あ-row. That is the key difference." },
+        ],
       },
       {
         text: "Irregular verbs (just two): する (do) and くる (come). Memorise these as exceptions.",
         example: "する→します、くる→きます",
+        examples: [
+          { jp: "する → します / しない / して / した", en: "する is completely irregular — memorise each form. It combines with nouns: べんきょうする, りょこうする." },
+          { jp: "くる → きます / こない / きて / きた", en: "くる is also fully irregular. It appears in many compound expressions: もってくる (bring), やってくる (come do)." },
+        ],
       },
       {
         text: "The group decides ALL conjugations — ます form, ない form, て-form, た-form.",
         example: "食(た)べる(Ichidan) → 食(た)べます vs 読(よ)む(Godan) → 読(よ)みます",
+        examples: [
+          { jp: "食(た)べる(Ichidan): 食(た)べます・食(た)べない・食(た)べて・食(た)べた", en: "Ichidan: stem + ending. Four forms, same stem every time." },
+          { jp: "読(よ)む(Godan): 読(よ)みます・読(よ)まない・読(よ)んで・読(よ)んだ", en: "Godan: final sound shifts for each form. Know the group first, then apply the rule." },
+        ],
       },
     ],
     exampleJapanese: "毎日日本語を読んで、書いています。",
@@ -630,6 +724,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "I read and write Japanese every day.",
     shortNote:
       "When you learn a new verb, note its group right away. It changes everything about how that verb conjugates.",
+    commonMistakes: [
+      {
+        wrong: "る-トラップ: 帰(かえ)る を一段(いちだん)として活用(かつよう)する — 「帰(かえ)べない」「帰(かえ)て」",
+        right: "帰(かえ)らない、帰(かえ)って — 帰る is Godan.",
+        note: "帰る, 走る, 切る, 知る, 入る — these all end in る but are Godan. A safe test: if the vowel before る is NOT い or え, it is very likely Godan.",
+      },
+      {
+        wrong: "不規則動詞(ふきそくどうし)をルール通(どお)りに活用(かつよう)する — 「くる→くます」「する→すます」",
+        right: "くる→きます、する→します — both are fully irregular.",
+        note: "する and くる do not follow either group's rules. They must be memorised in each form individually. They are among the most-used verbs, so getting them right matters a lot.",
+      },
+      {
+        wrong: "動詞(どうし)のグループを確認(かくにん)せずに活用(かつよう)する",
+        right: "When learning a new verb, always note: Ichidan, Godan, or irregular?",
+        note: "The group determines every single conjugation. Guessing without knowing the group leads to consistent errors. Make noting the verb group a habit from the very start.",
+      },
+    ],
   },
   {
     id: 11,
@@ -643,22 +754,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "Ichidan: remove る, add ます.",
         example: "食(た)べる→食(た)べます、見(み)る→見(み)ます",
+        examples: [
+          { jp: "食(た)べる → 食(た)べます", en: "I eat / I will eat. — Remove る, add ます. The stem never changes for Ichidan." },
+          { jp: "起(お)きる → 起(お)きます", en: "I wake up. — Ichidan ます form is always the same simple swap." },
+        ],
       },
       {
         text: "Godan: shift the final sound to its い-row version, then add ます.",
         example: "書(か)く→書(か)きます、読(よ)む→読(よ)みます、行(い)く→行(い)きます",
+        examples: [
+          { jp: "書(か)く → 書(か)きます (く→き)", en: "I write. — く shifts to き (い-row), then add ます." },
+          { jp: "飲(の)む → 飲(の)みます (む→み)", en: "I drink. — む shifts to み (い-row), then add ます." },
+        ],
       },
       {
         text: "Four essential forms: ます (present/future) / ました (past) / ません (negative) / ませんでした (past negative).",
         example: "飲(の)みます、飲(の)みました、飲(の)みません、飲(の)みませんでした",
+        examples: [
+          { jp: "飲(の)みます → 飲(の)みました → 飲(の)みません → 飲(の)みませんでした", en: "All four forms from one verb. These four cover the most common polite verb situations." },
+          { jp: "きのうはがっこうにいきませんでした。", en: "I didn't go to school yesterday. — ませんでした = polite past negative." },
+        ],
       },
       {
         text: "ましょう = 'Let's …' — a cheerful invitation to do something together.",
         example: "いっしょに食(た)べましょう！べんきょうしましょう。",
+        examples: [
+          { jp: "いっしょにたべましょう！", en: "Let's eat together! — ましょう = shared invitation. Warm and friendly." },
+          { jp: "あそこでやすみましょうか。", en: "Shall we rest over there? — ましょうか is softer — 'shall we?' rather than 'let's!'." },
+        ],
       },
       {
         text: "Irregular two: する→します、くる→きます.",
         example: "べんきょうします。がっこうにきます。",
+        examples: [
+          { jp: "まいにちべんきょうします。", en: "I study every day. — する → します. Also: りょこうします (travel), そうじします (clean)." },
+          { jp: "ともだちがいえにきます。", en: "My friend is coming to my house. — くる → きます. Irregular — must be memorised." },
+        ],
       },
     ],
     exampleJapanese: "毎朝６時に起きます。",
@@ -667,6 +798,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "I wake up at 6 every morning.",
     shortNote:
       "When in doubt, use ます. It is always polite and correct in most everyday situations.",
+    commonMistakes: [
+      {
+        wrong: "五段(ごだん)動詞(どうし)でい段(だん)への変化(へんか)を忘(わす)れる — 「よむ→よむます」",
+        right: "よむ → よみます — む shifts to み (い-row) before ます.",
+        note: "Godan verbs must shift the final sound to the い-row before adding ます. Adding ます directly to the dictionary form (よむます) is the most common Godan ます error.",
+      },
+      {
+        wrong: "くる の丁寧形(ていねいけい)を間違(まちが)える — 「くる→くます」",
+        right: "くる → きます — くる is fully irregular.",
+        note: "くる does not follow Godan rules. The stem changes entirely: く→き. Memorise: きます・きません・きました・きませんでした.",
+      },
+      {
+        wrong: "ましょう と ましょうか の使(つか)い分(わ)けを知(し)らない",
+        right: "ましょう = 'Let's!' (assertive). ましょうか = 'Shall we?' (checking with the other person).",
+        note: "ましょう assumes the other person will agree and sounds enthusiastic. ましょうか is more polite — it checks whether the other person wants to. Use ましょうか when you are not sure.",
+      },
+    ],
   },
   {
     id: 12,
@@ -680,22 +828,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "Dictionary form: Ichidan verbs end in る, Godan verbs end in an う-row sound.",
         example: "食(た)べる（Ichidan）、飲(の)む、書(か)く、行(い)く（Godan）",
+        examples: [
+          { jp: "食(た)べる(Ichidan)、飲(の)む(Godan)、書(か)く(Godan)、する(irregular)", en: "Dictionary form is the base — what you find in a dictionary. Each ends in an う-row sound." },
+          { jp: "みる・たべる → Ichidan / かく・よむ・いく → Godan", en: "Quick guide: if the vowel before る is い or え, likely Ichidan. Everything else ends in く/ぐ/す/む/ぬ/ぶ/つ/う/る = Godan." },
+        ],
       },
       {
         text: "Ichidan negative: drop る, add ない.",
         example: "食(た)べる→食(た)べない、見(み)る→見(み)ない",
+        examples: [
+          { jp: "食(た)べる → 食(た)べない", en: "I don't eat / won't eat. — Just drop る and add ない. Same stem as always." },
+          { jp: "起(お)きる → 起(お)きない", en: "I won't wake up / don't wake up. — Ichidan negative is always this simple." },
+        ],
       },
       {
         text: "Godan negative: shift the final sound to the あ-row, then add ない.",
         example: "飲(の)む→飲(の)まない、書(か)く→書(か)かない、行(い)く→行(い)かない",
+        examples: [
+          { jp: "飲(の)む → 飲(の)まない (む→ま)", en: "I don't drink. — む shifts to ま (あ-row), then add ない." },
+          { jp: "書(か)く → 書(か)かない (く→か)", en: "I don't write. — く shifts to か (あ-row), then add ない." },
+        ],
       },
       {
         text: "Irregular negatives: する→しない、くる→こない. And: ある→ない (not あらない).",
         example: "べんきょうしない。きょうはこない。おかねがない。",
+        examples: [
+          { jp: "べんきょうしない。きょうはこない。", en: "I won't study. / They're not coming today. — Irregular forms must be memorised." },
+          { jp: "おかねがない。じかんがない。", en: "There is no money. There is no time. — ある negates to ない, not あらない. Very common in daily speech." },
+        ],
       },
       {
         text: "The plain form appears before patterns like と思(おも)う (I think…) and かもしれない (maybe).",
         example: "いくかもしれない。おいしいと思(おも)う。",
+        examples: [
+          { jp: "かれはくるかもしれない。", en: "He might come. — Plain form (くる) + かもしれない = 'maybe/might'." },
+          { jp: "このえいがはおもしろいとおもう。", en: "I think this movie is interesting. — Plain form + と思う = sharing your opinion." },
+        ],
       },
     ],
     exampleJapanese: "今日は学校に行かない。",
@@ -704,6 +872,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "I'm not going to school today.",
     shortNote:
       "Godan negatives shift to the あ-row — not the い-row. Common mistake: ✗ いきない → ✓ いかない.",
+    commonMistakes: [
+      {
+        wrong: "五段(ごだん)否定(ひてい)でい段(だん)を使(つか)う — 「いく→いきない」",
+        right: "いく → いかない — Godan negative shifts to あ-row, not い-row.",
+        note: "This is the top Godan negative mistake. ます uses the い-row (いきます), but ない uses the あ-row (いかない). The rows are different — do not mix them up.",
+      },
+      {
+        wrong: "ある の否定形(ひていけい)を 「あらない」 にする",
+        right: "ある → ない — the negative of ある is simply ない.",
+        note: "ある is a Godan verb, but its negative is irregular. あらない does not exist in standard Japanese. Use ない directly: おかねがない, じかんがない.",
+      },
+      {
+        wrong: "する の否定形(ひていけい)を 「すない」 にする",
+        right: "する → しない — fully irregular.",
+        note: "する's negative is しない, not すない. Its stem changes to し (not す). Memorise: しない・しなかった・しなかったです.",
+      },
+    ],
   },
   {
     id: 13,
@@ -717,22 +902,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "Verbs (polite past): ます → ました.",
         example: "食(た)べます→食(た)べました、行(い)きます→行(い)きました",
+        examples: [
+          { jp: "きのうラーメンをたべました。", en: "I ate ramen yesterday. — たべます → たべました. Just swap ます → ました." },
+          { jp: "せんしゅうえいがをみました。", en: "I watched a movie last week. — Any ます verb becomes past with ました." },
+        ],
       },
       {
         text: "Verbs (plain past): make the て-form, then change て→た, で→だ.",
         example: "食(た)べた、飲(の)んだ、行(い)った、した",
+        examples: [
+          { jp: "食(た)べて → 食(た)べた / 飲(の)んで → 飲(の)んだ", en: "Plain past = て-form with て→た, で→だ. Used in casual speech and storytelling." },
+          { jp: "きのうともだちとこうえんにいった。", en: "I went to the park with a friend yesterday. — Plain past in casual conversation." },
+        ],
       },
       {
         text: "い-adjectives past: drop い, add かった.",
         example: "たのしい→たのしかった、おいしい→おいしかった",
+        examples: [
+          { jp: "パーティーはたのしかったです。", en: "The party was fun. — たのしい → drop い → たのし + かった." },
+          { jp: "きのうのごはんはおいしかった！", en: "Yesterday's meal was delicious! — Plain casual past also drops です." },
+        ],
       },
       {
         text: "な-adjectives and nouns past: add でした.",
         example: "しずかでした、がくせいでした",
+        examples: [
+          { jp: "そのまちはしずかでした。", en: "That town was quiet. — な-adjective + でした for past." },
+          { jp: "こどものとき、わたしはがくせいでした。", en: "When I was a child, I was a student. — Noun + でした." },
+        ],
       },
       {
         text: "The most common mistake: putting い-adjectives with でした.",
         example: "✗ たのしいでした → ✓ たのしかったです",
+        examples: [
+          { jp: "✗ たのしいでした → ✓ たのしかったです", en: "Fun past tense. い-adjectives conjugate themselves — they never need でした." },
+          { jp: "✗ おいしいでした → ✓ おいしかったです", en: "Delicious past tense. Same rule — change the adjective ending, not the copula." },
+        ],
       },
     ],
     exampleJapanese: "昨日は友達と映画を見ました。",
@@ -741,6 +946,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "Yesterday I watched a movie with my friend.",
     shortNote:
       "い-adjectives have their own built-in past tense (かった). Never pair them with でした.",
+    commonMistakes: [
+      {
+        wrong: "い形容詞(けいようし)に でした をつける — 「たのしいでした」",
+        right: "たのしかったです — い-adjectives use their own かった ending.",
+        note: "This is the #1 past-tense mistake for Japanese learners. でした is for nouns and な-adjectives only. い-adjectives always change their own ending: たのしい → たのしかった.",
+      },
+      {
+        wrong: "な形容詞(けいようし)に かった をつける — 「きれいかった」",
+        right: "きれいでした — な-adjectives use でした.",
+        note: "きれい, しずか, ゆうめい and all other な-adjectives use でした for past tense. Never かった. The pattern is: な-adjective (no な) + でした.",
+      },
+      {
+        wrong: "丁寧(ていねい)な否定(ひてい)過去(かこ)を間違(まちが)える — 「いきませんだった」",
+        right: "いきませんでした — polite past negative is ませんでした as one unit.",
+        note: "ませんでした is the correct polite past negative. Do not try to build it from parts like ません + だった. It is a single fixed ending.",
+      },
+    ],
   },
   {
     id: 14,
@@ -754,22 +976,42 @@ export const MINI_LESSONS: MiniLesson[] = [
       {
         text: "Ichidan: drop る, add て.",
         example: "食(た)べる→食(た)べて、見(み)る→見(み)て、起(お)きる→起(お)きて",
+        examples: [
+          { jp: "食(た)べる → 食(た)べて", en: "Ichidan て-form is simple: drop る, add て. Stem never changes." },
+          { jp: "おきる → おきて、みる → みて", en: "Every Ichidan verb follows the same pattern — no sound changes." },
+        ],
       },
       {
         text: "Godan く/ぐ → いて/いで (voiced g softens the ending to いで).",
         example: "書(か)く→書(か)いて、泳(およ)ぐ→泳(およ)いで",
+        examples: [
+          { jp: "書(か)く → 書(か)いて", en: "く → いて. The く disappears and becomes い before て." },
+          { jp: "泳(およ)ぐ → 泳(およ)いで", en: "ぐ → いで. Voiced ぐ becomes voiced いで (not いて)." },
+        ],
       },
       {
         text: "Godan す → して.",
         example: "話(はな)す→話(はな)して、貸(か)す→貸(か)して",
+        examples: [
+          { jp: "話(はな)す → 話(はな)して", en: "す → して. Clean and predictable — all す-verbs follow this." },
+          { jp: "貸(か)す → 貸(か)して、返(かえ)す → 返(かえ)して", en: "Please lend me / please return. — して makes polite requests here." },
+        ],
       },
       {
         text: "Godan ぬ/ぶ/む → んで.",
         example: "飲(の)む→飲(の)んで、遊(あそ)ぶ→遊(あそ)んで、死(し)ぬ→死(し)んで",
+        examples: [
+          { jp: "飲(の)む → 飲(の)んで", en: "む → んで. The む sound nasalizes to ん." },
+          { jp: "遊(あそ)ぶ → 遊(あそ)んで、読(よ)む → 読(よ)んで", en: "ぶ and む both → んで. These three (ぬ/ぶ/む) all end in the same て-form." },
+        ],
       },
       {
         text: "Godan る/う/つ → って. Irregular: する→して、くる→きて. Exception: 行(い)く→行(い)って (not 行(い)いて).",
         example: "帰(かえ)る→帰(かえ)って、買(か)う→買(か)って、待(ま)つ→待(ま)って",
+        examples: [
+          { jp: "帰(かえ)る → 帰(かえ)って、買(か)う → 買(か)って、待(ま)つ → 待(ま)って", en: "る/う/つ all → って. Three different endings, same result." },
+          { jp: "行(い)く → 行(い)って (NOT 行(い)いて)", en: "行く is the famous exception! く normally → いて, but 行く → 行って. Must be memorised." },
+        ],
       },
     ],
     exampleJapanese: "手を洗ってから、食べてください。",
@@ -778,6 +1020,23 @@ export const MINI_LESSONS: MiniLesson[] = [
     exampleEnglish: "Please wash your hands before eating.",
     shortNote:
       "行く is the one exception: its て-form is 行って, not 行いて. Remember it on its own.",
+    commonMistakes: [
+      {
+        wrong: "行(い)く のて形(けい)を 「行(い)いて」 にする",
+        right: "行く → 行って — this is the one exception to the く→いて rule.",
+        note: "All other く-verbs follow く→いて (書く→書いて, 聞く→聞いて), but 行く is different: 行く→行って. It is the single most important て-form exception to memorise.",
+      },
+      {
+        wrong: "ぬ/ぶ/む のて形(けい)を 「て」 にする — 「飲(の)むて」「遊(あそ)ぶて」",
+        right: "飲む → 飲んで、遊ぶ → 遊んで — ぬ/ぶ/む all become んで (voiced).",
+        note: "These three endings all become んで, not んて. The ん nasalizes the sound and makes it voiced (で not て). Think of it as: the nose hum (ん) makes the ending soft.",
+      },
+      {
+        wrong: "する のて形(けい)を 「すて」 にする",
+        right: "する → して — irregular, must be memorised.",
+        note: "する does not follow any regular pattern. Its て-form is して. This combines with nouns constantly: べんきょうして, そうじして, りょこうして.",
+      },
+    ],
   },
   {
     id: 15,
