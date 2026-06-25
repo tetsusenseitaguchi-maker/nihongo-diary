@@ -159,7 +159,7 @@ export async function POST(request: Request) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("plan, preferred_language")
+    .select("plan, preferred_language, timezone")
     .eq("id", user.id)
     .single();
   const plan = normalizePlan(profile?.plan);
@@ -184,9 +184,27 @@ export async function POST(request: Request) {
     );
   }
 
+  // Resolve user timezone: cookie (set by TimezoneSyncer on the client) takes priority,
+  // then fall back to the value stored in the profile DB column.
+  const rawTz = cookieStore.get("user_tz")?.value;
+  let tz = "UTC";
+  if (rawTz) {
+    try {
+      const decoded = decodeURIComponent(rawTz);
+      new Intl.DateTimeFormat("en-CA", { timeZone: decoded });
+      tz = decoded;
+    } catch { /* invalid cookie value — fall through */ }
+  }
+  if (tz === "UTC" && profile?.timezone && profile.timezone !== "UTC") {
+    try {
+      new Intl.DateTimeFormat("en-CA", { timeZone: profile.timezone });
+      tz = profile.timezone;
+    } catch { /* invalid DB value — fall through */ }
+  }
+
   // Atomically claim one correction slot (check + increment in a single DB round-trip).
   // Returns false when the daily limit is already reached — no race-condition bypass possible.
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: tz });
   const { data: allowed, error: rpcError } = await supabase.rpc("try_use_correction", {
     p_user_id: user.id,
     p_date: today,

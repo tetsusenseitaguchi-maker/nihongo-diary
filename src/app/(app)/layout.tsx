@@ -6,10 +6,13 @@ import { TopBar } from "@/components/TopBar";
 import { BottomNav } from "@/components/BottomNav";
 import { Avatar } from "@/components/ObiePhoto";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { TimezoneSyncer } from "@/components/TimezoneSyncer";
 import { createClient } from "@/lib/supabase/server";
 import { LocaleProvider } from "@/contexts/locale";
 import { normaliseLocale } from "@/lib/i18n";
 import { getInitialMessages, getServerT } from "@/lib/i18n-server";
+import { todayInTZ } from "@/lib/date-tz";
+import { validateTZ } from "@/lib/tz-server";
 
 export default async function AppLayout({
   children,
@@ -27,6 +30,8 @@ export default async function AppLayout({
   let currentStreak = 0;
   let preferredLang = "en";
 
+  const cookieStore = await cookies();
+
   if (user) {
     const [{ data: profile }, { data: dateData }] = await Promise.all([
       supabase
@@ -41,26 +46,31 @@ export default async function AppLayout({
     avatarUrl = profile?.avatar_url || "";
     if (profile?.preferred_language) preferredLang = profile.preferred_language;
 
-    const toYMD = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     const dateSet = new Set<string>((dateData ?? []).map((r: { diary_date: string }) => r.diary_date));
-    const cursor = new Date();
-    if (!dateSet.has(toYMD(cursor))) cursor.setDate(cursor.getDate() - 1);
-    while (dateSet.has(toYMD(cursor))) {
+    const prevDay = (s: string) => {
+      const d = new Date(s + "T00:00:00");
+      d.setDate(d.getDate() - 1);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    };
+    const rawTz = cookieStore.get("user_tz")?.value;
+    const tz = rawTz ? validateTZ(decodeURIComponent(rawTz)) : "UTC";
+    let cur = todayInTZ(tz);
+    if (!dateSet.has(cur)) cur = prevDay(cur);
+    while (dateSet.has(cur)) {
       currentStreak++;
-      cursor.setDate(cursor.getDate() - 1);
+      cur = prevDay(cur);
     }
   }
 
   // Locale resolution: cookie takes priority (reflects last explicit choice),
   // fall back to the user's DB preference, then to "en".
-  const cookieStore = await cookies();
   const cookieLang = cookieStore.get("NEXT_LOCALE")?.value;
   const locale = normaliseLocale(cookieLang || preferredLang);
   const initialMessages = await getInitialMessages(locale);
 
   return (
     <LocaleProvider initialLocale={locale} initialMessages={initialMessages}>
+      <TimezoneSyncer />
       <div className="min-h-screen bg-cream">
         {/* Desktop sidebar */}
         <aside className="fixed inset-y-0 left-0 z-30 hidden w-[264px] border-r border-line bg-paper lg:block">

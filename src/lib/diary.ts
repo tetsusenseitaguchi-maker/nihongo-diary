@@ -21,20 +21,25 @@ export interface DiaryStats {
   today: DiaryRow | null;
 }
 
-function ymd(d: Date): string {
+function prevDay(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00");
+  d.setDate(d.getDate() - 1);
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
 
-export function computeStats(entries: DiaryRow[], now: Date = new Date()): DiaryStats {
-  const year = now.getFullYear();
-  const month = now.getMonth();
+// todayStr: "YYYY-MM-DD" in the user's local timezone.
+// Omit to fall back to the server's local date (UTC on Vercel — only correct
+// for callers that don't have access to the user's timezone).
+export function computeStats(entries: DiaryRow[], todayStr?: string): DiaryStats {
+  const ref = todayStr ?? new Date().toLocaleDateString("en-CA");
+  const [year, m] = ref.split("-").map(Number);
+  const month = m - 1; // 0-indexed
 
   const dateSet = new Set(entries.map((e) => e.diary_date));
 
-  // This / last month counts
   const lastMonthDate = new Date(year, month - 1, 1);
   const lm = { y: lastMonthDate.getFullYear(), m: lastMonthDate.getMonth() };
 
@@ -52,13 +57,13 @@ export function computeStats(entries: DiaryRow[], now: Date = new Date()): Diary
     }
   }
 
-  // Current streak — consecutive days ending today (or yesterday if today is blank)
+  // Current streak — walk backwards from today (or yesterday if today has no entry)
   let currentStreak = 0;
-  const cursor = new Date(now);
-  if (!dateSet.has(ymd(cursor))) cursor.setDate(cursor.getDate() - 1);
-  while (dateSet.has(ymd(cursor))) {
+  let cursor = ref;
+  if (!dateSet.has(cursor)) cursor = prevDay(cursor);
+  while (dateSet.has(cursor)) {
     currentStreak++;
-    cursor.setDate(cursor.getDate() - 1);
+    cursor = prevDay(cursor);
   }
 
   // Longest streak across all entries
@@ -78,7 +83,7 @@ export function computeStats(entries: DiaryRow[], now: Date = new Date()): Diary
     prev = d;
   }
 
-  const today = entries.find((e) => e.diary_date === ymd(now)) ?? null;
+  const today = entries.find((e) => e.diary_date === ref) ?? null;
 
   return {
     total: entries.length,

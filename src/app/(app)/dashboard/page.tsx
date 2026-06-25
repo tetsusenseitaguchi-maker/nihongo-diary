@@ -10,6 +10,8 @@ import { templates } from "@/lib/mock-data";
 import { computeStats, type DiaryRow } from "@/lib/diary";
 import { monthLabel, formatShort } from "@/lib/dates";
 import { getServerT } from "@/lib/i18n-server";
+import { getTimezoneFromCookie } from "@/lib/tz-server";
+import { nowInTZ } from "@/lib/date-tz";
 
 export const dynamic = "force-dynamic";
 
@@ -37,15 +39,12 @@ export default async function DashboardPage() {
   const t = await getServerT();
 
   const entries = (data ?? []) as DiaryRow[];
-  const stats = computeStats(entries);
+  const tz = await getTimezoneFromCookie();
+  const { year, month, day: today, dateStr: todayStr } = nowInTZ(tz);
+  const stats = computeStats(entries, todayStr);
 
   const displayName = profile?.display_name || profile?.username || "Learner";
   const avatarUrl = profile?.avatar_url || "";
-
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const today = now.getDate();
   const recent = entries.slice(0, 4);
 
   return (

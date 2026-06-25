@@ -42,7 +42,8 @@ const tips = [
 ];
 
 function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  // en-CA locale returns YYYY-MM-DD in the browser's local timezone (not UTC).
+  return new Date().toLocaleDateString("en-CA");
 }
 
 function jpDate(iso: string) {
