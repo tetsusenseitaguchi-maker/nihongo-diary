@@ -10,16 +10,27 @@ import { navItems } from "@/lib/mock-data";
 const primary = navItems.slice(0, 6);
 const secondary = navItems.slice(6);
 
-const MILESTONES = [7, 14, 30, 60, 100, 200, 365];
+// Milestones start at 3 so new users get a quick first win.
+const MILESTONES = [3, 7, 14, 30, 60, 100];
 
-function streakPct(streak: number): number {
-  if (streak <= 0) return 0;
+type StreakInfo = { pct: number; next: number | null; remaining: number };
+
+function streakInfo(streak: number): StreakInfo {
+  if (streak <= 0) return { pct: 0, next: MILESTONES[0], remaining: MILESTONES[0] };
   let prev = 0;
   for (const m of MILESTONES) {
-    if (streak <= m) return Math.round(((streak - prev) / (m - prev)) * 100);
+    if (streak < m) {
+      // Progress from prev milestone toward m (0 % on the day prev milestone was reached)
+      return {
+        pct: Math.round(((streak - prev) / (m - prev)) * 100),
+        next: m,
+        remaining: m - streak,
+      };
+    }
     prev = m;
   }
-  return 100;
+  // Past all milestones
+  return { pct: 100, next: null, remaining: 0 };
 }
 
 export function Sidebar({ onNavigate, currentStreak = 0 }: { onNavigate?: () => void; currentStreak?: number }) {
@@ -64,23 +75,44 @@ export function Sidebar({ onNavigate, currentStreak = 0 }: { onNavigate?: () => 
       </nav>
 
       {/* Obie buddy card */}
-      <div className="rounded-2xl border border-line bg-mint/50 p-3">
-        <div className="flex items-center gap-3">
-          <ObiePhoto size={44} />
-          <div className="leading-tight">
-            <p className="text-sm font-bold text-pine">Keep going!</p>
-            <p className="text-[11px] text-muted">
-              Consistency is your superpower.
-            </p>
+      {(() => {
+        const info = streakInfo(currentStreak);
+        const labelJa =
+          currentStreak === 0
+            ? "今日から始めよう 🌱"
+            : info.next === null
+            ? `連続${currentStreak}日！すごい 🌟`
+            : `あと${info.remaining}日で${info.next}日連続！`;
+        const labelEn =
+          currentStreak === 0
+            ? "Let's start today!"
+            : info.next === null
+            ? "Building a legend!"
+            : `${info.remaining} more day${info.remaining !== 1 ? "s" : ""} to ${info.next}-day streak`;
+        return (
+          <div className="rounded-2xl border border-line bg-mint/50 p-3">
+            <div className="flex items-center gap-3">
+              <ObiePhoto size={44} />
+              <div className="min-w-0 leading-tight">
+                <p className="text-sm font-bold text-pine">Keep going!</p>
+                <p className="truncate text-[11px] text-muted">{labelJa}</p>
+              </div>
+            </div>
+            <div className="mt-3">
+              <div className="flex items-center gap-2">
+                <span className="text-moss-600">🐾</span>
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-paper">
+                  <div
+                    className="h-full rounded-full bg-moss transition-all duration-500"
+                    style={{ width: `${info.pct}%` }}
+                  />
+                </div>
+              </div>
+              <p className="mt-1 pl-5 text-[10px] text-muted">{labelEn}</p>
+            </div>
           </div>
-        </div>
-        <div className="mt-3 flex items-center gap-2">
-          <span className="text-moss-600">🐾</span>
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-paper">
-            <div className="h-full rounded-full bg-moss transition-all" style={{ width: `${streakPct(currentStreak)}%` }} />
-          </div>
-        </div>
-      </div>
+        );
+      })()}
     </div>
   );
 }
