@@ -288,13 +288,13 @@ export default function LandingPage() {
               Write one sentence in Japanese today. Obie will take it from there.
             </p>
             <div className="mt-7 flex justify-center">
-              <LinkButton
-                href="/signup"
-                size="lg"
-                className="bg-cream text-pine hover:bg-paper"
+              {/* Plain Link — avoids gloss-btn's background-image gradient overriding bg-cream */}
+              <Link
+                href="/write"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-cream px-6 text-base font-semibold text-pine transition-colors hover:bg-paper active:bg-sand"
               >
                 Start for free <Icon.arrow className="h-5 w-5" />
-              </LinkButton>
+              </Link>
             </div>
           </div>
         </Card>
