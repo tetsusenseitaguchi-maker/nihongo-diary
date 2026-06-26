@@ -41,6 +41,7 @@ const NAV_KEYS: Record<string, string> = {
   Feed: "nav.feed",
   "My Places": "nav.places",
   Learn: "nav.learn",
+  "How to Use": "nav.howToUse",
   Profile: "nav.profile",
   Upgrade: "nav.upgrade",
 };

@@ -12,6 +12,7 @@ export const navItems: NavItem[] = [
   { label: "Feed", href: "/feed", icon: "feed" },
   { label: "My Places", href: "/places", icon: "mapPin" },
   { label: "Learn", href: "/support", icon: "template" },
+  { label: "How to Use", href: "/how-to-use", icon: "helpCircle" },
   { label: "Profile", href: "/profile", icon: "profile" },
   { label: "Upgrade", href: "/upgrade", icon: "star" },
 ];

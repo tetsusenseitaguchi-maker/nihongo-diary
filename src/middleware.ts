@@ -11,6 +11,8 @@ const PROTECTED = [
   "/profile",
   "/profile-setup",
   "/diary",
+  "/how-to-use",
+  "/places",
 ];
 
 const AUTH_PAGES = ["/login", "/signup"];

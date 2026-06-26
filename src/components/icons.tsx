@@ -178,6 +178,12 @@ export const Icon = {
       <circle cx="12" cy="8.5" r="2.2" />
     </svg>
   ),
+  helpCircle: (p: IconProps) => (
+    <svg {...base} {...p}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M9.5 9.5a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 3.8M12 16.8v.4" />
+    </svg>
+  ),
 };
 
 export const weatherIcon = { sunny: "sun", cloudy: "cloud", rainy: "rain" } as const;
