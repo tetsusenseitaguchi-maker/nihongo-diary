@@ -394,5 +394,7 @@
   "pwa.iosStep1": "Appuyez sur le bouton Partager en bas de Safari",
   "pwa.iosStep2": "Faites defiler et appuyez sur « Ajouter a l’ecran d’accueil »",
   "pwa.iosStep3": "Appuyez sur « Ajouter » pour confirmer",
-  "pwa.done": "Compris"
+  "pwa.done": "Compris",
+  "pwa.androidStep1": "Appuie sur ⋮ en haut à droite de Chrome",
+  "pwa.androidStep2": "Appuie sur « Ajouter à l’écran d’accueil »"
 }

@@ -394,5 +394,7 @@
   "pwa.iosStep1": "Toca el boton Compartir en la barra de Safari",
   "pwa.iosStep2": "Desplazate y toca “Agregar a la pantalla de inicio”",
   "pwa.iosStep3": "Toca “Agregar” para confirmar",
-  "pwa.done": "Entendido"
+  "pwa.done": "Entendido",
+  "pwa.androidStep1": "Toca ⋮ en la parte superior derecha de Chrome",
+  "pwa.androidStep2": "Toca “Agregar a pantalla de inicio”"
 }

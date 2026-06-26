@@ -394,5 +394,7 @@
   "pwa.iosStep1": "Tocca il pulsante Condividi in basso in Safari",
   "pwa.iosStep2": "Scorri e tocca “Aggiungi a Home”",
   "pwa.iosStep3": "Tocca “Aggiungi” per confermare",
-  "pwa.done": "Capito"
+  "pwa.done": "Capito",
+  "pwa.androidStep1": "Tocca ⋮ in alto a destra su Chrome",
+  "pwa.androidStep2": "Tocca “Aggiungi alla schermata Home”"
 }

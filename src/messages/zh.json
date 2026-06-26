@@ -394,5 +394,7 @@
   "pwa.iosStep1": "点击 Safari 底部的分享按钮",
   "pwa.iosStep2": "向下滚动，点击「添加到主屏幕」",
   "pwa.iosStep3": "点击右上角「添加」确认",
-  "pwa.done": "知道了"
+  "pwa.done": "知道了",
+  "pwa.androidStep1": "点击 Chrome 右上角的 ⋮ 菜单",
+  "pwa.androidStep2": "点击「添加到主屏幕」"
 }

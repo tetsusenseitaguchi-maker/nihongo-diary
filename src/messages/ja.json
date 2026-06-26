@@ -394,5 +394,7 @@
   "pwa.iosStep1": "Safari 下部の共有ボタン（四角に矢印）をタップ",
   "pwa.iosStep2": "「ホーム画面に追加」をタップ",
   "pwa.iosStep3": "右上の「追加」をタップして完了",
-  "pwa.done": "わかった"
+  "pwa.done": "わかった",
+  "pwa.androidStep1": "Chrome 右上の「⋮」をタップ",
+  "pwa.androidStep2": "「ホーム画面に追加」をタップ"
 }

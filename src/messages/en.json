@@ -394,5 +394,7 @@
   "pwa.iosStep1": "Tap the Share button at the bottom of Safari",
   "pwa.iosStep2": "Scroll down and tap “Add to Home Screen”",
   "pwa.iosStep3": "Tap “Add” to confirm",
-  "pwa.done": "Got it"
+  "pwa.done": "Got it",
+  "pwa.androidStep1": "Tap ⋮ at the top-right of Chrome",
+  "pwa.androidStep2": "Tap “Add to Home screen”"
 }
