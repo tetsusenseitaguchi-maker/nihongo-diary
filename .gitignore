@@ -1,6 +1,12 @@
 /node_modules
 /.next
 /out
+
+# Capacitor iOS build artifacts (keep project files, ignore build output)
+ios/App/App/public/
+ios/App/.build/
+ios/App/DerivedData/
+ios/App/build/
 /build
 .env*
 .DS_Store

@@ -1,0 +1,16 @@
+{
+  "" : {
+    "const-values" : "/Users/tettataguchi/Downloads/nihongo-diary 10/ios/App/CapApp-SPM/build/CapApp-SPM.build/Release-iphoneos/CapApp-SPM.build/Objects-normal/arm64/CapApp-SPM-primary.swiftconstvalues",
+    "dependencies" : "/Users/tettataguchi/Downloads/nihongo-diary 10/ios/App/CapApp-SPM/build/CapApp-SPM.build/Release-iphoneos/CapApp-SPM.build/Objects-normal/arm64/CapApp-SPM-primary.d",
+    "diagnostics" : "/Users/tettataguchi/Downloads/nihongo-diary 10/ios/App/CapApp-SPM/build/CapApp-SPM.build/Release-iphoneos/CapApp-SPM.build/Objects-normal/arm64/CapApp-SPM-primary.dia",
+    "emit-module-dependencies" : "/Users/tettataguchi/Downloads/nihongo-diary 10/ios/App/CapApp-SPM/build/CapApp-SPM.build/Release-iphoneos/CapApp-SPM.build/Objects-normal/arm64/CapApp-SPM-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/tettataguchi/Downloads/nihongo-diary 10/ios/App/CapApp-SPM/build/CapApp-SPM.build/Release-iphoneos/CapApp-SPM.build/Objects-normal/arm64/CapApp-SPM-primary-emit-module.dia",
+    "pch" : "/Users/tettataguchi/Downloads/nihongo-diary 10/ios/App/CapApp-SPM/build/CapApp-SPM.build/Release-iphoneos/CapApp-SPM.build/Objects-normal/arm64/CapApp-SPM-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/tettataguchi/Downloads/nihongo-diary 10/ios/App/CapApp-SPM/build/CapApp-SPM.build/Release-iphoneos/CapApp-SPM.build/Objects-normal/arm64/CapApp-SPM-primary.swiftdeps"
+  },
+  "/Users/tettataguchi/Downloads/nihongo-diary 10/ios/App/CapApp-SPM/Sources/CapApp-SPM/CapApp-SPM.swift" : {
+    "index-unit-output-path" : "/CapApp-SPM.build/Release-iphoneos/CapApp-SPM.build/Objects-normal/arm64/CapApp-SPM.o",
+    "llvm-bc" : "/Users/tettataguchi/Downloads/nihongo-diary 10/ios/App/CapApp-SPM/build/CapApp-SPM.build/Release-iphoneos/CapApp-SPM.build/Objects-normal/arm64/CapApp-SPM.bc",
+    "object" : "/Users/tettataguchi/Downloads/nihongo-diary 10/ios/App/CapApp-SPM/build/CapApp-SPM.build/Release-iphoneos/CapApp-SPM.build/Objects-normal/arm64/CapApp-SPM.o"
+  }
+}
