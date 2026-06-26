@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Noto_Sans_JP, Noto_Serif_JP } from "next/font/google";
+import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -23,10 +24,24 @@ const notoSerifJP = Noto_Serif_JP({
   weight: ["500", "600", "700"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#233d30",
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
   title: "Nihongo Diary — Write Japanese every day",
   description:
     "Build a daily Japanese writing habit with instant AI corrections, saved diary history, calendar tracking, and learning support from Obie.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Nihongo Diary",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export default function RootLayout({
@@ -34,10 +49,14 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+      </head>
       <body
         className={`${jakarta.variable} ${notoJP.variable} ${notoSerifJP.variable} antialiased`}
       >
         {children}
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );
