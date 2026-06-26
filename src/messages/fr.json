@@ -381,5 +381,8 @@
   "stripe.success.pro.f1": "10 corrections IA par jour",
   "stripe.success.pro.f2": "Jusqu'a 500 caracteres par entree",
   "stripe.success.pro.f3": "Bibliotheque Mini Lecon complete (20 lecons)",
-  "stripe.success.pro.f4": "Exercices de revision generes par IA"
+  "stripe.success.pro.f4": "Exercices de revision generes par IA",
+  "stripe.manageSubscription": "Gerer l'abonnement",
+  "stripe.managingSubscription": "Redirection...",
+  "stripe.portalError": "Une erreur s'est produite. Veuillez reessayer."
 }

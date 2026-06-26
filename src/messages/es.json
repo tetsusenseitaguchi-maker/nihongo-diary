@@ -381,5 +381,8 @@
   "stripe.success.pro.f1": "10 correcciones de IA por dia",
   "stripe.success.pro.f2": "Hasta 500 caracteres por entrada",
   "stripe.success.pro.f3": "Biblioteca Mini Leccion completa (20 lecciones)",
-  "stripe.success.pro.f4": "Ejercicios de revision generados por IA"
+  "stripe.success.pro.f4": "Ejercicios de revision generados por IA",
+  "stripe.manageSubscription": "Gestionar suscripcion",
+  "stripe.managingSubscription": "Redirigiendo...",
+  "stripe.portalError": "Algo salio mal. Intentalo de nuevo."
 }

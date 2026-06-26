@@ -381,5 +381,8 @@
   "stripe.success.pro.f1": "10 AI corrections per day",
   "stripe.success.pro.f2": "Up to 500 characters per entry",
   "stripe.success.pro.f3": "Full Mini Lesson Library (all 20 lessons)",
-  "stripe.success.pro.f4": "AI-generated Review Drills"
+  "stripe.success.pro.f4": "AI-generated Review Drills",
+  "stripe.manageSubscription": "Manage subscription",
+  "stripe.managingSubscription": "Redirecting...",
+  "stripe.portalError": "Something went wrong. Please try again."
 }

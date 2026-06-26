@@ -381,5 +381,8 @@
   "stripe.success.pro.f1": "AI添削 1日10回",
   "stripe.success.pro.f2": "1エントリー最大500文字",
   "stripe.success.pro.f3": "ミニレッスンライブラリ全20本",
-  "stripe.success.pro.f4": "AI生成リビュードリル"
+  "stripe.success.pro.f4": "AI生成リビュードリル",
+  "stripe.manageSubscription": "サブスクを管理する",
+  "stripe.managingSubscription": "移動中...",
+  "stripe.portalError": "エラーが発生しました。もう一度お試しください。"
 }

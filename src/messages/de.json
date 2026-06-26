@@ -381,5 +381,8 @@
   "stripe.success.pro.f1": "10 KI-Korrekturen pro Tag",
   "stripe.success.pro.f2": "Bis zu 500 Zeichen pro Eintrag",
   "stripe.success.pro.f3": "Vollstandige Mini-Lektionsbibliothek (alle 20 Lektionen)",
-  "stripe.success.pro.f4": "KI-generierte Ubungsaufgaben"
+  "stripe.success.pro.f4": "KI-generierte Ubungsaufgaben",
+  "stripe.manageSubscription": "Abonnement verwalten",
+  "stripe.managingSubscription": "Weiterleitung...",
+  "stripe.portalError": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
 }

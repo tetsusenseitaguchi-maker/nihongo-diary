@@ -381,5 +381,8 @@
   "stripe.success.pro.f1": "10 correzioni IA al giorno",
   "stripe.success.pro.f2": "Fino a 500 caratteri per voce",
   "stripe.success.pro.f3": "Libreria Mini Lezione completa (20 lezioni)",
-  "stripe.success.pro.f4": "Esercizi di ripasso generati dall'IA"
+  "stripe.success.pro.f4": "Esercizi di ripasso generati dall'IA",
+  "stripe.manageSubscription": "Gestisci abbonamento",
+  "stripe.managingSubscription": "Reindirizzamento...",
+  "stripe.portalError": "Qualcosa e andato storto. Riprova."
 }

@@ -381,5 +381,8 @@
   "stripe.success.pro.f1": "每日 10 次 AI 纠正",
   "stripe.success.pro.f2": "每篇最多 500 字",
   "stripe.success.pro.f3": "完整迷你课程库（全 20 课）",
-  "stripe.success.pro.f4": "AI 生成复习练习"
+  "stripe.success.pro.f4": "AI 生成复习练习",
+  "stripe.manageSubscription": "管理订阅",
+  "stripe.managingSubscription": "正在跳转...",
+  "stripe.portalError": "出现了错误，请重试。"
 }

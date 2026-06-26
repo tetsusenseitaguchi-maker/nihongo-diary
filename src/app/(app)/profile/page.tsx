@@ -7,8 +7,10 @@ import { LogoutButton } from "@/components/LogoutButton";
 import { UserSearch } from "@/components/UserSearch";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { InviteLinkButton } from "@/components/InviteLinkButton";
+import { ManageSubscriptionButton } from "@/components/ManageSubscriptionButton";
 import { computeStats, type DiaryRow } from "@/lib/diary";
 import { getServerT } from "@/lib/i18n-server";
+import { normalizePlan, PLAN_LABELS } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +21,11 @@ export default async function ProfilePage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*, stripe_customer_id, plan")
+    .eq("id", user.id)
+    .single();
 
   const { data: diaryData } = await supabase
     .from("diary_entries")
@@ -90,6 +96,19 @@ export default async function ProfilePage() {
         </div>
         <LinkButton href="/feed" size="sm" variant="secondary">Feed を見る</LinkButton>
       </Card>
+
+      {/* Subscription management — shown when user has/had a paid plan */}
+      {profile?.stripe_customer_id && (
+        <Card className="flex items-center justify-between gap-4 p-5">
+          <div>
+            <p className="font-serif font-bold text-pine">
+              {PLAN_LABELS[normalizePlan(profile.plan)]}
+            </p>
+            <p className="mt-0.5 text-sm text-muted">{t("upgrade.currentPlan", { plan: PLAN_LABELS[normalizePlan(profile.plan)] })}</p>
+          </div>
+          <ManageSubscriptionButton />
+        </Card>
+      )}
 
       {/* Invite friends */}
       {profile?.invite_code && (
