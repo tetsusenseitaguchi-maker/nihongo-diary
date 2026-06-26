@@ -33,6 +33,12 @@ export default async function PlacesPage() {
       getServerT(),
     ]);
 
+  type ProfileRow = {
+    display_name: string | null;
+    username: string | null;
+    avatar_url: string | null;
+  };
+
   type PlaceRow = {
     id: string;
     lat: number;
@@ -46,15 +52,9 @@ export default async function PlacesPage() {
       | null;
   };
 
-  const ownAuthorName =
-    (profile as { display_name?: string | null; username?: string | null; avatar_url?: string | null } | null)
-      ?.display_name ||
-    (profile as { display_name?: string | null; username?: string | null; avatar_url?: string | null } | null)
-      ?.username ||
-    null;
-  const ownAuthorAvatar =
-    (profile as { display_name?: string | null; username?: string | null; avatar_url?: string | null } | null)
-      ?.avatar_url || null;
+  const p = profile as ProfileRow | null;
+  const ownAuthorName = p?.display_name || p?.username || null;
+  const ownAuthorAvatar = p?.avatar_url || null;
 
   const ownPins: MapPin[] = ((ownData ?? []) as PlaceRow[]).map((p) => {
     const de = Array.isArray(p.diary_entries) ? p.diary_entries[0] : p.diary_entries;
