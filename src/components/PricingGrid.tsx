@@ -22,13 +22,13 @@ export const TIERS: Tier[] = [
     name: "Free",
     price: "$0",
     features: [
-      "1 AI correction / day",
-      "300 characters per entry",
-      "Unlimited diary saves",
-      "Full correction details (explanation, vocabulary, practice drills)",
-      "All correction styles incl. Native",
-      "Follow / Feed / Reactions",
-      "Mini Lesson Preview after each correction",
+      "pricing.features.free.1",
+      "pricing.features.free.2",
+      "pricing.features.free.3",
+      "pricing.features.free.4",
+      "pricing.features.free.5",
+      "pricing.features.free.6",
+      "pricing.features.free.7",
     ],
   },
   {
@@ -38,10 +38,10 @@ export const TIERS: Tier[] = [
     cadence: "/month",
     highlight: true,
     features: [
-      "5 AI corrections / day",
-      "500 characters per entry",
-      "Everything in Free",
-      "Mini Lesson Library — all 20 lessons",
+      "pricing.features.plus.1",
+      "pricing.features.plus.2",
+      "pricing.features.plus.3",
+      "pricing.features.plus.4",
     ],
   },
   {
@@ -50,10 +50,10 @@ export const TIERS: Tier[] = [
     price: "$19",
     cadence: "/month",
     features: [
-      "10 AI corrections / day",
-      "500 characters per entry",
-      "Everything in Plus",
-      "Mini Lesson Review Drills (AI-generated)",
+      "pricing.features.pro.1",
+      "pricing.features.pro.2",
+      "pricing.features.pro.3",
+      "pricing.features.pro.4",
     ],
   },
   {
@@ -63,9 +63,9 @@ export const TIERS: Tier[] = [
     cadence: "/month",
     comingSoon: true,
     features: [
-      "Personal feedback from Tetsu-sensei",
-      "Everything in Pro",
-      "Limited spots",
+      "pricing.features.teacher.1",
+      "pricing.features.teacher.2",
+      "pricing.features.teacher.3",
     ],
   },
 ];
@@ -105,10 +105,12 @@ export function PricingGrid({
   currentPlan,
   mode = "landing",
   labels = DEFAULT_LABELS,
+  translateFeature,
 }: {
   currentPlan?: Plan;
   mode?: "landing" | "upgrade";
   labels?: PricingLabels;
+  translateFeature?: (key: string) => string;
 }) {
   return (
     <div className="space-y-5">
@@ -160,7 +162,7 @@ export function PricingGrid({
                         isComingSoon ? "text-muted" : "text-moss"
                       }`}
                     />
-                    {f}
+                    {translateFeature ? translateFeature(f) : f}
                   </li>
                 ))}
               </ul>

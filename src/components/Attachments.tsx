@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icons";
+import { useT } from "@/contexts/locale";
 
 // ── Validation ─────────────────────────────────────────────────────────────
 
@@ -17,21 +18,23 @@ const AUDIO_MAX_MB = 10;
 const AUDIO_MAX_BYTES = AUDIO_MAX_MB * 1024 * 1024;
 const AUDIO_EXTS = ["mp3", "m4a", "wav", "webm"];
 
-function validatePhoto(file: File): string | null {
+type ValidationResult = { key: string; vars?: Record<string, string | number> } | null;
+
+function validatePhoto(file: File): ValidationResult {
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   if (!PHOTO_EXTS.includes(ext))
-    return `対応形式は ${PHOTO_EXTS.join(" / ")} です。`;
+    return { key: "attach.photoInvalidType", vars: { exts: PHOTO_EXTS.join(" / ") } };
   if (file.size > PHOTO_MAX_BYTES)
-    return `写真は ${PHOTO_MAX_MB}MB 以下にしてください（現在: ${(file.size / 1024 / 1024).toFixed(1)}MB）。`;
+    return { key: "attach.photoTooLarge", vars: { maxMB: PHOTO_MAX_MB, sizeMB: (file.size / 1024 / 1024).toFixed(1) } };
   return null;
 }
 
-function validateAudio(file: File): string | null {
+function validateAudio(file: File): ValidationResult {
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   if (!AUDIO_EXTS.includes(ext))
-    return `対応形式は ${AUDIO_EXTS.join(" / ")} です。`;
+    return { key: "attach.audioInvalidType", vars: { exts: AUDIO_EXTS.join(" / ") } };
   if (file.size > AUDIO_MAX_BYTES)
-    return `音声ファイルは ${AUDIO_MAX_MB}MB 以下にしてください（現在: ${(file.size / 1024 / 1024).toFixed(1)}MB）。`;
+    return { key: "attach.audioTooLarge", vars: { maxMB: AUDIO_MAX_MB, sizeMB: (file.size / 1024 / 1024).toFixed(1) } };
   return null;
 }
 
@@ -84,6 +87,7 @@ export function Attachments({
   const audioInputRef = useRef<HTMLInputElement>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
+  const t = useT();
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [audioError, setAudioError] = useState<string | null>(null);
 
@@ -120,7 +124,7 @@ export function Attachments({
     if (!file) return;
     const err = validatePhoto(file);
     if (err) {
-      setPhotoError(err);
+      setPhotoError(t(err.key, err.vars));
       e.target.value = "";
       return;
     }
@@ -145,7 +149,7 @@ export function Attachments({
     if (!file) return;
     const err = validateAudio(file);
     if (err) {
-      setAudioError(err);
+      setAudioError(t(err.key, err.vars));
       e.target.value = "";
       return;
     }
@@ -265,7 +269,7 @@ export function Attachments({
   return (
     <div className="rounded-[var(--radius-card)] border border-line bg-paper p-4 shadow-card">
       <p className="mb-3 text-xs font-bold uppercase tracking-wide text-muted">
-        Attachments
+        {t("attach.heading")}
       </p>
 
       <div className="flex flex-wrap gap-2">
@@ -277,7 +281,7 @@ export function Attachments({
             className="inline-flex items-center gap-2 rounded-full bg-mint px-4 py-2 text-sm font-semibold text-pine transition-colors hover:bg-moss/20"
           >
             <Icon.camera className="h-4 w-4" />
-            Add photo
+            {t("attach.addPhoto")}
           </button>
         )}
 
@@ -289,7 +293,7 @@ export function Attachments({
             className="inline-flex items-center gap-2 rounded-full bg-mint px-4 py-2 text-sm font-semibold text-pine transition-colors hover:bg-moss/20"
           >
             <Icon.mic className="h-4 w-4" />
-            Record voice
+            {t("attach.recordVoice")}
           </button>
         )}
 
@@ -301,7 +305,7 @@ export function Attachments({
             className="inline-flex items-center gap-2 rounded-full border border-line bg-paper px-4 py-2 text-sm font-semibold text-pine transition-colors hover:border-moss hover:bg-mint/30"
           >
             <Icon.book className="h-4 w-4" />
-            Upload audio file
+            {t("attach.uploadAudio")}
           </button>
         )}
       </div>
@@ -312,7 +316,7 @@ export function Attachments({
       {recState === "requesting" && (
         <div className="mt-3 flex items-center gap-2 rounded-xl bg-mint/40 px-4 py-3 text-sm text-pine">
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-moss/30 border-t-moss" />
-          Requesting microphone access…
+          {t("attach.requestingMic")}
         </div>
       )}
 
@@ -321,7 +325,7 @@ export function Attachments({
         <div className="mt-3 flex items-center gap-3 rounded-xl border border-apricot/30 bg-apricot/10 px-4 py-3">
           <span className="flex items-center gap-1.5 text-sm font-semibold text-apricot">
             <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-apricot" />
-            Recording
+            {t("attach.recording")}
           </span>
           <span className="font-mono text-sm font-bold text-pine">{fmtTime(recSecs)}</span>
           <button
@@ -330,7 +334,7 @@ export function Attachments({
             className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-pine px-3.5 py-1.5 text-xs font-semibold text-cream hover:opacity-90"
           >
             <span className="h-3 w-3 rounded-sm bg-cream" />
-            Stop
+            {t("attach.stop")}
           </button>
         </div>
       )}
@@ -338,7 +342,7 @@ export function Attachments({
       {/* Preview after recording */}
       {recState === "preview" && recPreviewUrl && (
         <div className="mt-3 rounded-xl border border-moss/30 bg-mint/20 p-3">
-          <p className="mb-2 text-xs font-semibold text-moss-600">Recording preview</p>
+          <p className="mb-2 text-xs font-semibold text-moss-600">{t("attach.recordingPreview")}</p>
           <audio controls src={recPreviewUrl} className="h-9 w-full max-w-xs" />
           <div className="mt-2.5 flex gap-2">
             <button
@@ -347,14 +351,14 @@ export function Attachments({
               className="inline-flex items-center gap-1.5 rounded-full bg-pine px-4 py-2 text-xs font-semibold text-cream hover:opacity-90"
             >
               <Icon.check className="h-3.5 w-3.5" />
-              Use this
+              {t("attach.useThis")}
             </button>
             <button
               type="button"
               onClick={retakeRecording}
               className="inline-flex items-center gap-1.5 rounded-full border border-line bg-paper px-4 py-2 text-xs font-semibold text-pine hover:border-moss"
             >
-              ↺ Re-record
+              ↺ {t("attach.reRecord")}
             </button>
           </div>
         </div>
@@ -363,16 +367,16 @@ export function Attachments({
       {/* Microphone denied */}
       {recState === "denied" && (
         <div className="mt-3 rounded-xl bg-apricot/10 px-4 py-3 text-sm text-apricot">
-          <p className="font-semibold">Microphone access was denied.</p>
+          <p className="font-semibold">{t("attach.micDenied")}</p>
           <p className="mt-0.5 text-xs text-apricot/80">
-            Allow microphone access in your browser settings, or upload an audio file instead.
+            {t("attach.micDeniedDetail")}
           </p>
           <button
             type="button"
             onClick={() => setRecState("idle")}
             className="mt-2 text-xs font-semibold underline hover:opacity-80"
           >
-            Try again
+            {t("attach.tryAgain")}
           </button>
         </div>
       )}
@@ -380,14 +384,13 @@ export function Attachments({
       {/* MediaRecorder not supported */}
       {recState === "unsupported" && (
         <div className="mt-3 rounded-xl bg-sand/60 px-4 py-3 text-sm text-ink/70">
-          Recording is not supported in this browser.
-          Please upload an audio file using the button above.
+          {t("attach.unsupported")}
           <button
             type="button"
             onClick={() => setRecState("idle")}
             className="ml-2 text-xs font-semibold text-pine underline hover:opacity-80"
           >
-            Dismiss
+            {t("attach.dismiss")}
           </button>
         </div>
       )}
@@ -428,7 +431,7 @@ export function Attachments({
                   className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-muted hover:text-apricot"
                 >
                   <Icon.trash className="h-3.5 w-3.5" />
-                  Remove
+                  {t("attach.remove")}
                 </button>
               </div>
             </div>
@@ -452,7 +455,7 @@ export function Attachments({
                   className="shrink-0 inline-flex items-center gap-1 text-xs font-medium text-muted hover:text-apricot"
                 >
                   <Icon.trash className="h-3.5 w-3.5" />
-                  Remove
+                  {t("attach.remove")}
                 </button>
               </div>
             </div>

@@ -133,12 +133,12 @@ export default async function ProfilePage() {
 
       {/* Privacy settings */}
       <Card className="p-6">
-        <h2 className="font-serif text-lg font-bold text-pine">Privacy</h2>
+        <h2 className="font-serif text-lg font-bold text-pine">{t("profile.privacy.heading")}</h2>
         <p className="mt-2 text-sm leading-relaxed text-ink/75">
-          Your diaries are <span className="font-semibold text-pine">private by default</span>. Only you can read them.
-          You can make any single diary public from its detail page — public diaries show on your profile and in your
-          followers&apos; feed. Your learning activity (like &quot;wrote a diary&quot;) is shared with people who follow you, but
-          never the diary text unless you make it public.
+          {t("profile.privacy.private1")}
+          <span className="font-semibold text-pine">{t("profile.privacy.private2")}</span>
+          {t("profile.privacy.private3")}
+          {" "}{t("profile.privacy.detail")}
         </p>
       </Card>
     </div>

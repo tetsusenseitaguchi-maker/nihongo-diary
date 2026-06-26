@@ -36,6 +36,7 @@ export default async function UpgradePage() {
       <PricingGrid
         currentPlan={plan}
         mode="upgrade"
+        translateFeature={t}
         labels={{
           mostPopular: t("pricing.mostPopular"),
           comingSoon: t("pricing.comingSoon"),

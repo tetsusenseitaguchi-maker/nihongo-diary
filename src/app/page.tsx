@@ -230,7 +230,7 @@ export default async function LandingPage() {
           </h2>
         </div>
         <div className="mt-10">
-          <PricingGrid mode="landing" />
+          <PricingGrid mode="landing" translateFeature={t} />
         </div>
       </section>
 
