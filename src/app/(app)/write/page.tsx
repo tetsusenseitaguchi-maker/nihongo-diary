@@ -319,7 +319,6 @@ export default function WritePage() {
     });
 
     router.push(`/diary/${data.id}`);
-    router.refresh();
   }
 
   function cycle(setter: (fn: (n: number) => number) => void, len: number) {
