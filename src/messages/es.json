@@ -384,5 +384,15 @@
   "stripe.success.pro.f4": "Ejercicios de revision generados por IA",
   "stripe.manageSubscription": "Gestionar suscripcion",
   "stripe.managingSubscription": "Redirigiendo...",
-  "stripe.portalError": "Algo salio mal. Intentalo de nuevo."
+  "stripe.portalError": "Algo salio mal. Intentalo de nuevo.",
+  "pwa.installTitle": "Agregar a la pantalla de inicio",
+  "pwa.installDesc": "Usala como una app, sin barra del navegador",
+  "pwa.howToAdd": "Como agregar",
+  "pwa.install": "Instalar",
+  "pwa.notNow": "Ahora no",
+  "pwa.howToAddTitle": "Agregar a la pantalla de inicio",
+  "pwa.iosStep1": "Toca el boton Compartir en la barra de Safari",
+  "pwa.iosStep2": "Desplazate y toca “Agregar a la pantalla de inicio”",
+  "pwa.iosStep3": "Toca “Agregar” para confirmar",
+  "pwa.done": "Entendido"
 }

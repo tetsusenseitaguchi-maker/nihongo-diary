@@ -384,5 +384,15 @@
   "stripe.success.pro.f4": "Esercizi di ripasso generati dall'IA",
   "stripe.manageSubscription": "Gestisci abbonamento",
   "stripe.managingSubscription": "Reindirizzamento...",
-  "stripe.portalError": "Qualcosa e andato storto. Riprova."
+  "stripe.portalError": "Qualcosa e andato storto. Riprova.",
+  "pwa.installTitle": "Aggiungi alla schermata Home",
+  "pwa.installDesc": "Usala come un’app, senza la barra del browser",
+  "pwa.howToAdd": "Come si aggiunge",
+  "pwa.install": "Installa",
+  "pwa.notNow": "Non ora",
+  "pwa.howToAddTitle": "Come aggiungere alla schermata Home",
+  "pwa.iosStep1": "Tocca il pulsante Condividi in basso in Safari",
+  "pwa.iosStep2": "Scorri e tocca “Aggiungi a Home”",
+  "pwa.iosStep3": "Tocca “Aggiungi” per confermare",
+  "pwa.done": "Capito"
 }

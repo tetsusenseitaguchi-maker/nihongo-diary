@@ -384,5 +384,15 @@
   "stripe.success.pro.f4": "KI-generierte Ubungsaufgaben",
   "stripe.manageSubscription": "Abonnement verwalten",
   "stripe.managingSubscription": "Weiterleitung...",
-  "stripe.portalError": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+  "stripe.portalError": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+  "pwa.installTitle": "Zum Startbildschirm hinzufuegen",
+  "pwa.installDesc": "Nutze es wie eine App ohne Adressleiste",
+  "pwa.howToAdd": "So geht es",
+  "pwa.install": "Installieren",
+  "pwa.notNow": "Nicht jetzt",
+  "pwa.howToAddTitle": "Zum Startbildschirm hinzufuegen",
+  "pwa.iosStep1": "Tippe auf das Teilen-Symbol in der Safari-Leiste",
+  "pwa.iosStep2": "Scrolle und tippe auf „Zum Home-Bildschirm“",
+  "pwa.iosStep3": "Tippe auf „Hinzufuegen“ zum Bestaetigen",
+  "pwa.done": "Verstanden"
 }

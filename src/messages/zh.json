@@ -384,5 +384,15 @@
   "stripe.success.pro.f4": "AI 生成复习练习",
   "stripe.manageSubscription": "管理订阅",
   "stripe.managingSubscription": "正在跳转...",
-  "stripe.portalError": "出现了错误，请重试。"
+  "stripe.portalError": "出现了错误，请重试。",
+  "pwa.installTitle": "添加到主屏幕",
+  "pwa.installDesc": "像 App 一样全屏使用，无浏览器栏",
+  "pwa.howToAdd": "查看添加方法",
+  "pwa.install": "安装",
+  "pwa.notNow": "暂不添加",
+  "pwa.howToAddTitle": "如何添加到主屏幕",
+  "pwa.iosStep1": "点击 Safari 底部的分享按钮",
+  "pwa.iosStep2": "向下滚动，点击「添加到主屏幕」",
+  "pwa.iosStep3": "点击右上角「添加」确认",
+  "pwa.done": "知道了"
 }

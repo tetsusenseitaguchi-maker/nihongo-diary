@@ -384,5 +384,15 @@
   "stripe.success.pro.f4": "Exercices de revision generes par IA",
   "stripe.manageSubscription": "Gerer l'abonnement",
   "stripe.managingSubscription": "Redirection...",
-  "stripe.portalError": "Une erreur s'est produite. Veuillez reessayer."
+  "stripe.portalError": "Une erreur s'est produite. Veuillez reessayer.",
+  "pwa.installTitle": "Ajouter a l’ecran d’accueil",
+  "pwa.installDesc": "Utilisez-la comme une app, sans barre de navigation",
+  "pwa.howToAdd": "Comment ajouter",
+  "pwa.install": "Installer",
+  "pwa.notNow": "Pas maintenant",
+  "pwa.howToAddTitle": "Ajouter a l’ecran d’accueil",
+  "pwa.iosStep1": "Appuyez sur le bouton Partager en bas de Safari",
+  "pwa.iosStep2": "Faites defiler et appuyez sur « Ajouter a l’ecran d’accueil »",
+  "pwa.iosStep3": "Appuyez sur « Ajouter » pour confirmer",
+  "pwa.done": "Compris"
 }

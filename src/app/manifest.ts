@@ -6,10 +6,10 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Nihongo Diary",
     description:
       "Build a daily Japanese writing habit with AI corrections and learning support.",
-    start_url: "/dashboard",
+    start_url: "/",
     display: "standalone",
-    background_color: "#faf8f2",
-    theme_color: "#233d30",
+    background_color: "#0f3d2e",
+    theme_color: "#0f3d2e",
     orientation: "portrait",
     categories: ["education", "productivity"],
     icons: [

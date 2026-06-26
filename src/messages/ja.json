@@ -384,5 +384,15 @@
   "stripe.success.pro.f4": "AI生成リビュードリル",
   "stripe.manageSubscription": "サブスクを管理する",
   "stripe.managingSubscription": "移動中...",
-  "stripe.portalError": "エラーが発生しました。もう一度お試しください。"
+  "stripe.portalError": "エラーが発生しました。もう一度お試しください。",
+  "pwa.installTitle": "ホーム画面に追加",
+  "pwa.installDesc": "アプリのようにフルスクリーンで使えます",
+  "pwa.howToAdd": "追加方法を見る",
+  "pwa.install": "インストール",
+  "pwa.notNow": "今はしない",
+  "pwa.howToAddTitle": "ホーム画面に追加する方法",
+  "pwa.iosStep1": "Safari 下部の共有ボタン（四角に矢印）をタップ",
+  "pwa.iosStep2": "「ホーム画面に追加」をタップ",
+  "pwa.iosStep3": "右上の「追加」をタップして完了",
+  "pwa.done": "わかった"
 }

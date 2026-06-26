@@ -25,7 +25,7 @@ const notoSerifJP = Noto_Serif_JP({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#233d30",
+  themeColor: "#0f3d2e",
   width: "device-width",
   initialScale: 1,
 };
@@ -49,9 +49,6 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <head>
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-      </head>
       <body
         className={`${jakarta.variable} ${notoJP.variable} ${notoSerifJP.variable} antialiased`}
       >

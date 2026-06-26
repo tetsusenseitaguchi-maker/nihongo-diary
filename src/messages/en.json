@@ -384,5 +384,15 @@
   "stripe.success.pro.f4": "AI-generated Review Drills",
   "stripe.manageSubscription": "Manage subscription",
   "stripe.managingSubscription": "Redirecting...",
-  "stripe.portalError": "Something went wrong. Please try again."
+  "stripe.portalError": "Something went wrong. Please try again.",
+  "pwa.installTitle": "Add to home screen",
+  "pwa.installDesc": "Use it like an app — no browser bar",
+  "pwa.howToAdd": "Show me how",
+  "pwa.install": "Install",
+  "pwa.notNow": "Not now",
+  "pwa.howToAddTitle": "Add to home screen",
+  "pwa.iosStep1": "Tap the Share button at the bottom of Safari",
+  "pwa.iosStep2": "Scroll down and tap “Add to Home Screen”",
+  "pwa.iosStep3": "Tap “Add” to confirm",
+  "pwa.done": "Got it"
 }
