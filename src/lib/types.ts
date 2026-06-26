@@ -138,6 +138,12 @@ export interface MapPin {
   diaryEntryId: string;
   diaryDate: string;
   diaryTitle: string | null;
+  /** true = own pin (exact coords); false = friend pin (city-level blurred). Defaults to true. */
+  isOwner?: boolean;
+  /** Author display name — shown in friend-pin popups. */
+  authorName?: string | null;
+  /** Author avatar URL — used to render the pin icon. */
+  authorAvatar?: string | null;
 }
 
 /** A row from the Supabase `diary_entries` table. */

@@ -6,16 +6,6 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { MapPin } from "@/lib/types";
 
-const PIN_ICON = new L.DivIcon({
-  html: `<div style="width:14px;height:14px;background:#2d6a4f;border:2.5px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.4);"></div>`,
-  className: "",
-  iconSize: [14, 14],
-  iconAnchor: [7, 7],
-  popupAnchor: [0, -10],
-});
-
-// Recalculates tile grid after the container settles — fixes blurry tiles
-// when the map is revealed inside a collapsible/animated container.
 function InvalidateSize() {
   const map = useMap();
   useEffect(() => {
@@ -35,8 +25,58 @@ function FitBounds({ latlngs }: { latlngs: Array<[number, number]> }) {
       map.fitBounds(L.latLngBounds(latlngs), { padding: [50, 50], maxZoom: 13 });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // fit only on mount
+  }, []);
   return null;
+}
+
+function makePinIcon(pin: MapPin): L.DivIcon {
+  const own = pin.isOwner !== false;
+  const size = own ? 36 : 30;
+  const half = size / 2;
+  const border = own ? "#2d6a4f" : "#8ab4a0";
+  const bg = own ? "#2d6a4f" : "#8ab4a0";
+  const opacity = own ? "1" : "0.82";
+  const label = pin.authorName || "?";
+  const initial = label.charAt(0).toUpperCase();
+  const fsize = Math.round(size * 0.4);
+
+  const inner = pin.authorAvatar
+    ? `<img src="${pin.authorAvatar}" width="${size}" height="${size}" style="object-fit:cover;border-radius:50%;display:block;" />`
+    : `<span style="font-size:${fsize}px;font-weight:700;color:#fff;line-height:1;">${initial}</span>`;
+
+  return new L.DivIcon({
+    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;border:2.5px solid ${border};background:${bg};display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.35);opacity:${opacity};">${inner}</div>`,
+    className: "",
+    iconSize: [size, size],
+    iconAnchor: [half, half],
+    popupAnchor: [0, -(half + 4)],
+  });
+}
+
+function jpDate(iso: string): string {
+  return new Date(iso + "T00:00:00").toLocaleDateString("ja-JP", {
+    year: "numeric", month: "short", day: "numeric",
+  });
+}
+
+function ownPopup(pin: MapPin): string {
+  return `<div style="font-family:sans-serif;min-width:150px;line-height:1.6;">
+    <strong style="font-size:13px;color:#1a3d2b;">${pin.name || "📍 場所"}</strong>
+    ${pin.diaryTitle ? `<p style="margin:3px 0 0;font-size:12px;color:#444;">${pin.diaryTitle}</p>` : ""}
+    ${pin.diaryDate ? `<p style="margin:2px 0 6px;font-size:11px;color:#888;">${jpDate(pin.diaryDate)}</p>` : ""}
+    <a href="/diary/${pin.diaryEntryId}" style="color:#2d6a4f;font-weight:700;text-decoration:none;font-size:13px;">日記を読む →</a>
+  </div>`;
+}
+
+function friendPopup(pin: MapPin): string {
+  const who = pin.authorName ? `${pin.authorName}さん` : "友達";
+  return `<div style="font-family:sans-serif;min-width:160px;line-height:1.6;">
+    <p style="margin:0 0 2px;font-size:12px;color:#555;">${who}がこのあたりを訪れました</p>
+    <strong style="font-size:13px;color:#1a3d2b;">${pin.name || "📍 場所"}</strong>
+    ${pin.diaryDate ? `<p style="margin:2px 0 6px;font-size:11px;color:#888;">${jpDate(pin.diaryDate)}</p>` : ""}
+    <a href="/diary/${pin.diaryEntryId}" style="color:#2d6a4f;font-weight:700;text-decoration:none;font-size:12px;">日記を読む →</a>
+    <p style="margin:5px 0 0;font-size:10px;color:#aaa;">📍 市レベルの概算位置</p>
+  </div>`;
 }
 
 export function LeafletMap({ pins, height = 400 }: { pins: MapPin[]; height?: number }) {
@@ -45,6 +85,8 @@ export function LeafletMap({ pins, height = 400 }: { pins: MapPin[]; height?: nu
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
+
+  const icons = useMemo(() => pins.map((p) => makePinIcon(p)), [pins]);
 
   const center: [number, number] = pins.length > 0 ? [pins[0].lat, pins[0].lng] : [36.5, 138];
 
@@ -56,7 +98,6 @@ export function LeafletMap({ pins, height = 400 }: { pins: MapPin[]; height?: nu
         style={{ height: "100%", width: "100%" }}
         scrollWheelZoom
       >
-        {/* CARTO Voyager — supports {r} retina placeholder, free, no API key */}
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a>'
@@ -65,32 +106,10 @@ export function LeafletMap({ pins, height = 400 }: { pins: MapPin[]; height?: nu
         />
         <InvalidateSize />
         {pins.length > 0 && <FitBounds latlngs={latlngs} />}
-        {pins.map((pin) => (
-          <Marker key={pin.id} position={[pin.lat, pin.lng]} icon={PIN_ICON}>
+        {pins.map((pin, i) => (
+          <Marker key={pin.id} position={[pin.lat, pin.lng]} icon={icons[i]}>
             <Popup>
-              <div style={{ fontFamily: "sans-serif", minWidth: 150, lineHeight: 1.5 }}>
-                <strong style={{ fontSize: 13, color: "#1a3d2b" }}>
-                  {pin.name || "📍 場所"}
-                </strong>
-                {pin.diaryTitle && (
-                  <p style={{ margin: "4px 0 0", fontSize: 12, color: "#444" }}>{pin.diaryTitle}</p>
-                )}
-                {pin.diaryDate && (
-                  <p style={{ margin: "2px 0 6px", fontSize: 11, color: "#888" }}>
-                    {new Date(pin.diaryDate + "T00:00:00").toLocaleDateString("ja-JP", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </p>
-                )}
-                <a
-                  href={`/diary/${pin.diaryEntryId}`}
-                  style={{ color: "#2d6a4f", fontWeight: 700, textDecoration: "none", fontSize: 13 }}
-                >
-                  日記を読む →
-                </a>
-              </div>
+              <div dangerouslySetInnerHTML={{ __html: pin.isOwner !== false ? ownPopup(pin) : friendPopup(pin) }} />
             </Popup>
           </Marker>
         ))}

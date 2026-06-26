@@ -6,7 +6,6 @@ import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-lea
 import L from "leaflet";
 import type { DiaryPlace } from "@/lib/types";
 
-// Custom green circle pin — avoids Leaflet's default marker icon path issues
 const PIN_ICON = new L.DivIcon({
   html: `<div style="width:14px;height:14px;background:#2d6a4f;border:2.5px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.35);"></div>`,
   className: "",
@@ -23,29 +22,19 @@ interface NominatimResult {
 }
 
 function MapClickHandler({ onAdd }: { onAdd: (lat: number, lng: number) => void }) {
-  useMapEvents({
-    click(e) {
-      onAdd(e.latlng.lat, e.latlng.lng);
-    },
-  });
+  useMapEvents({ click(e) { onAdd(e.latlng.lat, e.latlng.lng); } });
   return null;
 }
 
 function FlyTo({ target }: { target: [number, number] | null }) {
   const map = useMap();
-  useEffect(() => {
-    if (target) map.flyTo(target, 14, { duration: 0.5 });
-  }, [map, target]);
+  useEffect(() => { if (target) map.flyTo(target, 14, { duration: 0.5 }); }, [map, target]);
   return null;
 }
 
-// Recalculates tile grid after container size settles (collapsible reveal fix)
 function InvalidateSize() {
   const map = useMap();
-  useEffect(() => {
-    const t = setTimeout(() => map.invalidateSize(), 100);
-    return () => clearTimeout(t);
-  }, [map]);
+  useEffect(() => { const t = setTimeout(() => map.invalidateSize(), 100); return () => clearTimeout(t); }, [map]);
   return null;
 }
 
@@ -88,10 +77,7 @@ export function DiaryMapPicker({ places, onPlacesChange }: Props) {
   function handleQuery(q: string) {
     setQuery(q);
     clearTimeout(timerRef.current);
-    if (q.length < 2) {
-      setResults([]);
-      return;
-    }
+    if (q.length < 2) { setResults([]); return; }
     timerRef.current = setTimeout(async () => {
       setSearching(true);
       try {
@@ -137,91 +123,96 @@ export function DiaryMapPicker({ places, onPlacesChange }: Props) {
         onPlacesChange([...places, { lat, lng, name }]);
         setFlyTarget([lat, lng]);
       },
-      () => {
-        setGpsError("位置情報を取得できませんでした。設定で許可してください。");
-      }
+      () => { setGpsError("位置情報を取得できませんでした。設定で許可してください。"); }
     );
   }
 
   return (
     <div className="space-y-3">
-      {/* Search + GPS */}
-      <div className="relative flex items-center gap-2" style={{ zIndex: 20 }}>
-        <div className="relative flex-1">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => handleQuery(e.target.value)}
-            placeholder="場所名で検索 · Search a place"
-            className="w-full rounded-full border border-line bg-paper pl-4 pr-3 py-2 text-sm text-ink placeholder:text-muted focus:border-moss focus:outline-none"
-          />
-          {(results.length > 0 || searching) && (
-            <div
-              className="absolute top-full left-0 right-0 mt-1 rounded-xl border border-line bg-paper shadow-lift overflow-hidden"
-              style={{ zIndex: 3000 }}
-            >
-              {searching && (
-                <p className="px-4 py-2 text-sm text-muted">検索中…</p>
-              )}
-              {results.map((r) => (
-                <button
-                  key={r.place_id}
-                  type="button"
-                  onClick={() => pickResult(r)}
-                  className="flex w-full items-start gap-2 px-4 py-2.5 text-left hover:bg-mint/40 transition-colors"
-                >
-                  <span className="mt-0.5 shrink-0 text-moss-600 text-base">📍</span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-semibold text-pine">
-                      {r.display_name.split(",")[0]}
+      {/* Header */}
+      <p className="text-sm font-semibold text-pine">📍 場所を追加</p>
+
+      {/* Step 1 — Search */}
+      <div className="rounded-xl border border-line bg-paper p-3 space-y-2">
+        <p className="text-xs font-medium text-muted">① 名前で検索して追加</p>
+        <div className="relative flex items-center gap-2" style={{ zIndex: 20 }}>
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => handleQuery(e.target.value)}
+              placeholder="例：新宿、Kyoto、Paris…"
+              /* 16px prevents iOS auto-zoom on focus */
+              style={{ fontSize: "16px" }}
+              className="w-full rounded-xl border border-line bg-cream pl-4 pr-3 py-2.5 text-ink placeholder:text-muted focus:border-moss focus:outline-none"
+            />
+            {(results.length > 0 || searching) && (
+              <div
+                className="absolute top-full left-0 right-0 mt-1 rounded-xl border border-line bg-paper shadow-lift overflow-hidden"
+                style={{ zIndex: 3000 }}
+              >
+                {searching && <p className="px-4 py-2.5 text-sm text-muted">検索中…</p>}
+                {results.map((r) => (
+                  <button
+                    key={r.place_id}
+                    type="button"
+                    onClick={() => pickResult(r)}
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left hover:bg-mint/40 transition-colors border-b border-line/50 last:border-0"
+                  >
+                    <span className="shrink-0 text-base leading-none">📍</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold text-pine">
+                        {r.display_name.split(",")[0]}
+                      </span>
+                      <span className="block truncate text-xs text-muted">
+                        {r.display_name.split(",").slice(1, 3).join(",")}
+                      </span>
                     </span>
-                    <span className="block truncate text-xs text-muted">
-                      {r.display_name.split(",").slice(1, 3).join(",")}
+                    <span className="shrink-0 rounded-full bg-pine px-2 py-0.5 text-xs font-bold text-cream">
+                      ＋追加
                     </span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleGPS}
+            title="現在地を使う"
+            className="flex shrink-0 items-center gap-1.5 rounded-xl border border-line bg-paper px-3 py-2.5 text-sm font-semibold text-pine hover:border-moss hover:bg-mint/40 transition-colors whitespace-nowrap"
+          >
+            📍 現在地
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={handleGPS}
-          title="現在地を使う"
-          className="flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-paper px-3 py-2 text-xs font-semibold text-pine hover:border-moss hover:bg-mint/40 transition-colors whitespace-nowrap"
-        >
-          📍 現在地
-        </button>
+        {gpsError && <p className="text-xs text-apricot">{gpsError}</p>}
       </div>
 
-      {gpsError && (
-        <p className="text-xs text-apricot">{gpsError}</p>
-      )}
-
-      {/* Map */}
-      <div style={{ height: 280 }} className="relative overflow-hidden rounded-2xl border border-line">
-        <MapContainer
-          center={DEFAULT_CENTER}
-          zoom={5}
-          style={{ height: "100%", width: "100%" }}
-          scrollWheelZoom
-        >
-          {/* CARTO Voyager — supports {r} retina placeholder, free, no API key */}
-          <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a>'
-            maxZoom={19}
-            detectRetina={true}
-          />
-          <InvalidateSize />
-          <MapClickHandler onAdd={handleMapClick} />
-          <FlyTo target={flyTarget} />
-          {places.map((p, i) => (
-            <Marker key={`${p.lat}-${p.lng}-${i}`} position={[p.lat, p.lng]} icon={PIN_ICON} />
-          ))}
-        </MapContainer>
+      {/* Step 2 — Map */}
+      <div className="space-y-1.5">
+        <p className="text-xs font-medium text-muted">② または地図をタップ・クリックしてピンを置く</p>
+        <div style={{ height: 320 }} className="relative overflow-hidden rounded-2xl border border-line">
+          <MapContainer
+            center={DEFAULT_CENTER}
+            zoom={5}
+            style={{ height: "100%", width: "100%" }}
+            scrollWheelZoom
+          >
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a>'
+              maxZoom={19}
+              detectRetina={true}
+            />
+            <InvalidateSize />
+            <MapClickHandler onAdd={handleMapClick} />
+            <FlyTo target={flyTarget} />
+            {places.map((p, i) => (
+              <Marker key={`${p.lat}-${p.lng}-${i}`} position={[p.lat, p.lng]} icon={PIN_ICON} />
+            ))}
+          </MapContainer>
+        </div>
       </div>
-      <p className="text-xs text-muted">地図をタップしてピンを置けます · Tap map to drop a pin</p>
     </div>
   );
 }
