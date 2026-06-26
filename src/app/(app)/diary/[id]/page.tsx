@@ -6,6 +6,7 @@ import { Icon } from "@/components/icons";
 import { CorrectionResult } from "@/components/CorrectionResult";
 import { PublicToggle } from "@/components/PublicToggle";
 import { DiaryAttachments } from "@/components/DiaryAttachments";
+import { DiaryEditAttachments } from "@/components/DiaryEditAttachments";
 import { DeleteDiaryButton } from "@/components/DeleteDiaryButton";
 import { CommentsSection } from "@/components/CommentsSection";
 import { TagChips } from "@/components/TagChips";
@@ -214,7 +215,18 @@ export default async function DiaryDetailPage({
         <span className="text-sm font-medium text-muted">{t("write.resultTitle")}</span>
       </div>
 
-      <DiaryAttachments imageUrl={imageUrl} audioUrl={audioUrl} />
+      <DiaryAttachments imageUrl={imageUrl} audioUrl={audioUrl} t={t} />
+
+      {isOwner && (
+        <DiaryEditAttachments
+          diaryId={id}
+          imageUrl={imageUrl}
+          audioUrl={audioUrl}
+          hasExistingImage={Boolean(entry.image_path)}
+          hasExistingAudio={Boolean(entry.audio_path)}
+          savedPlaces={places}
+        />
+      )}
 
       <CorrectionResult correction={correction} />
 

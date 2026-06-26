@@ -73,6 +73,10 @@ export interface AttachmentsProps {
   audioFile: File | null;
   onPhotoChange: (file: File | null) => void;
   onAudioChange: (file: File | null) => void;
+  /** Hide the entire photo section (buttons + preview). Used when caller renders the existing photo separately. */
+  hidePhoto?: boolean;
+  /** Hide the entire audio section (buttons + recording UI + preview). */
+  hideAudio?: boolean;
 }
 
 // ── Attachments ────────────────────────────────────────────────────────────
@@ -82,6 +86,8 @@ export function Attachments({
   audioFile,
   onPhotoChange,
   onAudioChange,
+  hidePhoto = false,
+  hideAudio = false,
 }: AttachmentsProps) {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
@@ -274,7 +280,7 @@ export function Attachments({
 
       <div className="flex flex-wrap gap-2">
         {/* Photo picker */}
-        {!photoFile && (
+        {!hidePhoto && !photoFile && (
           <button
             type="button"
             onClick={() => photoInputRef.current?.click()}
@@ -286,7 +292,7 @@ export function Attachments({
         )}
 
         {/* Record voice button — only shown when idle and no audio yet */}
-        {!audioFile && recState === "idle" && (
+        {!hideAudio && !audioFile && recState === "idle" && (
           <button
             type="button"
             onClick={startRecording}
@@ -298,7 +304,7 @@ export function Attachments({
         )}
 
         {/* Upload audio file — hidden while recording/preview */}
-        {!audioFile && !isRecordingActive && (
+        {!hideAudio && !audioFile && !isRecordingActive && (
           <button
             type="button"
             onClick={() => audioInputRef.current?.click()}
@@ -313,7 +319,7 @@ export function Attachments({
       {/* ── Recording UI ─────────────────────────────────────────────── */}
 
       {/* Requesting permission */}
-      {recState === "requesting" && (
+      {!hideAudio && recState === "requesting" && (
         <div className="mt-3 flex items-center gap-2 rounded-xl bg-mint/40 px-4 py-3 text-sm text-pine">
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-moss/30 border-t-moss" />
           {t("attach.requestingMic")}
@@ -321,7 +327,7 @@ export function Attachments({
       )}
 
       {/* Recording in progress */}
-      {recState === "recording" && (
+      {!hideAudio && recState === "recording" && (
         <div className="mt-3 flex items-center gap-3 rounded-xl border border-apricot/30 bg-apricot/10 px-4 py-3">
           <span className="flex items-center gap-1.5 text-sm font-semibold text-apricot">
             <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-apricot" />
@@ -340,7 +346,7 @@ export function Attachments({
       )}
 
       {/* Preview after recording */}
-      {recState === "preview" && recPreviewUrl && (
+      {!hideAudio && recState === "preview" && recPreviewUrl && (
         <div className="mt-3 rounded-xl border border-moss/30 bg-mint/20 p-3">
           <p className="mb-2 text-xs font-semibold text-moss-600">{t("attach.recordingPreview")}</p>
           <audio controls src={recPreviewUrl} className="h-9 w-full max-w-xs" />
@@ -365,7 +371,7 @@ export function Attachments({
       )}
 
       {/* Microphone denied */}
-      {recState === "denied" && (
+      {!hideAudio && recState === "denied" && (
         <div className="mt-3 rounded-xl bg-apricot/10 px-4 py-3 text-sm text-apricot">
           <p className="font-semibold">{t("attach.micDenied")}</p>
           <p className="mt-0.5 text-xs text-apricot/80">
@@ -382,7 +388,7 @@ export function Attachments({
       )}
 
       {/* MediaRecorder not supported */}
-      {recState === "unsupported" && (
+      {!hideAudio && recState === "unsupported" && (
         <div className="mt-3 rounded-xl bg-sand/60 px-4 py-3 text-sm text-ink/70">
           {t("attach.unsupported")}
           <button
@@ -408,9 +414,9 @@ export function Attachments({
       )}
 
       {/* Previews */}
-      {(photoFile || audioFile) && (
+      {((!hidePhoto && photoFile) || (!hideAudio && audioFile)) && (
         <div className="mt-4 space-y-3">
-          {photoFile && photoPreviewUrl && (
+          {!hidePhoto && photoFile && photoPreviewUrl && (
             <div className="flex items-start gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -437,7 +443,7 @@ export function Attachments({
             </div>
           )}
 
-          {audioFile && audioPreviewUrl && (
+          {!hideAudio && audioFile && audioPreviewUrl && (
             <div className="space-y-1.5">
               <audio
                 controls
@@ -464,20 +470,24 @@ export function Attachments({
       )}
 
       {/* Hidden file inputs */}
-      <input
-        ref={photoInputRef}
-        type="file"
-        accept={PHOTO_ACCEPT}
-        onChange={handlePhotoInput}
-        className="hidden"
-      />
-      <input
-        ref={audioInputRef}
-        type="file"
-        accept={AUDIO_ACCEPT}
-        onChange={handleAudioInput}
-        className="hidden"
-      />
+      {!hidePhoto && (
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept={PHOTO_ACCEPT}
+          onChange={handlePhotoInput}
+          className="hidden"
+        />
+      )}
+      {!hideAudio && (
+        <input
+          ref={audioInputRef}
+          type="file"
+          accept={AUDIO_ACCEPT}
+          onChange={handleAudioInput}
+          className="hidden"
+        />
+      )}
     </div>
   );
 }
