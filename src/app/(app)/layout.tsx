@@ -83,19 +83,24 @@ export default async function AppLayout({
           <Sidebar currentStreak={currentStreak} />
         </aside>
 
-        {/* Mobile top header */}
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-line bg-cream/90 px-4 backdrop-blur lg:hidden">
-          <Logo href="/dashboard" size="sm" />
-          <div className="flex items-center gap-2">
-            <LanguageSwitcher compact />
-            <Link href="/profile" aria-label="プロフィール" className="overflow-hidden rounded-full ring-1 ring-line hover:ring-moss">
-              {avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatarUrl} alt={name} className="h-9 w-9 object-cover" />
-              ) : (
-                <Avatar initials={initials} size={36} />
-              )}
-            </Link>
+        {/* Mobile top header — pt covers status bar in PWA standalone (black-translucent) */}
+        <header
+          className="sticky top-0 z-20 border-b border-line bg-cream/90 px-4 backdrop-blur lg:hidden"
+          style={{ paddingTop: "env(safe-area-inset-top)" }}
+        >
+          <div className="flex h-16 items-center justify-between">
+            <Logo href="/dashboard" size="sm" />
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher compact />
+              <Link href="/profile" aria-label="プロフィール" className="overflow-hidden rounded-full ring-1 ring-line hover:ring-moss">
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={avatarUrl} alt={name} className="h-9 w-9 object-cover" />
+                ) : (
+                  <Avatar initials={initials} size={36} />
+                )}
+              </Link>
+            </div>
           </div>
         </header>
 
