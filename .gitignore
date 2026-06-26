@@ -7,6 +7,7 @@ ios/App/App/public/
 ios/App/.build/
 ios/App/DerivedData/
 ios/App/build/
+ios/App/CapApp-SPM/build/
 /build
 .env*
 .DS_Store
