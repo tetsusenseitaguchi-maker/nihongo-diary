@@ -26,7 +26,7 @@ export function InstallPromptBanner() {
     // Already running as installed PWA — hide
     if (
       window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as Record<string, unknown>).standalone === true
+      (window.navigator as unknown as Record<string, unknown>).standalone === true
     ) return;
 
     // Dismissed recently — hide

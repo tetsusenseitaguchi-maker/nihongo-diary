@@ -29,7 +29,7 @@ export type FeedItem = {
   myReactions: string[];
 };
 
-function FeedCard({ item, currentUserId }: { item: FeedItem; currentUserId: string }) {
+function FeedCard({ item }: { item: FeedItem }) {
   const t = useT();
   const isDiary =
     item.activityType === "wrote_diary" || item.activityType === "shared_diary";
@@ -271,7 +271,7 @@ export function FeedTimeline({
   return (
     <div className="space-y-4">
       {items.map((item) => (
-        <FeedCard key={item.activityId} item={item} currentUserId={currentUserId} />
+        <FeedCard key={item.activityId} item={item} />
       ))}
       {hasMore && (
         <button
