@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useT } from "@/contexts/locale";
 
 type Status = "idle" | "loading" | "success" | "already" | "self" | "error";
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function ApplyInviteButton({ code, inviterName }: Props) {
+  const t = useT();
   const [status, setStatus] = useState<Status>("idle");
 
   async function apply() {
@@ -35,7 +37,7 @@ export function ApplyInviteButton({ code, inviterName }: Props) {
         onClick={apply}
         className="w-full rounded-2xl bg-pine px-6 py-3.5 text-base font-bold text-cream shadow-lift transition-opacity hover:opacity-90"
       >
-        {inviterName}さんと繋がる →
+        {t("invite.connectWith", { name: inviterName })}
       </button>
     );
   }
@@ -43,7 +45,7 @@ export function ApplyInviteButton({ code, inviterName }: Props) {
   if (status === "loading") {
     return (
       <div className="flex w-full items-center justify-center rounded-2xl bg-pine/60 px-6 py-3.5 text-base font-bold text-cream">
-        繋がっています…
+        {t("invite.connecting")}
       </div>
     );
   }
@@ -52,13 +54,13 @@ export function ApplyInviteButton({ code, inviterName }: Props) {
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-center gap-2 rounded-2xl bg-mint px-6 py-3.5 text-base font-bold text-pine">
-          ✓ {inviterName}さんと繋がりました！
+          {t("invite.connected", { name: inviterName })}
         </div>
         <a
           href="/dashboard"
           className="block w-full rounded-2xl border border-line bg-paper px-6 py-2.5 text-center text-sm font-semibold text-pine hover:bg-mint/40"
         >
-          ダッシュボードへ →
+          {t("invite.toDashboard")}
         </a>
       </div>
     );
@@ -68,13 +70,13 @@ export function ApplyInviteButton({ code, inviterName }: Props) {
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-center gap-2 rounded-2xl bg-mint/50 px-6 py-3.5 text-sm font-semibold text-pine">
-          ✓ すでに{inviterName}さんと繋がっています
+          {t("invite.alreadyConnected", { name: inviterName })}
         </div>
         <a
           href="/dashboard"
           className="block w-full rounded-2xl border border-line bg-paper px-6 py-2.5 text-center text-sm font-semibold text-pine hover:bg-mint/40"
         >
-          ダッシュボードへ →
+          {t("invite.toDashboard")}
         </a>
       </div>
     );
@@ -83,7 +85,7 @@ export function ApplyInviteButton({ code, inviterName }: Props) {
   if (status === "self") {
     return (
       <div className="rounded-2xl bg-mint/30 px-6 py-3.5 text-center text-sm text-muted">
-        これはあなた自身の招待リンクです
+        {t("invite.selfInvite")}
       </div>
     );
   }
@@ -91,13 +93,13 @@ export function ApplyInviteButton({ code, inviterName }: Props) {
   return (
     <div className="space-y-3">
       <div className="rounded-2xl bg-apricot/20 px-6 py-3.5 text-center text-sm text-apricot">
-        エラーが発生しました。もう一度お試しください。
+        {t("invite.error")}
       </div>
       <button
         onClick={() => setStatus("idle")}
         className="w-full rounded-2xl border border-line bg-paper px-6 py-2.5 text-sm font-semibold text-pine hover:bg-mint/40"
       >
-        再試行
+        {t("invite.retry")}
       </button>
     </div>
   );

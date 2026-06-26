@@ -94,10 +94,8 @@ export default async function ProfilePage() {
       {/* Invite friends */}
       {profile?.invite_code && (
         <Card className="p-6">
-          <h2 className="mb-1 font-serif text-lg font-bold text-pine">👥 友達を招待</h2>
-          <p className="mb-4 text-sm text-muted">
-            このリンクから登録した人と自動的に相互フォローになります。
-          </p>
+          <h2 className="mb-1 font-serif text-lg font-bold text-pine">{t("invite.sectionTitle")}</h2>
+          <p className="mb-4 text-sm text-muted">{t("invite.sectionDesc")}</p>
           <InviteLinkButton inviteCode={profile.invite_code} />
         </Card>
       )}
