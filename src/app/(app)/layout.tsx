@@ -7,6 +7,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { Avatar } from "@/components/ObiePhoto";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { TimezoneSyncer } from "@/components/TimezoneSyncer";
+import { InvitePendingHandler } from "@/components/InvitePendingHandler";
 import { createClient } from "@/lib/supabase/server";
 import { LocaleProvider } from "@/contexts/locale";
 import { normaliseLocale } from "@/lib/i18n";
@@ -71,6 +72,7 @@ export default async function AppLayout({
   return (
     <LocaleProvider initialLocale={locale} initialMessages={initialMessages}>
       <TimezoneSyncer />
+      <InvitePendingHandler />
       <div className="min-h-screen bg-cream">
         {/* Desktop sidebar */}
         <aside className="fixed inset-y-0 left-0 z-30 hidden w-[264px] border-r border-line bg-paper lg:block">

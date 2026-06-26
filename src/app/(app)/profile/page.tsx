@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ObiePhoto";
 import { LogoutButton } from "@/components/LogoutButton";
 import { UserSearch } from "@/components/UserSearch";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { InviteLinkButton } from "@/components/InviteLinkButton";
 import { computeStats, type DiaryRow } from "@/lib/diary";
 import { getServerT } from "@/lib/i18n-server";
 
@@ -89,6 +90,17 @@ export default async function ProfilePage() {
         </div>
         <LinkButton href="/feed" size="sm" variant="secondary">Feed を見る</LinkButton>
       </Card>
+
+      {/* Invite friends */}
+      {profile?.invite_code && (
+        <Card className="p-6">
+          <h2 className="mb-1 font-serif text-lg font-bold text-pine">👥 友達を招待</h2>
+          <p className="mb-4 text-sm text-muted">
+            このリンクから登録した人と自動的に相互フォローになります。
+          </p>
+          <InviteLinkButton inviteCode={profile.invite_code} />
+        </Card>
+      )}
 
       {/* Find friends */}
       <UserSearch />
