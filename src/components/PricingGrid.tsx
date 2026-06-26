@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { type Plan } from "@/lib/plans";
+import { CheckoutButton } from "@/components/CheckoutButton";
 
 type Tier = {
   id: Plan;
@@ -76,6 +77,8 @@ export type PricingLabels = {
   startFree: string;
   upgradeSoon: string;
   betaNotice: string;
+  /** When true, paid plan buttons become live Stripe checkout links */
+  checkoutEnabled?: boolean;
 };
 
 const DEFAULT_LABELS: PricingLabels = {
@@ -184,6 +187,8 @@ export function PricingGrid({
                   >
                     {labels.startFree}
                   </Link>
+                ) : labels.checkoutEnabled && (tier.id === "plus" || tier.id === "pro") ? (
+                  <CheckoutButton plan={tier.id} />
                 ) : (
                   <button
                     disabled

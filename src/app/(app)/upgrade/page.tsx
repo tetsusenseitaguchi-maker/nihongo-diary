@@ -43,6 +43,7 @@ export default async function UpgradePage() {
           startFree: t("pricing.startFree"),
           upgradeSoon: t("pricing.upgradeSoon"),
           betaNotice: t("pricing.betaNotice"),
+          checkoutEnabled: true,
         }}
       />
     </div>
