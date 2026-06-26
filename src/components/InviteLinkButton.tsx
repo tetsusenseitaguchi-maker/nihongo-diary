@@ -1,36 +1,35 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+
+// Build-time constant — Next.js inlines NEXT_PUBLIC_* at compile time.
+// Set NEXT_PUBLIC_SITE_URL in Vercel env vars; fallback keeps it working locally.
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://nihongodiary.app";
 
 interface Props {
   inviteCode: string;
 }
 
 export function InviteLinkButton({ inviteCode }: Props) {
-  const [origin, setOrigin] = useState("");
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
-
-  const inviteUrl = origin ? `${origin}/invite/${inviteCode}` : `/invite/${inviteCode}`;
+  const inviteUrl = `${SITE_URL}/invite/${inviteCode}`;
 
   async function handleShare() {
     if (typeof navigator === "undefined") return;
-    const url = `${window.location.origin}/invite/${inviteCode}`;
 
     if (navigator.share) {
       try {
         await navigator.share({
           title: "Nihongo Diary",
           text: "一緒に日本語を学ぼう！招待リンクから登録すると最初から友達になれます。",
-          url,
+          url: inviteUrl,
         });
       } catch {
         // user cancelled — do nothing
       }
     } else {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(inviteUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2200);
     }
@@ -61,20 +60,18 @@ export function InviteLinkButton({ inviteCode }: Props) {
           )}
         </button>
 
-        {/* Always show explicit copy button on desktop */}
-        {typeof navigator !== "undefined" && !("share" in navigator) ? null : (
-          <button
-            type="button"
-            onClick={async () => {
-              await navigator.clipboard.writeText(`${window.location.origin}/invite/${inviteCode}`);
-              setCopied(true);
-              setTimeout(() => setCopied(false), 2200);
-            }}
-            className="flex items-center gap-1.5 rounded-xl border border-line bg-paper px-3 py-2.5 text-xs font-semibold text-pine transition-colors hover:border-moss hover:bg-mint/40"
-          >
-            {copied ? "✓ コピー済み" : "📋 コピー"}
-          </button>
-        )}
+        {/* Explicit copy button (always visible alongside share on mobile) */}
+        <button
+          type="button"
+          onClick={async () => {
+            await navigator.clipboard.writeText(inviteUrl);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2200);
+          }}
+          className="flex items-center gap-1.5 rounded-xl border border-line bg-paper px-3 py-2.5 text-xs font-semibold text-pine transition-colors hover:border-moss hover:bg-mint/40"
+        >
+          {copied ? "✓ コピー済み" : "📋 コピー"}
+        </button>
       </div>
     </div>
   );
