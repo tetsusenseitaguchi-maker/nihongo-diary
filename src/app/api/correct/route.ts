@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizePlan, limitsFor } from "@/lib/plans";
 import { lessonById } from "@/lib/lessons";
 import { languageDisplayName } from "@/lib/languages";
@@ -252,8 +251,7 @@ export async function POST(request: Request) {
   // Atomically claim one correction slot (check + increment in a single DB round-trip).
   // Returns false when the daily limit is already reached — no race-condition bypass possible.
   const today = new Date().toLocaleDateString("en-CA", { timeZone: tz });
-  const adminClient = createAdminClient();
-  const { data: allowed, error: rpcError } = await adminClient.rpc("try_use_correction", {
+  const { data: allowed, error: rpcError } = await supabase.rpc("try_use_correction", {
     p_user_id: user.id,
     p_date: today,
     p_limit: limits.corrections,
