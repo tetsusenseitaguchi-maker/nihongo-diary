@@ -139,11 +139,17 @@ export default function WritePage() {
       if (!user) return;
       const today = new Date().toISOString().slice(0, 10);
       const [{ data: prof }, { data: usage }] = await Promise.all([
-        supabase.from("profiles").select("plan").eq("id", user.id).single(),
+        supabase.from("profiles").select("plan, username").eq("id", user.id).single(),
         supabase.from("usage_limits").select("correction_count").eq("user_id", user.id).eq("usage_date", today).maybeSingle(),
       ]);
       setPlan(normalizePlan(prof?.plan));
-      setUsedToday(usage?.correction_count ?? 0);
+      // Developer accounts (listed in NEXT_PUBLIC_DEV_USERNAMES) show unlimited remaining corrections.
+      const devList = (process.env.NEXT_PUBLIC_DEV_USERNAMES ?? "")
+        .split(",")
+        .map((u) => u.trim().toLowerCase())
+        .filter(Boolean);
+      const isDev = devList.length > 0 && devList.includes((prof?.username ?? "").toLowerCase().trim());
+      setUsedToday(isDev ? 0 : (usage?.correction_count ?? 0));
     })();
   }, []);
 

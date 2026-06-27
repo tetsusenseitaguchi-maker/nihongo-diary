@@ -192,10 +192,18 @@ export async function POST(request: Request) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("plan, preferred_language, timezone")
+    .select("plan, preferred_language, timezone, username")
     .eq("id", user.id)
     .single();
   const plan = normalizePlan(profile?.plan);
+
+  // Developer accounts listed in NEXT_PUBLIC_DEV_USERNAMES bypass daily limits entirely.
+  // Comparison is case-insensitive and trims whitespace so "Tetsu116" / "tetsu116" both match.
+  const devList = (process.env.NEXT_PUBLIC_DEV_USERNAMES ?? "")
+    .split(",")
+    .map((u) => u.trim().toLowerCase())
+    .filter(Boolean);
+  const isDev = devList.length > 0 && devList.includes((profile?.username ?? "").toLowerCase().trim());
 
   // Locale resolution mirrors (app)/layout.tsx: cookie-first → DB → "en"
   // The NEXT_LOCALE cookie is set immediately on every language switch,
@@ -237,24 +245,29 @@ export async function POST(request: Request) {
 
   // Atomically claim one correction slot (check + increment in a single DB round-trip).
   // Returns false when the daily limit is already reached — no race-condition bypass possible.
-  const today = new Date().toLocaleDateString("en-CA", { timeZone: tz });
-  const { data: allowed, error: rpcError } = await supabase.rpc("try_use_correction", {
-    p_user_id: user.id,
-    p_date: today,
-    p_limit: limits.corrections,
-  });
-  if (rpcError) {
-    console.error("[correct] try_use_correction error:", rpcError.message, "code:", rpcError.code);
-    return NextResponse.json(
-      { error: `添削サービスで一時的なエラーが発生しました。しばらくしてから再試行してください。 [${rpcError.code ?? rpcError.message}]` },
-      { status: 500 },
-    );
-  }
-  if (!allowed) {
-    return NextResponse.json(
-      { error: "daily_correction_limit_reached", upgrade: true, plan, limit: limits.corrections },
-      { status: 429 },
-    );
+  // Developer accounts skip this entirely so their count never increments.
+  if (!isDev) {
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: tz });
+    const { data: allowed, error: rpcError } = await supabase.rpc("try_use_correction", {
+      p_user_id: user.id,
+      p_date: today,
+      p_limit: limits.corrections,
+    });
+    if (rpcError) {
+      console.error("[correct] try_use_correction error:", rpcError.message, "code:", rpcError.code);
+      return NextResponse.json(
+        { error: `添削サービスで一時的なエラーが発生しました。しばらくしてから再試行してください。 [${rpcError.code ?? rpcError.message}]` },
+        { status: 500 },
+      );
+    }
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "daily_correction_limit_reached", upgrade: true, plan, limit: limits.corrections },
+        { status: 429 },
+      );
+    }
+  } else {
+    console.log(`[correct] dev bypass: skipping limit check for user ${profile?.username}`);
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
