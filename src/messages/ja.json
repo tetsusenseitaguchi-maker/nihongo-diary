@@ -544,5 +544,12 @@
   "pricing.features.free.10": "ミニレッスンプレビュー",
   "pricing.features.plus.5": "週次レポート：フル版（よく使った言葉・間違いの傾向・来週の練習提案）",
   "pricing.features.plus.6": "ミニレッスンライブラリ：全20レッスン",
-  "pricing.features.pro.5": "復習ドリル（AI生成）：Pro限定"
+  "pricing.features.pro.5": "復習ドリル（AI生成）：Pro限定",
+  "history.tabReview": "復習",
+  "review.title": "昨日の文法復習",
+  "review.prompt": "昨日、この表現を間違えました。今日の日記で正しい表現を使ってみよう！",
+  "review.cta": "今日の日記で使ってみよう ✍️",
+  "review.historyTitle": "文法復習ログ",
+  "review.noReviews": "復習記録がまだありません",
+  "review.noReviewsHint": "AI添削を受けると、ここに文法復習が表示されます。"
 }

@@ -544,5 +544,12 @@
   "pricing.features.free.10": "迷你课程预览",
   "pricing.features.plus.5": "周报：完整版（常用词汇、错误规律、练习建议）",
   "pricing.features.plus.6": "迷你课程库：全20课",
-  "pricing.features.pro.5": "复习练习（AI生成）— 仅限Pro"
+  "pricing.features.pro.5": "复习练习（AI生成）— 仅限Pro",
+  "history.tabReview": "复习",
+  "review.title": "昨天的语法复习",
+  "review.prompt": "你昨天犯了这个错误。试着在今天的日记里使用正确的表达！",
+  "review.cta": "在今天的日记里试用 ✍️",
+  "review.historyTitle": "语法复习记录",
+  "review.noReviews": "还没有复习记录",
+  "review.noReviewsHint": "第一次AI批改后，复习内容会出现在这里。"
 }

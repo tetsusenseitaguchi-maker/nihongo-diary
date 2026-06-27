@@ -544,5 +544,12 @@
   "pricing.features.free.10": "미니 레슨 미리보기",
   "pricing.features.plus.5": "주간 리포트: 풀 버전 (자주 쓴 단어, 실수 패턴, 연습 제안)",
   "pricing.features.plus.6": "미니 레슨 라이브러리: 전체 20강",
-  "pricing.features.pro.5": "복습 드릴 (AI 생성) — Pro 전용"
+  "pricing.features.pro.5": "복습 드릴 (AI 생성) — Pro 전용",
+  "history.tabReview": "복습",
+  "review.title": "어제의 문법 복습",
+  "review.prompt": "어제 이 실수를 했습니다. 오늘 일기에서 올바른 표현을 사용해 보세요!",
+  "review.cta": "오늘 일기에서 써보기 ✍️",
+  "review.historyTitle": "문법 복습 기록",
+  "review.noReviews": "아직 복습 기록이 없습니다",
+  "review.noReviewsHint": "첫 AI 첨삭 후 여기에 복습이 표시됩니다."
 }

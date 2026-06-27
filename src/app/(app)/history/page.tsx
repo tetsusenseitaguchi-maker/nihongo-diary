@@ -26,7 +26,7 @@ export default async function HistoryPage({
 
   const params = await searchParams;
   const initialTab =
-    params.tab === "vocab" ? "vocab" : params.tab === "report" ? "report" : "diary";
+    params.tab === "vocab" ? "vocab" : params.tab === "report" ? "report" : params.tab === "review" ? "review" : "diary";
 
   return <HistoryWithTabs entries={data ?? []} initialTab={initialTab} />;
 }

@@ -544,5 +544,12 @@
   "pricing.features.free.10": "Mini Lesson preview",
   "pricing.features.plus.5": "Weekly Report: full version (vocab, mistakes, practice tips)",
   "pricing.features.plus.6": "Mini Lesson Library: all 20 lessons",
-  "pricing.features.pro.5": "Review Drills (AI-generated) — Pro only"
+  "pricing.features.pro.5": "Review Drills (AI-generated) — Pro only",
+  "history.tabReview": "Review",
+  "review.title": "Yesterday's Grammar Review",
+  "review.prompt": "You made this mistake yesterday. Try using the correct form in today's diary!",
+  "review.cta": "Try using it in today's entry ✍️",
+  "review.historyTitle": "Grammar Review Log",
+  "review.noReviews": "No grammar reviews yet",
+  "review.noReviewsHint": "Reviews appear here after your first AI correction."
 }

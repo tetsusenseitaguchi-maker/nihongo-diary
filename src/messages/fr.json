@@ -544,5 +544,12 @@
   "pricing.features.free.10": "Aperçu des Mini Leçons",
   "pricing.features.plus.5": "Rapport hebdo : version complète (vocab, erreurs, conseils)",
   "pricing.features.plus.6": "Bibliothèque Mini Leçons : les 20 leçons",
-  "pricing.features.pro.5": "Exercices de révision (IA) — Pro seulement"
+  "pricing.features.pro.5": "Exercices de révision (IA) — Pro seulement",
+  "history.tabReview": "Révision",
+  "review.title": "Révision grammaticale d'hier",
+  "review.prompt": "Vous avez fait cette erreur hier. Essayez d'utiliser la forme correcte dans votre journal d'aujourd'hui !",
+  "review.cta": "Utilisez-la dans l'entrée d'aujourd'hui ✍️",
+  "review.historyTitle": "Journal des révisions grammaticales",
+  "review.noReviews": "Pas encore de révisions",
+  "review.noReviewsHint": "Les révisions apparaissent ici après votre première correction IA."
 }

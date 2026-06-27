@@ -544,5 +544,12 @@
   "pricing.features.free.10": "Mini-Lektion Vorschau",
   "pricing.features.plus.5": "Wochenbericht: Vollversion (Vokabeln, Fehler, Übungstipps)",
   "pricing.features.plus.6": "Mini-Lektion-Bibliothek: alle 20 Lektionen",
-  "pricing.features.pro.5": "Übungsdrills (KI-generiert) — nur für Pro"
+  "pricing.features.pro.5": "Übungsdrills (KI-generiert) — nur für Pro",
+  "history.tabReview": "Wiederholung",
+  "review.title": "Grammatik-Wiederholung von gestern",
+  "review.prompt": "Diesen Fehler hast du gestern gemacht. Versuche die richtige Form im heutigen Tagebuch zu verwenden!",
+  "review.cta": "Heute im Eintrag ausprobieren ✍️",
+  "review.historyTitle": "Grammatik-Wiederholungsprotokoll",
+  "review.noReviews": "Noch keine Wiederholungen",
+  "review.noReviewsHint": "Wiederholungen erscheinen hier nach deiner ersten KI-Korrektur."
 }

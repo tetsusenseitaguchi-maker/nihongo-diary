@@ -544,5 +544,12 @@
   "pricing.features.free.10": "Vista previa de Mini Lección",
   "pricing.features.plus.5": "Informe semanal: versión completa (vocabulario, errores, consejos)",
   "pricing.features.plus.6": "Biblioteca de Mini Lecciones: las 20 lecciones",
-  "pricing.features.pro.5": "Drills de repaso (IA) — solo Pro"
+  "pricing.features.pro.5": "Drills de repaso (IA) — solo Pro",
+  "history.tabReview": "Revisión",
+  "review.title": "Revisión gramatical de ayer",
+  "review.prompt": "Cometiste este error ayer. ¡Intenta usar la forma correcta en el diario de hoy!",
+  "review.cta": "Úsalo en la entrada de hoy ✍️",
+  "review.historyTitle": "Registro de revisiones gramaticales",
+  "review.noReviews": "Aún no hay revisiones",
+  "review.noReviewsHint": "Las revisiones aparecen aquí después de tu primera corrección con IA."
 }

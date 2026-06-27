@@ -167,5 +167,12 @@
   "pricing.features.pro.2": "500 caracteres por entrada",
   "pricing.features.pro.3": "Tudo do Plus",
   "pricing.features.pro.4": "Caderno de vocab: ilimitado ↑ a partir de 100",
-  "pricing.features.pro.5": "Exercícios de revisão (IA) — apenas Pro"
+  "pricing.features.pro.5": "Exercícios de revisão (IA) — apenas Pro",
+  "history.tabReview": "Revisão",
+  "review.title": "Revisão gramatical de ontem",
+  "review.prompt": "Você cometeu este erro ontem. Tente usar a forma correta no diário de hoje!",
+  "review.cta": "Use na entrada de hoje ✍️",
+  "review.historyTitle": "Histórico de revisões gramaticais",
+  "review.noReviews": "Ainda não há revisões",
+  "review.noReviewsHint": "As revisões aparecem aqui após a primeira correção com IA."
 }

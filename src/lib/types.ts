@@ -94,6 +94,8 @@ export interface Correction {
   explanation: string;
   correctionNote?: string;
   mistakes: MistakeItem[];
+  /** The single grammar mistake selected for next-day review. Same shape as MistakeItem. */
+  grammarFocus?: MistakeItem | null;
   vocabulary: VocabItem[];
   practice: { jp: string; en: string };
   relatedMiniLesson?: MiniLesson | null;
@@ -205,6 +207,7 @@ export interface DiaryRow {
   /** Per-language translation cache keyed by BCP-47 code, e.g. {"en": "…", "es": "…"} */
   translations: Record<string, string> | null;
   key_mistakes: MistakeItem[] | null;
+  grammar_focus: MistakeItem | null;
   useful_vocabulary: VocabItem[] | null;
   practice_sentence: string | null;
   level: string | null;

@@ -6,6 +6,7 @@ import { Icon } from "@/components/icons";
 import { DiaryHistoryList } from "@/components/DiaryHistoryList";
 import { VocabularyList } from "@/components/VocabularyList";
 import { WeeklyReport } from "@/components/WeeklyReport";
+import { GrammarReviewList } from "@/components/GrammarReviewList";
 import { useT } from "@/contexts/locale";
 
 interface Entry {
@@ -20,7 +21,7 @@ interface Entry {
   audio_path: string | null;
 }
 
-type Tab = "diary" | "vocab" | "report";
+type Tab = "diary" | "vocab" | "report" | "review";
 
 export function HistoryWithTabs({
   entries,
@@ -37,7 +38,9 @@ export function HistoryWithTabs({
       ? t("vocab.title")
       : tab === "report"
         ? t("report.title")
-        : t("history.title");
+        : tab === "review"
+          ? t("review.historyTitle")
+          : t("history.title");
 
   return (
     <div className="space-y-6">
@@ -63,7 +66,7 @@ export function HistoryWithTabs({
 
       {/* Tab switcher */}
       <div className="flex gap-1 rounded-xl border border-line bg-paper p-1">
-        {(["diary", "vocab", "report"] as Tab[]).map((tabKey) => (
+        {(["diary", "vocab", "report", "review"] as Tab[]).map((tabKey) => (
           <button
             key={tabKey}
             onClick={() => setTab(tabKey)}
@@ -77,7 +80,9 @@ export function HistoryWithTabs({
               ? t("history.tabDiary")
               : tabKey === "vocab"
                 ? t("history.tabVocab")
-                : t("history.tabReport")}
+                : tabKey === "report"
+                  ? t("history.tabReport")
+                  : t("history.tabReview")}
           </button>
         ))}
       </div>
@@ -100,8 +105,10 @@ export function HistoryWithTabs({
         )
       ) : tab === "vocab" ? (
         <VocabularyList />
-      ) : (
+      ) : tab === "report" ? (
         <WeeklyReport />
+      ) : (
+        <GrammarReviewList />
       )}
     </div>
   );

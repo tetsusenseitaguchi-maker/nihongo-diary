@@ -12,7 +12,8 @@ import { CorrectionResult } from "@/components/CorrectionResult";
 import { Furigana } from "@/components/Furigana";
 import { Bilingual } from "@/components/Bilingual";
 import { templates, sampleDraft } from "@/lib/mock-data";
-import type { Level, CorrectionStyle, Correction, DiaryPlace } from "@/lib/types";
+import type { Level, CorrectionStyle, Correction, DiaryPlace, MistakeItem } from "@/lib/types";
+import { GrammarReviewCard } from "@/components/GrammarReviewCard";
 import { limitsFor, normalizePlan, PLAN_LABELS, PLAN_LIMITS, type Plan } from "@/lib/plans";
 import { PRESET_TAGS, PRESET_TAG_KEYS } from "@/lib/tags";
 import { useT } from "@/contexts/locale";
@@ -116,6 +117,7 @@ export default function WritePage() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [places, setPlaces] = useState<DiaryPlace[]>([]);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [grammarReview, setGrammarReview] = useState<MistakeItem | null>(null);
 
   // Plan + usage
   const [plan, setPlan] = useState<Plan>("free");
@@ -138,12 +140,14 @@ export default function WritePage() {
       } = await supabase.auth.getUser();
       if (!user) return;
       const today = new Date().toISOString().slice(0, 10);
-      const [{ data: prof }, { data: usage }] = await Promise.all([
+      const [{ data: prof }, { data: usage }, { data: reviewRow }] = await Promise.all([
         supabase.from("profiles").select("plan").eq("id", user.id).single(),
         supabase.from("usage_limits").select("correction_count").eq("user_id", user.id).eq("usage_date", today).maybeSingle(),
+        supabase.from("diary_entries").select("grammar_focus").eq("user_id", user.id).not("grammar_focus", "is", null).lt("diary_date", today).order("diary_date", { ascending: false }).limit(1).maybeSingle(),
       ]);
       setPlan(normalizePlan(prof?.plan));
       setUsedToday(usage?.correction_count ?? 0);
+      if (reviewRow?.grammar_focus) setGrammarReview(reviewRow.grammar_focus as MistakeItem);
     })();
   }, []);
 
@@ -252,6 +256,15 @@ export default function WritePage() {
         obieCheer: data.obieCheerRuby || "",
         obiePhraseRuby: data.obiePhraseRuby || "",
         obiePhraseExplanation: data.obiePhraseExplanation || "",
+        grammarFocus: (() => {
+          const km = (data.keyMistakes ?? [])[0];
+          if (!km || !km.mistake) return null;
+          return {
+            before: km.mistakeRuby || km.mistake || "",
+            after: km.correctionRuby || "",
+            note: km.explanation || "",
+          } satisfies MistakeItem;
+        })(),
       };
       setResult(correction);
       setLoading(false);   // show result immediately; save happens next
@@ -294,6 +307,7 @@ export default function WritePage() {
         english_explanation: correction.explanation,
         correction_note: correction.correctionNote ?? "",
         key_mistakes: correction.mistakes,
+        grammar_focus: correction.grammarFocus ?? null,
         useful_vocabulary: correction.vocabulary,
         practice_sentence: correction.practice.jp,
         level: levels[level],
@@ -445,6 +459,10 @@ export default function WritePage() {
             </a>
           )}
         </div>
+      )}
+
+      {grammarReview && !result && (
+        <GrammarReviewCard item={grammarReview} />
       )}
 
       <div className="grid gap-6 lg:grid-cols-[1.55fr_0.85fr]">

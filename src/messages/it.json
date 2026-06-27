@@ -544,5 +544,12 @@
   "pricing.features.free.10": "Anteprima Mini Lezione",
   "pricing.features.plus.5": "Report settimanale: versione completa (vocab, errori, consigli)",
   "pricing.features.plus.6": "Libreria Mini Lezioni: tutte le 20 lezioni",
-  "pricing.features.pro.5": "Esercizi di ripasso (IA) — solo Pro"
+  "pricing.features.pro.5": "Esercizi di ripasso (IA) — solo Pro",
+  "history.tabReview": "Ripasso",
+  "review.title": "Ripasso grammaticale di ieri",
+  "review.prompt": "Hai fatto questo errore ieri. Prova a usare la forma corretta nel diario di oggi!",
+  "review.cta": "Usala nell'entrata di oggi ✍️",
+  "review.historyTitle": "Registro dei ripassi grammaticali",
+  "review.noReviews": "Nessun ripasso ancora",
+  "review.noReviewsHint": "I ripassi appaiono qui dopo la tua prima correzione IA."
 }
