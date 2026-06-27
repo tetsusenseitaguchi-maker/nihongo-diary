@@ -23,7 +23,8 @@ export const PLAN_LABELS: Record<Plan, string> = {
 };
 
 export function normalizePlan(p: string | null | undefined): Plan {
-  if (p === "plus" || p === "pro" || p === "teacher_feedback") return p;
+  const v = (p ?? "").toLowerCase().trim();
+  if (v === "plus" || v === "pro" || v === "teacher_feedback") return v as Plan;
   return "free";
 }
 
