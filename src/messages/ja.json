@@ -465,7 +465,7 @@
   "offline.title": "オフラインです",
   "offline.body": "接続を確認してもう一度試してください。日記のデータは保存されており、オンラインに戻ったときに同期されます。",
   "offline.tryAgain": "再試行",
-  "pricing.features.free.1": "AI添削 1回/日",
+  "pricing.features.free.1": "AI添削 2回/日",
   "pricing.features.free.2": "1エントリー300文字まで",
   "pricing.features.free.3": "日記の保存は無制限",
   "pricing.features.free.4": "添削の詳細（解説・語彙・練習）",
