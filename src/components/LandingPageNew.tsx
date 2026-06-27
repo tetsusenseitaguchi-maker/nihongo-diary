@@ -70,33 +70,59 @@ export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
       </header>
 
       {/* ── 1. HERO ─────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-pine">
-        <div className="genkou absolute inset-0 opacity-[0.07]" aria-hidden />
+      <section className="relative overflow-hidden bg-cream">
+        {/* Radial light: soft white glow from top */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{ background: "radial-gradient(ellipse 90% 55% at 50% -5%, rgba(255,255,255,0.60) 0%, transparent 68%)" }}
+          aria-hidden
+        />
+        {/* Genkou paper texture at low opacity on cream */}
+        <div className="genkou absolute inset-0 opacity-40" aria-hidden />
         <div className="relative mx-auto max-w-6xl px-4 pb-24 pt-20 sm:px-6 sm:pt-28">
           <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
             <div>
-              <h1 className="font-serif text-4xl font-extrabold leading-[1.1] tracking-tight text-cream sm:text-5xl lg:text-[3.5rem]">
+              {/* Coral eyebrow accent — decorative only */}
+              <div className="mb-5 flex items-center gap-2.5" aria-hidden>
+                <span className="h-2 w-2 rounded-full" style={{ background: "#e3704c" }} />
+                <span className="h-px w-10 bg-pine/20" />
+              </div>
+
+              <h1 className="font-serif text-4xl font-extrabold leading-[1.1] tracking-tight text-pine sm:text-5xl lg:text-[3.5rem]">
                 {t("lp.hero.h1a")}
                 <br />
-                <span className="text-moss-300">{t("lp.hero.h1b")}</span>
+                <span className="text-ink">{t("lp.hero.h1b")}</span>
               </h1>
-              <p className="mt-6 max-w-xl text-lg leading-relaxed text-cream/75">
+              <p className="mt-6 max-w-xl text-lg leading-relaxed" style={{ color: "#5d6b62" }}>
                 {t("lp.hero.subhead")}
               </p>
               <div className="mt-8">
+                {/* Glossy deep-green CTA pill */}
                 <Link
                   href="/signup"
-                  className="inline-flex h-12 items-center gap-2 rounded-full bg-cream px-7 text-base font-bold text-pine transition hover:bg-paper active:scale-95"
+                  className="relative inline-flex h-12 items-center gap-2 overflow-hidden rounded-full px-7 text-base font-bold text-cream transition-transform active:scale-[0.97]"
+                  style={{
+                    background: "linear-gradient(180deg,#27664f 0%,#154a37 45%,#0f3d2e 100%)",
+                    boxShadow: "0 1px 0 rgba(255,255,255,.18) inset, 0 -8px 14px rgba(0,0,0,.12) inset, 0 8px 18px rgba(15,61,46,.28)",
+                  }}
                 >
-                  {t("lp.hero.cta")} <Icon.arrow className="h-5 w-5" />
+                  {/* Upper-half gloss layer */}
+                  <span
+                    className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-full"
+                    style={{ background: "linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0))" }}
+                    aria-hidden
+                  />
+                  <span className="relative flex items-center gap-2">
+                    {t("lp.hero.cta")} <Icon.arrow className="h-5 w-5" />
+                  </span>
                 </Link>
               </div>
-              <p className="mt-4 text-sm text-cream/40">{t("lp.hero.microcopy")}</p>
+              <p className="mt-4 text-sm" style={{ color: "#8a948b" }}>{t("lp.hero.microcopy")}</p>
             </div>
             {/* TODO: hero visual / app screenshot placeholder */}
             <div className="hidden lg:block">
-              <div className="flex aspect-[4/3] items-center justify-center rounded-2xl border border-cream/10 bg-white/5 p-4">
-                <p className="text-center text-xs text-cream/20">TODO: hero visual / app screenshot</p>
+              <div className="flex aspect-[4/3] items-center justify-center rounded-2xl border border-pine/10 bg-pine/[0.04] p-4">
+                <p className="text-center text-xs text-pine/25">TODO: hero visual / app screenshot</p>
               </div>
             </div>
           </div>
