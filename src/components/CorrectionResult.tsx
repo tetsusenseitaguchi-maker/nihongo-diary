@@ -101,24 +101,32 @@ export function CorrectionResult({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ word, reading, jlptLevel }),
       });
-      if (res.status === 409) {
-        setWordStates((prev) => new Map(prev).set(word, "already_saved"));
-        return;
-      }
-      if (res.status === 403) {
-        setWordStates((prev) => new Map(prev).set(word, "idle"));
-        setShowVocabUpgrade(true);
-        return;
-      }
-      if (!res.ok) {
-        setWordStates((prev) => new Map(prev).set(word, "error"));
-        setTimeout(() => setWordStates((prev) => new Map(prev).set(word, "idle")), 2000);
-        return;
-      }
+      if (res.status === 409) { setWordStates((prev) => new Map(prev).set(word, "already_saved")); return; }
+      if (res.status === 403) { setWordStates((prev) => new Map(prev).set(word, "idle")); setShowVocabUpgrade(true); return; }
+      if (!res.ok) { setWordStates((prev) => new Map(prev).set(word, "error")); setTimeout(() => setWordStates((prev) => new Map(prev).set(word, "idle")), 2000); return; }
       setWordStates((prev) => new Map(prev).set(word, "saved"));
     } catch {
       setWordStates((prev) => new Map(prev).set(word, "error"));
       setTimeout(() => setWordStates((prev) => new Map(prev).set(word, "idle")), 2000);
+    }
+  }
+
+  async function handleSaveGrammar(pattern: string, expl: string, exRuby: string) {
+    const key = `grammar:${pattern}`;
+    setWordStates((prev) => new Map(prev).set(key, "saving"));
+    try {
+      const res = await fetch("/api/vocabulary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word: pattern, reading: "", explanation: expl, exampleRuby: exRuby, entryType: "grammar" }),
+      });
+      if (res.status === 409) { setWordStates((prev) => new Map(prev).set(key, "already_saved")); return; }
+      if (res.status === 403) { setWordStates((prev) => new Map(prev).set(key, "idle")); setShowVocabUpgrade(true); return; }
+      if (!res.ok) { setWordStates((prev) => new Map(prev).set(key, "error")); setTimeout(() => setWordStates((prev) => new Map(prev).set(key, "idle")), 2000); return; }
+      setWordStates((prev) => new Map(prev).set(key, "saved"));
+    } catch {
+      setWordStates((prev) => new Map(prev).set(key, "error"));
+      setTimeout(() => setWordStates((prev) => new Map(prev).set(key, "idle")), 2000);
     }
   }
 
@@ -285,9 +293,17 @@ export function CorrectionResult({
               <ul className="space-y-3 text-sm">
                 {correction.nextGrammar.map((g, i) => (
                   <li key={i} className="rounded-xl bg-paper/60 px-3 py-3">
-                    <span className="font-jp text-[13px] font-bold text-pine">{g.pattern}</span>
-                    <span className="mx-2 text-muted">—</span>
-                    <span className="text-xs text-ink/70">{g.explanation}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-jp text-[13px] font-bold text-pine">{g.pattern}</span>
+                      <span className="text-muted">—</span>
+                      <span className="flex-1 text-xs text-ink/70">{g.explanation}</span>
+                      <SaveWordButton
+                        word={`grammar:${g.pattern}`}
+                        reading=""
+                        state={wordStates.get(`grammar:${g.pattern}`) ?? "idle"}
+                        onSave={() => handleSaveGrammar(g.pattern, g.explanation, g.exampleRuby)}
+                      />
+                    </div>
                     {g.exampleRuby && (
                       <p className="mt-1.5 font-jp text-[13px] leading-loose text-ink/80">
                         <Furigana text={g.exampleRuby} />

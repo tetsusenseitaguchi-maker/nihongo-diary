@@ -39,16 +39,25 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));
-  const { word, reading, jlptLevel } = body as {
+  const { word, reading, jlptLevel, entryType, explanation, exampleRuby } = body as {
     word?: string;
     reading?: string;
     jlptLevel?: string;
+    entryType?: string;
+    explanation?: string;
+    exampleRuby?: string;
   };
-  if (!word || typeof word !== "string" || !reading || typeof reading !== "string") {
-    return NextResponse.json({ error: "Missing word or reading" }, { status: 400 });
+
+  const type = entryType === "grammar" ? "grammar" : "word";
+
+  if (!word || typeof word !== "string") {
+    return NextResponse.json({ error: "Missing word" }, { status: 400 });
+  }
+  if (type === "word" && (!reading || typeof reading !== "string")) {
+    return NextResponse.json({ error: "Missing reading" }, { status: 400 });
   }
 
-  // ---- Plan check: Free users capped at FREE_VOCAB_LIMIT entries ----
+  // ---- Plan check: Free users capped at FREE_VOCAB_LIMIT total entries (words + grammar) ----
   const { data: profile } = await supabase
     .from("profiles")
     .select("plan, preferred_language")
@@ -87,15 +96,51 @@ export async function POST(req: Request) {
   if (apiKey) {
     try {
       const openai = new OpenAI({ apiKey });
-      const completion = await openai.chat.completions.create({
-        model: MODEL,
-        response_format: { type: "json_object" },
-        max_tokens: 400,
-        temperature: 0.7,
-        messages: [
-          {
-            role: "user",
-            content: `You are a Japanese language teacher. Generate study content for this Japanese word.
+
+      if (type === "grammar") {
+        // For grammar entries, meaning and example are already provided.
+        // AI only generates translation + practice.
+        meaning = explanation || word;
+        example_jp_ruby = exampleRuby || "";
+
+        const completion = await openai.chat.completions.create({
+          model: MODEL,
+          response_format: { type: "json_object" },
+          max_tokens: 300,
+          temperature: 0.7,
+          messages: [
+            {
+              role: "user",
+              content: `You are a Japanese language teacher. Generate practice content for this Japanese grammar pattern.
+
+Grammar pattern: ${word}
+Explanation: ${explanation || ""}
+Example sentence (with ruby furigana HTML): ${exampleRuby || ""}
+
+Return ONLY a JSON object (no markdown):
+{
+  "example_translation": "Translation of the example sentence into ${lang}",
+  "practice_question": "A short Japanese sentence that demonstrates the grammar pattern, where the pattern itself is replaced by ___. Add <ruby>kanji<rt>reading</rt></ruby> tags to ALL kanji in the sentence. Do NOT wrap hiragana or katakana.",
+  "practice_answer": "The grammar pattern that fills the blank (e.g. 〜てから)"
+}`,
+            },
+          ],
+        });
+        const parsed = JSON.parse(completion.choices[0]?.message?.content ?? "{}");
+        example_translation = String(parsed.example_translation ?? "").trim();
+        practice_question = String(parsed.practice_question ?? "").trim();
+        practice_answer = String(parsed.practice_answer ?? word).trim();
+      } else {
+        // Vocabulary word generation (existing logic)
+        const completion = await openai.chat.completions.create({
+          model: MODEL,
+          response_format: { type: "json_object" },
+          max_tokens: 400,
+          temperature: 0.7,
+          messages: [
+            {
+              role: "user",
+              content: `You are a Japanese language teacher. Generate study content for this Japanese word.
 
 Word: ${word}
 Reading (hiragana): ${reading}
@@ -109,18 +154,26 @@ Return ONLY a JSON object (no markdown):
   "practice_question": "Japanese sentence where the target word is replaced by ___. Add <ruby> tags to other kanji in the sentence.",
   "practice_answer": "The word or phrase that fills the blank"
 }`,
-          },
-        ],
-      });
-      const parsed = JSON.parse(completion.choices[0]?.message?.content ?? "{}");
-      meaning = String(parsed.meaning ?? "").trim();
-      example_jp_ruby = String(parsed.example_jp_ruby ?? "").trim();
-      example_translation = String(parsed.example_translation ?? "").trim();
-      practice_question = String(parsed.practice_question ?? "").trim();
-      practice_answer = String(parsed.practice_answer ?? word).trim();
+            },
+          ],
+        });
+        const parsed = JSON.parse(completion.choices[0]?.message?.content ?? "{}");
+        meaning = String(parsed.meaning ?? "").trim();
+        example_jp_ruby = String(parsed.example_jp_ruby ?? "").trim();
+        example_translation = String(parsed.example_translation ?? "").trim();
+        practice_question = String(parsed.practice_question ?? "").trim();
+        practice_answer = String(parsed.practice_answer ?? word).trim();
+      }
     } catch {
-      // AI failure is non-fatal — save the word with an empty meaning fallback.
+      // AI failure is non-fatal — save with available data.
+      if (type === "grammar") {
+        meaning = explanation || word;
+        example_jp_ruby = exampleRuby || "";
+      }
     }
+  } else if (type === "grammar") {
+    meaning = explanation || word;
+    example_jp_ruby = exampleRuby || "";
   }
 
   // ---- Insert ----
@@ -129,13 +182,14 @@ Return ONLY a JSON object (no markdown):
     .insert({
       user_id: user.id,
       word,
-      reading,
+      reading: reading || "",
       jlpt_level: jlptLevel ?? null,
       meaning: meaning || word,
       example_jp_ruby: example_jp_ruby || null,
       example_translation: example_translation || null,
       practice_question: practice_question || null,
       practice_answer: practice_answer || null,
+      entry_type: type,
     })
     .select()
     .single();
