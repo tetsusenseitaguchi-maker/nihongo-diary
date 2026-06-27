@@ -133,7 +133,10 @@ export async function GET() {
         .join("\n");
 
       const content = mistakeContext
-        ? `You are a Japanese language teacher reviewing a learner's week. Suggest 2–3 specific, actionable practice activities for next week based on these mistakes.
+        ? `You are a Japanese language teacher reviewing a learner's week.
+IMPORTANT: Write ALL suggestion text in ${lang}. Japanese vocabulary, grammar terms, and example Japanese sentences may remain in Japanese script, but every explanation and surrounding text must be in ${lang}.
+
+Suggest 2–3 specific, actionable practice activities for next week based on these mistakes.
 
 Mistakes this week:
 ${mistakeContext}
@@ -141,18 +144,21 @@ ${mistakeContext}
 Return ONLY a JSON object:
 {
   "suggestions": [
-    "Practice activity 1 in ${lang} (1–2 sentences, concrete and actionable)",
-    "Practice activity 2 in ${lang}",
-    "Practice activity 3 in ${lang}"
+    "suggestion 1 (1–2 sentences, concrete and actionable)",
+    "suggestion 2",
+    "suggestion 3"
   ]
 }`
-        : `You are a Japanese language teacher. A learner had a great week with no mistakes. Suggest 2 ways to keep challenging themselves.
+        : `You are a Japanese language teacher.
+IMPORTANT: Write ALL suggestion text in ${lang}. Japanese vocabulary and example Japanese sentences may remain in Japanese script, but every explanation must be in ${lang}.
+
+A learner had a great week with no mistakes. Suggest 2 ways to keep challenging themselves.
 
 Return ONLY a JSON object:
 {
   "suggestions": [
-    "Challenge suggestion 1 in ${lang}",
-    "Challenge suggestion 2 in ${lang}"
+    "challenge suggestion 1",
+    "challenge suggestion 2"
   ]
 }`;
 
