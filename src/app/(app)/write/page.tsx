@@ -150,7 +150,9 @@ export default function WritePage() {
       const isDev =
         devEmails.has((user.email ?? "").toLowerCase()) ||
         devUsernames.has((prof?.username ?? "").toLowerCase().trim());
-      setUsedToday(isDev ? 0 : (usage?.correction_count ?? 0));
+      // -9999 keeps remaining always positive so the button never disables for dev accounts,
+      // even after many corrections in a single session without a page refresh.
+      setUsedToday(isDev ? -9999 : (usage?.correction_count ?? 0));
     })();
   }, []);
 
