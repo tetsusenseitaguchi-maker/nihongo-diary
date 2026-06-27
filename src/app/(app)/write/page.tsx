@@ -17,6 +17,7 @@ import { GrammarReviewCard } from "@/components/GrammarReviewCard";
 import { limitsFor, normalizePlan, PLAN_LABELS, PLAN_LIMITS, type Plan } from "@/lib/plans";
 import { PRESET_TAGS, PRESET_TAG_KEYS } from "@/lib/tags";
 import { useT } from "@/contexts/locale";
+import { todayInTZ } from "@/lib/date-tz";
 
 const DiaryMapPicker = dynamicLoad(
   () => import("@/components/DiaryMapPicker").then((m) => m.DiaryMapPicker),
@@ -42,9 +43,24 @@ const tips = [
   { jp: "自分(じぶん)の気持(きも)ちを書(か)こう", en: "Write how you feel" },
 ];
 
+// Display only: the date shown in the notebook header (when the page was opened).
 function todayISO() {
-  // en-CA locale returns YYYY-MM-DD in the browser's local timezone (not UTC).
   return new Date().toLocaleDateString("en-CA");
+}
+
+// Read the user_tz cookie (set by TimezoneSyncer) so date calculations stay in
+// sync with the same timezone used by layout.tsx and dashboard/page.tsx.
+// Falls back to the browser's own IANA timezone if the cookie isn't set yet.
+function getClientTZ(): string {
+  const match = document.cookie.match(/(?:^|;\s*)user_tz=([^;]+)/);
+  const raw = match ? decodeURIComponent(match[1]) : null;
+  if (raw) {
+    try {
+      new Intl.DateTimeFormat("en-CA", { timeZone: raw });
+      return raw;
+    } catch { /* invalid cookie value */ }
+  }
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 }
 
 function jpDate(iso: string) {
@@ -138,7 +154,7 @@ export default function WritePage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
-      const today = new Date().toISOString().slice(0, 10);
+      const today = todayInTZ(getClientTZ());
       const [{ data: prof }, { data: usage }, { data: reviewRow }] = await Promise.all([
         supabase.from("profiles").select("plan").eq("id", user.id).single(),
         supabase.from("usage_limits").select("correction_count").eq("user_id", user.id).eq("usage_date", today).maybeSingle(),
@@ -290,11 +306,17 @@ export default function WritePage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
 
+    // Compute diary_date at submission time using the same timezone as the streak
+    // logic (layout.tsx / diary.ts). If the user writes across midnight their diary
+    // is filed under the calendar day they actually submitted, not when they opened
+    // the page.
+    const diaryDate = todayInTZ(getClientTZ());
+
     const { data, error } = await supabase
       .from("diary_entries")
       .insert({
         user_id: user.id,
-        diary_date: date,
+        diary_date: diaryDate,
         title: correction.diaryTitle
           ? correction.diaryTitle
               .replace(
@@ -387,7 +409,7 @@ export default function WritePage() {
       user_id: user.id,
       activity_type: "wrote_diary",
       diary_entry_id: data.id,
-      metadata: { diary_date: date, is_public: false },
+      metadata: { diary_date: diaryDate, is_public: false },
     });
 
     return data.id;
