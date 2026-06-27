@@ -10,12 +10,10 @@
   "nav.upgrade": "Melhorar plano",
   "nav.home": "Início",
   "nav.write": "Escrever",
-
   "sidebar.keepGoing": "Continue assim!",
   "sidebar.startToday": "Vamos começar hoje!",
   "sidebar.legend": "Construindo uma lenda!",
   "sidebar.daysTo": "Mais {remaining} dia(s) para {next} dias seguidos",
-
   "dashboard.todayDiary": "Diário de hoje",
   "dashboard.aiFeedback": "Correção IA",
   "dashboard.templates": "Modelos",
@@ -37,7 +35,6 @@
   "dashboard.changePhoto": "Alterar foto",
   "dashboard.obieTip": "Dica do Obie",
   "dashboard.noRecent": "Ainda sem diários.",
-
   "write.level": "Nível",
   "write.style": "Estilo",
   "write.mood": "Humor",
@@ -46,6 +43,7 @@
   "write.correctBtn": "Corrigir meu japonês",
   "write.correcting": "Corrigindo…",
   "write.saveBtn": "Salvar diário",
+  "write.viewDiary": "Ver diário →",
   "write.saving": "Salvando…",
   "write.placeholder": "Escreva em japonês (ou tente o seu melhor!)…",
   "write.resultTitle": "Resultado da correção",
@@ -54,7 +52,6 @@
   "write.upgradeBtn": "Atualizar →",
   "write.savedMsg": "Diário salvo! ",
   "write.viewSaved": "Ver →",
-
   "profile.title": "Perfil",
   "profile.editProfile": "Editar perfil",
   "profile.viewPublic": "Ver perfil público →",
@@ -68,14 +65,11 @@
   "profile.language.desc": "Escolha o idioma para menus, botões e traduções.",
   "profile.plan.title": "Seu plano",
   "profile.plan.upgrade": "Atualizar →",
-
   "common.seeAll": "Ver tudo",
   "common.loading": "Carregando…",
   "common.daysStreak": "{n} dias seguidos",
   "common.days": "dias",
-
   "lang.label": "Idioma",
-
   "footer.disclaimer": "As correções de IA podem não ser perfeitas. Use-as como apoio ao aprendizado.",
   "footer.beta": "Nihongo Diary · beta pública",
   "footer.terms": "Ao usar este app, você concorda com nossos Termos e Privacidade. Seus diários ficam privados a menos que você os torne públicos.",

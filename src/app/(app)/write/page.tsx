@@ -111,6 +111,7 @@ export default function WritePage() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [savedEntryId, setSavedEntryId] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [places, setPlaces] = useState<DiaryPlace[]>([]);
@@ -159,6 +160,7 @@ export default function WritePage() {
     setShowUpgrade(false);
     setSaveError(null);
     setResult(null);
+    setSavedEntryId(null);
     try {
       const res = await fetch("/api/correct", {
         method: "POST",
@@ -238,25 +240,30 @@ export default function WritePage() {
         ),
       };
       setResult(correction);
+      setLoading(false);   // show result immediately; save happens next
+
+      // Auto-save: diary is persisted as part of the correction flow
+      setSaving(true);
+      try {
+        const id = await saveEntry(correction);
+        setSavedEntryId(id);
+      } catch (err) {
+        setSaveError(err instanceof Error ? err.message : "Save failed");
+      } finally {
+        setSaving(false);
+      }
     } catch {
       setCorrectError(t("write.networkError"));
-    } finally {
       setLoading(false);
     }
   }
 
-  async function handleSave() {
-    if (!result) return;
-    setSaving(true);
-    setSaveError(null);
+  // Core save logic — inserts the entry and returns its ID. Does NOT navigate.
+  async function saveEntry(correction: Correction): Promise<string> {
     const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      router.push("/login");
-      return;
-    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
     const { data, error } = await supabase
       .from("diary_entries")
       .insert({
@@ -264,28 +271,22 @@ export default function WritePage() {
         diary_date: date,
         title: title.trim() || null,
         tags,
-        original_text: result.original,
-        corrected_japanese: result.corrected,
-        natural_japanese: result.natural,
-        english_explanation: result.explanation,
-        correction_note: result.correctionNote ?? "",
-        key_mistakes: result.mistakes,
-        useful_vocabulary: result.vocabulary,
-        practice_sentence: result.practice.jp,
+        original_text: correction.original,
+        corrected_japanese: correction.corrected,
+        natural_japanese: correction.natural,
+        english_explanation: correction.explanation,
+        correction_note: correction.correctionNote ?? "",
+        key_mistakes: correction.mistakes,
+        useful_vocabulary: correction.vocabulary,
+        practice_sentence: correction.practice.jp,
         level: levels[level],
         correction_style: styles[style],
       })
       .select("id")
       .single();
 
-    if (error) {
-      setSaveError(error.message);
-      setSaving(false);
-      return;
-    }
+    if (error) throw new Error(error.message);
 
-    // Upload attachments to Supabase Storage
-    // Path: <user_id>/<entry_id>.<ext> — consistent with avatars bucket pattern.
     let imagePath: string | null = null;
     let audioPath: string | null = null;
 
@@ -297,9 +298,7 @@ export default function WritePage() {
         .upload(storagePath, photoFile, { contentType: photoFile.type });
       if (upErr) {
         await supabase.from("diary_entries").delete().eq("id", data.id);
-        setSaveError(`Photo upload failed: ${upErr.message}`);
-        setSaving(false);
-        return;
+        throw new Error(`Photo upload failed: ${upErr.message}`);
       }
       imagePath = storagePath;
     }
@@ -313,9 +312,7 @@ export default function WritePage() {
       if (upErr) {
         if (imagePath) await supabase.storage.from("diary-images").remove([imagePath]);
         await supabase.from("diary_entries").delete().eq("id", data.id);
-        setSaveError(`Audio upload failed: ${upErr.message}`);
-        setSaving(false);
-        return;
+        throw new Error(`Audio upload failed: ${upErr.message}`);
       }
       audioPath = storagePath;
     }
@@ -327,7 +324,6 @@ export default function WritePage() {
         .eq("id", data.id);
     }
 
-    // Save location pins
     if (places.length > 0) {
       await supabase.from("diary_places").insert(
         places.map((p) => ({
@@ -340,19 +336,17 @@ export default function WritePage() {
       );
     }
 
-    // Best-effort: save JLPT word data + alternatives (requires migration add-vocab-features.sql)
-    if (result.jlptWords?.length || result.alternativeWords?.length) {
+    if (correction.jlptWords?.length || correction.alternativeWords?.length) {
       supabase
         .from("diary_entries")
         .update({
-          jlpt_words: result.jlptWords ?? [],
-          alternative_words: result.alternativeWords ?? [],
+          jlpt_words: correction.jlptWords ?? [],
+          alternative_words: correction.alternativeWords ?? [],
         })
         .eq("id", data.id)
-        .then(() => { /* intentionally fire-and-forget — don't fail save if columns missing */ });
+        .then(() => {});
     }
 
-    // Record a learning-activity (no diary text — privacy safe)
     await supabase.from("activity_feed").insert({
       user_id: user.id,
       activity_type: "wrote_diary",
@@ -360,7 +354,22 @@ export default function WritePage() {
       metadata: { diary_date: date, is_public: false },
     });
 
-    router.push(`/diary/${data.id}`);
+    return data.id;
+  }
+
+  // Manual save retry — only reachable when auto-save failed.
+  async function handleSave() {
+    if (!result || savedEntryId) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const id = await saveEntry(result);
+      setSavedEntryId(id);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function cycle(setter: (fn: (n: number) => number) => void, len: number) {
@@ -753,6 +762,16 @@ export default function WritePage() {
               <span className="inline-flex items-center gap-2 rounded-full bg-mint px-4 py-2 text-sm font-semibold text-pine">
                 {t("write.saving")}
               </span>
+            ) : savedEntryId ? (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-moss-600">✓ {t("write.savedMsg")}</span>
+                <a
+                  href={`/diary/${savedEntryId}`}
+                  className="gloss-btn shrink-0 rounded-full px-4 py-2 text-sm font-semibold text-cream hover:brightness-105"
+                >
+                  {t("write.viewDiary")}
+                </a>
+              </div>
             ) : (
               <Button onClick={handleSave}>
                 <Icon.check className="h-4 w-4" /> {t("write.saveBtn")}
