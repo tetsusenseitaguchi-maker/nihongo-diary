@@ -227,7 +227,14 @@ export async function POST(request: Request) {
     p_date: today,
     p_limit: limits.corrections,
   });
-  if (rpcError || !allowed) {
+  if (rpcError) {
+    console.error("[correct] try_use_correction error:", rpcError.message, "code:", rpcError.code);
+    return NextResponse.json(
+      { error: `添削サービスで一時的なエラーが発生しました。しばらくしてから再試行してください。 [${rpcError.code ?? rpcError.message}]` },
+      { status: 500 },
+    );
+  }
+  if (!allowed) {
     return NextResponse.json(
       { error: "daily_correction_limit_reached", upgrade: true, plan, limit: limits.corrections },
       { status: 429 },

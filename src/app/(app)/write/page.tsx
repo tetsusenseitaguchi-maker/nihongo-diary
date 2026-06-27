@@ -179,6 +179,8 @@ export default function WritePage() {
           // Daily correction limit — show the friendly plan-specific banner, not a red error
           setShowUpgrade(true);
           setCorrectError(null);
+          // Force remaining=0 so the button disables immediately (avoids repeated 429 clicks)
+          setUsedToday(limits.corrections);
         } else {
           setCorrectError(data?.error || "Correction failed. Please try again.");
           if (data?.upgrade) setShowUpgrade(true);
