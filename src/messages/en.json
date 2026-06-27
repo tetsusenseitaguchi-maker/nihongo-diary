@@ -518,5 +518,22 @@
   "vocab.limitDescIos": "Plus plan allows unlimited vocabulary words.",
   "vocab.upgradeBtn": "Upgrade to Plus →",
   "vocab.addToVocab": "Save to My Vocabulary",
-  "vocab.wordCount": "{n} words saved"
+  "vocab.wordCount": "{n} words saved",
+  "history.tabReport": "Report",
+  "report.title": "Weekly Growth Report",
+  "report.weekOf": "Week: {start} – {end}",
+  "report.daysWritten": "You wrote {n} out of 7 days",
+  "report.streak": "{n}-day streak",
+  "report.frequentWords": "Vocabulary from this week",
+  "report.mistakePatterns": "Areas to work on",
+  "report.noMistakes": "No mistakes this week — great job!",
+  "report.aiSuggestions": "Practice ideas for next week",
+  "report.noEntries": "No diary entries this week",
+  "report.noEntriesHint": "Write a diary entry to see your weekly report.",
+  "report.generating": "Generating your report…",
+  "report.error": "Failed to load report. Please try again.",
+  "report.upgradeTitle": "Full report on Plus",
+  "report.upgradeDesc": "Unlock vocabulary insights, mistake patterns, and personalised practice suggestions.",
+  "report.upgradeBtn": "Upgrade to Plus →",
+  "report.upgradeIos": "Full analysis is available on the Plus plan."
 }

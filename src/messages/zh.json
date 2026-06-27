@@ -518,5 +518,22 @@
   "vocab.limitDescIos": "Plus方案可无限保存词汇。",
   "vocab.upgradeBtn": "升级到Plus →",
   "vocab.addToVocab": "保存到我的词汇",
-  "vocab.wordCount": "已保存{n}个单词"
+  "vocab.wordCount": "已保存{n}个单词",
+  "history.tabReport": "报告",
+  "report.title": "每周成长报告",
+  "report.weekOf": "本周：{start} – {end}",
+  "report.daysWritten": "本周写了 {n} / 7 天",
+  "report.streak": "连续 {n} 天",
+  "report.frequentWords": "本周出现的词汇",
+  "report.mistakePatterns": "需要注意的地方",
+  "report.noMistakes": "本周没有错误 — 太棒了！",
+  "report.aiSuggestions": "下周练习建议",
+  "report.noEntries": "本周没有日记",
+  "report.noEntriesHint": "写一篇日记来查看每周报告。",
+  "report.generating": "正在生成报告…",
+  "report.error": "无法加载报告，请重试。",
+  "report.upgradeTitle": "Plus 计划查看完整报告",
+  "report.upgradeDesc": "解锁词汇趋势、错误模式和个性化练习建议。",
+  "report.upgradeBtn": "升级到 Plus →",
+  "report.upgradeIos": "完整分析在 Plus 计划中可用。"
 }

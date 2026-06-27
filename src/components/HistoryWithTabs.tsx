@@ -5,6 +5,7 @@ import { Card, LinkButton } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { DiaryHistoryList } from "@/components/DiaryHistoryList";
 import { VocabularyList } from "@/components/VocabularyList";
+import { WeeklyReport } from "@/components/WeeklyReport";
 import { useT } from "@/contexts/locale";
 
 interface Entry {
@@ -19,24 +20,31 @@ interface Entry {
   audio_path: string | null;
 }
 
+type Tab = "diary" | "vocab" | "report";
+
 export function HistoryWithTabs({
   entries,
   initialTab,
 }: {
   entries: Entry[];
-  initialTab: "diary" | "vocab";
+  initialTab: Tab;
 }) {
   const t = useT();
-  const [tab, setTab] = useState<"diary" | "vocab">(initialTab);
+  const [tab, setTab] = useState<Tab>(initialTab);
+
+  const headerTitle =
+    tab === "vocab"
+      ? t("vocab.title")
+      : tab === "report"
+        ? t("report.title")
+        : t("history.title");
 
   return (
     <div className="space-y-6">
       {/* Page header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-serif text-3xl font-bold tracking-tight text-pine">
-            {tab === "vocab" ? t("vocab.title") : t("history.title")}
-          </h1>
+          <h1 className="font-serif text-3xl font-bold tracking-tight text-pine">{headerTitle}</h1>
           {tab === "diary" && (
             <p className="mt-1 text-ink/70">
               <span className="font-medium">{t("history.subtitle")}</span>
@@ -55,26 +63,23 @@ export function HistoryWithTabs({
 
       {/* Tab switcher */}
       <div className="flex gap-1 rounded-xl border border-line bg-paper p-1">
-        <button
-          onClick={() => setTab("diary")}
-          className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-            tab === "diary"
-              ? "bg-pine text-cream shadow-sm"
-              : "text-ink/60 hover:text-pine"
-          }`}
-        >
-          {t("history.tabDiary")}
-        </button>
-        <button
-          onClick={() => setTab("vocab")}
-          className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-            tab === "vocab"
-              ? "bg-pine text-cream shadow-sm"
-              : "text-ink/60 hover:text-pine"
-          }`}
-        >
-          {t("history.tabVocab")}
-        </button>
+        {(["diary", "vocab", "report"] as Tab[]).map((tabKey) => (
+          <button
+            key={tabKey}
+            onClick={() => setTab(tabKey)}
+            className={`flex-1 rounded-lg px-2 py-2 text-sm font-semibold transition-colors ${
+              tab === tabKey
+                ? "bg-pine text-cream shadow-sm"
+                : "text-ink/60 hover:text-pine"
+            }`}
+          >
+            {tabKey === "diary"
+              ? t("history.tabDiary")
+              : tabKey === "vocab"
+                ? t("history.tabVocab")
+                : t("history.tabReport")}
+          </button>
+        ))}
       </div>
 
       {/* Tab content */}
@@ -93,8 +98,10 @@ export function HistoryWithTabs({
         ) : (
           <DiaryHistoryList initialEntries={entries} />
         )
-      ) : (
+      ) : tab === "vocab" ? (
         <VocabularyList />
+      ) : (
+        <WeeklyReport />
       )}
     </div>
   );

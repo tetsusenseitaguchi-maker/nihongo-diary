@@ -518,5 +518,22 @@
   "vocab.limitDescIos": "Plusプランなら単語を無制限に保存できます。",
   "vocab.upgradeBtn": "Plusにアップグレード →",
   "vocab.addToVocab": "単語帳に保存",
-  "vocab.wordCount": "{n}語保存済み"
+  "vocab.wordCount": "{n}語保存済み",
+  "history.tabReport": "レポート",
+  "report.title": "週次成長レポート",
+  "report.weekOf": "{start} – {end} の週",
+  "report.daysWritten": "今週 {n} / 7日 書けました",
+  "report.streak": "{n}日連続",
+  "report.frequentWords": "今週出てきた語彙",
+  "report.mistakePatterns": "注意したいポイント",
+  "report.noMistakes": "今週は間違いなし — 素晴らしい！",
+  "report.aiSuggestions": "来週のおすすめ練習",
+  "report.noEntries": "今週はまだ日記がありません",
+  "report.noEntriesHint": "日記を書くと、週次レポートが表示されます。",
+  "report.generating": "レポートを生成中…",
+  "report.error": "レポートを読み込めませんでした。もう一度お試しください。",
+  "report.upgradeTitle": "詳しい分析はPlusプランで",
+  "report.upgradeDesc": "語彙の傾向・間違いのパターン・パーソナルな練習提案を見られます。",
+  "report.upgradeBtn": "Plusにアップグレード →",
+  "report.upgradeIos": "詳しい分析はPlusプランで利用できます。"
 }

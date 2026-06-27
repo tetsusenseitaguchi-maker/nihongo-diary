@@ -518,5 +518,22 @@
   "vocab.limitDescIos": "Plus 플랜은 단어를 무제한으로 저장할 수 있습니다.",
   "vocab.upgradeBtn": "Plus로 업그레이드 →",
   "vocab.addToVocab": "단어장에 저장",
-  "vocab.wordCount": "{n}개 단어 저장됨"
+  "vocab.wordCount": "{n}개 단어 저장됨",
+  "history.tabReport": "리포트",
+  "report.title": "주간 성장 리포트",
+  "report.weekOf": "주간: {start} – {end}",
+  "report.daysWritten": "이번 주 {n} / 7일 작성",
+  "report.streak": "{n}일 연속",
+  "report.frequentWords": "이번 주 나온 어휘",
+  "report.mistakePatterns": "개선이 필요한 부분",
+  "report.noMistakes": "이번 주 실수 없음 — 훌륭해요!",
+  "report.aiSuggestions": "다음 주 연습 추천",
+  "report.noEntries": "이번 주 일기가 없습니다",
+  "report.noEntriesHint": "일기를 쓰면 주간 리포트를 볼 수 있습니다.",
+  "report.generating": "리포트 생성 중…",
+  "report.error": "리포트를 불러올 수 없습니다. 다시 시도해 주세요.",
+  "report.upgradeTitle": "Plus에서 전체 리포트 보기",
+  "report.upgradeDesc": "어휘 경향, 실수 패턴, 맞춤형 연습 제안을 확인하세요.",
+  "report.upgradeBtn": "Plus로 업그레이드 →",
+  "report.upgradeIos": "전체 분석은 Plus 플랜에서 이용할 수 있습니다."
 }

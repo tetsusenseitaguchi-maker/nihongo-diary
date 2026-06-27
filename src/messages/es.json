@@ -518,5 +518,22 @@
   "vocab.limitDescIos": "El plan Plus permite vocabulario ilimitado.",
   "vocab.upgradeBtn": "Actualizar a Plus →",
   "vocab.addToVocab": "Guardar en Mi Vocabulario",
-  "vocab.wordCount": "{n} palabras guardadas"
+  "vocab.wordCount": "{n} palabras guardadas",
+  "history.tabReport": "Informe",
+  "report.title": "Informe semanal de progreso",
+  "report.weekOf": "Semana: {start} – {end}",
+  "report.daysWritten": "Escribiste {n} de 7 días",
+  "report.streak": "Racha de {n} días",
+  "report.frequentWords": "Vocabulario de esta semana",
+  "report.mistakePatterns": "Áreas a mejorar",
+  "report.noMistakes": "Sin errores esta semana — ¡excelente!",
+  "report.aiSuggestions": "Ideas de práctica para la próxima semana",
+  "report.noEntries": "No hay entradas esta semana",
+  "report.noEntriesHint": "Escribe una entrada para ver tu informe semanal.",
+  "report.generating": "Generando tu informe…",
+  "report.error": "No se pudo cargar el informe. Por favor, inténtalo de nuevo.",
+  "report.upgradeTitle": "Informe completo en Plus",
+  "report.upgradeDesc": "Desbloquea análisis de vocabulario, patrones de errores y sugerencias de práctica.",
+  "report.upgradeBtn": "Mejorar a Plus →",
+  "report.upgradeIos": "El análisis completo está disponible en el plan Plus."
 }

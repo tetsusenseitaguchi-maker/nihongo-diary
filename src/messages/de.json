@@ -518,5 +518,22 @@
   "vocab.limitDescIos": "Der Plus-Plan ermöglicht unbegrenztes Vokabular.",
   "vocab.upgradeBtn": "Zu Plus wechseln →",
   "vocab.addToVocab": "In Mein Vokabular speichern",
-  "vocab.wordCount": "{n} Wörter gespeichert"
+  "vocab.wordCount": "{n} Wörter gespeichert",
+  "history.tabReport": "Bericht",
+  "report.title": "Wöchentlicher Wachstumsbericht",
+  "report.weekOf": "Woche: {start} – {end}",
+  "report.daysWritten": "Du hast {n} von 7 Tagen geschrieben",
+  "report.streak": "{n}-Tage-Serie",
+  "report.frequentWords": "Vokabular dieser Woche",
+  "report.mistakePatterns": "Bereiche zum Üben",
+  "report.noMistakes": "Keine Fehler diese Woche — großartig!",
+  "report.aiSuggestions": "Übungsideen für nächste Woche",
+  "report.noEntries": "Keine Einträge diese Woche",
+  "report.noEntriesHint": "Schreibe einen Eintrag, um deinen Wochenbericht zu sehen.",
+  "report.generating": "Bericht wird erstellt…",
+  "report.error": "Bericht konnte nicht geladen werden. Bitte versuche es erneut.",
+  "report.upgradeTitle": "Vollständiger Bericht auf Plus",
+  "report.upgradeDesc": "Erhalte Vokabeltrends, Fehlermuster und persönliche Übungsvorschläge.",
+  "report.upgradeBtn": "Auf Plus upgraden →",
+  "report.upgradeIos": "Die vollständige Analyse ist im Plus-Plan verfügbar."
 }
