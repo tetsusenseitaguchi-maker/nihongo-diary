@@ -11,6 +11,8 @@ type Tier = {
   cadence?: string;
   highlight?: boolean;
   comingSoon?: boolean;
+  tagline?: string;
+  taglineKey?: string;
   features: string[];
 };
 
@@ -21,6 +23,8 @@ export const TIERS: Tier[] = [
     id: "free",
     name: "Free",
     price: "$0",
+    tagline: "Start your Japanese diary — no commitment needed",
+    taglineKey: "pricing.tagline.free",
     features: [
       "pricing.features.free.1",
       "pricing.features.free.2",
@@ -29,6 +33,9 @@ export const TIERS: Tier[] = [
       "pricing.features.free.5",
       "pricing.features.free.6",
       "pricing.features.free.7",
+      "pricing.features.free.8",
+      "pricing.features.free.9",
+      "pricing.features.free.10",
     ],
   },
   {
@@ -37,11 +44,15 @@ export const TIERS: Tier[] = [
     price: "$9",
     cadence: "/month",
     highlight: true,
+    tagline: "Level up seriously. Every entry builds real skill.",
+    taglineKey: "pricing.tagline.plus",
     features: [
       "pricing.features.plus.1",
       "pricing.features.plus.2",
       "pricing.features.plus.3",
       "pricing.features.plus.4",
+      "pricing.features.plus.5",
+      "pricing.features.plus.6",
     ],
   },
   {
@@ -49,11 +60,14 @@ export const TIERS: Tier[] = [
     name: "Pro",
     price: "$19",
     cadence: "/month",
+    tagline: "For those who want to master Japanese.",
+    taglineKey: "pricing.tagline.pro",
     features: [
       "pricing.features.pro.1",
       "pricing.features.pro.2",
       "pricing.features.pro.3",
       "pricing.features.pro.4",
+      "pricing.features.pro.5",
     ],
   },
   {
@@ -150,6 +164,14 @@ export function PricingGrid({
                   <span className="text-sm text-muted">{tier.cadence}</span>
                 )}
               </p>
+
+              {(tier.taglineKey || tier.tagline) && (
+                <p className="mt-2 min-h-[2.5rem] text-xs leading-snug text-ink/60">
+                  {translateFeature && tier.taglineKey
+                    ? translateFeature(tier.taglineKey)
+                    : (tier.tagline ?? "")}
+                </p>
+              )}
 
               <ul className="mt-4 flex-1 space-y-2">
                 {tier.features.map((f) => (
