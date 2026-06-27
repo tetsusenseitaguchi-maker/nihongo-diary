@@ -87,5 +87,7 @@
   "notification.justNow": "Agora mesmo",
   "notification.minutesAgo": "há {n} min",
   "notification.hoursAgo": "há {n} h",
-  "notification.daysAgo": "há {n} d"
+  "notification.daysAgo": "há {n} d",
+  "correction.diaryTitle": "Título do diário de hoje",
+  "correction.cultureMemo": "Nota cultural"
 }

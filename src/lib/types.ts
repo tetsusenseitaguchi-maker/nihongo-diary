@@ -87,6 +87,10 @@ export interface Correction {
   jlptWords?: JlptWord[];
   /** ~3 synonym/paraphrase suggestions for words used in the diary. */
   alternativeWords?: AlternativeWord[];
+  /** AI-generated catchy title for this diary entry (Japanese, with <ruby> furigana HTML). */
+  diaryTitle?: string;
+  /** Short cultural note about Japan related to the diary topic, in the user's UI language. */
+  cultureMemo?: string;
 }
 
 export interface DiaryEntry {

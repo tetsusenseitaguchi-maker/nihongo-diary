@@ -100,6 +100,8 @@
   "correction.jlptLevels": "使った言葉のJLPTレベル",
   "correction.jlptDisclaimer": "※レベルは目安です（JLPT公式リストとは一致しません）。",
   "correction.alternatives": "他にもこんな言い方ができます",
+  "correction.diaryTitle": "今日の日記タイトル",
+  "correction.cultureMemo": "文化メモ",
   "comments.title": "コメント",
   "comments.empty": "まだコメントはありません — 最初に応援してみよう！🌸",
   "comments.placeholder": "応援コメントをどうぞ…",

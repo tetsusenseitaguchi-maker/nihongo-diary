@@ -100,6 +100,8 @@
   "correction.jlptLevels": "사용한 단어 — JLPT 레벨",
   "correction.jlptDisclaimer": "※ 레벨은 참고용이며 공식 JLPT 목록과 다를 수 있습니다.",
   "correction.alternatives": "이렇게도 말할 수 있어요",
+  "correction.diaryTitle": "오늘의 일기 제목",
+  "correction.cultureMemo": "문화 노트",
   "comments.title": "댓글",
   "comments.empty": "아직 댓글이 없어요 — 첫 번째로 응원해 보세요! 🌸",
   "comments.placeholder": "댓글을 남겨보세요…",

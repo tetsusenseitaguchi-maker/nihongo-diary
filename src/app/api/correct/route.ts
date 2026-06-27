@@ -59,7 +59,9 @@ Return this JSON structure:
   ],
   "alternativeWords": [
     { "original": "", "alternative": "", "alternativeReading": "" }
-  ]
+  ],
+  "diaryTitleRuby": "",
+  "cultureMemo": ""
 }
 
 Rules:
@@ -144,6 +146,20 @@ If the diary is very short or uses only basic words, pick the 3 least-basic word
 - "original": the word exactly as it appears in the diary (plain form or conjugated is fine)
 - "alternative": the suggested replacement in dictionary/plain form
 - "alternativeReading": complete hiragana reading of the alternative
+
+15. diaryTitleRuby: create ONE catchy, fun, and engaging Japanese title for this diary entry. Guidelines:
+- Tone: warm, playful, or gently humorous — like a magazine feature headline or a cosy book title, NOT a dry descriptive label. Something that makes the writer smile or feel proud when they see it.
+- Length: aim for 15 characters or fewer (excluding markup).
+- Language: Japanese only.
+- Furigana: follow rule 2 EXACTLY — add furigana to ALL kanji using <ruby>漢字<rt>かんじ</rt></ruby>. Only kanji inside <ruby>. Okurigana OUTSIDE the tag. Never wrap hiragana or katakana. Apply the same correctness standards as correctedJapaneseRuby.
+
+16. cultureMemo: one short, reliable cultural note about Japan that is directly related to this diary's topic. Write in ${lang}. STRICT ACCURACY RULES — follow every rule without exception:
+- Only state facts you are certain are widely known and factually true. If you have any doubt, do not include it.
+- Never use sweeping generalizations such as "All Japanese people..." or "Japanese people always...". Say "it is common in Japan" or "many people in Japan" where appropriate.
+- Never invent or guess statistics, historical dates, or specific claims you cannot verify with certainty.
+- If the diary topic has no clear, confident cultural connection to Japan that you can state with certainty, return "" (empty string). Do NOT force a cultural connection.
+- Maximum 2–3 sentences. Japanese proper nouns may appear in Japanese with a brief gloss.
+- This note is shown to language learners by a Japanese teacher. Factual accuracy is essential — inaccurate information would seriously damage learner trust.
 
 Output must be valid JSON. No markdown, no comments, no trailing commas.`;
 }
@@ -351,6 +367,8 @@ export async function POST(request: Request) {
           alternativeReading: str(a?.alternativeReading),
         })).filter((a: { original: string; alternative: string; alternativeReading: string }) => a.original && a.alternative)
       : [],
+    diaryTitleRuby: str(parsed.diaryTitleRuby),
+    cultureMemo: str(parsed.cultureMemo),
   };
 
   return NextResponse.json(result);

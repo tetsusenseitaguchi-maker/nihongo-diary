@@ -87,6 +87,18 @@ export function CorrectionResult({
 
   return (
     <div className="space-y-4">
+      {/* Diary Title */}
+      {correction.diaryTitle && (
+        <div className="gloss-panel rounded-[var(--radius-card)] px-6 py-5 text-center" style={tint("--color-tint-sage")}>
+          <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-moss-600">
+            📓 {t("correction.diaryTitle")}
+          </p>
+          <p className="font-jp text-[22px] font-bold leading-loose text-pine">
+            <Furigana text={correction.diaryTitle} />
+          </p>
+        </div>
+      )}
+
       {/* Original + Natural */}
       <div className="grid gap-4 md:grid-cols-2">
         {showOriginal && (
@@ -218,6 +230,17 @@ export function CorrectionResult({
               </ul>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Culture Memo */}
+      {correction.cultureMemo && (
+        <div className="gloss-panel flex items-start gap-3 rounded-[var(--radius-card)] p-6" style={tint("--color-tint-sand")}>
+          <span className="mt-0.5 shrink-0 text-xl">🌸</span>
+          <div>
+            <Label en={t("correction.cultureMemo")} jp="文化(ぶんか)メモ" />
+            <p className="text-sm leading-relaxed text-ink/80">{correction.cultureMemo}</p>
+          </div>
         </div>
       )}
 

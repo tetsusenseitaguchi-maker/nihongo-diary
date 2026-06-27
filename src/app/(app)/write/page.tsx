@@ -240,6 +240,8 @@ export default function WritePage() {
             alternativeReading: a.alternativeReading ?? "",
           })
         ),
+        diaryTitle: data.diaryTitleRuby || "",
+        cultureMemo: data.cultureMemo || "",
       };
       setResult(correction);
       setLoading(false);   // show result immediately; save happens next
@@ -271,7 +273,10 @@ export default function WritePage() {
       .insert({
         user_id: user.id,
         diary_date: date,
-        title: title.trim() || null,
+        title: title.trim() ||
+          (correction.diaryTitle
+            ? correction.diaryTitle.replace(/<rt>[^<]*<\/rt>/g, "").replace(/<[^>]*>/g, "").trim()
+            : null),
         tags,
         original_text: correction.original,
         corrected_japanese: correction.corrected,

@@ -100,6 +100,8 @@
   "correction.jlptLevels": "Mots utilisés — niveaux JLPT",
   "correction.jlptDisclaimer": "* Les niveaux sont approximatifs — pas une liste officielle JLPT.",
   "correction.alternatives": "D'autres façons de le dire",
+  "correction.diaryTitle": "Titre du journal d'aujourd'hui",
+  "correction.cultureMemo": "Note culturelle",
   "comments.title": "Commentaires",
   "comments.empty": "Pas encore de commentaires — soyez le premier à encourager ! 🌸",
   "comments.placeholder": "Laissez un commentaire…",
