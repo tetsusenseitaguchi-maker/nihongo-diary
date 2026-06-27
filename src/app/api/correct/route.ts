@@ -140,7 +140,7 @@ Return only: id (1-20), shortExplanation (in ${lang}, tailored to the learner's 
 - "level": your best estimate of the JLPT level as exactly one of "N5", "N4", "N3", "N2", "N1". This is an approximate guide, not an official JLPT classification.
 If the diary is very short or uses only basic words, pick the 3 least-basic words available.
 
-14. alternativeWords: suggest exactly 3 synonym or paraphrase alternatives for words used in the learner's diary. Aim for vocabulary variety — include at least one alternative that is simpler and one that is more advanced than the original. For each return:
+14. alternativeWords: suggest exactly 3 natural synonym or paraphrase alternatives for words used in the learner's diary. IMPORTANT: focus on words a native Japanese speaker actually uses in casual conversation or diary writing. Avoid stiff, formal, or Sino-Japanese (漢語) vocabulary that sounds bookish or unnatural in everyday contexts (for example: do NOT suggest 疲労 for 疲れる, or 美味 / 美食 for おいしい — these are written-language words people rarely say out loud). Instead, prefer natural colloquial alternatives that feel like something a friend would actually say or write (e.g. へとへと / くたくた for 疲れる, わくわく for 楽しみにしている, うまい / 最高 for おいしい). Aim for natural variety in nuance or register, not artificial difficulty elevation. For each return:
 - "original": the word exactly as it appears in the diary (plain form or conjugated is fine)
 - "alternative": the suggested replacement in dictionary/plain form
 - "alternativeReading": complete hiragana reading of the alternative

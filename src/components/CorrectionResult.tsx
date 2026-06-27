@@ -12,14 +12,17 @@ function tint(v: string): CSSProperties {
   return { ["--tint" as string]: `var(${v})` } as CSSProperties;
 }
 
+// True only when every character is kanji (no embedded hiragana like 待ち遠)
+const ONLY_KANJI = /^[一-鿿々〆ヶ]+$/;
+
 /**
- * Builds 漢字（よみ）okurigana notation that Furigana renders as ruby.
+ * Builds ruby notation that Furigana renders correctly.
  * Detects okurigana by comparing the trailing characters of word and reading.
  *
- * "公園","こうえん" → "公園（こうえん）"   → <ruby>公園<rt>こうえん</rt></ruby>
- * "行く","いく"    → "行（い）く"          → <ruby>行<rt>い</rt></ruby>く
- * "楽しい","たのしい" → "楽（たの）しい"   → <ruby>楽<rt>たの</rt></ruby>しい
- * "雨","あめ"      → "雨（あめ）"          → <ruby>雨<rt>あめ</rt></ruby>
+ * Pure-kanji base → （）notation, handled by Furigana's simple regex path.
+ * Mixed kanji+kana base (e.g. 待ち遠, 食べ物) → <ruby> HTML directly,
+ * because the （）regex only matches contiguous-kanji runs and would squash
+ * all the reading onto the last kanji alone.
  */
 function buildRubyNotation(word: string, reading: string): string {
   const wc = [...word];
@@ -34,7 +37,10 @@ function buildRubyNotation(word: string, reading: string): string {
   const okurigana = okuLen > 0 ? wc.slice(-okuLen).join("") : "";
   const kanjiReading = okuLen > 0 ? rc.slice(0, -okuLen).join("") : reading;
   if (!kanjiBase || !kanjiReading) return word;
-  return `${kanjiBase}（${kanjiReading}）${okurigana}`;
+  if (ONLY_KANJI.test(kanjiBase)) {
+    return `${kanjiBase}（${kanjiReading}）${okurigana}`;
+  }
+  return `<ruby>${kanjiBase}<rt>${kanjiReading}</rt></ruby>${okurigana}`;
 }
 
 /**
