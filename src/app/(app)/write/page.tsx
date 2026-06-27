@@ -128,8 +128,7 @@ export default function WritePage() {
   const weathers = (t("write.weathers") || DEFAULT_WEATHERS.join("|")).split("|");
 
   const limits = limitsFor(plan);
-  // usedToday < 0 signals dev bypass (set to -9999); show full limit in that case.
-  const remaining = usedToday < 0 ? limits.corrections : Math.max(0, limits.corrections - usedToday);
+  const remaining = Math.max(0, limits.corrections - usedToday);
 
   useEffect(() => {
     (async () => {
@@ -140,20 +139,11 @@ export default function WritePage() {
       if (!user) return;
       const today = new Date().toISOString().slice(0, 10);
       const [{ data: prof }, { data: usage }] = await Promise.all([
-        supabase.from("profiles").select("plan, username").eq("id", user.id).single(),
+        supabase.from("profiles").select("plan").eq("id", user.id).single(),
         supabase.from("usage_limits").select("correction_count").eq("user_id", user.id).eq("usage_date", today).maybeSingle(),
       ]);
       setPlan(normalizePlan(prof?.plan));
-      // Developer accounts always show full remaining corrections (button never disabled by count).
-      // Uses user.email from auth (always reliable) as primary check.
-      const devEmails = new Set(["tetsusenseitaguchi@gmail.com"]);
-      const devUsernames = new Set(["tetsu116"]);
-      const isDev =
-        devEmails.has((user.email ?? "").toLowerCase()) ||
-        devUsernames.has((prof?.username ?? "").toLowerCase().trim());
-      // -9999 keeps remaining always positive so the button never disables for dev accounts,
-      // even after many corrections in a single session without a page refresh.
-      setUsedToday(isDev ? -9999 : (usage?.correction_count ?? 0));
+      setUsedToday(usage?.correction_count ?? 0);
     })();
   }, []);
 
