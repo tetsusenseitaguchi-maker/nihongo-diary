@@ -239,42 +239,72 @@ export function CorrectionResult({
         )}
       </div>
 
-      {/* JLPT word levels + Alternative words */}
-      {((correction.jlptWords && correction.jlptWords.length > 0) ||
+      {/* Next Steps: vocabulary + grammar suggestions */}
+      {((correction.nextVocab && correction.nextVocab.length > 0) ||
+        (correction.nextGrammar && correction.nextGrammar.length > 0) ||
         (correction.alternativeWords && correction.alternativeWords.length > 0)) && (
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* JLPT levels */}
-          {correction.jlptWords && correction.jlptWords.length > 0 && (
-            <div className="gloss-panel rounded-[var(--radius-card)] p-6" style={tint("--color-tint-sand")}>
-              <Label en={t("correction.jlptLevels")} jp="使(つか)った言葉(ことば)のレベル" />
+        <div className="gloss-panel rounded-[var(--radius-card)] p-6" style={tint("--color-tint-sand")}>
+          <Label en={t("correction.nextSteps")} jp="次(つぎ)に使(つか)える言葉(ことば)・文法(ぶんぽう)" />
+
+          {/* Next vocabulary */}
+          {correction.nextVocab && correction.nextVocab.length > 0 && (
+            <div className="mb-4">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-moss-600">
+                {t("correction.nextVocab")}
+              </p>
               <ul className="space-y-2 text-sm">
-                {correction.jlptWords.map((w, i) => (
+                {correction.nextVocab.map((v, i) => (
                   <li key={i} className="flex items-center gap-2 rounded-xl bg-paper/60 px-3 py-2">
                     <Furigana
-                      text={vocabWordText(w.word, w.reading)}
+                      text={vocabWordText(v.word, v.reading)}
                       className="font-jp text-[15px] font-semibold text-pine"
                     />
+                    <span className="text-ink/65 text-xs">{v.meaning}</span>
                     <span className="ml-auto shrink-0 rounded-full bg-pine px-2.5 py-0.5 text-xs font-bold text-cream">
-                      {w.level}
+                      {v.level}
                     </span>
                     <SaveWordButton
-                      word={w.word}
-                      reading={w.reading}
-                      jlptLevel={w.level}
-                      state={wordStates.get(w.word) ?? "idle"}
+                      word={v.word}
+                      reading={v.reading}
+                      jlptLevel={v.level}
+                      state={wordStates.get(v.word) ?? "idle"}
                       onSave={handleSaveWord}
                     />
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-xs text-muted">{t("correction.jlptDisclaimer")}</p>
+            </div>
+          )}
+
+          {/* Next grammar */}
+          {correction.nextGrammar && correction.nextGrammar.length > 0 && (
+            <div className="mb-4">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-moss-600">
+                {t("correction.nextGrammar")}
+              </p>
+              <ul className="space-y-3 text-sm">
+                {correction.nextGrammar.map((g, i) => (
+                  <li key={i} className="rounded-xl bg-paper/60 px-3 py-3">
+                    <span className="font-jp text-[13px] font-bold text-pine">{g.pattern}</span>
+                    <span className="mx-2 text-muted">—</span>
+                    <span className="text-xs text-ink/70">{g.explanation}</span>
+                    {g.exampleRuby && (
+                      <p className="mt-1.5 font-jp text-[13px] leading-loose text-ink/80">
+                        <Furigana text={g.exampleRuby} />
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
           {/* Alternative words */}
           {correction.alternativeWords && correction.alternativeWords.length > 0 && (
-            <div className="gloss-panel rounded-[var(--radius-card)] p-6" style={tint("--color-tint-blue")}>
-              <Label en={t("correction.alternatives")} jp="他(ほか)にもこんな言(い)い方(かた)が" />
+            <div>
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-moss-600">
+                {t("correction.alternatives")}
+              </p>
               <ul className="space-y-2 text-sm">
                 {correction.alternativeWords.map((a, i) => (
                   <li key={i} className="flex items-center gap-2 rounded-xl bg-paper/60 px-3 py-2">
@@ -297,6 +327,8 @@ export function CorrectionResult({
               </ul>
             </div>
           )}
+
+          <p className="mt-3 text-xs text-muted">{t("correction.levelDisclaimer")}</p>
         </div>
       )}
 

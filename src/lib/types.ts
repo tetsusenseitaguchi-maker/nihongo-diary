@@ -65,6 +65,21 @@ export interface JlptWord {
   level: string;     // "N5" | "N4" | "N3" | "N2" | "N1"
 }
 
+/** A suggested next-level vocabulary word based on diary context. */
+export interface NextVocabItem {
+  word: string;     // kanji form
+  reading: string;  // hiragana reading
+  meaning: string;  // short definition in UI language
+  level: string;    // "N5" | "N4" | "N3" | "N2" | "N1"
+}
+
+/** A suggested next-level grammar pattern based on diary context. */
+export interface NextGrammarItem {
+  pattern: string;       // e.g. 〜てくる
+  explanation: string;   // in UI language
+  exampleRuby: string;   // Japanese example sentence with <ruby> furigana
+}
+
 /** A synonym / paraphrase suggestion for a word used in the diary. */
 export interface AlternativeWord {
   original: string;            // word as written in the diary
@@ -83,10 +98,14 @@ export interface Correction {
   practice: { jp: string; en: string };
   relatedMiniLesson?: MiniLesson | null;
   practiceDrills?: PracticeDrill[];
-  /** ~3 characteristic words from the diary with approximate JLPT levels. */
+  /** ~3 characteristic words from the diary with approximate JLPT levels (legacy — from DB only). */
   jlptWords?: JlptWord[];
   /** ~3 synonym/paraphrase suggestions for words used in the diary. */
   alternativeWords?: AlternativeWord[];
+  /** ~3 next-level vocabulary suggestions based on diary topic. */
+  nextVocab?: NextVocabItem[];
+  /** 2-3 next-level grammar/expression suggestions based on diary content. */
+  nextGrammar?: NextGrammarItem[];
   /** AI-generated catchy title for this diary entry (Japanese, with <ruby> furigana HTML). */
   diaryTitle?: string;
   /** Obie's personalised encouragement reacting to diary content (Japanese with <ruby> furigana). */

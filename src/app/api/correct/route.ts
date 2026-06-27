@@ -54,8 +54,11 @@ Return this JSON structure:
   "practiceDrills": [
     { "type": "", "question": "", "questionRuby": "", "choices": [], "answer": "", "answerRuby": "", "englishExplanation": "" }
   ],
-  "jlptWords": [
-    { "word": "", "reading": "", "level": "" }
+  "nextVocab": [
+    { "word": "", "reading": "", "meaning": "", "level": "" }
+  ],
+  "nextGrammar": [
+    { "pattern": "", "explanation": "", "exampleRuby": "" }
   ],
   "alternativeWords": [
     { "original": "", "alternative": "", "alternativeReading": "" }
@@ -138,30 +141,35 @@ Every Japanese field above ends in "Ruby" and must contain furigana in this form
 20 = Wants & Invitations (たい / ましょう / ませんか)
 Return only: id (1-20), shortExplanation (in ${lang}, tailored to the learner's level), exampleJapaneseRuby (with <ruby> furigana, tailored to level — keep in Japanese), exampleEnglish (in ${lang}), shortNote (in ${lang}, friendly). If nothing clearly fits, use id 3. Do NOT invent new lessons or change titles.
 
-13. jlptWords: pick exactly 3 words from the learner's ORIGINAL diary text that are characteristic or moderately difficult. Skip very basic words (私, 好き, 食べる, 飲む, 行く, 今日, 明日, 学校, 先生, 友達, です, ます, etc.). For each word return:
-- "word": the kanji form as it would appear in a dictionary (e.g. "散歩" not "さんぽ")
-- "reading": complete hiragana reading including okurigana (e.g. "さんぽ")
-- "level": your best estimate of the JLPT level as exactly one of "N5", "N4", "N3", "N2", "N1". This is an approximate guide, not an official JLPT classification.
-If the diary is very short or uses only basic words, pick the 3 least-basic words available.
+13. nextVocab: suggest exactly 3 vocabulary words the learner could use in a future diary about the SAME topic. These must be one JLPT level above the learner's current level (${level} → one step up: N5→N4, N4→N3, N3→N2, N2→N1, N1/Natural→advanced N1). Choose words that fit naturally into the diary's specific topic/context. Do NOT pick words the learner already used. For each:
+- "word": kanji form as in a dictionary (e.g. "散策" not "さんさく")
+- "reading": complete hiragana reading including okurigana (e.g. "さんさく")
+- "meaning": a short definition in ${lang} (one short phrase, not a full sentence)
+- "level": your JLPT level estimate as exactly "N5", "N4", "N3", "N2", or "N1"
 
-14. alternativeWords: suggest exactly 3 natural synonym or paraphrase alternatives for words used in the learner's diary. IMPORTANT: focus on words a native Japanese speaker actually uses in casual conversation or diary writing. Avoid stiff, formal, or Sino-Japanese (漢語) vocabulary that sounds bookish or unnatural in everyday contexts (for example: do NOT suggest 疲労 for 疲れる, or 美味 / 美食 for おいしい — these are written-language words people rarely say out loud). Instead, prefer natural colloquial alternatives that feel like something a friend would actually say or write (e.g. へとへと / くたくた for 疲れる, わくわく for 楽しみにしている, うまい / 最高 for おいしい). Aim for natural variety in nuance or register, not artificial difficulty elevation. For each return:
+14. nextGrammar: suggest exactly 2 grammar patterns or expressions the learner could try in their NEXT diary, one level above ${level}. Base each on something they actually wrote — show how the same idea could be expressed more naturally with that pattern. For each:
+- "pattern": the grammar pattern label (e.g. 〜てくる, 〜ながら, 〜ことができる)
+- "explanation": a short, friendly explanation in ${lang} of what it means and when to use it (1–2 sentences)
+- "exampleRuby": a short Japanese sentence demonstrating the pattern in a context similar to the diary. Follow furigana rule 2 EXACTLY: <ruby>kanji<rt>reading</rt></ruby> on ALL kanji, okurigana OUTSIDE the tag, never wrap hiragana or katakana.
+
+15. alternativeWords: suggest exactly 3 natural synonym or paraphrase alternatives for words used in the learner's diary. IMPORTANT: focus on words a native Japanese speaker actually uses in casual conversation or diary writing. Avoid stiff, formal, or Sino-Japanese (漢語) vocabulary that sounds bookish or unnatural in everyday contexts (for example: do NOT suggest 疲労 for 疲れる, or 美味 / 美食 for おいしい — these are written-language words people rarely say out loud). Instead, prefer natural colloquial alternatives that feel like something a friend would actually say or write (e.g. へとへと / くたくた for 疲れる, わくわく for 楽しみにしている, うまい / 最高 for おいしい). Aim for natural variety in nuance or register, not artificial difficulty elevation. For each return:
 - "original": the word exactly as it appears in the diary (plain form or conjugated is fine)
 - "alternative": the suggested replacement in dictionary/plain form
 - "alternativeReading": complete hiragana reading of the alternative
 
-15. diaryTitleRuby: create ONE catchy, fun, and engaging Japanese title for this diary entry. Guidelines:
+16. diaryTitleRuby: create ONE catchy, fun, and engaging Japanese title for this diary entry. Guidelines:
 - Tone: warm, playful, or gently humorous — like a magazine feature headline or a cosy book title, NOT a dry descriptive label. Something that makes the writer smile or feel proud when they see it.
 - Length: aim for 15 characters or fewer (excluding markup).
 - Language: Japanese only.
 - Furigana: follow rule 2 EXACTLY — add furigana to ALL kanji using <ruby>漢字<rt>かんじ</rt></ruby>. Only kanji inside <ruby>. Okurigana OUTSIDE the tag. Never wrap hiragana or katakana. Apply the same correctness standards as correctedJapaneseRuby.
 
-16. obieCheerRuby: write a short, warm, personalised message from Obie (a friendly dog mascot) reacting to the specific events or feelings described in THIS diary. Write in Japanese with furigana following rule 2 EXACTLY: <ruby>漢字<rt>かんじ</rt></ruby> on ALL kanji, okurigana OUTSIDE the tag, never wrap hiragana or katakana.
+17. obieCheerRuby: write a short, warm, personalised message from Obie (a friendly dog mascot) reacting to the specific events or feelings described in THIS diary. Write in Japanese with furigana following rule 2 EXACTLY: <ruby>漢字<rt>かんじ</rt></ruby> on ALL kanji, okurigana OUTSIDE the tag, never wrap hiragana or katakana.
 - React to WHAT HAPPENED in the diary: if the writer had a job interview, empathise about nerves; if they went to a park, share excitement about walks; if something was tough, show compassion. Be specific to this diary's content.
 - NEVER say anything generic about writing quality ("よく書けたね" etc.). Only comment on the diary's events and feelings.
 - Tone: warm, gentle, puppy-like. Always end with 🐶. Length: 1–2 short sentences.
 - The message must change meaningfully with every different diary — it is personalised, not a template.
 
-17. obiePhraseRuby + obiePhraseExplanation: Obie teaches one natural, commonly-used Japanese phrase.
+18. obiePhraseRuby + obiePhraseExplanation: Obie teaches one natural, commonly-used Japanese phrase.
 - obiePhraseRuby: the phrase in Japanese with furigana on ALL kanji, following rule 2 exactly. Keep the phrase brief (2–6 words). It does NOT need to relate to the diary topic — variety is encouraged.
 - obiePhraseExplanation: a short, friendly explanation of when/how to use this phrase, written in ${lang}. End with 🐶. Keep it to 1–2 sentences.
 - Choose phrases people genuinely say in everyday conversation. Avoid stiff textbook phrases. Vary widely — do not default to the same examples every time.
@@ -358,12 +366,20 @@ export async function POST(request: Request) {
           englishExplanation: str(d?.englishExplanation),
         }))
       : [],
-    jlptWords: Array.isArray(parsed.jlptWords)
-      ? parsed.jlptWords.map((w: Record<string, unknown>) => ({
-          word: str(w?.word),
-          reading: str(w?.reading),
-          level: str(w?.level),
-        })).filter((w: { word: string; reading: string; level: string }) => w.word && w.level)
+    nextVocab: Array.isArray(parsed.nextVocab)
+      ? parsed.nextVocab.map((v: Record<string, unknown>) => ({
+          word: str(v?.word),
+          reading: str(v?.reading),
+          meaning: str(v?.meaning),
+          level: str(v?.level),
+        })).filter((v: { word: string; reading: string; meaning: string; level: string }) => v.word && v.level)
+      : [],
+    nextGrammar: Array.isArray(parsed.nextGrammar)
+      ? parsed.nextGrammar.map((g: Record<string, unknown>) => ({
+          pattern: str(g?.pattern),
+          explanation: str(g?.explanation),
+          exampleRuby: str(g?.exampleRuby),
+        })).filter((g: { pattern: string; explanation: string; exampleRuby: string }) => g.pattern)
       : [],
     alternativeWords: Array.isArray(parsed.alternativeWords)
       ? parsed.alternativeWords.map((a: Record<string, unknown>) => ({

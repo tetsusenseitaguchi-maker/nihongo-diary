@@ -226,11 +226,19 @@ export default function WritePage() {
             englishExplanation: d.englishExplanation ?? "",
           })
         ),
-        jlptWords: (data.jlptWords ?? []).map(
-          (w: { word?: string; reading?: string; level?: string }) => ({
-            word: w.word ?? "",
-            reading: w.reading ?? "",
-            level: w.level ?? "",
+        nextVocab: (data.nextVocab ?? []).map(
+          (v: { word?: string; reading?: string; meaning?: string; level?: string }) => ({
+            word: v.word ?? "",
+            reading: v.reading ?? "",
+            meaning: v.meaning ?? "",
+            level: v.level ?? "",
+          })
+        ),
+        nextGrammar: (data.nextGrammar ?? []).map(
+          (g: { pattern?: string; explanation?: string; exampleRuby?: string }) => ({
+            pattern: g.pattern ?? "",
+            explanation: g.explanation ?? "",
+            exampleRuby: g.exampleRuby ?? "",
           })
         ),
         alternativeWords: (data.alternativeWords ?? []).map(
@@ -345,11 +353,10 @@ export default function WritePage() {
       );
     }
 
-    if (correction.jlptWords?.length || correction.alternativeWords?.length) {
+    if (correction.alternativeWords?.length) {
       supabase
         .from("diary_entries")
         .update({
-          jlpt_words: correction.jlptWords ?? [],
           alternative_words: correction.alternativeWords ?? [],
         })
         .eq("id", data.id)
