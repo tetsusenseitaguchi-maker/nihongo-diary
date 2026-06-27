@@ -58,6 +58,20 @@ export interface MiniLesson {
   commonMistakes?: CommonMistake[]; // NEW
 }
 
+/** A word from the user's diary annotated with its approximate JLPT level. */
+export interface JlptWord {
+  word: string;      // kanji form (or hiragana if no kanji)
+  reading: string;   // complete hiragana reading
+  level: string;     // "N5" | "N4" | "N3" | "N2" | "N1"
+}
+
+/** A synonym / paraphrase suggestion for a word used in the diary. */
+export interface AlternativeWord {
+  original: string;            // word as written in the diary
+  alternative: string;         // suggested replacement (dictionary form)
+  alternativeReading: string;  // complete hiragana reading of the alternative
+}
+
 export interface Correction {
   original: string;
   corrected: string;
@@ -69,6 +83,10 @@ export interface Correction {
   practice: { jp: string; en: string };
   relatedMiniLesson?: MiniLesson | null;
   practiceDrills?: PracticeDrill[];
+  /** ~3 characteristic words from the diary with approximate JLPT levels. */
+  jlptWords?: JlptWord[];
+  /** ~3 synonym/paraphrase suggestions for words used in the diary. */
+  alternativeWords?: AlternativeWord[];
 }
 
 export interface DiaryEntry {

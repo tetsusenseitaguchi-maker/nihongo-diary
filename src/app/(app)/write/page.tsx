@@ -222,6 +222,20 @@ export default function WritePage() {
             englishExplanation: d.englishExplanation ?? "",
           })
         ),
+        jlptWords: (data.jlptWords ?? []).map(
+          (w: { word?: string; reading?: string; level?: string }) => ({
+            word: w.word ?? "",
+            reading: w.reading ?? "",
+            level: w.level ?? "",
+          })
+        ),
+        alternativeWords: (data.alternativeWords ?? []).map(
+          (a: { original?: string; alternative?: string; alternativeReading?: string }) => ({
+            original: a.original ?? "",
+            alternative: a.alternative ?? "",
+            alternativeReading: a.alternativeReading ?? "",
+          })
+        ),
       };
       setResult(correction);
     } catch {
@@ -324,6 +338,18 @@ export default function WritePage() {
           place_name: p.name || null,
         }))
       );
+    }
+
+    // Best-effort: save JLPT word data + alternatives (requires migration add-vocab-features.sql)
+    if (result.jlptWords?.length || result.alternativeWords?.length) {
+      supabase
+        .from("diary_entries")
+        .update({
+          jlpt_words: result.jlptWords ?? [],
+          alternative_words: result.alternativeWords ?? [],
+        })
+        .eq("id", data.id)
+        .then(() => { /* intentionally fire-and-forget — don't fail save if columns missing */ });
     }
 
     // Record a learning-activity (no diary text — privacy safe)

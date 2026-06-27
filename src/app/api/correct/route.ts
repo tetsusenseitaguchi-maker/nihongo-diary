@@ -53,6 +53,12 @@ Return this JSON structure:
   "relatedMiniLesson": { "id": 1, "shortExplanation": "", "exampleJapaneseRuby": "", "exampleEnglish": "", "shortNote": "" },
   "practiceDrills": [
     { "type": "", "question": "", "questionRuby": "", "choices": [], "answer": "", "answerRuby": "", "englishExplanation": "" }
+  ],
+  "jlptWords": [
+    { "word": "", "reading": "", "level": "" }
+  ],
+  "alternativeWords": [
+    { "original": "", "alternative": "", "alternativeReading": "" }
   ]
 }
 
@@ -127,6 +133,17 @@ Every Japanese field above ends in "Ruby" and must contain furigana in this form
 19 = Reasons: から & ので (reason expressions)
 20 = Wants & Invitations (たい / ましょう / ませんか)
 Return only: id (1-20), shortExplanation (in ${lang}, tailored to the learner's level), exampleJapaneseRuby (with <ruby> furigana, tailored to level — keep in Japanese), exampleEnglish (in ${lang}), shortNote (in ${lang}, friendly). If nothing clearly fits, use id 3. Do NOT invent new lessons or change titles.
+
+13. jlptWords: pick exactly 3 words from the learner's ORIGINAL diary text that are characteristic or moderately difficult. Skip very basic words (私, 好き, 食べる, 飲む, 行く, 今日, 明日, 学校, 先生, 友達, です, ます, etc.). For each word return:
+- "word": the kanji form as it would appear in a dictionary (e.g. "散歩" not "さんぽ")
+- "reading": complete hiragana reading including okurigana (e.g. "さんぽ")
+- "level": your best estimate of the JLPT level as exactly one of "N5", "N4", "N3", "N2", "N1". This is an approximate guide, not an official JLPT classification.
+If the diary is very short or uses only basic words, pick the 3 least-basic words available.
+
+14. alternativeWords: suggest exactly 3 synonym or paraphrase alternatives for words used in the learner's diary. Aim for vocabulary variety — include at least one alternative that is simpler and one that is more advanced than the original. For each return:
+- "original": the word exactly as it appears in the diary (plain form or conjugated is fine)
+- "alternative": the suggested replacement in dictionary/plain form
+- "alternativeReading": complete hiragana reading of the alternative
 
 Output must be valid JSON. No markdown, no comments, no trailing commas.`;
 }
@@ -236,7 +253,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         model: MODEL,
         temperature: 0.3,
-        max_tokens: 2400,
+        max_tokens: 3000,
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: systemPrompt(level, style, matchScript, lang) },
@@ -312,6 +329,20 @@ export async function POST(request: Request) {
           answerRuby: str(d?.answerRuby),
           englishExplanation: str(d?.englishExplanation),
         }))
+      : [],
+    jlptWords: Array.isArray(parsed.jlptWords)
+      ? parsed.jlptWords.map((w: Record<string, unknown>) => ({
+          word: str(w?.word),
+          reading: str(w?.reading),
+          level: str(w?.level),
+        })).filter((w: { word: string; reading: string; level: string }) => w.word && w.level)
+      : [],
+    alternativeWords: Array.isArray(parsed.alternativeWords)
+      ? parsed.alternativeWords.map((a: Record<string, unknown>) => ({
+          original: str(a?.original),
+          alternative: str(a?.alternative),
+          alternativeReading: str(a?.alternativeReading),
+        })).filter((a: { original: string; alternative: string; alternativeReading: string }) => a.original && a.alternative)
       : [],
   };
 

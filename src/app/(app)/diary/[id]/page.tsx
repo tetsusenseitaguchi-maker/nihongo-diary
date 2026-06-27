@@ -15,7 +15,7 @@ import { TranslateButton } from "@/components/TranslateButton";
 import { Avatar } from "@/components/ObiePhoto";
 import { formatLong } from "@/lib/dates";
 import { getServerT } from "@/lib/i18n-server";
-import type { Correction, MistakeItem, VocabItem } from "@/lib/types";
+import type { Correction, MistakeItem, VocabItem, JlptWord, AlternativeWord } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +84,8 @@ export default async function DiaryDetailPage({
     mistakes: (entry.key_mistakes as MistakeItem[]) ?? [],
     vocabulary: (entry.useful_vocabulary as VocabItem[]) ?? [],
     practice: { jp: entry.practice_sentence ?? "", en: "" },
+    jlptWords: ((entry as Record<string, unknown>).jlpt_words as JlptWord[] | null) ?? [],
+    alternativeWords: ((entry as Record<string, unknown>).alternative_words as AlternativeWord[] | null) ?? [],
   };
 
   const imageUrl = entry.image_path

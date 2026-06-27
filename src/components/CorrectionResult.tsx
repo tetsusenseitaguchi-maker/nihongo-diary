@@ -169,6 +169,52 @@ export function CorrectionResult({
         )}
       </div>
 
+      {/* JLPT word levels + Alternative words */}
+      {((correction.jlptWords && correction.jlptWords.length > 0) ||
+        (correction.alternativeWords && correction.alternativeWords.length > 0)) && (
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* JLPT levels */}
+          {correction.jlptWords && correction.jlptWords.length > 0 && (
+            <div className="gloss-panel rounded-[var(--radius-card)] p-6" style={tint("--color-tint-sand")}>
+              <Label en={t("correction.jlptLevels")} jp="使(つか)った言葉(ことば)のレベル" />
+              <ul className="space-y-2 text-sm">
+                {correction.jlptWords.map((w, i) => (
+                  <li key={i} className="flex items-center gap-2 rounded-xl bg-paper/60 px-3 py-2">
+                    <Furigana
+                      text={vocabWordText(w.word, w.reading)}
+                      className="font-jp text-[15px] font-semibold text-pine"
+                    />
+                    <span className="ml-auto shrink-0 rounded-full bg-pine px-2.5 py-0.5 text-xs font-bold text-cream">
+                      {w.level}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs text-muted">{t("correction.jlptDisclaimer")}</p>
+            </div>
+          )}
+
+          {/* Alternative words */}
+          {correction.alternativeWords && correction.alternativeWords.length > 0 && (
+            <div className="gloss-panel rounded-[var(--radius-card)] p-6" style={tint("--color-tint-blue")}>
+              <Label en={t("correction.alternatives")} jp="他(ほか)にもこんな言(い)い方(かた)が" />
+              <ul className="space-y-2 text-sm">
+                {correction.alternativeWords.map((a, i) => (
+                  <li key={i} className="rounded-xl bg-paper/60 px-3 py-2">
+                    <span className="font-jp text-ink/65">{a.original}</span>
+                    <span className="mx-2 font-bold text-moss">→</span>
+                    <Furigana
+                      text={vocabWordText(a.alternative, a.alternativeReading)}
+                      className="font-jp font-semibold text-pine"
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Mini Lesson Preview */}
       {miniLesson && (
         <div className="gloss-card overflow-hidden rounded-[var(--radius-card)]">
