@@ -465,7 +465,7 @@
   "offline.title": "Vous etes hors ligne",
   "offline.body": "Verifiez votre connexion et reessayez. Vos entrees sont sauvegardees et se synchroniseront quand vous serez reconnecte.",
   "offline.tryAgain": "Reessayer",
-  "pricing.features.free.1": "3 corrections IA / jour",
+  "pricing.features.free.1": "1 correction IA / jour",
   "pricing.features.free.2": "300 caracteres par entree",
   "pricing.features.free.3": "Sauvegardes illimitees",
   "pricing.features.free.4": "Details complets de correction",
