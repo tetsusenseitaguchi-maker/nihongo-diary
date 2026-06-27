@@ -128,7 +128,8 @@ export default function WritePage() {
   const weathers = (t("write.weathers") || DEFAULT_WEATHERS.join("|")).split("|");
 
   const limits = limitsFor(plan);
-  const remaining = Math.max(0, limits.corrections - usedToday);
+  // usedToday < 0 signals dev bypass (set to -9999); show full limit in that case.
+  const remaining = usedToday < 0 ? limits.corrections : Math.max(0, limits.corrections - usedToday);
 
   useEffect(() => {
     (async () => {
