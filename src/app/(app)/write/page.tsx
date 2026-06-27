@@ -250,7 +250,9 @@ export default function WritePage() {
           })
         ),
         diaryTitle: data.diaryTitleRuby || "",
-        cultureMemo: data.cultureMemo || "",
+        obieCheer: data.obieCheerRuby || "",
+        obiePhraseRuby: data.obiePhraseRuby || "",
+        obiePhraseExplanation: data.obiePhraseExplanation || "",
       };
       setResult(correction);
       setLoading(false);   // show result immediately; save happens next

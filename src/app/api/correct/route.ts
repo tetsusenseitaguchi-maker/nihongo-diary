@@ -61,7 +61,9 @@ Return this JSON structure:
     { "original": "", "alternative": "", "alternativeReading": "" }
   ],
   "diaryTitleRuby": "",
-  "cultureMemo": ""
+  "obieCheerRuby": "",
+  "obiePhraseRuby": "",
+  "obiePhraseExplanation": ""
 }
 
 Rules:
@@ -153,13 +155,16 @@ If the diary is very short or uses only basic words, pick the 3 least-basic word
 - Language: Japanese only.
 - Furigana: follow rule 2 EXACTLY — add furigana to ALL kanji using <ruby>漢字<rt>かんじ</rt></ruby>. Only kanji inside <ruby>. Okurigana OUTSIDE the tag. Never wrap hiragana or katakana. Apply the same correctness standards as correctedJapaneseRuby.
 
-16. cultureMemo: one short, reliable cultural note about Japan that is directly related to this diary's topic. Write in ${lang}. STRICT ACCURACY RULES — follow every rule without exception:
-- Only state facts you are certain are widely known and factually true. If you have any doubt, do not include it.
-- Never use sweeping generalizations such as "All Japanese people..." or "Japanese people always...". Say "it is common in Japan" or "many people in Japan" where appropriate.
-- Never invent or guess statistics, historical dates, or specific claims you cannot verify with certainty.
-- If the diary topic has no clear, confident cultural connection to Japan that you can state with certainty, return "" (empty string). Do NOT force a cultural connection.
-- Maximum 2–3 sentences. Japanese proper nouns may appear in Japanese with a brief gloss.
-- This note is shown to language learners by a Japanese teacher. Factual accuracy is essential — inaccurate information would seriously damage learner trust.
+16. obieCheerRuby: write a short, warm, personalised message from Obie (a friendly dog mascot) reacting to the specific events or feelings described in THIS diary. Write in Japanese with furigana following rule 2 EXACTLY: <ruby>漢字<rt>かんじ</rt></ruby> on ALL kanji, okurigana OUTSIDE the tag, never wrap hiragana or katakana.
+- React to WHAT HAPPENED in the diary: if the writer had a job interview, empathise about nerves; if they went to a park, share excitement about walks; if something was tough, show compassion. Be specific to this diary's content.
+- NEVER say anything generic about writing quality ("よく書けたね" etc.). Only comment on the diary's events and feelings.
+- Tone: warm, gentle, puppy-like. Always end with 🐶. Length: 1–2 short sentences.
+- The message must change meaningfully with every different diary — it is personalised, not a template.
+
+17. obiePhraseRuby + obiePhraseExplanation: Obie teaches one natural, commonly-used Japanese phrase.
+- obiePhraseRuby: the phrase in Japanese with furigana on ALL kanji, following rule 2 exactly. Keep the phrase brief (2–6 words). It does NOT need to relate to the diary topic — variety is encouraged.
+- obiePhraseExplanation: a short, friendly explanation of when/how to use this phrase, written in ${lang}. End with 🐶. Keep it to 1–2 sentences.
+- Choose phrases people genuinely say in everyday conversation. Avoid stiff textbook phrases. Vary widely — do not default to the same examples every time.
 
 Output must be valid JSON. No markdown, no comments, no trailing commas.`;
 }
@@ -384,7 +389,9 @@ export async function POST(request: Request) {
         })).filter((a: { original: string; alternative: string; alternativeReading: string }) => a.original && a.alternative)
       : [],
     diaryTitleRuby: str(parsed.diaryTitleRuby),
-    cultureMemo: str(parsed.cultureMemo),
+    obieCheerRuby: str(parsed.obieCheerRuby),
+    obiePhraseRuby: str(parsed.obiePhraseRuby),
+    obiePhraseExplanation: str(parsed.obiePhraseExplanation),
   };
 
   return NextResponse.json(result);

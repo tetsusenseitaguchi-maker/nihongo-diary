@@ -89,5 +89,6 @@
   "notification.hoursAgo": "há {n} h",
   "notification.daysAgo": "há {n} d",
   "correction.diaryTitle": "Título do diário de hoje",
-  "correction.cultureMemo": "Nota cultural"
+  "correction.obieCheer": "Incentivo do Obie",
+  "correction.obiePhrase": "Expressão do dia do Obie"
 }

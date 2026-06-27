@@ -99,6 +99,21 @@ export function CorrectionResult({
         </div>
       )}
 
+      {/* Obie Cheer — personalised reaction to the diary content */}
+      {correction.obieCheer && (
+        <div className="gloss-green flex items-start gap-3 rounded-[var(--radius-card)] p-5">
+          <ObiePhoto size={44} className="shrink-0 ring-2 ring-cream/25" />
+          <div className="min-w-0">
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-cream/70">
+              🐾 {t("correction.obieCheer")}
+            </p>
+            <p className="font-jp text-[15px] font-medium leading-relaxed text-cream">
+              <Furigana text={correction.obieCheer} />
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Original + Natural */}
       <div className="grid gap-4 md:grid-cols-2">
         {showOriginal && (
@@ -233,13 +248,22 @@ export function CorrectionResult({
         </div>
       )}
 
-      {/* Culture Memo */}
-      {correction.cultureMemo && (
-        <div className="gloss-panel flex items-start gap-3 rounded-[var(--radius-card)] p-6" style={tint("--color-tint-sand")}>
-          <span className="mt-0.5 shrink-0 text-xl">🌸</span>
-          <div>
-            <Label en={t("correction.cultureMemo")} jp="文化(ぶんか)メモ" />
-            <p className="text-sm leading-relaxed text-ink/80">{correction.cultureMemo}</p>
+      {/* Obie Phrase — natural Japanese phrase of the day */}
+      {(correction.obiePhraseRuby || correction.obiePhraseExplanation) && (
+        <div className="gloss-panel flex items-start gap-3 rounded-[var(--radius-card)] p-5" style={tint("--color-tint-sage")}>
+          <ObiePhoto size={44} className="shrink-0 ring-2 ring-pine/20" />
+          <div className="min-w-0">
+            <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-moss-600">
+              🐾 {t("correction.obiePhrase")}
+            </p>
+            {correction.obiePhraseRuby && (
+              <p className="font-jp text-[18px] font-bold leading-loose text-pine">
+                <Furigana text={correction.obiePhraseRuby} />
+              </p>
+            )}
+            {correction.obiePhraseExplanation && (
+              <p className="mt-1 text-sm leading-relaxed text-ink/75">{correction.obiePhraseExplanation}</p>
+            )}
           </div>
         </div>
       )}

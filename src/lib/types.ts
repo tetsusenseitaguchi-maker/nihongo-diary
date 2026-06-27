@@ -89,8 +89,12 @@ export interface Correction {
   alternativeWords?: AlternativeWord[];
   /** AI-generated catchy title for this diary entry (Japanese, with <ruby> furigana HTML). */
   diaryTitle?: string;
-  /** Short cultural note about Japan related to the diary topic, in the user's UI language. */
-  cultureMemo?: string;
+  /** Obie's personalised encouragement reacting to diary content (Japanese with <ruby> furigana). */
+  obieCheer?: string;
+  /** A natural Japanese phrase Obie teaches (with <ruby> furigana). */
+  obiePhraseRuby?: string;
+  /** Explanation of obiePhraseRuby in the user's UI language. */
+  obiePhraseExplanation?: string;
 }
 
 export interface DiaryEntry {
