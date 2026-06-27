@@ -203,15 +203,13 @@ export async function POST(request: Request) {
   const plan = normalizePlan(profile?.plan);
 
   // Developer accounts bypass daily limits entirely (no count increment).
-  // Hardcoded list covers the app owner; NEXT_PUBLIC_DEV_USERNAMES env var adds more accounts.
-  // Comparison is case-insensitive and whitespace-trimmed.
-  const hardcodedDevs = ["tetsu116"];
-  const envDevs = (process.env.NEXT_PUBLIC_DEV_USERNAMES ?? "")
-    .split(",")
-    .map((u) => u.trim().toLowerCase())
-    .filter(Boolean);
-  const devSet = new Set([...hardcodedDevs, ...envDevs]);
-  const isDev = devSet.has((profile?.username ?? "").toLowerCase().trim());
+  // Uses user.email from auth (always reliable) as primary check.
+  // username fallback handles accounts where email is unavailable.
+  const devEmails = new Set(["tetsusenseitaguchi@gmail.com"]);
+  const devUsernames = new Set(["tetsu116"]);
+  const isDev =
+    devEmails.has((user.email ?? "").toLowerCase()) ||
+    devUsernames.has((profile?.username ?? "").toLowerCase().trim());
 
   // Locale resolution mirrors (app)/layout.tsx: cookie-first → DB → "en"
   // The NEXT_LOCALE cookie is set immediately on every language switch,
@@ -221,6 +219,7 @@ export async function POST(request: Request) {
   const langCode = normaliseLocale(cookieLang || profile?.preferred_language || "en");
   const lang = languageDisplayName(langCode);
   const limits = limitsFor(plan);
+  console.log(`[correct] email=${user.email} plan=${profile?.plan ?? "null"} normalizedPlan=${plan} isDev=${isDev} limit=${limits.corrections}`);
 
   // Character limit
   if (text.length > limits.maxChars) {

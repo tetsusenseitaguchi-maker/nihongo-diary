@@ -144,14 +144,12 @@ export default function WritePage() {
       ]);
       setPlan(normalizePlan(prof?.plan));
       // Developer accounts always show full remaining corrections (button never disabled by count).
-      // Hardcoded list covers the app owner; env var adds more accounts without code changes.
-      const hardcodedDevs = ["tetsu116"];
-      const envDevs = (process.env.NEXT_PUBLIC_DEV_USERNAMES ?? "")
-        .split(",")
-        .map((u) => u.trim().toLowerCase())
-        .filter(Boolean);
-      const devSet = new Set([...hardcodedDevs, ...envDevs]);
-      const isDev = devSet.has((prof?.username ?? "").toLowerCase().trim());
+      // Uses user.email from auth (always reliable) as primary check.
+      const devEmails = new Set(["tetsusenseitaguchi@gmail.com"]);
+      const devUsernames = new Set(["tetsu116"]);
+      const isDev =
+        devEmails.has((user.email ?? "").toLowerCase()) ||
+        devUsernames.has((prof?.username ?? "").toLowerCase().trim());
       setUsedToday(isDev ? 0 : (usage?.correction_count ?? 0));
     })();
   }, []);
