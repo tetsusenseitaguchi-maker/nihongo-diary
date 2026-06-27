@@ -9,6 +9,7 @@ export const navItems: NavItem[] = [
   { label: "Write Diary", href: "/write", icon: "pen" },
   { label: "Calendar", href: "/calendar", icon: "calendar" },
   { label: "History", href: "/history", icon: "history" },
+  { label: "My Vocabulary", href: "/vocabulary", icon: "book" },
   { label: "Feed", href: "/feed", icon: "feed" },
   { label: "My Places", href: "/places", icon: "mapPin" },
   { label: "Learn", href: "/support", icon: "template" },

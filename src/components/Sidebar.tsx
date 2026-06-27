@@ -38,6 +38,7 @@ const NAV_KEYS: Record<string, string> = {
   "Write Diary": "nav.writeDiary",
   Calendar: "nav.calendar",
   History: "nav.history",
+  "My Vocabulary": "nav.vocabulary",
   Feed: "nav.feed",
   "My Places": "nav.places",
   Learn: "nav.learn",

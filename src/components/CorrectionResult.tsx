@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import type { CSSProperties } from "react";
 import type { Correction } from "@/lib/types";
 import { ObiePhoto } from "@/components/ObiePhoto";
@@ -7,60 +8,55 @@ import { Furigana } from "@/components/Furigana";
 import { PracticeDrills } from "@/components/PracticeDrills";
 import { useT, useLocale } from "@/contexts/locale";
 import { getLessonInLocale } from "@/lib/lesson-i18n";
+import { vocabWordText } from "@/lib/furigana";
 
 function tint(v: string): CSSProperties {
   return { ["--tint" as string]: `var(${v})` } as CSSProperties;
 }
 
-// True only when every character is kanji (no embedded hiragana like 待ち遠)
-const ONLY_KANJI = /^[一-鿿々〆ヶ]+$/;
+// vocabWordText is imported from @/lib/furigana (shared with vocabulary page)
 
-/**
- * Builds ruby notation that Furigana renders correctly.
- * Detects okurigana by comparing the trailing characters of word and reading.
- *
- * Pure-kanji base → （）notation, handled by Furigana's simple regex path.
- * Mixed kanji+kana base (e.g. 待ち遠, 食べ物) → <ruby> HTML directly,
- * because the （）regex only matches contiguous-kanji runs and would squash
- * all the reading onto the last kanji alone.
- */
-function buildRubyNotation(word: string, reading: string): string {
-  const wc = [...word];
-  const rc = [...reading];
-  let okuLen = 0;
-  while (
-    okuLen < wc.length &&
-    okuLen < rc.length &&
-    wc[wc.length - 1 - okuLen] === rc[rc.length - 1 - okuLen]
-  ) okuLen++;
-  const kanjiBase = wc.slice(0, wc.length - okuLen).join("");
-  const okurigana = okuLen > 0 ? wc.slice(-okuLen).join("") : "";
-  const kanjiReading = okuLen > 0 ? rc.slice(0, -okuLen).join("") : reading;
-  if (!kanjiBase || !kanjiReading) return word;
-  if (ONLY_KANJI.test(kanjiBase)) {
-    return `${kanjiBase}（${kanjiReading}）${okurigana}`;
+type SaveState = "idle" | "saving" | "saved" | "already_saved" | "error";
+
+function SaveWordButton({
+  word,
+  reading,
+  jlptLevel,
+  state,
+  onSave,
+}: {
+  word: string;
+  reading: string;
+  jlptLevel?: string;
+  state: SaveState;
+  onSave: (word: string, reading: string, jlptLevel?: string) => void;
+}) {
+  const t = useT();
+  if (state === "saved" || state === "already_saved") {
+    return (
+      <span
+        className="shrink-0 text-sm font-bold text-moss-600"
+        title={t("vocab.saved")}
+      >
+        ✓
+      </span>
+    );
   }
-  return `<ruby>${kanjiBase}<rt>${kanjiReading}</rt></ruby>${okurigana}`;
-}
-
-/**
- * Returns the display string for a vocabulary headword, always passing through Furigana.
- *
- * Priority:
- *  1. word + reading (new API) → buildRubyNotation → correct okurigana split
- *  2. Already has <ruby> or （） markup → pass through unchanged
- *  3. Old concatenated "公園こうえん" (2+ kanji required to avoid okurigana being
- *     misread as a reading) → split and wrap in （）
- */
-function vocabWordText(word: string, reading?: string): string {
-  if (!word) return "";
-  if (reading) return buildRubyNotation(word, reading);
-  if (word.includes("<ruby>") || word.includes("（") || word.includes("(")) return word;
-  // Old concatenated format — only safe when 2+ leading kanji (single-kanji words like
-  // 行く would produce wrong ruby if okurigana were mistaken for the reading)
-  const m = word.match(/^([一-鿿々〆ヶ]{2,})([ぁ-ゖ]+)$/u);
-  if (m) return `${m[1]}（${m[2]}）`;
-  return word;
+  if (state === "saving") {
+    return (
+      <span className="shrink-0 text-[10px] text-muted">{t("vocab.saving")}</span>
+    );
+  }
+  return (
+    <button
+      onClick={() => onSave(word, reading, jlptLevel)}
+      title={t("vocab.addToVocab")}
+      className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full border border-moss-600/40 text-sm font-bold text-moss-600 transition-colors hover:bg-pine hover:text-cream hover:border-pine"
+      aria-label={t("vocab.addToVocab")}
+    >
+      +
+    </button>
+  );
 }
 
 function Label({ en, jp }: { en: string; jp: string }) {
@@ -84,6 +80,47 @@ export function CorrectionResult({
   const miniLesson = correction.relatedMiniLesson
     ? getLessonInLocale(correction.relatedMiniLesson, locale)
     : null;
+
+  // Vocabulary saving state
+  const [wordStates, setWordStates] = useState<Map<string, SaveState>>(new Map());
+  const [showVocabUpgrade, setShowVocabUpgrade] = useState(false);
+  const [isIosApp, setIsIosApp] = useState(false);
+
+  useEffect(() => {
+    type CapWindow = Window & { Capacitor?: { isNativePlatform?: () => boolean } };
+    if ((window as CapWindow).Capacitor?.isNativePlatform?.()) {
+      setIsIosApp(true);
+    }
+  }, []);
+
+  async function handleSaveWord(word: string, reading: string, jlptLevel?: string) {
+    setWordStates((prev) => new Map(prev).set(word, "saving"));
+    try {
+      const res = await fetch("/api/vocabulary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word, reading, jlptLevel }),
+      });
+      if (res.status === 409) {
+        setWordStates((prev) => new Map(prev).set(word, "already_saved"));
+        return;
+      }
+      if (res.status === 403) {
+        setWordStates((prev) => new Map(prev).set(word, "idle"));
+        setShowVocabUpgrade(true);
+        return;
+      }
+      if (!res.ok) {
+        setWordStates((prev) => new Map(prev).set(word, "error"));
+        setTimeout(() => setWordStates((prev) => new Map(prev).set(word, "idle")), 2000);
+        return;
+      }
+      setWordStates((prev) => new Map(prev).set(word, "saved"));
+    } catch {
+      setWordStates((prev) => new Map(prev).set(word, "error"));
+      setTimeout(() => setWordStates((prev) => new Map(prev).set(word, "idle")), 2000);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -220,6 +257,13 @@ export function CorrectionResult({
                     <span className="ml-auto shrink-0 rounded-full bg-pine px-2.5 py-0.5 text-xs font-bold text-cream">
                       {w.level}
                     </span>
+                    <SaveWordButton
+                      word={w.word}
+                      reading={w.reading}
+                      jlptLevel={w.level}
+                      state={wordStates.get(w.word) ?? "idle"}
+                      onSave={handleSaveWord}
+                    />
                   </li>
                 ))}
               </ul>
@@ -233,18 +277,55 @@ export function CorrectionResult({
               <Label en={t("correction.alternatives")} jp="他(ほか)にもこんな言(い)い方(かた)が" />
               <ul className="space-y-2 text-sm">
                 {correction.alternativeWords.map((a, i) => (
-                  <li key={i} className="rounded-xl bg-paper/60 px-3 py-2">
+                  <li key={i} className="flex items-center gap-2 rounded-xl bg-paper/60 px-3 py-2">
                     <span className="font-jp text-ink/65">{a.original}</span>
-                    <span className="mx-2 font-bold text-moss">→</span>
+                    <span className="mx-1 font-bold text-moss">→</span>
                     <Furigana
                       text={vocabWordText(a.alternative, a.alternativeReading)}
                       className="font-jp font-semibold text-pine"
                     />
+                    <span className="ml-auto">
+                      <SaveWordButton
+                        word={a.alternative}
+                        reading={a.alternativeReading}
+                        state={wordStates.get(a.alternative) ?? "idle"}
+                        onSave={handleSaveWord}
+                      />
+                    </span>
                   </li>
                 ))}
               </ul>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Vocabulary upgrade prompt (shown when Free limit is reached) */}
+      {showVocabUpgrade && (
+        <div className="flex items-start justify-between gap-3 rounded-[var(--radius-card)] border border-amber-200 bg-amber-50 px-4 py-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-amber-800">{t("vocab.limitReached")}</p>
+            <p className="mt-0.5 text-xs text-amber-700">
+              {isIosApp ? t("vocab.limitDescIos") : t("vocab.limitDesc")}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {!isIosApp && (
+              <a
+                href="/upgrade"
+                className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
+              >
+                {t("vocab.upgradeBtn")}
+              </a>
+            )}
+            <button
+              onClick={() => setShowVocabUpgrade(false)}
+              className="text-amber-500 hover:text-amber-800"
+              aria-label="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       )}
 
