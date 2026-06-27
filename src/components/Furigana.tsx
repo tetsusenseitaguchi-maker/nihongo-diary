@@ -25,10 +25,11 @@ export function Furigana({
   if (!text) return null;
 
   // Strip kanji that immediately precede their own <ruby> tag
-  // e.g. AI sometimes outputs 清水寺<ruby>清水寺<rt>... → remove the leading duplicate
+  // e.g. AI outputs 公<ruby>公園<rt>... or 清水寺<ruby>清水寺<rt>... → remove the leading duplicate
   const processed = text.replace(
-    /([一-鿿々〆ヶ]+)(<ruby>\1<rt>)/g,
-    "$2",
+    /([一-鿿々〆ヶ]+)(<ruby>([^<]*)<rt>)/g,
+    (match, preKanji: string, rubyOpen: string, rubyBase: string) =>
+      rubyBase.startsWith(preKanji) ? rubyOpen : match,
   );
 
   // Fresh RegExp per call — module-level /g regex shares lastIndex across concurrent renders

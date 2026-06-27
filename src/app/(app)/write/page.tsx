@@ -296,7 +296,15 @@ export default function WritePage() {
         user_id: user.id,
         diary_date: date,
         title: correction.diaryTitle
-          ? correction.diaryTitle.replace(/<rt>[^<]*<\/rt>/g, "").replace(/<[^>]*>/g, "").trim() || null
+          ? correction.diaryTitle
+              .replace(
+                /([一-鿿々〆ヶ]+)(<ruby>([^<]*)<rt>)/g,
+                (_m, preK: string, rubyOpen: string, rubyBase: string) =>
+                  rubyBase.startsWith(preK) ? rubyOpen : _m,
+              )
+              .replace(/<rt>[^<]*<\/rt>/g, "")
+              .replace(/<[^>]*>/g, "")
+              .trim() || null
           : null,
         tags,
         original_text: correction.original,

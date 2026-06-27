@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { Obie } from "@/components/Obie";
@@ -119,11 +120,8 @@ export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
               </div>
               <p className="mt-4 text-sm" style={{ color: "#8a948b" }}>{t("lp.hero.microcopy")}</p>
             </div>
-            {/* TODO: hero visual / app screenshot placeholder */}
-            <div className="hidden lg:block">
-              <div className="flex aspect-[4/3] items-center justify-center rounded-2xl border border-pine/10 bg-pine/[0.04] p-4">
-                <p className="text-center text-xs text-pine/25">TODO: hero visual / app screenshot</p>
-              </div>
+            <div className="mx-auto w-full max-w-sm lg:max-w-none">
+              <DiaryCard />
             </div>
           </div>
         </div>
@@ -228,16 +226,20 @@ export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <div className="grid items-start gap-10 lg:grid-cols-[1fr_1.6fr]">
           <div className="flex flex-col gap-4">
-            {/* TODO: teacher photo (Kiyomizu-dera) */}
-            <div className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-2xl bg-mint/25">
-              <p className="px-4 text-center text-xs text-muted/40">
-                TODO: teacher photo (Kiyomizu-dera)
-              </p>
+            <div className="relative aspect-[3/4] overflow-hidden rounded-2xl">
+              <Image
+                src="/tetsu-sensei.jpg"
+                alt="Tetsu Sensei, Japanese teacher in Sapporo"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 380px"
+              />
             </div>
             <p className="text-center text-sm font-semibold text-pine">{t("lp.teacher.name")}</p>
-            {/* TODO: YouTube channel URL */}
             <Link
-              href="#"
+              href="https://youtube.com/@tetsusenseidesuyo"
+              target="_blank"
+              rel="noopener noreferrer"
               className="block w-full rounded-xl border border-moss/30 bg-mint/20 px-4 py-2.5 text-center text-sm font-semibold text-pine transition hover:bg-mint/50"
             >
               {t("lp.teacher.cta")}
@@ -352,6 +354,77 @@ export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
           <p className="mt-1">{t("landing.footer.beta")}</p>
         </div>
       </footer>
+    </div>
+  );
+}
+
+function DiaryCard() {
+  return (
+    <div style={{ transform: "rotate(-1.5deg)" }}>
+      <div
+        className="relative overflow-hidden rounded-2xl p-5"
+        style={{
+          background: "#fdfbf4",
+          border: "1px solid #e7e0cf",
+          boxShadow: "0 20px 60px rgba(15,61,46,0.12), 0 4px 16px rgba(0,0,0,0.06)",
+        }}
+      >
+        {/* Glass sheen */}
+        <div
+          className="pointer-events-none absolute inset-0 rounded-2xl"
+          style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.5) 0%, transparent 40%)" }}
+          aria-hidden
+        />
+
+        {/* Header row */}
+        <div className="relative mb-4 flex items-center justify-between">
+          {/* TODO i18n: lp.heroCard.label */}
+          <span className="text-xs font-medium" style={{ color: "#9ca3af" }}>Today&apos;s entry</span>
+          <span className="rounded-full px-2.5 py-0.5 text-xs font-bold" style={{ background: "#e8f0eb", color: "#1d4a2e" }}>N4</span>
+        </div>
+
+        {/* Diary text — Japanese hardcoded (example content, not i18n) */}
+        <p className="relative mb-4 font-jp text-[15px] leading-relaxed text-ink">
+          今日は友達と公園で
+          <span style={{ borderBottom: "2px solid #e3704c" }}>遊びました</span>
+          。天気がよくて、とても楽しかったです。
+        </p>
+
+        {/* Natural rewrite block */}
+        <div className="relative mb-4 rounded-xl p-3.5" style={{ background: "#f0f5f1" }}>
+          <div className="mb-2 flex items-center gap-1.5">
+            <span
+              className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold"
+              style={{ background: "#2d6a4f", color: "#fff" }}
+            >
+              ✓
+            </span>
+            {/* TODO i18n: lp.heroCard.rewriteLabel */}
+            <span className="text-xs font-semibold" style={{ color: "#2d6a4f" }}>Natural rewrite</span>
+          </div>
+          {/* Japanese hardcoded (example content, not i18n) */}
+          <p className="font-jp text-[14px] leading-relaxed" style={{ color: "#374151" }}>
+            今日は友達と公園で遊びました。天気がよかったので、とても楽しかったです。
+          </p>
+        </div>
+
+        {/* Obie streak bubble */}
+        <div
+          className="flex items-center gap-2.5 rounded-xl bg-white p-3"
+          style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.07)", border: "1px solid #f0ede6" }}
+        >
+          <div
+            className="h-7 w-7 shrink-0 rounded-full"
+            style={{ background: "radial-gradient(circle at 35% 35%, #c9a97a, #8b5e34)" }}
+          />
+          {/* TODO i18n: lp.heroCard.streak */}
+          <p className="text-xs" style={{ color: "#6b7280" }}>
+            Obie:{" "}
+            <span className="font-bold" style={{ color: "#e3704c" }}>3-day streak!</span>
+            {" "}Keep going 🐾
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
