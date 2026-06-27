@@ -470,5 +470,19 @@
   "pricing.features.pro.4": "小课复习练习（AI 生成）",
   "pricing.features.teacher.1": "Tetsu 老师个人反馈",
   "pricing.features.teacher.2": "Pro 的全部功能",
-  "pricing.features.teacher.3": "名额有限"
+  "pricing.features.teacher.3": "名额有限",
+  "notification.title": "通知",
+  "notification.empty": "暂无通知",
+  "notification.someone": "某人",
+  "notification.follow": "{name}开始关注你了",
+  "notification.newDiary": "{name}发布了新日记",
+  "notification.reaction": "{name}对你的日记做出了反应",
+  "notification.comment": "{name}评论了你的日记",
+  "notification.obieWrite": "今天还没写日记哦，Obie在等你🐶",
+  "notification.obieStreak": "连续{days}天！继续加油🐶",
+  "notification.obieWelcomeBack": "欢迎回来！Obie想你了🐶",
+  "notification.justNow": "刚刚",
+  "notification.minutesAgo": "{n}分钟前",
+  "notification.hoursAgo": "{n}小时前",
+  "notification.daysAgo": "{n}天前"
 }

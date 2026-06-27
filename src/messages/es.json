@@ -470,5 +470,19 @@
   "pricing.features.pro.4": "Ejercicios de repaso con IA",
   "pricing.features.teacher.1": "Retroalimentacion personal de Tetsu-sensei",
   "pricing.features.teacher.2": "Todo en Pro",
-  "pricing.features.teacher.3": "Plazas limitadas"
+  "pricing.features.teacher.3": "Plazas limitadas",
+  "notification.title": "Notificaciones",
+  "notification.empty": "Aún no hay notificaciones",
+  "notification.someone": "Alguien",
+  "notification.follow": "{name} te empezó a seguir",
+  "notification.newDiary": "{name} publicó un nuevo diario",
+  "notification.reaction": "{name} reaccionó a tu diario",
+  "notification.comment": "{name} comentó en tu diario",
+  "notification.obieWrite": "Todavía no has escrito hoy. Obie te espera 🐶",
+  "notification.obieStreak": "¡{days} días seguidos! ¡Así se hace! 🐶",
+  "notification.obieWelcomeBack": "¡Bienvenido de vuelta! Obie te echó de menos 🐶",
+  "notification.justNow": "Ahora mismo",
+  "notification.minutesAgo": "hace {n} min",
+  "notification.hoursAgo": "hace {n} h",
+  "notification.daysAgo": "hace {n} d"
 }

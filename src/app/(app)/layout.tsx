@@ -10,6 +10,8 @@ import { TimezoneSyncer } from "@/components/TimezoneSyncer";
 import { InvitePendingHandler } from "@/components/InvitePendingHandler";
 import { TourLauncher } from "@/components/TourLauncher";
 import { InstallPromptBanner } from "@/components/InstallPromptBanner";
+import { NotificationBell } from "@/components/NotificationBell";
+import { ObieNotificationSyncer } from "@/components/ObieNotificationSyncer";
 import { createClient } from "@/lib/supabase/server";
 import { LocaleProvider } from "@/contexts/locale";
 import { normaliseLocale } from "@/lib/i18n";
@@ -32,6 +34,7 @@ export default async function AppLayout({
   let avatarUrl = "";
   let currentStreak = 0;
   let preferredLang = "en";
+  const userId = user?.id ?? "";
 
   const cookieStore = await cookies();
 
@@ -77,6 +80,7 @@ export default async function AppLayout({
       <InvitePendingHandler />
       <TourLauncher />
       <InstallPromptBanner />
+      {userId && <ObieNotificationSyncer userId={userId} />}
       <div className="min-h-screen bg-cream">
         {/* Desktop sidebar */}
         <aside className="fixed inset-y-0 left-0 z-30 hidden w-[264px] border-r border-line bg-paper lg:block">
@@ -92,6 +96,7 @@ export default async function AppLayout({
             <Logo href="/dashboard" size="sm" />
             <div className="flex items-center gap-2">
               <LanguageSwitcher compact />
+              {userId && <NotificationBell userId={userId} />}
               <Link href="/profile" aria-label="プロフィール" className="overflow-hidden rounded-full ring-1 ring-line hover:ring-moss">
                 {avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -107,7 +112,7 @@ export default async function AppLayout({
         <div className="lg:pl-[264px]">
           {/* Desktop top bar */}
           <div className="sticky top-0 z-20 hidden border-b border-line bg-cream/85 px-6 py-3 backdrop-blur lg:block lg:px-10">
-            <TopBar name={name} initials={initials} avatarUrl={avatarUrl} />
+            <TopBar name={name} initials={initials} avatarUrl={avatarUrl} userId={userId} />
           </div>
 
           <main className="mx-auto max-w-6xl overflow-x-hidden px-4 pb-24 pt-6 sm:px-6 lg:px-10 lg:pb-12 lg:pt-8">

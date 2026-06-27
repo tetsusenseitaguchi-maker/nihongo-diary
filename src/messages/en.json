@@ -470,5 +470,19 @@
   "pricing.features.pro.4": "Mini Lesson Review Drills (AI-generated)",
   "pricing.features.teacher.1": "Personal feedback from Tetsu-sensei",
   "pricing.features.teacher.2": "Everything in Pro",
-  "pricing.features.teacher.3": "Limited spots"
+  "pricing.features.teacher.3": "Limited spots",
+  "notification.title": "Notifications",
+  "notification.empty": "No notifications yet",
+  "notification.someone": "Someone",
+  "notification.follow": "{name} started following you",
+  "notification.newDiary": "{name} posted a new diary",
+  "notification.reaction": "{name} reacted to your diary",
+  "notification.comment": "{name} commented on your diary",
+  "notification.obieWrite": "You haven't written today yet. Obie is waiting 🐶",
+  "notification.obieStreak": "{days} days in a row! Keep it up 🐶",
+  "notification.obieWelcomeBack": "Welcome back! Obie missed you 🐶",
+  "notification.justNow": "Just now",
+  "notification.minutesAgo": "{n}m ago",
+  "notification.hoursAgo": "{n}h ago",
+  "notification.daysAgo": "{n}d ago"
 }

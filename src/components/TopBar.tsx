@@ -2,15 +2,18 @@ import Link from "next/link";
 import { Icon } from "@/components/icons";
 import { Avatar } from "@/components/ObiePhoto";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export function TopBar({
   name = "Learner",
   initials = "U",
   avatarUrl = "",
+  userId = "",
 }: {
   name?: string;
   initials?: string;
   avatarUrl?: string;
+  userId?: string;
 }) {
   return (
     <div className="flex items-center gap-3">
@@ -25,6 +28,7 @@ export function TopBar({
 
       {/* Compact language switcher */}
       <LanguageSwitcher compact />
+      {userId && <NotificationBell userId={userId} />}
 
       <Link
         href="/profile"

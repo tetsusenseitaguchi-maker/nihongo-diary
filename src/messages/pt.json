@@ -73,5 +73,19 @@
   "footer.disclaimer": "As correções de IA podem não ser perfeitas. Use-as como apoio ao aprendizado.",
   "footer.beta": "Nihongo Diary · beta pública",
   "footer.terms": "Ao usar este app, você concorda com nossos Termos e Privacidade. Seus diários ficam privados a menos que você os torne públicos.",
-  "footer.createdBy": "Criado por"
+  "footer.createdBy": "Criado por",
+  "notification.title": "Notificações",
+  "notification.empty": "Nenhuma notificação ainda",
+  "notification.someone": "Alguém",
+  "notification.follow": "{name} começou a seguir você",
+  "notification.newDiary": "{name} publicou um novo diário",
+  "notification.reaction": "{name} reagiu ao seu diário",
+  "notification.comment": "{name} comentou no seu diário",
+  "notification.obieWrite": "Você ainda não escreveu hoje. Obie está esperando 🐶",
+  "notification.obieStreak": "{days} dias seguidos! Continue assim 🐶",
+  "notification.obieWelcomeBack": "Bem-vindo de volta! Obie sentiu sua falta 🐶",
+  "notification.justNow": "Agora mesmo",
+  "notification.minutesAgo": "há {n} min",
+  "notification.hoursAgo": "há {n} h",
+  "notification.daysAgo": "há {n} d"
 }

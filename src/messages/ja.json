@@ -470,5 +470,19 @@
   "pricing.features.pro.4": "ミニレッスン復習ドリル（AI生成）",
   "pricing.features.teacher.1": "Tetsu先生によるパーソナルフィードバック",
   "pricing.features.teacher.2": "Pro のすべての機能",
-  "pricing.features.teacher.3": "定員制"
+  "pricing.features.teacher.3": "定員制",
+  "notification.title": "通知",
+  "notification.empty": "通知はまだありません",
+  "notification.someone": "誰か",
+  "notification.follow": "{name}さんがあなたをフォローしました",
+  "notification.newDiary": "{name}さんが日記を投稿しました",
+  "notification.reaction": "{name}さんがあなたの日記にリアクションしました",
+  "notification.comment": "{name}さんがあなたの日記にコメントしました",
+  "notification.obieWrite": "今日はまだ日記を書いていないよ。Obieが待ってるよ🐶",
+  "notification.obieStreak": "{days}日連続！この調子🐶",
+  "notification.obieWelcomeBack": "おかえり！また会えてうれしいよ🐶",
+  "notification.justNow": "今",
+  "notification.minutesAgo": "{n}分前",
+  "notification.hoursAgo": "{n}時間前",
+  "notification.daysAgo": "{n}日前"
 }

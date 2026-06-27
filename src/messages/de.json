@@ -470,5 +470,19 @@
   "pricing.features.pro.4": "Mini-Lektions-Drills (KI-generiert)",
   "pricing.features.teacher.1": "Persoenliches Feedback von Tetsu-sensei",
   "pricing.features.teacher.2": "Alles in Pro",
-  "pricing.features.teacher.3": "Begrenzte Plaetze"
+  "pricing.features.teacher.3": "Begrenzte Plaetze",
+  "notification.title": "Benachrichtigungen",
+  "notification.empty": "Noch keine Benachrichtigungen",
+  "notification.someone": "Jemand",
+  "notification.follow": "{name} folgt dir jetzt",
+  "notification.newDiary": "{name} hat ein neues Tagebuch gepostet",
+  "notification.reaction": "{name} hat auf dein Tagebuch reagiert",
+  "notification.comment": "{name} hat dein Tagebuch kommentiert",
+  "notification.obieWrite": "Du hast heute noch nicht geschrieben. Obie wartet auf dich 🐶",
+  "notification.obieStreak": "{days} Tage hintereinander! Weiter so 🐶",
+  "notification.obieWelcomeBack": "Willkommen zurück! Obie hat dich vermisst 🐶",
+  "notification.justNow": "Gerade eben",
+  "notification.minutesAgo": "vor {n} Min",
+  "notification.hoursAgo": "vor {n} Std",
+  "notification.daysAgo": "vor {n} T"
 }

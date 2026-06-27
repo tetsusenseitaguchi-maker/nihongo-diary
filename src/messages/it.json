@@ -470,5 +470,19 @@
   "pricing.features.pro.4": "Esercizi di revisione (generati da IA)",
   "pricing.features.teacher.1": "Feedback personale da Tetsu-sensei",
   "pricing.features.teacher.2": "Tutto in Pro",
-  "pricing.features.teacher.3": "Posti limitati"
+  "pricing.features.teacher.3": "Posti limitati",
+  "notification.title": "Notifiche",
+  "notification.empty": "Nessuna notifica ancora",
+  "notification.someone": "Qualcuno",
+  "notification.follow": "{name} ha iniziato a seguirti",
+  "notification.newDiary": "{name} ha pubblicato un nuovo diario",
+  "notification.reaction": "{name} ha reagito al tuo diario",
+  "notification.comment": "{name} ha commentato il tuo diario",
+  "notification.obieWrite": "Non hai ancora scritto oggi. Obie ti aspetta 🐶",
+  "notification.obieStreak": "{days} giorni di fila! Continua così 🐶",
+  "notification.obieWelcomeBack": "Bentornato! Obie ti è mancato 🐶",
+  "notification.justNow": "Proprio ora",
+  "notification.minutesAgo": "{n} min fa",
+  "notification.hoursAgo": "{n} ore fa",
+  "notification.daysAgo": "{n} g fa"
 }

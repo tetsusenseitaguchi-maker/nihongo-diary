@@ -470,5 +470,19 @@
   "pricing.features.pro.4": "미니 레슨 복습 드릴 (AI 생성)",
   "pricing.features.teacher.1": "Tetsu 선생님의 개인 피드백",
   "pricing.features.teacher.2": "Pro의 모든 기능",
-  "pricing.features.teacher.3": "자리 제한"
+  "pricing.features.teacher.3": "자리 제한",
+  "notification.title": "알림",
+  "notification.empty": "아직 알림이 없어요",
+  "notification.someone": "누군가",
+  "notification.follow": "{name}님이 팔로우했어요",
+  "notification.newDiary": "{name}님이 새 일기를 올렸어요",
+  "notification.reaction": "{name}님이 일기에 반응했어요",
+  "notification.comment": "{name}님이 일기에 댓글을 달았어요",
+  "notification.obieWrite": "오늘 아직 일기를 안 썼어요. Obie가 기다리고 있어요 🐶",
+  "notification.obieStreak": "{days}일 연속! 계속해봐요 🐶",
+  "notification.obieWelcomeBack": "돌아오셨군요! Obie가 보고 싶었어요 🐶",
+  "notification.justNow": "방금",
+  "notification.minutesAgo": "{n}분 전",
+  "notification.hoursAgo": "{n}시간 전",
+  "notification.daysAgo": "{n}일 전"
 }
