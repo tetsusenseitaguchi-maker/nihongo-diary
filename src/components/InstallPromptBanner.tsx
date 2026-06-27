@@ -10,6 +10,29 @@ interface BeforeInstallPromptEvent extends Event {
 
 type Platform = "ios" | "android" | null;
 
+const DISMISS_KEY = "pwa_install_dismissed_at";
+const SUPPRESS_DAYS = 365; // effectively "don't show again"
+
+function isDismissed(): boolean {
+  try {
+    const stored = localStorage.getItem(DISMISS_KEY);
+    if (!stored) return false;
+    const ts = parseInt(stored, 10);
+    if (isNaN(ts)) return false;
+    return (Date.now() - ts) / 86_400_000 < SUPPRESS_DAYS;
+  } catch {
+    return false;
+  }
+}
+
+function recordDismiss() {
+  try {
+    localStorage.setItem(DISMISS_KEY, String(Date.now()));
+  } catch {
+    // localStorage unavailable — ignore
+  }
+}
+
 function isStandalone() {
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
@@ -73,6 +96,7 @@ export function InstallPromptBanner() {
   useEffect(() => {
     setMounted(true);
     if (isStandalone()) return;
+    if (isDismissed()) return;
 
     const ua = navigator.userAgent;
 
@@ -91,6 +115,7 @@ export function InstallPromptBanner() {
   }, []);
 
   function dismiss() {
+    recordDismiss();
     setPlatform(null);
   }
 
@@ -98,7 +123,10 @@ export function InstallPromptBanner() {
     if (!deferredRef.current) return;
     await deferredRef.current.prompt();
     const { outcome } = await deferredRef.current.userChoice;
-    if (outcome === "accepted") setPlatform(null);
+    if (outcome === "accepted") {
+      recordDismiss();
+      setPlatform(null);
+    }
   }
 
   if (!mounted || !platform) return null;
