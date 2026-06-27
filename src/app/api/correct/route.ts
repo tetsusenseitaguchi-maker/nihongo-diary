@@ -197,13 +197,16 @@ export async function POST(request: Request) {
     .single();
   const plan = normalizePlan(profile?.plan);
 
-  // Developer accounts listed in NEXT_PUBLIC_DEV_USERNAMES bypass daily limits entirely.
-  // Comparison is case-insensitive and trims whitespace so "Tetsu116" / "tetsu116" both match.
-  const devList = (process.env.NEXT_PUBLIC_DEV_USERNAMES ?? "")
+  // Developer accounts bypass daily limits entirely (no count increment).
+  // Hardcoded list covers the app owner; NEXT_PUBLIC_DEV_USERNAMES env var adds more accounts.
+  // Comparison is case-insensitive and whitespace-trimmed.
+  const hardcodedDevs = ["tetsu116"];
+  const envDevs = (process.env.NEXT_PUBLIC_DEV_USERNAMES ?? "")
     .split(",")
     .map((u) => u.trim().toLowerCase())
     .filter(Boolean);
-  const isDev = devList.length > 0 && devList.includes((profile?.username ?? "").toLowerCase().trim());
+  const devSet = new Set([...hardcodedDevs, ...envDevs]);
+  const isDev = devSet.has((profile?.username ?? "").toLowerCase().trim());
 
   // Locale resolution mirrors (app)/layout.tsx: cookie-first → DB → "en"
   // The NEXT_LOCALE cookie is set immediately on every language switch,

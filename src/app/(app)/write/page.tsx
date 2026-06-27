@@ -143,12 +143,15 @@ export default function WritePage() {
         supabase.from("usage_limits").select("correction_count").eq("user_id", user.id).eq("usage_date", today).maybeSingle(),
       ]);
       setPlan(normalizePlan(prof?.plan));
-      // Developer accounts (listed in NEXT_PUBLIC_DEV_USERNAMES) show unlimited remaining corrections.
-      const devList = (process.env.NEXT_PUBLIC_DEV_USERNAMES ?? "")
+      // Developer accounts always show full remaining corrections (button never disabled by count).
+      // Hardcoded list covers the app owner; env var adds more accounts without code changes.
+      const hardcodedDevs = ["tetsu116"];
+      const envDevs = (process.env.NEXT_PUBLIC_DEV_USERNAMES ?? "")
         .split(",")
         .map((u) => u.trim().toLowerCase())
         .filter(Boolean);
-      const isDev = devList.length > 0 && devList.includes((prof?.username ?? "").toLowerCase().trim());
+      const devSet = new Set([...hardcodedDevs, ...envDevs]);
+      const isDev = devSet.has((prof?.username ?? "").toLowerCase().trim());
       setUsedToday(isDev ? 0 : (usage?.correction_count ?? 0));
     })();
   }, []);
