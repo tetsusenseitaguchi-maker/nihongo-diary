@@ -212,10 +212,7 @@ export async function POST(request: Request) {
   });
   if (rpcError || !allowed) {
     return NextResponse.json(
-      {
-        error: `今日のAI添削の上限（${limits.corrections}回）に達しました。明日また使えます。もっと使うにはアップグレードしてね。`,
-        upgrade: true,
-      },
+      { error: "daily_correction_limit_reached", upgrade: true, plan, limit: limits.corrections },
       { status: 429 },
     );
   }

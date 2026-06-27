@@ -13,7 +13,7 @@ import { Furigana } from "@/components/Furigana";
 import { Bilingual } from "@/components/Bilingual";
 import { templates, sampleDraft } from "@/lib/mock-data";
 import type { Level, CorrectionStyle, Correction, DiaryPlace } from "@/lib/types";
-import { limitsFor, normalizePlan, PLAN_LABELS, type Plan } from "@/lib/plans";
+import { limitsFor, normalizePlan, PLAN_LABELS, PLAN_LIMITS, type Plan } from "@/lib/plans";
 import { PRESET_TAGS, PRESET_TAG_KEYS } from "@/lib/tags";
 import { useT } from "@/contexts/locale";
 
@@ -95,6 +95,14 @@ export default function WritePage() {
     const s = new URLSearchParams(window.location.search).get("starter");
     if (s) setText((prev) => (prev ? prev : s));
   }, []);
+
+  // Detect Capacitor native iOS shell — upgrade CTAs are hidden inside the app store build
+  useEffect(() => {
+    type CapWindow = Window & { Capacitor?: { isNativePlatform?: () => boolean } };
+    if ((window as CapWindow).Capacitor?.isNativePlatform?.()) {
+      setIsIosApp(true);
+    }
+  }, []);
   const [mood, setMood] = useState(0);
   const [weather, setWeather] = useState(0);
   const [result, setResult] = useState<Correction | null>(null);
@@ -111,6 +119,8 @@ export default function WritePage() {
   // Plan + usage
   const [plan, setPlan] = useState<Plan>("free");
   const [usedToday, setUsedToday] = useState(0);
+  // True when running inside the Capacitor iOS native app — suppress paid upgrade CTAs
+  const [isIosApp, setIsIosApp] = useState(false);
   const router = useRouter();
   const t = useT();
   const moods = (t("write.moods") || DEFAULT_MOODS.join("|")).split("|");
@@ -163,8 +173,14 @@ export default function WritePage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setCorrectError(data?.error || "Correction failed. Please try again.");
-        if (data?.upgrade) setShowUpgrade(true);
+        if (res.status === 429) {
+          // Daily correction limit — show the friendly plan-specific banner, not a red error
+          setShowUpgrade(true);
+          setCorrectError(null);
+        } else {
+          setCorrectError(data?.error || "Correction failed. Please try again.");
+          if (data?.upgrade) setShowUpgrade(true);
+        }
         setLoading(false);
         return;
       }
@@ -354,11 +370,29 @@ export default function WritePage() {
       {showUpgrade && (
         <div className="gloss-panel flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] p-4" style={{ ["--tint" as string]: "var(--color-tint-sand)" } as CSSProperties}>
           <p className="text-sm text-ink/80">
-            {t("write.dailyLimitMsg")}
+            {plan === "free" && t("write.limitReachedFree", {
+              limit: limits.corrections,
+              plusLimit: PLAN_LIMITS.plus.corrections,
+            })}
+            {plan === "plus" && t("write.limitReachedPlus", {
+              limit: limits.corrections,
+              proLimit: PLAN_LIMITS.pro.corrections,
+            })}
+            {(plan === "pro" || plan === "teacher_feedback") && t("write.limitReachedPro", {
+              limit: limits.corrections,
+            })}
           </p>
-          <a href="/upgrade" className="gloss-btn rounded-full px-4 py-2 text-sm font-semibold text-cream hover:brightness-105">
-            {t("write.seePlans")}
-          </a>
+          {/* iOS native app: hide all paid upgrade CTAs (App Store policy) */}
+          {!isIosApp && plan === "free" && (
+            <a href="/upgrade" className="gloss-btn shrink-0 rounded-full px-4 py-2 text-sm font-semibold text-cream hover:brightness-105">
+              {t("write.upgradeToPlus")}
+            </a>
+          )}
+          {!isIosApp && plan === "plus" && (
+            <a href="/upgrade" className="gloss-btn shrink-0 rounded-full px-4 py-2 text-sm font-semibold text-cream hover:brightness-105">
+              {t("write.upgradeToPro")}
+            </a>
+          )}
         </div>
       )}
 
