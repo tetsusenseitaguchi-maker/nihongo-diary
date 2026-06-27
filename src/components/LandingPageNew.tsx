@@ -185,16 +185,12 @@ export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
         </h2>
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f) => (
-            <Card key={f.title} className="overflow-hidden p-5 transition-shadow hover:shadow-lift">
-              {/* TODO: feature screenshot placeholder */}
-              <div className="mb-4 flex aspect-video items-center justify-center rounded-xl bg-mint/20">
-                <p className="text-[10px] text-muted/40">TODO: feature screenshot</p>
-              </div>
-              <span className="mb-3 grid h-9 w-9 place-items-center rounded-xl bg-mint text-pine">
-                {renderIcon(f.icon, "h-4 w-4")}
+            <Card key={f.title} className="flex flex-col p-6 transition-shadow hover:shadow-lift">
+              <span className="mb-4 grid h-10 w-10 place-items-center rounded-xl bg-mint text-pine">
+                {renderIcon(f.icon, "h-5 w-5")}
               </span>
               <h3 className="font-serif text-base font-bold text-pine">{f.title}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-ink/70">{f.body}</p>
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-ink/70">{f.body}</p>
             </Card>
           ))}
         </div>
