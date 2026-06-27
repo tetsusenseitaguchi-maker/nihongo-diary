@@ -385,9 +385,9 @@ function DiaryCard() {
 
         {/* Diary text — Japanese hardcoded (example content, not i18n) */}
         <p className="relative mb-4 font-jp text-[15px] leading-relaxed text-ink">
-          今日は友達と公園で
-          <span style={{ borderBottom: "2px solid #e3704c" }}>遊びました</span>
-          。天気がよくて、とても楽しかったです。
+          今日は友達と公園に行きました。天気がよくて、
+          <span style={{ borderBottom: "2px solid #e3704c" }}>楽しいでした</span>
+          ！
         </p>
 
         {/* Natural rewrite block */}
@@ -404,7 +404,9 @@ function DiaryCard() {
           </div>
           {/* Japanese hardcoded (example content, not i18n) */}
           <p className="font-jp text-[14px] leading-relaxed" style={{ color: "#374151" }}>
-            今日は友達と公園で遊びました。天気がよかったので、とても楽しかったです。
+            今日は友達と公園に行きました。天気がよくて、
+            <span className="font-semibold" style={{ color: "#2d6a4f" }}>楽しかったです</span>
+            ！
           </p>
         </div>
 
