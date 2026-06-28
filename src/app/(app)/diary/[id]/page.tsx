@@ -13,6 +13,7 @@ import { TagChips } from "@/components/TagChips";
 import { DiaryPlaceMap } from "@/components/DiaryPlaceMap";
 import { TranslateButton } from "@/components/TranslateButton";
 import { GetCorrectionButton } from "@/components/GetCorrectionButton";
+import { PeerCorrections } from "@/components/PeerCorrections";
 import { Avatar } from "@/components/ObiePhoto";
 import { formatLong } from "@/lib/dates";
 import { getServerT } from "@/lib/i18n-server";
@@ -250,6 +251,17 @@ export default async function DiaryDetailPage({
             )}
           </div>
         </>
+      )}
+
+      {/* Peer corrections — shown for any public diary */}
+      {entry.is_public && (
+        <PeerCorrections
+          entryId={id}
+          originalText={entry.original_text ?? ""}
+          isOwner={isOwner}
+          isPublic={Boolean(entry.is_public)}
+          currentUserId={user.id}
+        />
       )}
 
       {/* Comments — shown for any public diary */}

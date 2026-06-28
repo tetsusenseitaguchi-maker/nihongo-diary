@@ -655,5 +655,26 @@
   "review.cta": "Try using it in today's entry ✍️",
   "review.historyTitle": "Grammar Review Log",
   "review.noReviews": "No grammar reviews yet",
-  "review.noReviewsHint": "Reviews appear here after your first AI correction."
+  "review.noReviewsHint": "Reviews appear here after your first AI correction.",
+
+  "peerCorrection.title": "Community Corrections",
+  "peerCorrection.addBtn": "Add a correction",
+  "peerCorrection.selectPrompt": "Select the text you want to correct",
+  "peerCorrection.clickHighlight": "Tap an underlined word to see the correction.",
+  "peerCorrection.correcting": "Correcting",
+  "peerCorrection.correctedLabel": "Correction",
+  "peerCorrection.commentLabel": "Comment (optional)",
+  "peerCorrection.correctionPlaceholder": "How should it be written?",
+  "peerCorrection.commentPlaceholder": "Add an explanation (optional)",
+  "peerCorrection.submitBtn": "Submit",
+  "peerCorrection.submitting": "Submitting…",
+  "peerCorrection.saveBtn": "Save",
+  "peerCorrection.cancelBtn": "Cancel",
+  "peerCorrection.editBtn": "Edit",
+  "peerCorrection.deleteBtn": "Delete",
+  "peerCorrection.original": "Before",
+  "peerCorrection.corrected": "After",
+  "peerCorrection.noCorrections": "No corrections yet. Be the first to help!",
+  "peerCorrection.noCorrectionsOwner": "No community corrections yet.",
+  "peerCorrection.error": "Failed to submit. Please try again."
 }
