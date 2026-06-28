@@ -562,8 +562,8 @@
 
   "peerCorrection.title": "みんなの添削",
   "peerCorrection.addBtn": "添削を追加する",
-  "peerCorrection.tapFirstChar": "直したい範囲の最初の文字をタップしてください",
-  "peerCorrection.tapLastChar": "次に、範囲の最後の文字をタップしてください",
+  "peerCorrection.tapFirstChar": "直したい最初の単語をタップしてください",
+  "peerCorrection.tapLastChar": "次に、範囲の最後の単語をタップしてください",
   "peerCorrection.clickHighlight": "下線部をタップすると添削内容が表示されます。",
   "peerCorrection.correcting": "添削中",
   "peerCorrection.correctedLabel": "正しい表現",

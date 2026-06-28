@@ -562,8 +562,8 @@
 
   "peerCorrection.title": "Community Corrections",
   "peerCorrection.addBtn": "Add a correction",
-  "peerCorrection.tapFirstChar": "Tap the first character you want to correct",
-  "peerCorrection.tapLastChar": "Now tap the last character of the range",
+  "peerCorrection.tapFirstChar": "Tap the first word you want to correct",
+  "peerCorrection.tapLastChar": "Now tap the last word of the range",
   "peerCorrection.clickHighlight": "Tap an underlined word to see the correction.",
   "peerCorrection.correcting": "Correcting",
   "peerCorrection.correctedLabel": "Correction",

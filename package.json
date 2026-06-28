@@ -15,13 +15,15 @@
     "@capacitor/splash-screen": "^8.0.1",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.2",
+    "@types/tiny-segmenter": "^0.2.0",
     "leaflet": "^1.9.4",
     "next": "15.5.19",
     "openai": "^6.45.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-leaflet": "^5.0.0",
-    "stripe": "^22.3.0"
+    "stripe": "^22.3.0",
+    "tiny-segmenter": "^0.2.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
