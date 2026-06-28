@@ -12,6 +12,7 @@ import { CommentsSection } from "@/components/CommentsSection";
 import { TagChips } from "@/components/TagChips";
 import { DiaryPlaceMap } from "@/components/DiaryPlaceMap";
 import { TranslateButton } from "@/components/TranslateButton";
+import { GetCorrectionButton } from "@/components/GetCorrectionButton";
 import { Avatar } from "@/components/ObiePhoto";
 import { formatLong } from "@/lib/dates";
 import { getServerT } from "@/lib/i18n-server";
@@ -211,12 +212,6 @@ export default async function DiaryDetailPage({
         preferredLanguage={preferredLanguage}
       />
 
-      <div className="flex items-center gap-2">
-        <span>🌸</span>
-        <h2 className="font-serif text-xl font-bold text-pine">添削結果</h2>
-        <span className="text-sm font-medium text-muted">{t("write.resultTitle")}</span>
-      </div>
-
       <DiaryAttachments imageUrl={imageUrl} audioUrl={audioUrl} t={t} />
 
       {isOwner && (
@@ -230,7 +225,25 @@ export default async function DiaryDetailPage({
         />
       )}
 
-      <CorrectionResult correction={correction} />
+      {entry.corrected_japanese ? (
+        <>
+          <div className="flex items-center gap-2">
+            <span>🌸</span>
+            <h2 className="font-serif text-xl font-bold text-pine">添削結果</h2>
+            <span className="text-sm font-medium text-muted">{t("write.resultTitle")}</span>
+          </div>
+          <CorrectionResult correction={correction} />
+        </>
+      ) : (
+        <div className="rounded-2xl border border-dashed border-line bg-paper/60 px-6 py-8 text-center">
+          <p className="mb-1 font-semibold text-pine">{t("diary.noCorrectionYet")}</p>
+          {isOwner && (
+            <div className="mt-4">
+              <GetCorrectionButton entryId={id} />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Comments — shown for any public diary */}
       {entry.is_public && (

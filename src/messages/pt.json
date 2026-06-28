@@ -174,5 +174,13 @@
   "review.cta": "Use na entrada de hoje ✍️",
   "review.historyTitle": "Histórico de revisões gramaticais",
   "review.noReviews": "Ainda não há revisões",
-  "review.noReviewsHint": "As revisões aparecem aqui após a primeira correção com IA."
+  "review.noReviewsHint": "As revisões aparecem aqui após a primeira correção com IA.",
+  "diary.getCorrectionNow": "Get correction now",
+  "diary.gettingCorrection": "Getting correction…",
+  "diary.noCorrectionYet": "No correction yet",
+  "diary.correctionError": "Correction failed. Please try again.",
+  "feed.noCorrectionYet": "No correction yet",
+  "write.justSave": "Just save (no correction)",
+  "write.justSaving": "Saving…",
+  "write.justSaveError": "Save failed. Please try again."
 }

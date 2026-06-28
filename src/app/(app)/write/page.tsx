@@ -128,6 +128,8 @@ export default function WritePage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedEntryId, setSavedEntryId] = useState<string | null>(null);
+  const [justSaving, setJustSaving] = useState(false);
+  const [justSaveError, setJustSaveError] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [places, setPlaces] = useState<DiaryPlace[]>([]);
@@ -415,6 +417,91 @@ export default function WritePage() {
     return data.id;
   }
 
+  // Save diary without running AI correction — does not consume any correction count.
+  async function saveWithoutCorrection(): Promise<string> {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const diaryDate = todayInTZ(getClientTZ());
+
+    const { data, error } = await supabase
+      .from("diary_entries")
+      .insert({
+        user_id: user.id,
+        diary_date: diaryDate,
+        tags,
+        original_text: text.trim(),
+        level: levels[level],
+        correction_style: styles[style],
+      })
+      .select("id")
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    if (photoFile) {
+      const ext = photoFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
+      const storagePath = `${user.id}/${data.id}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("diary-images")
+        .upload(storagePath, photoFile, { contentType: photoFile.type });
+      if (upErr) {
+        await supabase.from("diary_entries").delete().eq("id", data.id);
+        throw new Error(`Photo upload failed: ${upErr.message}`);
+      }
+      await supabase.from("diary_entries").update({ image_path: storagePath }).eq("id", data.id);
+    }
+
+    if (audioFile) {
+      const ext = audioFile.name.split(".").pop()?.toLowerCase() ?? "webm";
+      const storagePath = `${user.id}/${data.id}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("diary-audio")
+        .upload(storagePath, audioFile, { contentType: audioFile.type });
+      if (upErr) {
+        await supabase.from("diary_entries").delete().eq("id", data.id);
+        throw new Error(`Audio upload failed: ${upErr.message}`);
+      }
+      await supabase.from("diary_entries").update({ audio_path: storagePath }).eq("id", data.id);
+    }
+
+    if (places.length > 0) {
+      await supabase.from("diary_places").insert(
+        places.map((p) => ({
+          diary_entry_id: data.id,
+          user_id: user.id,
+          lat: p.lat,
+          lng: p.lng,
+          place_name: p.name || null,
+        }))
+      );
+    }
+
+    await supabase.from("activity_feed").insert({
+      user_id: user.id,
+      activity_type: "wrote_diary",
+      diary_entry_id: data.id,
+      metadata: { diary_date: diaryDate, is_public: false },
+    });
+
+    return data.id;
+  }
+
+  async function handleJustSave() {
+    if (!text.trim() || overLimit || loading || justSaving || saving) return;
+    setJustSaving(true);
+    setJustSaveError(null);
+    try {
+      const id = await saveWithoutCorrection();
+      router.push(`/diary/${id}`);
+    } catch (err) {
+      setJustSaveError(err instanceof Error ? err.message : t("write.justSaveError"));
+    } finally {
+      setJustSaving(false);
+    }
+  }
+
   // Manual save retry — only reachable when auto-save failed.
   async function handleSave() {
     if (!result || savedEntryId) return;
@@ -665,6 +752,15 @@ export default function WritePage() {
                 <Button variant="secondary">
                   <Icon.book className="h-4 w-4" /> {t("write.saveDraft")}
                 </Button>
+                {!result && (
+                  <Button
+                    variant="ghost"
+                    onClick={handleJustSave}
+                    disabled={!text.trim() || overLimit || loading || justSaving || saving}
+                  >
+                    {justSaving ? t("write.justSaving") : t("write.justSave")}
+                  </Button>
+                )}
                 <Button onClick={handleCorrect} disabled={!text.trim() || overLimit || loading || remaining <= 0}>
                   {loading ? (
                     t("write.correcting")
@@ -678,6 +774,11 @@ export default function WritePage() {
               {overLimit && (
                 <p className="mt-2 text-right text-sm text-apricot">
                   {t("write.charLimit", { max: maxChars })}
+                </p>
+              )}
+              {justSaveError && (
+                <p className="mt-2 rounded-lg bg-apricot/10 px-3 py-2 text-sm text-apricot">
+                  {justSaveError}
                 </p>
               )}
               {correctError && (

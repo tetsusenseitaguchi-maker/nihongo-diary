@@ -23,6 +23,7 @@ export type FeedItem = {
   diaryTitle: string | null;
   diaryTags: string[];
   diarySnippet: string;
+  hasCorrectionResult: boolean;
   streak: number;
   monthlyCount: number;
   reactionCounts: Record<string, number>;
@@ -119,6 +120,11 @@ function FeedCard({ item }: { item: FeedItem }) {
                 {item.diarySnippet}
               </p>
             )}
+            {!item.hasCorrectionResult && (
+              <span className="mt-2 inline-block rounded-full border border-line bg-paper/80 px-2.5 py-0.5 text-[11px] font-medium text-muted">
+                {t("feed.noCorrectionYet")}
+              </span>
+            )}
             <p className="mt-1.5 text-xs font-semibold text-moss-600">
               {t("feed.readDiary")}
             </p>
@@ -204,7 +210,7 @@ export function FeedTimeline({
       diaryIds.length
         ? supabase
             .from("diary_entries")
-            .select("id, is_public, title, tags, original_text")
+            .select("id, is_public, title, tags, original_text, corrected_japanese")
             .in("id", diaryIds)
         : Promise.resolve({ data: [] }),
     ]);
@@ -214,7 +220,7 @@ export function FeedTimeline({
       (profileData ?? []).map((p) => [p.id, p as Profile]),
     );
 
-    type DiaryMeta = { id: string; is_public: boolean; title: string | null; tags: string[]; original_text: string };
+    type DiaryMeta = { id: string; is_public: boolean; title: string | null; tags: string[]; original_text: string; corrected_japanese: string | null };
     const diaryMap = new Map<string, DiaryMeta>(
       (dData ?? []).map((d) => [d.id, d as DiaryMeta]),
     );
@@ -247,6 +253,7 @@ export function FeedTimeline({
         diaryTitle: d?.title ?? null,
         diaryTags: d?.tags ?? [],
         diarySnippet: body ? body.slice(0, 100) + (body.length > 100 ? "…" : "") : "",
+        hasCorrectionResult: d?.corrected_japanese != null,
         streak: stats.streak,
         monthlyCount: stats.monthlyCount,
         reactionCounts: rxCounts.get(a.id) ?? {},

@@ -144,7 +144,7 @@ export default async function FeedPage() {
     diaryIds.length
       ? supabase
           .from("diary_entries")
-          .select("id, is_public, title, tags, original_text")
+          .select("id, is_public, title, tags, original_text, corrected_japanese")
           .in("id", diaryIds)
       : Promise.resolve({
           data: [] as {
@@ -153,6 +153,7 @@ export default async function FeedPage() {
             title: string | null;
             tags: string[];
             original_text: string;
+            corrected_japanese: string | null;
           }[],
         }),
   ]);
@@ -160,7 +161,7 @@ export default async function FeedPage() {
   // Build lookup maps
   const authors = new Map((authorData ?? []).map((p) => [p.id, p as Profile]));
 
-  type DiaryMeta = { id: string; is_public: boolean; title: string | null; tags: string[]; original_text: string };
+  type DiaryMeta = { id: string; is_public: boolean; title: string | null; tags: string[]; original_text: string; corrected_japanese: string | null };
   const diaryMap = new Map<string, DiaryMeta>(
     (diaryData ?? []).map((d) => [d.id, d as DiaryMeta]),
   );
@@ -199,6 +200,7 @@ export default async function FeedPage() {
       diaryTitle: d?.title ?? null,
       diaryTags: d?.tags ?? [],
       diarySnippet: body ? body.slice(0, 100) + (body.length > 100 ? "…" : "") : "",
+      hasCorrectionResult: d?.corrected_japanese != null,
       streak: stats.streak,
       monthlyCount: stats.monthlyCount,
       reactionCounts: rxCounts.get(a.id) ?? {},
