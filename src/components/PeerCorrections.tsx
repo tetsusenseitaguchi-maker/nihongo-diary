@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/icons";
 import { Avatar } from "@/components/ObiePhoto";
@@ -27,6 +27,19 @@ type PeerCorrection = {
 };
 
 type PendingRange = { start: number; end: number; excerpt: string };
+
+// code-unit offset entry for each Unicode code point in the text
+type CharEntry = { char: string; cuStart: number; cuEnd: number };
+
+function buildCharEntries(text: string): CharEntry[] {
+  const entries: CharEntry[] = [];
+  let cu = 0;
+  for (const char of text) {
+    entries.push({ char, cuStart: cu, cuEnd: cu + char.length });
+    cu += char.length;
+  }
+  return entries;
+}
 
 function resolveProfile(raw: PeerCorrection["profiles"]): ProfileSnap | null {
   if (!raw) return null;
@@ -90,6 +103,51 @@ function HighlightedText({
   );
 }
 
+// Renders each character as a tappable button for range selection.
+// phase="picking-start": no selection yet, every char is neutral
+// phase="picking-end":   tapStartIdx is highlighted; tapping another char confirms the range
+function TappableText({
+  chars,
+  phase,
+  tapStartIdx,
+  onTap,
+}: {
+  chars: CharEntry[];
+  phase: "picking-start" | "picking-end";
+  tapStartIdx: number | null;
+  onTap: (cpIdx: number) => void;
+}) {
+  return (
+    <div className="font-jp text-base leading-relaxed text-ink select-none break-all">
+      {chars.map(({ char }, cpIdx) => {
+        if (char === "\n") return <br key={cpIdx} />;
+
+        const isStart = phase === "picking-end" && cpIdx === tapStartIdx;
+
+        return (
+          <button
+            key={cpIdx}
+            type="button"
+            // onPointerDown fires before browser text-selection and works for both
+            // mouse and touch without the 300 ms tap delay
+            onPointerDown={(e) => {
+              e.preventDefault();
+              onTap(cpIdx);
+            }}
+            className={`touch-manipulation inline-block rounded-sm px-0.5 py-1.5 font-jp text-base transition-colors ${
+              isStart
+                ? "bg-pine/20 text-pine ring-1 ring-pine/30"
+                : "text-ink active:bg-mint/60 hover:bg-mint/30"
+            }`}
+          >
+            {char}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function PeerCorrections({
   entryId,
   originalText,
@@ -108,7 +166,13 @@ export function PeerCorrections({
   const [corrections, setCorrections] = useState<PeerCorrection[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [isSelecting, setIsSelecting] = useState(false);
+
+  // "picking-start" → waiting for first tap
+  // "picking-end"   → start is set, waiting for second tap
+  // null            → not in selection mode
+  const [selectPhase, setSelectPhase] = useState<"picking-start" | "picking-end" | null>(null);
+  const [tapStartIdx, setTapStartIdx] = useState<number | null>(null);
+
   const [pendingRange, setPendingRange] = useState<PendingRange | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [correctedInput, setCorrectedInput] = useState("");
@@ -116,8 +180,10 @@ export function PeerCorrections({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const textRef = useRef<HTMLDivElement>(null);
-  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const cardRefs: Record<string, HTMLDivElement | null> = {};
+
+  // Build char entries once — needed for Unicode-safe offset calculation
+  const chars = buildCharEntries(originalText);
 
   useEffect(() => {
     fetch(`/api/peer-corrections?diaryEntryId=${entryId}`)
@@ -127,47 +193,50 @@ export function PeerCorrections({
       .finally(() => setLoading(false));
   }, [entryId]);
 
-  const handleSelectionEnd = useCallback(() => {
-    if (!isSelecting || !textRef.current) return;
-    const sel = window.getSelection();
-    if (!sel || sel.isCollapsed) return;
-    const range = sel.getRangeAt(0);
-    if (!textRef.current.contains(range.commonAncestorContainer)) {
-      sel.removeAllRanges();
-      return;
-    }
-
-    const preRange = document.createRange();
-    preRange.selectNodeContents(textRef.current);
-    preRange.setEnd(range.startContainer, range.startOffset);
-    const start = preRange.toString().length;
-    const excerpt = range.toString();
-    if (!excerpt.trim()) return;
-
-    setPendingRange({ start, end: start + excerpt.length, excerpt });
-    setCorrectedInput("");
-    setCommentInput("");
-    sel.removeAllRanges();
-  }, [isSelecting]);
-
   function handleClickRange(id: string) {
     setActiveId((prev) => (prev === id ? null : id));
     setTimeout(() => {
-      cardRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      cardRefs[id]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }, 50);
   }
 
   function enterSelectMode() {
-    setIsSelecting(true);
+    setSelectPhase("picking-start");
+    setTapStartIdx(null);
     setPendingRange(null);
     setActiveId(null);
     setError(null);
   }
 
   function cancelAdd() {
-    setIsSelecting(false);
+    setSelectPhase(null);
+    setTapStartIdx(null);
     setPendingRange(null);
     setError(null);
+  }
+
+  function handleCharTap(cpIdx: number) {
+    if (selectPhase === "picking-start") {
+      setTapStartIdx(cpIdx);
+      setSelectPhase("picking-end");
+    } else if (selectPhase === "picking-end" && tapStartIdx !== null) {
+      if (cpIdx < tapStartIdx) {
+        // User tapped before the current start — re-pick start
+        setTapStartIdx(cpIdx);
+      } else {
+        // Confirm range [tapStartIdx, cpIdx] (both inclusive in code-point space)
+        const startEntry = chars[tapStartIdx];
+        const endEntry = chars[cpIdx];
+        const cuStart = startEntry.cuStart;
+        const cuEnd = endEntry.cuEnd; // exclusive
+        const excerpt = originalText.slice(cuStart, cuEnd);
+        setPendingRange({ start: cuStart, end: cuEnd, excerpt });
+        setCorrectedInput("");
+        setCommentInput("");
+        setSelectPhase(null);
+        setTapStartIdx(null);
+      }
+    }
   }
 
   async function handleSubmit() {
@@ -198,9 +267,8 @@ export function PeerCorrections({
       );
       setActiveId(newC.id);
       setPendingRange(null);
-      setIsSelecting(false);
       setTimeout(() => {
-        cardRefs.current[newC.id]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        cardRefs[newC.id]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }, 100);
     } catch {
       setError(t("peerCorrection.error"));
@@ -252,6 +320,7 @@ export function PeerCorrections({
   }
 
   const canAdd = !isOwner && isPublic;
+  const isSelecting = selectPhase !== null;
 
   return (
     <div className="space-y-4">
@@ -290,7 +359,7 @@ export function PeerCorrections({
             )}
           </div>
 
-          {/* Add correction button — only for non-owners of public diaries */}
+          {/* "Add a correction" button */}
           {canAdd && !isSelecting && !pendingRange && (
             <button
               onClick={enterSelectMode}
@@ -301,28 +370,29 @@ export function PeerCorrections({
             </button>
           )}
 
-          {/* Select mode: plain text for selection */}
-          {canAdd && isSelecting && !pendingRange && (
-            <div className="space-y-2 rounded-2xl border border-moss/30 bg-mint/10 p-4">
-              <p className="text-sm font-semibold text-pine">{t("peerCorrection.selectPrompt")}</p>
-              <div
-                ref={textRef}
-                onMouseUp={handleSelectionEnd}
-                onTouchEnd={handleSelectionEnd}
-                className="cursor-text select-text rounded-xl bg-paper px-4 py-3 font-jp text-base leading-relaxed text-ink whitespace-pre-wrap"
-              >
-                {originalText}
+          {/* Tap-to-select mode */}
+          {canAdd && isSelecting && (
+            <div className="space-y-3 rounded-2xl border border-moss/30 bg-mint/10 p-4">
+              <p className="text-sm font-semibold text-pine">
+                {selectPhase === "picking-start"
+                  ? t("peerCorrection.tapFirstChar")
+                  : t("peerCorrection.tapLastChar")}
+              </p>
+              <div className="rounded-xl bg-paper px-4 py-3">
+                <TappableText
+                  chars={chars}
+                  phase={selectPhase!}
+                  tapStartIdx={tapStartIdx}
+                  onTap={handleCharTap}
+                />
               </div>
-              <button
-                onClick={cancelAdd}
-                className="text-sm text-muted hover:text-ink"
-              >
+              <button onClick={cancelAdd} className="text-sm text-muted hover:text-ink">
                 {t("peerCorrection.cancelBtn")}
               </button>
             </div>
           )}
 
-          {/* Correction form — after text selection */}
+          {/* Correction form — after range is confirmed */}
           {canAdd && pendingRange && (
             <div className="space-y-3 rounded-2xl border border-moss/30 bg-mint/20 p-4">
               <p className="text-sm font-semibold text-pine">
@@ -395,7 +465,7 @@ export function PeerCorrections({
                   <div
                     key={c.id}
                     ref={(el) => {
-                      cardRefs.current[c.id] = el;
+                      cardRefs[c.id] = el;
                     }}
                     className={`rounded-2xl border p-4 space-y-2 transition-colors ${
                       isActive ? "border-moss/40 bg-mint/30" : "border-line bg-paper/60"
