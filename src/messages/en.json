@@ -53,7 +53,7 @@
   "write.mood": "Mood",
   "write.weather": "Weather",
   "write.tags": "Tags",
-  "write.correctBtn": "Correct my Japanese",
+  "write.correctBtn": "Correct with AI",
   "write.correcting": "Correcting…",
   "write.saveBtn": "Save diary",
   "write.viewDiary": "View diary →",
@@ -678,7 +678,7 @@
   "peerCorrection.noCorrectionsOwner": "No community corrections yet.",
   "peerCorrection.error": "Failed to submit. Please try again.",
 
-  "write.seekPeer": "Ask for corrections",
+  "write.seekPeer": "Ask the community",
   "write.seekingPeer": "Saving…",
   "write.seekPeerError": "Save failed. Please try again.",
   "feed.seekingCorrection": "Seeking corrections",

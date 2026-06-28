@@ -53,7 +53,7 @@
   "write.mood": "気分",
   "write.weather": "天気",
   "write.tags": "タグ",
-  "write.correctBtn": "日本語を添削する",
+  "write.correctBtn": "AIで添削する",
   "write.correcting": "添削中…",
   "write.saveBtn": "日記を保存",
   "write.viewDiary": "日記を見る →",
@@ -581,7 +581,7 @@
   "peerCorrection.noCorrectionsOwner": "まだコミュニティからの添削はありません。",
   "peerCorrection.error": "送信に失敗しました。もう一度お試しください。",
 
-  "write.seekPeer": "人に添削を頼む",
+  "write.seekPeer": "みんなに添削を頼む",
   "write.seekingPeer": "保存中…",
   "write.seekPeerError": "保存に失敗しました。もう一度お試しください。",
   "feed.seekingCorrection": "添削募集中",

@@ -781,7 +781,7 @@ export default function WritePage() {
                       onClick={handleSeekPeerCorrection}
                       disabled={!text.trim() || overLimit || loading || justSaving || seekingPeer || saving}
                     >
-                      {seekingPeer ? t("write.seekingPeer") : t("write.seekPeer")}
+                      {seekingPeer ? t("write.seekingPeer") : <><Icon.feed className="h-4 w-4" /> {t("write.seekPeer")}</>}
                     </Button>
                   </>
                 )}
