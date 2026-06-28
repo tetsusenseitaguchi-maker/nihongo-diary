@@ -749,12 +749,12 @@ export default function WritePage() {
 
               {/* actions */}
               <div className="mt-5 flex flex-wrap items-center justify-end gap-3">
-                <Button variant="secondary">
+                <Button variant="ghost">
                   <Icon.book className="h-4 w-4" /> {t("write.saveDraft")}
                 </Button>
                 {!result && (
                   <Button
-                    variant="ghost"
+                    variant="secondary"
                     onClick={handleJustSave}
                     disabled={!text.trim() || overLimit || loading || justSaving || saving}
                   >

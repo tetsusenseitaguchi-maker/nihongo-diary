@@ -15,6 +15,7 @@ interface Entry {
   title: string | null;
   tags: string[];
   original_text: string;
+  corrected_japanese: string | null;
   level: string | null;
   correction_style: string | null;
   image_path: string | null;

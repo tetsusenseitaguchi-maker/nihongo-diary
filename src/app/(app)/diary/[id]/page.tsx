@@ -235,14 +235,21 @@ export default async function DiaryDetailPage({
           <CorrectionResult correction={correction} />
         </>
       ) : (
-        <div className="rounded-2xl border border-dashed border-line bg-paper/60 px-6 py-8 text-center">
-          <p className="mb-1 font-semibold text-pine">{t("diary.noCorrectionYet")}</p>
-          {isOwner && (
-            <div className="mt-4">
-              <GetCorrectionButton entryId={id} />
-            </div>
-          )}
-        </div>
+        <>
+          <div className="rounded-2xl bg-mint/30 px-5 py-4">
+            <p className="font-jp text-base leading-relaxed text-ink whitespace-pre-wrap">
+              {entry.original_text}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-dashed border-line bg-paper/60 px-6 py-8 text-center">
+            <p className="mb-1 font-semibold text-pine">{t("diary.noCorrectionYet")}</p>
+            {isOwner && (
+              <div className="mt-4">
+                <GetCorrectionButton entryId={id} />
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* Comments — shown for any public diary */}
