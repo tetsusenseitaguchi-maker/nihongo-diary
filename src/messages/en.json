@@ -676,5 +676,11 @@
   "peerCorrection.corrected": "After",
   "peerCorrection.noCorrections": "No corrections yet. Be the first to help!",
   "peerCorrection.noCorrectionsOwner": "No community corrections yet.",
-  "peerCorrection.error": "Failed to submit. Please try again."
+  "peerCorrection.error": "Failed to submit. Please try again.",
+
+  "write.seekPeer": "Ask for corrections",
+  "write.seekingPeer": "Saving…",
+  "write.seekPeerError": "Save failed. Please try again.",
+  "feed.seekingCorrection": "Seeking corrections",
+  "diary.seekingCorrection": "Seeking corrections"
 }

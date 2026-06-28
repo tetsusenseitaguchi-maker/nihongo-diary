@@ -18,7 +18,7 @@ export default async function HistoryPage({
   const { data } = await supabase
     .from("diary_entries")
     .select(
-      "id, diary_date, title, tags, original_text, corrected_japanese, level, correction_style, image_path, audio_path",
+      "id, diary_date, title, tags, original_text, corrected_japanese, seeking_peer_correction, level, correction_style, image_path, audio_path",
     )
     .eq("user_id", user.id)
     .order("diary_date", { ascending: false })

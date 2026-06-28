@@ -130,6 +130,8 @@ export default function WritePage() {
   const [savedEntryId, setSavedEntryId] = useState<string | null>(null);
   const [justSaving, setJustSaving] = useState(false);
   const [justSaveError, setJustSaveError] = useState<string | null>(null);
+  const [seekingPeer, setSeekingPeer] = useState(false);
+  const [seekPeerError, setSeekPeerError] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [places, setPlaces] = useState<DiaryPlace[]>([]);
@@ -418,7 +420,7 @@ export default function WritePage() {
   }
 
   // Save diary without running AI correction — does not consume any correction count.
-  async function saveWithoutCorrection(): Promise<string> {
+  async function saveWithoutCorrection(opts?: { isPublic?: boolean; seekingPeerCorrection?: boolean }): Promise<string> {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
@@ -434,6 +436,8 @@ export default function WritePage() {
         original_text: text.trim(),
         level: levels[level],
         correction_style: styles[style],
+        is_public: opts?.isPublic ?? false,
+        seeking_peer_correction: opts?.seekingPeerCorrection ?? false,
       })
       .select("id")
       .single();
@@ -482,10 +486,24 @@ export default function WritePage() {
       user_id: user.id,
       activity_type: "wrote_diary",
       diary_entry_id: data.id,
-      metadata: { diary_date: diaryDate, is_public: false },
+      metadata: { diary_date: diaryDate, is_public: opts?.isPublic ?? false },
     });
 
     return data.id;
+  }
+
+  async function handleSeekPeerCorrection() {
+    if (!text.trim() || overLimit || loading || seekingPeer || justSaving || saving) return;
+    setSeekingPeer(true);
+    setSeekPeerError(null);
+    try {
+      const id = await saveWithoutCorrection({ isPublic: true, seekingPeerCorrection: true });
+      router.push(`/diary/${id}`);
+    } catch (err) {
+      setSeekPeerError(err instanceof Error ? err.message : t("write.seekPeerError"));
+    } finally {
+      setSeekingPeer(false);
+    }
   }
 
   async function handleJustSave() {
@@ -749,19 +767,25 @@ export default function WritePage() {
 
               {/* actions */}
               <div className="mt-5 flex flex-wrap items-center justify-end gap-3">
-                <Button variant="ghost">
-                  <Icon.book className="h-4 w-4" /> {t("write.saveDraft")}
-                </Button>
                 {!result && (
-                  <Button
-                    variant="secondary"
-                    onClick={handleJustSave}
-                    disabled={!text.trim() || overLimit || loading || justSaving || saving}
-                  >
-                    {justSaving ? t("write.justSaving") : t("write.justSave")}
-                  </Button>
+                  <>
+                    <Button
+                      variant="ghost"
+                      onClick={handleJustSave}
+                      disabled={!text.trim() || overLimit || loading || justSaving || seekingPeer || saving}
+                    >
+                      {justSaving ? t("write.justSaving") : t("write.justSave")}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={handleSeekPeerCorrection}
+                      disabled={!text.trim() || overLimit || loading || justSaving || seekingPeer || saving}
+                    >
+                      {seekingPeer ? t("write.seekingPeer") : t("write.seekPeer")}
+                    </Button>
+                  </>
                 )}
-                <Button onClick={handleCorrect} disabled={!text.trim() || overLimit || loading || remaining <= 0}>
+                <Button onClick={handleCorrect} disabled={!text.trim() || overLimit || loading || seekingPeer || justSaving || remaining <= 0}>
                   {loading ? (
                     t("write.correcting")
                   ) : remaining <= 0 ? (
@@ -779,6 +803,11 @@ export default function WritePage() {
               {justSaveError && (
                 <p className="mt-2 rounded-lg bg-apricot/10 px-3 py-2 text-sm text-apricot">
                   {justSaveError}
+                </p>
+              )}
+              {seekPeerError && (
+                <p className="mt-2 rounded-lg bg-apricot/10 px-3 py-2 text-sm text-apricot">
+                  {seekPeerError}
                 </p>
               )}
               {correctError && (

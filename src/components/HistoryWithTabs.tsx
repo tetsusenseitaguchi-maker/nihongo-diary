@@ -16,6 +16,7 @@ interface Entry {
   tags: string[];
   original_text: string;
   corrected_japanese: string | null;
+  seeking_peer_correction: boolean;
   level: string | null;
   correction_style: string | null;
   image_path: string | null;

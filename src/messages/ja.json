@@ -581,6 +581,12 @@
   "peerCorrection.noCorrectionsOwner": "まだコミュニティからの添削はありません。",
   "peerCorrection.error": "送信に失敗しました。もう一度お試しください。",
 
+  "write.seekPeer": "人に添削を頼む",
+  "write.seekingPeer": "保存中…",
+  "write.seekPeerError": "保存に失敗しました。もう一度お試しください。",
+  "feed.seekingCorrection": "添削募集中",
+  "diary.seekingCorrection": "添削募集中",
+
   "lp.nav.login": "ログイン",
   "lp.nav.cta": "無料で書き始める",
   "lp.hero.h1a": "日本語で一番難しいのは、覚えることじゃない。",

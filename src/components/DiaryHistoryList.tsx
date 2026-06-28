@@ -25,6 +25,7 @@ interface Entry {
   tags: string[];
   original_text: string;
   corrected_japanese: string | null;
+  seeking_peer_correction: boolean;
   level: string | null;
   correction_style: string | null;
   image_path: string | null;
@@ -105,11 +106,15 @@ export function DiaryHistoryList({ initialEntries }: { initialEntries: Entry[] }
                 <span className="text-xs text-muted">{formatLong(entry.diary_date)}</span>
                 {entry.level && <Badge tone="sand">{entry.level}</Badge>}
                 {entry.correction_style && <Badge tone="moss">{entry.correction_style}</Badge>}
-                {entry.corrected_japanese == null && (
+                {entry.seeking_peer_correction ? (
+                  <span className="rounded-full border border-moss/40 bg-mint/40 px-2 py-0.5 text-[10px] font-medium text-pine">
+                    {t("diary.seekingCorrection")}
+                  </span>
+                ) : entry.corrected_japanese == null ? (
                   <span className="rounded-full border border-line bg-paper/80 px-2 py-0.5 text-[10px] font-medium text-muted">
                     {t("diary.noCorrectionYet")}
                   </span>
-                )}
+                ) : null}
                 {entry.image_path && <AttachmentDot icon={<Icon.camera className="h-2.5 w-2.5" />} />}
                 {entry.audio_path && <AttachmentDot icon={<Icon.mic className="h-2.5 w-2.5" />} />}
               </div>

@@ -144,7 +144,7 @@ export default async function FeedPage() {
     diaryIds.length
       ? supabase
           .from("diary_entries")
-          .select("id, is_public, title, tags, original_text, corrected_japanese")
+          .select("id, is_public, title, tags, original_text, corrected_japanese, seeking_peer_correction")
           .in("id", diaryIds)
       : Promise.resolve({
           data: [] as {
@@ -154,6 +154,7 @@ export default async function FeedPage() {
             tags: string[];
             original_text: string;
             corrected_japanese: string | null;
+            seeking_peer_correction: boolean;
           }[],
         }),
   ]);
@@ -161,7 +162,7 @@ export default async function FeedPage() {
   // Build lookup maps
   const authors = new Map((authorData ?? []).map((p) => [p.id, p as Profile]));
 
-  type DiaryMeta = { id: string; is_public: boolean; title: string | null; tags: string[]; original_text: string; corrected_japanese: string | null };
+  type DiaryMeta = { id: string; is_public: boolean; title: string | null; tags: string[]; original_text: string; corrected_japanese: string | null; seeking_peer_correction: boolean };
   const diaryMap = new Map<string, DiaryMeta>(
     (diaryData ?? []).map((d) => [d.id, d as DiaryMeta]),
   );
@@ -201,6 +202,7 @@ export default async function FeedPage() {
       diaryTags: d?.tags ?? [],
       diarySnippet: body ? body.slice(0, 100) + (body.length > 100 ? "…" : "") : "",
       hasCorrectionResult: d?.corrected_japanese != null,
+      seekingPeerCorrection: d?.seeking_peer_correction ?? false,
       streak: stats.streak,
       monthlyCount: stats.monthlyCount,
       reactionCounts: rxCounts.get(a.id) ?? {},
