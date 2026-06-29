@@ -269,7 +269,7 @@ export default async function FeedPage() {
             )}
           </Card>
 
-          <Card className="gloss-green p-5">
+          <Card accent="none" className="gloss-green p-5">
             <p className="font-jp text-sm font-medium text-cream">
               毎日(まいにち)ちょっとずつ、いっしょに。
             </p>

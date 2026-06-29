@@ -51,7 +51,7 @@ export default async function DashboardPage() {
     <div className="space-y-5">
       {/* Hero + stats */}
       <div className="grid gap-5 lg:grid-cols-12">
-        <Card className="relative overflow-hidden p-0 lg:col-span-7">
+        <Card accent="none" className="relative overflow-hidden p-0 lg:col-span-7">
           <div className="flex h-full flex-col justify-between gap-6 bg-sage/60 p-7 sm:flex-row sm:items-center">
             <div className="max-w-xs">
               <p className="font-jp text-sm font-semibold text-moss-600">おかえり、{displayName}さん 🌸</p>
@@ -201,7 +201,7 @@ export default async function DashboardPage() {
             </Card>
 
             {/* Feed card */}
-            <Card className="flex flex-col border-moss/20 bg-sage/30 p-5">
+            <Card accent="none" className="flex flex-col border-moss/20 bg-sage/30 p-5">
               <div className="mb-3">
                 <span className="text-2xl">🌱</span>
                 <h2 className="mt-2 font-serif text-lg font-bold text-pine">{t("dashboard.feedSection")}</h2>
@@ -287,9 +287,8 @@ function StatCard({
   iconTint?: "moss" | "apricot";
   className?: string;
 }) {
-  const accent = iconTint === "apricot" ? "border-l-[3px] border-l-apricot" : "border-l-[3px] border-l-moss";
   return (
-    <Card className={`${accent} p-4 ${className}`}>
+    <Card accent={iconTint === "apricot" ? "apricot" : "pine"} className={`p-4 ${className}`}>
       <div className="flex items-start justify-between">
         <p className="text-xs font-semibold text-muted">{label}</p>
         <span

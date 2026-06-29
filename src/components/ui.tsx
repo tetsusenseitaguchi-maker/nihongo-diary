@@ -63,16 +63,26 @@ export function LinkButton({
 
 /* ------------------------------ Card ------------------------------ */
 
+type CardAccent = "pine" | "apricot" | "none";
+
 export function Card({
   className = "",
+  accent = "pine",
   children,
 }: {
   className?: string;
+  accent?: CardAccent;
   children: ReactNode;
 }) {
+  const accentClass =
+    accent === "pine"
+      ? "border-l-[3px] border-l-pine"
+      : accent === "apricot"
+        ? "border-l-[3px] border-l-apricot"
+        : "";
   return (
     <div
-      className={`rounded-[var(--radius-card)] border border-line bg-paper shadow-card ${className}`}
+      className={`rounded-[var(--radius-card)] border border-line bg-paper shadow-card ${accentClass} ${className}`}
     >
       {children}
     </div>

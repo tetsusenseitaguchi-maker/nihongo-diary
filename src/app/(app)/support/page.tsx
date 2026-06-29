@@ -72,7 +72,7 @@ export default function SupportPage() {
       </div>
 
       {/* Obie banner */}
-      <Card className="gloss-green relative overflow-hidden p-0">
+      <Card accent="none" className="gloss-green relative overflow-hidden p-0">
         <div className="flex flex-col items-center gap-5 p-6 sm:flex-row sm:p-7">
           <ObiePhoto size={84} className="ring-4 ring-cream/20" />
           <div>
@@ -154,7 +154,7 @@ export default function SupportPage() {
             </div>
           ))}
 
-          <Card className="gloss-green flex items-center gap-4 p-5">
+          <Card accent="none" className="gloss-green flex items-center gap-4 p-5">
             <span className="text-2xl">🐾</span>
             <p className="font-jp text-[15px] font-medium text-cream">
               <Furigana text="毎日(まいにち)ちょっとずつ。いっしょにがんばろう！" />

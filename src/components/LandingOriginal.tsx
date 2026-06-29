@@ -184,7 +184,7 @@ export function LandingOriginal({ t, locale }: { t: T; locale: Locale }) {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
-        <Card className="genkou-soft relative overflow-hidden bg-pine p-10 text-center shadow-lift sm:p-14">
+        <Card accent="none" className="genkou-soft relative overflow-hidden bg-pine p-10 text-center shadow-lift sm:p-14">
           <div className="relative">
             <Obie size={64} className="mx-auto mb-5" />
             <h2 className="font-serif text-3xl font-extrabold tracking-tight text-cream sm:text-4xl">{t("landing.cta.h2")}</h2>
