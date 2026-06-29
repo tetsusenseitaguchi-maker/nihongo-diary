@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Avatar } from "@/components/ObiePhoto";
 import { relativeTime } from "@/lib/activity";
 import { useT } from "@/contexts/locale";
+import { WordTranslateText } from "@/components/WordTranslateText";
 
 type CommentProfile = {
   username: string | null;
@@ -199,7 +200,11 @@ export function CommentsSection({
                   </span>
                   <span className="text-[11px] text-muted">{relativeTime(c.created_at)}</span>
                 </div>
-                <p className="mt-1 text-sm leading-relaxed text-ink/80">{c.body}</p>
+                <WordTranslateText
+                  text={c.body}
+                  language={viewerLanguage}
+                  textClassName="mt-1 text-sm leading-relaxed text-ink/80"
+                />
                 <CommentTranslate body={c.body} viewerLanguage={viewerLanguage} />
               </div>
               {c.user_id === currentUserId && (

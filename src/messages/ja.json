@@ -223,6 +223,8 @@
   "translate.translating": "翻訳中",
   "translate.hide": "隠す",
   "translate.show": "翻訳を見る",
+  "translate.tapWord": "単語をタップ",
+  "translate.tapWordOff": "閉じる",
   "review.title": "昨日の文法復習",
   "review.descPro": "AI生成の復習ドリルはProプランで利用できます。",
   "review.descFree": "ミニレッスンを選ぶとObieが5問の練習ドリルを作ります。",

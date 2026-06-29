@@ -18,6 +18,7 @@ import { Avatar } from "@/components/ObiePhoto";
 import { formatLong } from "@/lib/dates";
 import { getServerT } from "@/lib/i18n-server";
 import { Furigana } from "@/components/Furigana";
+import { WordTranslateText } from "@/components/WordTranslateText";
 import type { Correction, MistakeItem, VocabItem, JlptWord, AlternativeWord } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -267,9 +268,10 @@ export default async function DiaryDetailPage({
                 <span className="text-sm font-bold text-pine">{t("correction.naturalJapanese")}</span>
                 <Furigana text="自然(しぜん)な日本語(にほんご)" className="font-jp text-xs text-muted" />
               </p>
-              <p className="font-jp text-base leading-loose text-ink">
-                <Furigana text={entry.natural_japanese} />
-              </p>
+              <WordTranslateText
+                text={entry.natural_japanese}
+                language={preferredLanguage}
+              />
             </div>
           )}
         </div>

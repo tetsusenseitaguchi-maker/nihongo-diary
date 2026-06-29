@@ -209,5 +209,13 @@
   "feed.noCorrectionYet": "No correction yet",
   "write.justSave": "Just save (no correction)",
   "write.justSaving": "Saving…",
-  "write.justSaveError": "Save failed. Please try again."
+  "write.justSaveError": "Save failed. Please try again.",
+  "translate.failed": "Translation failed. Please try again.",
+  "translate.networkError": "Network error. Please check your connection and try again.",
+  "translate.label": "{lang} Translation",
+  "translate.translating": "Translating",
+  "translate.hide": "Hide",
+  "translate.show": "Show translation",
+  "translate.tapWord": "Tap a word",
+  "translate.tapWordOff": "Done"
 }

@@ -223,6 +223,8 @@
   "translate.translating": "翻译中",
   "translate.hide": "隐藏",
   "translate.show": "显示翻译",
+  "translate.tapWord": "Tap a word",
+  "translate.tapWordOff": "Done",
   "review.title": "昨天的语法复习",
   "review.descPro": "AI生成的复习练习可在Pro计划中使用。",
   "review.descFree": "选择任意迷你课程，Obie将为你生成5道专项练习题。",

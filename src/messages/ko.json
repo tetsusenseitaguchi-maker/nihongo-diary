@@ -223,6 +223,8 @@
   "translate.translating": "번역 중",
   "translate.hide": "숨기기",
   "translate.show": "번역 보기",
+  "translate.tapWord": "Tap a word",
+  "translate.tapWordOff": "Done",
   "review.title": "어제의 문법 복습",
   "review.descPro": "AI가 생성한 복습 연습은 Pro 플랜에서 이용 가능합니다.",
   "review.descFree": "미니 레슨을 선택하면 Obie가 5개의 맞춤 연습 문제를 만들어줍니다.",
