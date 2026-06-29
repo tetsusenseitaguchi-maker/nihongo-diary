@@ -39,6 +39,12 @@ export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
     t("lp.steps.s3"),
   ];
 
+  const testimonials = [
+    { body: t("lp.testimonials.t1.body"), name: t("lp.testimonials.t1.name"), flag: "🇩🇪", status: t("lp.testimonials.t1.status"), avatarSrc: "/testimonial-obie-1.png" },
+    { body: t("lp.testimonials.t2.body"), name: t("lp.testimonials.t2.name"), flag: "🇺🇸", status: t("lp.testimonials.t2.status"), avatarSrc: "/testimonial-obie-2.png" },
+    { body: t("lp.testimonials.t3.body"), name: t("lp.testimonials.t3.name"), flag: "🇺🇸", status: t("lp.testimonials.t3.status"), avatarSrc: "/testimonial-obie-3.png" },
+  ];
+
   const teacherBody = [
     t("lp.teacher.body1"),
     t("lp.teacher.body2"),
@@ -240,7 +246,47 @@ export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
         </div>
       </section>
 
-      {/* ── 6. MEET YOUR TEACHER ────────────────────────── */}
+      {/* ── 6. TESTIMONIALS ─────────────────────────────── */}
+      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+        <h2 className="mx-auto max-w-2xl text-center font-serif text-3xl font-extrabold tracking-tight text-pine sm:text-4xl">
+          {t("lp.testimonials.h2")}
+        </h2>
+        <div className="mt-10 grid gap-5 sm:grid-cols-3">
+          {testimonials.map((te, i) => (
+            <Card key={i} className="flex flex-col p-6">
+              {/* Quote */}
+              <p className="flex-1 text-[15px] leading-relaxed text-ink/80">
+                &ldquo;{te.body}&rdquo;
+              </p>
+              {/* Attribution */}
+              <div className="mt-5 flex items-center gap-3 border-t border-line pt-4">
+                {/*
+                  Avatar placeholder — swap for the real image once you drop
+                  /public/testimonial-obie-1.png, testimonial-obie-2.png, testimonial-obie-3.png:
+
+                  <Image
+                    src={te.avatarSrc}
+                    width={40} height={40}
+                    className="rounded-full object-cover"
+                    alt={te.name}
+                  />
+                */}
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sage text-base ring-2 ring-mint">
+                  🐾
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-pine">
+                    {te.name} <span className="ml-0.5">{te.flag}</span>
+                  </p>
+                  <p className="text-xs text-muted">{te.status}</p>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 7. MEET YOUR TEACHER ────────────────────────── */}
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <div className="grid items-start gap-10 lg:grid-cols-[1fr_1.6fr]">
           <div className="flex flex-col gap-4">
@@ -273,7 +319,7 @@ export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
         </div>
       </section>
 
-      {/* ── 7. PRICING ──────────────────────────────────── */}
+      {/* ── 8. PRICING ──────────────────────────────────── */}
       <section className="bg-sand/30">
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
           <h2 className="mx-auto max-w-2xl text-center font-serif text-3xl font-extrabold tracking-tight text-pine sm:text-4xl">
@@ -338,7 +384,7 @@ export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
         </div>
       </section>
 
-      {/* ── 8. FINAL CTA ────────────────────────────────── */}
+      {/* ── 9. FINAL CTA ────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-4 pb-24 pt-16 sm:px-6">
         <div className="relative overflow-hidden rounded-[var(--radius-card)] bg-pine p-10 text-center shadow-lift sm:p-16">
           <div className="genkou absolute inset-0 opacity-[0.07]" aria-hidden />

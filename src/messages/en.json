@@ -615,6 +615,17 @@
   "lp.steps.s3": "Save what you learned, and keep your streak with others. Tomorrow, you do it again — and you're not doing it alone.",
   "lp.steps.closing": "Five minutes a day. The output practice you could never check before — now you can.",
 
+  "lp.testimonials.h2": "What Japanese learners say",
+  "lp.testimonials.t1.body": "I've kept a little Japanese diary for three months — writing every day and getting it corrected. It's the best way to learn everyday words and practice grammar.",
+  "lp.testimonials.t1.name": "Simone",
+  "lp.testimonials.t1.status": "writing daily",
+  "lp.testimonials.t2.body": "I'd wanted to do daily writing practice and keep a journal. This solved two problems at once.",
+  "lp.testimonials.t2.name": "Matthew",
+  "lp.testimonials.t2.status": "keeping a streak",
+  "lp.testimonials.t3.body": "Such a cool idea. I love the order — original, natural rewrite, teacher's notes, key mistakes, vocab, then a practice sentence.",
+  "lp.testimonials.t3.name": "Jamie",
+  "lp.testimonials.t3.status": "beta tester",
+
   "lp.teacher.name": "Tetsu Sensei — Japanese teacher, Sapporo",
   "lp.teacher.body1": "I'm a Japanese teacher. But before that, I was an English learner who hit the exact wall I just described.",
   "lp.teacher.body2": "I learned the hard way that real progress comes down to three things: input, output, repeat. Input was easy. Output was where I got stuck — because I could never check if what I produced was actually right, and alone, I always quit.",
