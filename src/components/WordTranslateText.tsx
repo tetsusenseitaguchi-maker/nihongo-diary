@@ -24,8 +24,51 @@ function stripFurigana(text: string): string {
 
 type Seg = { text: string; isTappable: boolean };
 
+// Inflectional suffix fragments that TinySegmenter splits off as separate tokens
+// but which are never useful as standalone translation targets. Merging them into
+// the preceding token reconstructs natural word-forms:
+//   買い + まし + た  → 買いました
+//   おいしかっ + た  → おいしかった
+//   食べ + て + い + ませ + ん  → 食べて + いません
+const ATTACH_TO_PREV = new Set([
+  // polite-form fragments
+  "まし", "ます", "ました", "ません",
+  // copula fragments
+  "でし", "でした",
+  // adjective past-form fragment (おいしかっ+た)
+  "かっ",
+  // negative fragments
+  "なかっ", "ない",
+  // negative-polite fragment + nasal coda (ませ+ん in いません)
+  "ませ", "ん",
+  // passive / potential / causative stems
+  "られ", "させ",
+  // past tense auxiliary
+  "た",
+  // te-form connector (食べて、行って)
+  "て",
+  // volitional final mora (行きましょ+う)
+  "う",
+]);
+
+// Merges inflectional suffix fragments into the preceding token. Single pass:
+// chains like まし→た resolve because each token is appended to the growing
+// last element before the next iteration checks it.
+function mergeInflections(tokens: string[]): string[] {
+  const out: string[] = [];
+  for (const tok of tokens) {
+    if (out.length > 0 && ATTACH_TO_PREV.has(tok)) {
+      out[out.length - 1] += tok;
+    } else {
+      out.push(tok);
+    }
+  }
+  return out;
+}
+
 function makeSegments(plain: string): Seg[] {
-  return segmentJapanese(plain).flatMap((word) => {
+  const merged = mergeInflections(segmentJapanese(plain));
+  return merged.flatMap((word) => {
     const parts: Seg[] = [];
     let pos = 0;
     while (pos < word.length) {
