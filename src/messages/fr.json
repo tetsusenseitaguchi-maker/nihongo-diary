@@ -583,6 +583,14 @@
   "peerCorrection.noCorrections": "No corrections yet. Be the first to help!",
   "peerCorrection.noCorrectionsOwner": "No community corrections yet.",
   "peerCorrection.error": "Failed to submit. Please try again.",
+
+  "reply.label": "Reply",
+  "reply.close": "Close",
+  "reply.placeholder": "Write a reply…",
+  "reply.submit": "Post",
+  "reply.error": "Failed to post reply. Please try again.",
+  "reply.delete": "Delete reply",
+
   "write.seekPeer": "Ask the community",
   "write.seekingPeer": "Saving…",
   "write.seekPeerError": "Save failed. Please try again.",

@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ObiePhoto";
 import { relativeTime } from "@/lib/activity";
 import { useT } from "@/contexts/locale";
 import { WordTranslateText } from "@/components/WordTranslateText";
+import { ReplySection } from "@/components/ReplySection";
 
 type CommentProfile = {
   username: string | null;
@@ -206,6 +207,11 @@ export function CommentsSection({
                   textClassName="mt-1 text-sm leading-relaxed text-ink/80"
                 />
                 <CommentTranslate body={c.body} viewerLanguage={viewerLanguage} />
+                <ReplySection
+                  parentType="comment"
+                  parentId={c.id}
+                  currentUserId={currentUserId}
+                />
               </div>
               {c.user_id === currentUserId && (
                 <button

@@ -584,6 +584,13 @@
   "peerCorrection.noCorrectionsOwner": "まだコミュニティからの添削はありません。",
   "peerCorrection.error": "送信に失敗しました。もう一度お試しください。",
 
+  "reply.label": "返信",
+  "reply.close": "閉じる",
+  "reply.placeholder": "返信を書く…",
+  "reply.submit": "送信",
+  "reply.error": "返信の送信に失敗しました。もう一度お試しください。",
+  "reply.delete": "返信を削除",
+
   "write.seekPeer": "みんなに添削を頼む",
   "write.seekingPeer": "保存中…",
   "write.seekPeerError": "保存に失敗しました。もう一度お試しください。",

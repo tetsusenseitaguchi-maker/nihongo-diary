@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ObiePhoto";
 import { relativeTime } from "@/lib/activity";
 import { useT } from "@/contexts/locale";
 import { segmentJapanese } from "@/lib/segmenter";
+import { ReplySection } from "@/components/ReplySection";
 
 type ProfileSnap = {
   username: string | null;
@@ -642,6 +643,11 @@ export function PeerCorrections({
                           </span>
                         </div>
                         {c.comment && <p className="text-sm text-ink/70">{c.comment}</p>}
+                        <ReplySection
+                          parentType="peer_correction"
+                          parentId={c.id}
+                          currentUserId={currentUserId}
+                        />
                       </div>
                     )}
                   </div>
