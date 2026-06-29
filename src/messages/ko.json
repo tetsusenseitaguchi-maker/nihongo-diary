@@ -183,6 +183,8 @@
   "profileSetup.levelLabel": "레벨",
   "profileSetup.bioLabel": "소개",
   "profileSetup.bioPlaceholder": "하루에 일기 하나씩, 일본어를 배우는 중.",
+  "profileSetup.countryLabel": "국가",
+  "profileSetup.countryPlaceholder": "국가 선택 (선택 사항)",
   "profileSetup.uploadPhoto": "사진 업로드",
   "profileSetup.uploading": "업로드 중…",
   "profileSetup.saveBtn": "저장하고 계속",

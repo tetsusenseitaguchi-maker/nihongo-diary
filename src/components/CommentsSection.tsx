@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Avatar } from "@/components/ObiePhoto";
 import { relativeTime } from "@/lib/activity";
 import { useT } from "@/contexts/locale";
+import { countryFlag } from "@/lib/countryFlag";
 import { WordTranslateText } from "@/components/WordTranslateText";
 import { ReplySection } from "@/components/ReplySection";
 
@@ -13,6 +14,7 @@ type CommentProfile = {
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
+  country: string | null;
 };
 
 type CommentRow = {
@@ -111,7 +113,7 @@ export function CommentsSection({
   async function fetchComments() {
     const { data } = await supabase
       .from("comments")
-      .select("id, user_id, body, created_at, profiles(username, display_name, avatar_url)")
+      .select("id, user_id, body, created_at, profiles(username, display_name, avatar_url, country)")
       .eq("diary_entry_id", diaryEntryId)
       .order("created_at", { ascending: true });
     // Normalize the embedded profile (PostgREST may return object or array)
@@ -187,7 +189,7 @@ export function CommentsSection({
               )}
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
-                  <span className="text-sm font-semibold text-pine">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-pine">
                     {c.profiles?.username ? (
                       <Link
                         href={`/profile/${c.profiles.username}`}
@@ -197,6 +199,9 @@ export function CommentsSection({
                       </Link>
                     ) : (
                       nameOf(c.profiles)
+                    )}
+                    {countryFlag(c.profiles?.country) && (
+                      <span className="text-sm leading-none">{countryFlag(c.profiles?.country)}</span>
                     )}
                   </span>
                   <span className="text-[11px] text-muted">{relativeTime(c.created_at)}</span>

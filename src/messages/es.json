@@ -183,6 +183,8 @@
   "profileSetup.levelLabel": "Nivel",
   "profileSetup.bioLabel": "Biografía",
   "profileSetup.bioPlaceholder": "Aprendiendo japonés, un diario a la vez.",
+  "profileSetup.countryLabel": "País",
+  "profileSetup.countryPlaceholder": "Seleccionar país (opcional)",
   "profileSetup.uploadPhoto": "Subir foto",
   "profileSetup.uploading": "Subiendo…",
   "profileSetup.saveBtn": "Guardar y continuar",

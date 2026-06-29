@@ -8,6 +8,7 @@ import { Icon } from "@/components/icons";
 import { SUPPORTED_LANGUAGES } from "@/lib/languages";
 import { LOCALE_COOKIE } from "@/lib/i18n";
 import { useLocale, useT } from "@/contexts/locale";
+import { COUNTRIES, countryFlag } from "@/lib/countryFlag";
 import type { Locale } from "@/lib/i18n";
 
 const levels = ["N5", "N4", "N3", "N2", "N1"];
@@ -28,6 +29,7 @@ export default function ProfileSetupPage() {
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [preferredLang, setPreferredLang] = useState("en");
+  const [country, setCountry] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -47,6 +49,7 @@ export default function ProfileSetupPage() {
         setBio(data.bio ?? "");
         setAvatarUrl(data.avatar_url ?? "");
         setPreferredLang(data.preferred_language ?? "en");
+        setCountry(data.country ?? "");
       }
       setLoading(false);
     })();
@@ -109,6 +112,7 @@ export default function ProfileSetupPage() {
         bio,
         avatar_url: avatarUrl ? avatarUrl.split("?")[0] : null,
         preferred_language: preferredLang,
+        country: country || null,
       },
       { onConflict: "id" },
     );
@@ -230,6 +234,22 @@ export default function ProfileSetupPage() {
               placeholder={t("profileSetup.bioPlaceholder")}
               className="w-full resize-none rounded-xl border border-line bg-paper px-4 py-2.5 text-ink outline-none focus:border-moss"
             />
+          </label>
+
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-semibold text-ink">{t("profileSetup.countryLabel")}</span>
+            <select
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-ink outline-none focus:border-moss"
+            >
+              <option value="">{t("profileSetup.countryPlaceholder")}</option>
+              {COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {countryFlag(c.code)} {c.name}
+                </option>
+              ))}
+            </select>
           </label>
 
           {error && <p className="rounded-lg bg-apricot/10 px-3 py-2 text-sm text-apricot">{error}</p>}

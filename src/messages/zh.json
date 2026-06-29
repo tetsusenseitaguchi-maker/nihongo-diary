@@ -183,6 +183,8 @@
   "profileSetup.levelLabel": "级别",
   "profileSetup.bioLabel": "简介",
   "profileSetup.bioPlaceholder": "学习日语，每天一篇日记。",
+  "profileSetup.countryLabel": "国家",
+  "profileSetup.countryPlaceholder": "选择国家（可选）",
   "profileSetup.uploadPhoto": "上传照片",
   "profileSetup.uploading": "上传中…",
   "profileSetup.saveBtn": "保存并继续",

@@ -16,6 +16,7 @@ type Profile = {
   display_name: string | null;
   avatar_url: string | null;
   level: string | null;
+  country: string | null;
 };
 
 function nameOf(p?: Profile) {
@@ -92,7 +93,7 @@ export default async function FeedPage() {
     feedUserIds.length
       ? supabase
           .from("profiles")
-          .select("id, username, display_name, avatar_url, level")
+          .select("id, username, display_name, avatar_url, level, country")
           .in("id", feedUserIds)
       : Promise.resolve({ data: [] as Profile[] }),
     // Diary dates for streak + monthly count per user
@@ -197,6 +198,7 @@ export default async function FeedPage() {
       authorName: nameOf(p),
       authorUsername: p?.username ?? null,
       authorAvatar: p?.avatar_url ?? null,
+      authorCountry: p?.country ?? null,
       diaryIsPublic: Boolean(d?.is_public),
       diaryTitle: d?.title ?? null,
       diaryTags: d?.tags ?? [],

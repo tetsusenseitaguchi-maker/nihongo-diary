@@ -7,6 +7,7 @@ import { FollowButton } from "@/components/FollowButton";
 import { TagChips } from "@/components/TagChips";
 import { computeStats, type DiaryRow } from "@/lib/diary";
 import { formatShort } from "@/lib/dates";
+import { countryFlag } from "@/lib/countryFlag";
 import { getServerT } from "@/lib/i18n-server";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +26,7 @@ export default async function PublicProfilePage({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, username, display_name, avatar_url, level, bio")
+    .select("id, username, display_name, avatar_url, level, bio, country")
     .eq("username", username)
     .single();
 
@@ -85,7 +86,12 @@ export default async function PublicProfilePage({
           <div className="min-w-0 flex-1 text-center sm:text-left">
             <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
               <div>
-                <h1 className="font-serif text-2xl font-bold text-pine">{name}</h1>
+                <h1 className="inline-flex items-center gap-2 font-serif text-2xl font-bold text-pine">
+                  {name}
+                  {countryFlag(profile.country) && (
+                    <span className="text-2xl leading-none">{countryFlag(profile.country)}</span>
+                  )}
+                </h1>
                 <p className="text-sm text-muted">@{profile.username}</p>
               </div>
               {isSelf ? (

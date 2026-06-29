@@ -36,7 +36,8 @@ export async function GET(request: Request) {
        profiles:corrector_id (
          username,
          display_name,
-         avatar_url
+         avatar_url,
+         country
        )`
     )
     .eq("diary_entry_id", diaryEntryId)
@@ -122,7 +123,8 @@ export async function POST(request: Request) {
        profiles:corrector_id (
          username,
          display_name,
-         avatar_url
+         avatar_url,
+         country
        )`
     )
     .single();

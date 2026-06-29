@@ -6,11 +6,13 @@ import { createClient } from "@/lib/supabase/client";
 import { Avatar } from "@/components/ObiePhoto";
 import { relativeTime } from "@/lib/activity";
 import { useT } from "@/contexts/locale";
+import { countryFlag } from "@/lib/countryFlag";
 
 type ReplyProfile = {
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
+  country: string | null;
 };
 
 type ReplyRow = {
@@ -54,7 +56,7 @@ export function ReplySection({
   async function loadReplies() {
     const { data } = await supabase
       .from("replies")
-      .select("id, author_id, body, created_at, profiles(username, display_name, avatar_url)")
+      .select("id, author_id, body, created_at, profiles(username, display_name, avatar_url, country)")
       .eq(fk, parentId)
       .order("created_at", { ascending: true });
     setReplies(((data ?? []) as unknown[]) as ReplyRow[]);
@@ -138,7 +140,7 @@ export function ReplySection({
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-baseline gap-x-1.5">
-                        <span className="text-xs font-semibold text-pine">
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-pine">
                           {p?.username ? (
                             <Link
                               href={`/profile/${p.username}`}
@@ -148,6 +150,9 @@ export function ReplySection({
                             </Link>
                           ) : (
                             name
+                          )}
+                          {countryFlag(p?.country) && (
+                            <span className="text-xs leading-none">{countryFlag(p?.country)}</span>
                           )}
                         </span>
                         <span className="text-[10px] text-muted">

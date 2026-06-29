@@ -8,6 +8,7 @@ import { Avatar } from "@/components/ObiePhoto";
 import { ReactionBar } from "@/components/ReactionBar";
 import { TagChips } from "@/components/TagChips";
 import { activityMessage, relativeTime, type ActivityRow } from "@/lib/activity";
+import { countryFlag } from "@/lib/countryFlag";
 import { useT } from "@/contexts/locale";
 
 export type FeedItem = {
@@ -19,6 +20,7 @@ export type FeedItem = {
   authorName: string;
   authorUsername: string | null;
   authorAvatar: string | null;
+  authorCountry: string | null;
   diaryIsPublic: boolean;
   diaryTitle: string | null;
   diaryTags: string[];
@@ -80,6 +82,9 @@ function FeedCard({ item }: { item: FeedItem }) {
                 </Link>
               ) : (
                 <span className="font-semibold text-ink">{item.authorName}</span>
+              )}
+              {countryFlag(item.authorCountry) && (
+                <span className="text-sm leading-none">{countryFlag(item.authorCountry)}</span>
               )}
               {/* Streak badge */}
               {item.streak >= 2 && (
@@ -204,7 +209,7 @@ export function FeedTimeline({
     const [{ data: profileData }, { data: rxData }, { data: dData }] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, username, display_name, avatar_url")
+        .select("id, username, display_name, avatar_url, country")
         .in("id", authorIds),
       activityIds.length
         ? supabase
@@ -220,7 +225,7 @@ export function FeedTimeline({
         : Promise.resolve({ data: [] }),
     ]);
 
-    type Profile = { id: string; username: string | null; display_name: string | null; avatar_url: string | null };
+    type Profile = { id: string; username: string | null; display_name: string | null; avatar_url: string | null; country: string | null };
     const profileMap = new Map<string, Profile>(
       (profileData ?? []).map((p) => [p.id, p as Profile]),
     );
@@ -254,6 +259,7 @@ export function FeedTimeline({
         authorName: p?.display_name || p?.username || "Learner",
         authorUsername: p?.username ?? null,
         authorAvatar: p?.avatar_url ?? null,
+        authorCountry: p?.country ?? null,
         diaryIsPublic: Boolean(d?.is_public),
         diaryTitle: d?.title ?? null,
         diaryTags: d?.tags ?? [],

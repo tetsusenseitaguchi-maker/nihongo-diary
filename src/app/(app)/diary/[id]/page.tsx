@@ -17,6 +17,7 @@ import { PeerCorrections } from "@/components/PeerCorrections";
 import { Avatar } from "@/components/ObiePhoto";
 import { formatLong } from "@/lib/dates";
 import { getServerT } from "@/lib/i18n-server";
+import { countryFlag } from "@/lib/countryFlag";
 import { Furigana } from "@/components/Furigana";
 import { WordTranslateText } from "@/components/WordTranslateText";
 import type { Correction, MistakeItem, VocabItem, JlptWord, AlternativeWord } from "@/lib/types";
@@ -51,12 +52,12 @@ export default async function DiaryDetailPage({
   if (!isOwner && !entry.is_public) notFound();
 
   // Fetch author profile for non-owner view
-  type AuthorProfile = { username: string | null; display_name: string | null; avatar_url: string | null };
+  type AuthorProfile = { username: string | null; display_name: string | null; avatar_url: string | null; country: string | null };
   let authorProfile: AuthorProfile | null = null;
   if (!isOwner) {
     const { data } = await supabase
       .from("profiles")
-      .select("username, display_name, avatar_url")
+      .select("username, display_name, avatar_url, country")
       .eq("id", entry.user_id)
       .single();
     authorProfile = data;
@@ -135,16 +136,21 @@ export default async function DiaryDetailPage({
           )}
           <div className="min-w-0">
             <p className="text-sm text-muted">{t("diary.diaryBy")}</p>
-            {authorProfile.username ? (
-              <Link
-                href={`/profile/${authorProfile.username}`}
-                className="font-semibold text-pine hover:text-moss-600"
-              >
-                {authorName}
-              </Link>
-            ) : (
-              <span className="font-semibold text-pine">{authorName}</span>
-            )}
+            <span className="inline-flex items-center gap-1.5 font-semibold text-pine">
+              {authorProfile.username ? (
+                <Link
+                  href={`/profile/${authorProfile.username}`}
+                  className="hover:text-moss-600"
+                >
+                  {authorName}
+                </Link>
+              ) : (
+                authorName
+              )}
+              {countryFlag(authorProfile.country) && (
+                <span className="text-base leading-none">{countryFlag(authorProfile.country)}</span>
+              )}
+            </span>
           </div>
           <span className="ml-auto rounded-full bg-pine px-3 py-1 text-xs font-bold text-cream">
             公開

@@ -6,6 +6,7 @@ import { Icon } from "@/components/icons";
 import { Avatar } from "@/components/ObiePhoto";
 import { relativeTime } from "@/lib/activity";
 import { useT } from "@/contexts/locale";
+import { countryFlag } from "@/lib/countryFlag";
 import { segmentJapanese } from "@/lib/segmenter";
 import { ReplySection } from "@/components/ReplySection";
 
@@ -13,6 +14,7 @@ type ProfileSnap = {
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
+  country: string | null;
 };
 
 type PeerCorrection = {
@@ -550,6 +552,9 @@ export function PeerCorrections({
                           </Link>
                         ) : (
                           <span className="text-sm font-semibold text-pine">{name}</span>
+                        )}
+                        {countryFlag(profile?.country) && (
+                          <span className="text-sm leading-none">{countryFlag(profile?.country)}</span>
                         )}
                         {c.corrector_level && (
                           <span className="rounded-full bg-mint px-2 py-0.5 text-[11px] font-bold text-pine">

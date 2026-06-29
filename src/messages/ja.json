@@ -183,6 +183,8 @@
   "profileSetup.levelLabel": "レベル",
   "profileSetup.bioLabel": "プロフィール文",
   "profileSetup.bioPlaceholder": "毎日一筆、日本語を学習中。",
+  "profileSetup.countryLabel": "国（出身地）",
+  "profileSetup.countryPlaceholder": "国を選択（任意）",
   "profileSetup.uploadPhoto": "写真をアップロード",
   "profileSetup.uploading": "アップロード中…",
   "profileSetup.saveBtn": "保存して続ける",
