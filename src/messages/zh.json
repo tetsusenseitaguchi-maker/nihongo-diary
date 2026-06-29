@@ -500,6 +500,7 @@
   "notification.newDiary": "{name}发布了新日记",
   "notification.reaction": "{name}对你的日记做出了反应",
   "notification.comment": "{name}评论了你的日记",
+  "notification.reply": "{name} replied to your post",
   "notification.obieWrite": "今天还没写日记哦，Obie在等你🐶",
   "notification.obieStreak": "连续{days}天！继续加油🐶",
   "notification.obieWelcomeBack": "欢迎回来！Obie想你了🐶",

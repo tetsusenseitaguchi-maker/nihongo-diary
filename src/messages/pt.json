@@ -81,6 +81,7 @@
   "notification.newDiary": "{name} publicou um novo diário",
   "notification.reaction": "{name} reagiu ao seu diário",
   "notification.comment": "{name} comentou no seu diário",
+  "notification.reply": "{name} replied to your post",
   "notification.obieWrite": "Você ainda não escreveu hoje. Obie está esperando 🐶",
   "notification.obieStreak": "{days} dias seguidos! Continue assim 🐶",
   "notification.obieWelcomeBack": "Bem-vindo de volta! Obie sentiu sua falta 🐶",

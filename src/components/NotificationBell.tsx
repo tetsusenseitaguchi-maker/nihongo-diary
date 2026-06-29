@@ -32,6 +32,8 @@ function notifHref(n: NotifItem): string {
     case "reaction":
     case "comment":
       return n.diary_entry_id ? `/diary/${n.diary_entry_id}` : "/history";
+    case "reply":
+      return n.diary_entry_id ? `/diary/${n.diary_entry_id}` : "/feed";
     case "obie_write":
       return "/write";
     default:
@@ -108,6 +110,8 @@ export function NotificationBell({ userId }: { userId: string }) {
         return t("notification.reaction", { name });
       case "comment":
         return t("notification.comment", { name });
+      case "reply":
+        return t("notification.reply", { name });
       case "obie_write":
         return t("notification.obieWrite");
       case "obie_streak":

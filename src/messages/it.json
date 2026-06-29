@@ -500,6 +500,7 @@
   "notification.newDiary": "{name} ha pubblicato un nuovo diario",
   "notification.reaction": "{name} ha reagito al tuo diario",
   "notification.comment": "{name} ha commentato il tuo diario",
+  "notification.reply": "{name} replied to your post",
   "notification.obieWrite": "Non hai ancora scritto oggi. Obie ti aspetta 🐶",
   "notification.obieStreak": "{days} giorni di fila! Continua così 🐶",
   "notification.obieWelcomeBack": "Bentornato! Obie ti è mancato 🐶",

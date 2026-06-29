@@ -500,6 +500,7 @@
   "notification.newDiary": "{name}さんが日記を投稿しました",
   "notification.reaction": "{name}さんがあなたの日記にリアクションしました",
   "notification.comment": "{name}さんがあなたの日記にコメントしました",
+  "notification.reply": "{name}さんが返信しました",
   "notification.obieWrite": "今日はまだ日記を書いていないよ。Obieが待ってるよ🐶",
   "notification.obieStreak": "{days}日連続！この調子🐶",
   "notification.obieWelcomeBack": "おかえり！また会えてうれしいよ🐶",

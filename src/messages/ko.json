@@ -500,6 +500,7 @@
   "notification.newDiary": "{name}님이 새 일기를 올렸어요",
   "notification.reaction": "{name}님이 일기에 반응했어요",
   "notification.comment": "{name}님이 일기에 댓글을 달았어요",
+  "notification.reply": "{name} replied to your post",
   "notification.obieWrite": "오늘 아직 일기를 안 썼어요. Obie가 기다리고 있어요 🐶",
   "notification.obieStreak": "{days}일 연속! 계속해봐요 🐶",
   "notification.obieWelcomeBack": "돌아오셨군요! Obie가 보고 싶었어요 🐶",
