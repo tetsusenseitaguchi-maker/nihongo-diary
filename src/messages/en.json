@@ -571,7 +571,7 @@
   "lp.hero.microcopy": "No credit card needed — write your first diary today.",
 
   "lp.problem.h2": "You can study Japanese for years and still freeze the moment you try to use it.",
-  "lp.problem.body1": "Input is everywhere. Textbooks, apps, videos, flashcards — there's no shortage of ways to put Japanese in.",
+  "lp.problem.body1": "Input is everywhere — textbooks, apps, videos, flashcards. Output is the problem. The moment you try to actually produce Japanese, two things stop you:",
   "lp.problem.body2": "The problem is output. The moment you try to actually produce Japanese — write a real sentence, say something that matters — two things stop you:",
   "lp.problem.bullet1": "1. You write something… but you have no idea if it's right. No one's there to check. So the mistake just becomes a habit.",
   "lp.problem.bullet2": "2. You promise yourself you'll practice every day… and alone, you quietly stop. Not because you're lazy. Because no one's doing it with you.",
@@ -579,14 +579,15 @@
 
   "lp.solution.h2": "So we built Nihongo Diary around those exact two problems.",
   "lp.solution.intro": "Not another way to study. A way to finally output — and get the two things that were always missing.",
-  "lp.solution.p1.title": "Answer-checking, solved",
-  "lp.solution.p1.body": "Write today's diary in Japanese. Get it corrected the moment you finish. Every entry comes back with a corrected version, a natural rewrite the way a native would actually say it, a short explanation of why it was wrong, and the new words and grammar you used — so the same mistake doesn't become a habit.",
-  "lp.solution.p2.title": "Doing it alone, solved",
-  "lp.solution.p2.body": "You're not writing into the void. See what other learners are writing, react, comment, and follow the ones at your level. Their mistakes become your lessons. Your streak has witnesses. That's what keeps you coming back.",
+  "lp.solution.p1.title": "Get it corrected",
+  "lp.solution.p1.body": "Write in Japanese. The moment you finish, you get it back — corrected. That's the answer-check that was always missing.",
+  "lp.solution.p2.title": "You're not doing it alone",
+  "lp.solution.p2.body": "See real diaries from other learners. React, comment, follow. Share your own and receive peer corrections on top of AI ones — two layers of feedback, from the machine and from people who've been where you are. Their mistakes become your lessons. Your streak has witnesses.",
   "lp.solution.p3.title": "Your voice, too",
   "lp.solution.p3.body": "Some days you'd rather speak than type. Record your diary out loud and keep it. Output isn't only writing — it's getting your mouth used to Japanese, too.",
 
   "lp.features.h2": "Everything you need to output — nothing you don't.",
+  "lp.features.moreH2": "Everything else that keeps you going",
   "lp.features.f1.title": "Instant AI correction",
   "lp.features.f1.body": "Corrected version, natural rewrite, why-it-was-wrong, and the vocab you used. Every single entry.",
   "lp.features.f2.title": "Voice recording",

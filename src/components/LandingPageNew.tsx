@@ -10,10 +10,15 @@ import { type Locale } from "@/lib/i18n";
 type T = (key: string, params?: Record<string, string | number>) => string;
 
 export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
-  const features: Array<{ icon: string; title: string; body: string }> = [
-    { icon: "sparkle",  title: t("lp.features.f1.title"),  body: t("lp.features.f1.body") },
+  // Hero features — displayed large
+  const heroFeatures: Array<{ icon: string; title: string; body: string }> = [
+    { icon: "sparkle", title: t("lp.features.f1.title"), body: t("lp.features.f1.body") },
+    { icon: "feed",    title: t("lp.features.f3.title"), body: t("lp.features.f3.body") },
+  ];
+
+  // Supporting features — displayed compact
+  const extraFeatures: Array<{ icon: string; title: string; body: string }> = [
     { icon: "mic",      title: t("lp.features.f2.title"),  body: t("lp.features.f2.body") },
-    { icon: "feed",     title: t("lp.features.f3.title"),  body: t("lp.features.f3.body") },
     { icon: "history",  title: t("lp.features.f4.title"),  body: t("lp.features.f4.body") },
     { icon: "flame",    title: t("lp.features.f5.title"),  body: t("lp.features.f5.body") },
     { icon: "book",     title: t("lp.features.f6.title"),  body: t("lp.features.f6.body") },
@@ -26,7 +31,6 @@ export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
   const pillars = [
     { title: t("lp.solution.p1.title"), body: t("lp.solution.p1.body") },
     { title: t("lp.solution.p2.title"), body: t("lp.solution.p2.body") },
-    { title: t("lp.solution.p3.title"), body: t("lp.solution.p3.body") },
   ];
 
   const steps = [
@@ -134,7 +138,6 @@ export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
             {t("lp.problem.h2")}
           </h2>
           <p className="mt-6 text-lg leading-relaxed text-ink/75">{t("lp.problem.body1")}</p>
-          <p className="mt-4 text-lg leading-relaxed text-ink/75">{t("lp.problem.body2")}</p>
           <ul className="mt-5 space-y-3">
             {[t("lp.problem.bullet1"), t("lp.problem.bullet2")].map((bullet, i) => (
               <li
@@ -161,7 +164,7 @@ export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
             </h2>
             <p className="mt-4 text-lg text-cream/70">{t("lp.solution.intro")}</p>
           </div>
-          <div className="mt-12 grid gap-5 sm:grid-cols-3">
+          <div className="mt-12 grid gap-5 sm:grid-cols-2">
             {pillars.map((p, i) => (
               <div
                 key={i}
@@ -183,16 +186,35 @@ export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
         <h2 className="max-w-2xl font-serif text-3xl font-extrabold tracking-tight text-pine sm:text-4xl">
           {t("lp.features.h2")}
         </h2>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((f) => (
-            <Card key={f.title} className="flex flex-col p-6 transition-shadow hover:shadow-lift">
-              <span className="mb-4 grid h-10 w-10 place-items-center rounded-xl bg-mint text-pine">
-                {renderIcon(f.icon, "h-5 w-5")}
+        {/* Hero: 2 main features, large cards */}
+        <div className="mt-10 grid gap-5 sm:grid-cols-2">
+          {heroFeatures.map((f) => (
+            <Card key={f.title} className="flex flex-col p-7 transition-shadow hover:shadow-lift">
+              <span className="mb-4 grid h-12 w-12 place-items-center rounded-xl bg-mint text-pine">
+                {renderIcon(f.icon, "h-6 w-6")}
               </span>
-              <h3 className="font-serif text-base font-bold text-pine">{f.title}</h3>
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-ink/70">{f.body}</p>
+              <h3 className="font-serif text-xl font-bold text-pine">{f.title}</h3>
+              <p className="mt-3 flex-1 text-[15px] leading-relaxed text-ink/70">{f.body}</p>
             </Card>
           ))}
+        </div>
+
+        {/* Supporting: compact 2-col list */}
+        <div className="mt-8">
+          <p className="mb-4 font-serif text-base font-semibold text-pine/60">{t("lp.features.moreH2")}</p>
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            {extraFeatures.map((f) => (
+              <div key={f.title} className="flex items-start gap-3 rounded-xl bg-sand/40 px-4 py-3">
+                <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-mint text-pine">
+                  {renderIcon(f.icon, "h-3.5 w-3.5")}
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-pine">{f.title}</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-ink/65">{f.body}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
