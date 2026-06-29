@@ -76,9 +76,9 @@ export function Card({
 }) {
   const accentClass =
     accent === "pine"
-      ? "border-l-[3px] border-l-pine"
+      ? "border-l-2 border-l-pine/60"
       : accent === "apricot"
-        ? "border-l-[3px] border-l-apricot"
+        ? "border-l-2 border-l-apricot/60"
         : "";
   return (
     <div
