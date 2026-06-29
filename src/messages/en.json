@@ -227,6 +227,8 @@
   "translate.show": "Show translation",
   "translate.tapWord": "Tap a word",
   "translate.tapWordOff": "Done",
+  "translate.dailyLimit": "Today's {limit} free translations used up 🌸 Resets tomorrow.",
+  "translate.upgradeForMore": "Upgrade for unlimited",
   "review.title": "Mini Lesson Review Drills",
   "review.descPro": "AI-generated review drills for each Mini Lesson are available on the Pro plan.",
   "review.descFree": "Pick any Mini Lesson and Obie generates 5 targeted practice drills just for you.",

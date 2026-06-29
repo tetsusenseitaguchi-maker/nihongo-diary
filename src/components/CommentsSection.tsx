@@ -59,8 +59,15 @@ function CommentTranslate({ body, viewerLanguage }: { body: string; viewerLangua
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: body, language: viewerLanguage }),
       });
-      const data: { translation?: string; error?: string } = await res.json();
-      if (!res.ok) { setError(data.error || t("translate.failed")); return; }
+      const data: { translation?: string; error?: string; limit?: number } = await res.json();
+      if (!res.ok) {
+        if (res.status === 429) {
+          setError(t("translate.dailyLimit", { limit: String(data.limit ?? 10) }));
+        } else {
+          setError(data.error || t("translate.failed"));
+        }
+        return;
+      }
       setTranslation(data.translation ?? null);
       setShow(true);
     } catch {

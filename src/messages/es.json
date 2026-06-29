@@ -227,6 +227,8 @@
   "translate.show": "Ver traducción",
   "translate.tapWord": "Tap a word",
   "translate.tapWordOff": "Done",
+  "translate.dailyLimit": "Las {limit} traducciones gratuitas de hoy se agotaron 🌸 Se reinicia mañana.",
+  "translate.upgradeForMore": "Actualizar para uso ilimitado",
   "review.title": "Revisión gramatical de ayer",
   "review.descPro": "Los ejercicios de repaso generados por IA están disponibles en el plan Pro.",
   "review.descFree": "Elige cualquier Mini Lección y Obie genera 5 ejercicios de práctica para ti.",

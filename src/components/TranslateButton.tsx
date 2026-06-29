@@ -3,6 +3,10 @@ import { useState } from "react";
 import { SUPPORTED_LANGUAGES } from "@/lib/languages";
 import { useT } from "@/contexts/locale";
 
+const isNativeApp =
+  typeof window !== "undefined" &&
+  !!(window as unknown as { Capacitor?: { isNative?: boolean } })?.Capacitor?.isNative;
+
 interface Props {
   diaryEntryId: string;
   /** Full translations JSONB from DB, keyed by language code. */
@@ -22,6 +26,7 @@ export function TranslateButton({ diaryEntryId, translations, preferredLanguage 
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
   const t = useT();
 
   async function handleToggle() {
@@ -41,9 +46,14 @@ export function TranslateButton({ diaryEntryId, translations, preferredLanguage 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ diaryEntryId, language: preferredLanguage }),
       });
-      const data: { translation?: string; error?: string; message?: string } = await res.json();
+      const data: { translation?: string; error?: string; message?: string; limit?: number } = await res.json();
       if (!res.ok) {
-        setError(data.message || data.error || t("translate.failed"));
+        if (res.status === 429) {
+          setLimitReached(true);
+          setError(t("translate.dailyLimit", { limit: String(data.limit ?? 10) }));
+        } else {
+          setError(data.message || data.error || t("translate.failed"));
+        }
         return;
       }
       setTranslation(data.translation ?? null);
@@ -81,7 +91,14 @@ export function TranslateButton({ diaryEntryId, translations, preferredLanguage 
       </button>
 
       {error && !loading && (
-        <p className="rounded-xl bg-apricot/10 px-4 py-2 text-sm text-apricot">{error}</p>
+        <div className="flex flex-wrap items-center gap-3 rounded-xl bg-apricot/10 px-4 py-2">
+          <p className="text-sm text-apricot">{error}</p>
+          {limitReached && !isNativeApp && (
+            <a href="/upgrade" className="text-sm font-semibold text-moss-600 hover:text-pine">
+              {t("translate.upgradeForMore")}
+            </a>
+          )}
+        </div>
       )}
 
       {/* Translation panel — sand background distinguishes it from mint Japanese sections */}

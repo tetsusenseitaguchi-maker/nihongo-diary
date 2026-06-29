@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePlan, limitsFor } from "@/lib/plans";
 import { languageDisplayName, SUPPORTED_LANGUAGES } from "@/lib/languages";
+import { todayInTZ } from "@/lib/date-tz";
 
 const SUPPORTED_CODES = SUPPORTED_LANGUAGES.map((l) => l.code) as string[];
 
@@ -44,7 +46,7 @@ export async function POST(req: Request) {
   // Plan feature gate — flip translation: false in plans.ts to make it Pro-only
   const { data: prof } = await supabase
     .from("profiles")
-    .select("plan, preferred_language")
+    .select("plan, preferred_language, timezone")
     .eq("id", user.id)
     .single();
 
@@ -67,10 +69,51 @@ export async function POST(req: Request) {
     "en";
   const targetDisplay = languageDisplayName(targetLang);
 
-  // Return cached translation for this language — zero API cost
+  // Return cached translation for this language — zero API cost, zero counter
   const cached = (entry.translations as Record<string, string> | null) ?? {};
   if (cached[targetLang]) {
     return NextResponse.json({ translation: cached[targetLang], cached: true });
+  }
+
+  // Daily translation counter — only for uncached (real OpenAI) calls.
+  // Resolve timezone: user_tz cookie → profile.timezone → UTC (same pattern as /api/correct).
+  const limits = limitsFor(plan);
+  if (limits.translationsPerDay !== null) {
+    const cookieStore = await cookies();
+    const rawTz = cookieStore.get("user_tz")?.value;
+    let tz = "UTC";
+    if (rawTz) {
+      try {
+        const decoded = decodeURIComponent(rawTz);
+        new Intl.DateTimeFormat("en-CA", { timeZone: decoded });
+        tz = decoded;
+      } catch { /* invalid cookie — fall through */ }
+    }
+    if (tz === "UTC" && prof?.timezone && prof.timezone !== "UTC") {
+      try {
+        new Intl.DateTimeFormat("en-CA", { timeZone: prof.timezone });
+        tz = prof.timezone;
+      } catch { /* invalid DB value — fall through */ }
+    }
+    const today = todayInTZ(tz);
+    const { data: allowed, error: rpcError } = await supabase.rpc("try_use_translation", {
+      p_user_id: user.id,
+      p_date: today,
+      p_limit: limits.translationsPerDay,
+    });
+    if (rpcError) {
+      console.error("[translate] try_use_translation error:", rpcError.message);
+      return NextResponse.json(
+        { error: "Translation service temporarily unavailable. Please try again." },
+        { status: 500 }
+      );
+    }
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "daily_translation_limit_reached", upgrade: true, plan, limit: limits.translationsPerDay },
+        { status: 429 }
+      );
+    }
   }
 
   // Choose the most polished version of the Japanese text

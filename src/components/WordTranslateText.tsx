@@ -113,6 +113,7 @@ export function WordTranslateText({
   const [cache] = useState<Map<string, string>>(new Map());
   const [loadingWord, setLoadingWord] = useState(false);
   const [wordError, setWordError] = useState<string | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
 
   const plainText = useMemo(() => stripFurigana(text), [text]);
   const segments = useMemo(() => makeSegments(plainText), [plainText]);
@@ -126,6 +127,13 @@ export function WordTranslateText({
     }
     setTappedWord(word);
     setWordError(null);
+
+    // Once the daily limit is reached, subsequent uncached taps show the limit
+    // message directly without making another API call (server would just 429 again).
+    if (limitReached) {
+      setWordError(t("translate.dailyLimit", { limit: "10" }));
+      return;
+    }
 
     const cached = cache.get(word);
     if (cached !== undefined) {
@@ -141,10 +149,13 @@ export function WordTranslateText({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: word, language }),
       });
-      const data: { translation?: string; error?: string } = await res.json();
+      const data: { translation?: string; error?: string; limit?: number } = await res.json();
       if (res.ok && data.translation) {
         cache.set(word, data.translation);
         setWordTranslation(data.translation);
+      } else if (res.status === 429) {
+        setLimitReached(true);
+        setWordError(t("translate.dailyLimit", { limit: String(data.limit ?? 10) }));
       } else {
         setWordError(data.error || t("translate.failed"));
       }

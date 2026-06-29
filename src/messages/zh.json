@@ -227,6 +227,8 @@
   "translate.show": "显示翻译",
   "translate.tapWord": "Tap a word",
   "translate.tapWordOff": "Done",
+  "translate.dailyLimit": "今日 {limit} 次免费翻译已用完 🌸 明天重置",
+  "translate.upgradeForMore": "升级以无限使用",
   "review.title": "昨天的语法复习",
   "review.descPro": "AI生成的复习练习可在Pro计划中使用。",
   "review.descFree": "选择任意迷你课程，Obie将为你生成5道专项练习题。",

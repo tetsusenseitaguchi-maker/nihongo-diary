@@ -227,6 +227,8 @@
   "translate.show": "Übersetzung anzeigen",
   "translate.tapWord": "Tap a word",
   "translate.tapWordOff": "Done",
+  "translate.dailyLimit": "Die {limit} kostenlosen Übersetzungen für heute sind aufgebraucht 🌸 Morgen zurückgesetzt.",
+  "translate.upgradeForMore": "Upgrade für unbegrenzte Nutzung",
   "review.title": "Grammatik-Wiederholung von gestern",
   "review.descPro": "KI-generierte Übungsaufgaben sind im Pro-Plan verfügbar.",
   "review.descFree": "Wähle eine Mini-Lektion und Obie erstellt 5 gezielte Übungen für dich.",
