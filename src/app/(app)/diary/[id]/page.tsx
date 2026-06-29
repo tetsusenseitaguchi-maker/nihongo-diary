@@ -17,6 +17,7 @@ import { PeerCorrections } from "@/components/PeerCorrections";
 import { Avatar } from "@/components/ObiePhoto";
 import { formatLong } from "@/lib/dates";
 import { getServerT } from "@/lib/i18n-server";
+import { Furigana } from "@/components/Furigana";
 import type { Correction, MistakeItem, VocabItem, JlptWord, AlternativeWord } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -226,31 +227,52 @@ export default async function DiaryDetailPage({
         />
       )}
 
-      {entry.corrected_japanese ? (
-        <>
-          <div className="flex items-center gap-2">
-            <span>🌸</span>
-            <h2 className="font-serif text-xl font-bold text-pine">添削結果</h2>
-            <span className="text-sm font-medium text-muted">{t("write.resultTitle")}</span>
-          </div>
-          <CorrectionResult correction={correction} />
-        </>
+      {isOwner ? (
+        // Owner: full correction result with explanation, mistakes, vocabulary, etc.
+        entry.corrected_japanese ? (
+          <>
+            <div className="flex items-center gap-2">
+              <span>🌸</span>
+              <h2 className="font-serif text-xl font-bold text-pine">添削結果</h2>
+              <span className="text-sm font-medium text-muted">{t("write.resultTitle")}</span>
+            </div>
+            <CorrectionResult correction={correction} />
+          </>
+        ) : (
+          <>
+            <div className="rounded-2xl bg-mint/30 px-5 py-4">
+              <p className="font-jp text-base leading-relaxed text-ink whitespace-pre-wrap">
+                {entry.original_text}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-dashed border-line bg-paper/60 px-6 py-8 text-center">
+              <p className="mb-1 font-semibold text-pine">{t("diary.noCorrectionYet")}</p>
+              <div className="mt-4">
+                <GetCorrectionButton entryId={id} />
+              </div>
+            </div>
+          </>
+        )
       ) : (
-        <>
+        // Non-owner: only original text + natural Japanese rewrite (no corrections, mistakes, or vocabulary)
+        <div className="space-y-4">
           <div className="rounded-2xl bg-mint/30 px-5 py-4">
             <p className="font-jp text-base leading-relaxed text-ink whitespace-pre-wrap">
               {entry.original_text}
             </p>
           </div>
-          <div className="rounded-2xl border border-dashed border-line bg-paper/60 px-6 py-8 text-center">
-            <p className="mb-1 font-semibold text-pine">{t("diary.noCorrectionYet")}</p>
-            {isOwner && (
-              <div className="mt-4">
-                <GetCorrectionButton entryId={id} />
-              </div>
-            )}
-          </div>
-        </>
+          {entry.natural_japanese && (
+            <div className="gloss-panel rounded-2xl p-5">
+              <p className="mb-2 flex flex-wrap items-baseline gap-x-2">
+                <span className="text-sm font-bold text-pine">{t("correction.naturalJapanese")}</span>
+                <Furigana text="自然(しぜん)な日本語(にほんご)" className="font-jp text-xs text-muted" />
+              </p>
+              <p className="font-jp text-base leading-loose text-ink">
+                <Furigana text={entry.natural_japanese} />
+              </p>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Peer corrections — shown for any public diary */}
@@ -269,6 +291,7 @@ export default async function DiaryDetailPage({
         <CommentsSection
           diaryEntryId={id}
           currentUserId={user.id}
+          viewerLanguage={preferredLanguage}
         />
       )}
     </div>

@@ -36,12 +36,67 @@ function initialsOf(p: CommentRow["profiles"]) {
   return nameOf(p).slice(0, 2).toUpperCase();
 }
 
+// Per-comment translate toggle — manages its own loading/show state
+function CommentTranslate({ body, viewerLanguage }: { body: string; viewerLanguage: string }) {
+  const [translation, setTranslation] = useState<string | null>(null);
+  const [show, setShow] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const t = useT();
+
+  async function handleToggle() {
+    if (show) { setShow(false); return; }
+    if (translation) { setShow(true); return; }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/translate-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: body, language: viewerLanguage }),
+      });
+      const data: { translation?: string; error?: string } = await res.json();
+      if (!res.ok) { setError(data.error || t("translate.failed")); return; }
+      setTranslation(data.translation ?? null);
+      setShow(true);
+    } catch {
+      setError(t("translate.networkError"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="mt-1.5">
+      <button
+        onClick={handleToggle}
+        disabled={loading}
+        className="text-[11px] font-semibold text-moss-600/70 hover:text-pine disabled:opacity-50 transition-colors"
+      >
+        {loading
+          ? t("translate.translating")
+          : show
+          ? t("translate.hide")
+          : t("translate.show")}
+      </button>
+      {error && <span className="ml-2 text-[11px] text-apricot">{error}</span>}
+      {show && translation && (
+        <p className="mt-1.5 rounded-xl bg-sand/30 px-3 py-2 text-xs leading-relaxed text-ink/75">
+          {translation}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function CommentsSection({
   diaryEntryId,
   currentUserId,
+  viewerLanguage,
 }: {
   diaryEntryId: string;
   currentUserId: string;
+  viewerLanguage: string;
 }) {
   const [comments, setComments] = useState<CommentRow[]>([]);
   const [body, setBody] = useState("");
@@ -145,6 +200,7 @@ export function CommentsSection({
                   <span className="text-[11px] text-muted">{relativeTime(c.created_at)}</span>
                 </div>
                 <p className="mt-1 text-sm leading-relaxed text-ink/80">{c.body}</p>
+                <CommentTranslate body={c.body} viewerLanguage={viewerLanguage} />
               </div>
               {c.user_id === currentUserId && (
                 <button
