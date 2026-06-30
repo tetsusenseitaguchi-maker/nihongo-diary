@@ -260,20 +260,13 @@ export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
               </p>
               {/* Attribution */}
               <div className="mt-5 flex items-center gap-3 border-t border-line pt-4">
-                {/*
-                  Avatar placeholder — swap for the real image once you drop
-                  /public/testimonial-obie-1.png, testimonial-obie-2.png, testimonial-obie-3.png:
-
-                  <Image
-                    src={te.avatarSrc}
-                    width={40} height={40}
-                    className="rounded-full object-cover"
-                    alt={te.name}
-                  />
-                */}
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sage text-base ring-2 ring-mint">
-                  🐾
-                </div>
+                <Image
+                  src={te.avatarSrc}
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-mint"
+                  alt={te.name}
+                />
                 <div>
                   <p className="text-sm font-semibold text-pine">
                     {te.name} <span className="ml-0.5">{te.flag}</span>
