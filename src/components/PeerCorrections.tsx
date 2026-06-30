@@ -187,7 +187,7 @@ function TappableText({
             }}
             onMouseEnter={() => phase === "picking-end" && setHoverSegIdx(segIdx)}
             onMouseLeave={() => phase === "picking-end" && setHoverSegIdx(null)}
-            className={`touch-manipulation inline-block rounded px-1 py-1.5 font-jp text-base transition-colors ${
+            className={`touch-manipulation inline rounded font-jp text-base transition-colors ${
               inRange
                 ? "bg-mint text-pine font-medium"
                 : "text-ink hover:bg-mint/30 active:bg-mint/60"

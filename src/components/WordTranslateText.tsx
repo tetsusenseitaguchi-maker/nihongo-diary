@@ -202,7 +202,7 @@ export function WordTranslateText({
                     e.preventDefault();
                     handleWordTap(seg.text);
                   }}
-                  className={`touch-manipulation inline rounded px-0.5 font-jp text-base transition-colors ${
+                  className={`touch-manipulation inline rounded font-jp text-base transition-colors ${
                     isActive
                       ? "bg-pine/20 text-pine font-semibold ring-1 ring-pine/30"
                       : "text-ink hover:bg-mint/40 active:bg-mint/60"
