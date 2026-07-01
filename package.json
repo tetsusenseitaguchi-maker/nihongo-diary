@@ -17,6 +17,7 @@
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.2",
     "@types/tiny-segmenter": "^0.2.0",
+    "jose": "^6.2.3",
     "leaflet": "^1.9.4",
     "next": "15.5.19",
     "openai": "^6.45.0",

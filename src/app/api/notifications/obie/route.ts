@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { todayInTZ } from "@/lib/date-tz";
 import { validateTZ } from "@/lib/tz-server";
+import { sendPush } from "@/lib/apns";
 
 export const runtime = "nodejs";
 
@@ -33,6 +34,13 @@ export async function POST() {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ ok: false });
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("push_token")
+    .eq("id", user.id)
+    .single();
+  const pushToken = (profile?.push_token as string | null) ?? null;
+
   const cookieStore = await cookies();
   const rawTz = cookieStore.get("user_tz")?.value;
   const tz = rawTz ? validateTZ(decodeURIComponent(rawTz)) : "UTC";
@@ -60,6 +68,9 @@ export async function POST() {
     await supabase
       .from("notifications")
       .insert({ user_id: user.id, type: "obie_write" });
+    if (pushToken) {
+      void sendPush(pushToken, "今日の日記を書こう 📝", "毎日続けることが上達の近道です。");
+    }
   }
 
   // ── Obie 2: Streak milestone ────────────────────────────────────────────
@@ -95,6 +106,9 @@ export async function POST() {
       await supabase
         .from("notifications")
         .insert({ user_id: user.id, type: "obie_streak", metadata: { streak } });
+      if (pushToken) {
+        void sendPush(pushToken, `🎉 ${streak}日連続達成！`, "すばらしい！この調子で続けよう。");
+      }
     }
   }
 
@@ -131,6 +145,9 @@ export async function POST() {
       await supabase
         .from("notifications")
         .insert({ user_id: user.id, type: "obie_welcome_back" });
+      if (pushToken) {
+        void sendPush(pushToken, "おかえり！👋", "久しぶりですね。また一緒に日本語を練習しましょう。");
+      }
     }
   }
 
