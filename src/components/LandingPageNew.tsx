@@ -285,7 +285,7 @@ export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
           <div className="flex flex-col gap-4">
             <div className="relative aspect-[3/4] overflow-hidden rounded-2xl">
               <Image
-                src="/tetsu-sensei.jpg"
+                src="/tetsu-sensei.webp"
                 alt="Tetsu Sensei, Japanese teacher in Sapporo"
                 fill
                 className="object-cover"

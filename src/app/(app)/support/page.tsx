@@ -299,7 +299,7 @@ export default function SupportPage() {
           {/* Portrait photo — circular crop focused on face */}
           <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full sm:h-28 sm:w-28">
             <Image
-              src="/tetsu-sensei.jpg"
+              src="/tetsu-sensei.webp"
               alt="Tetsu Sensei"
               fill
               className="object-cover"
