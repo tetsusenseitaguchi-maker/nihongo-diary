@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePlan, limitsFor } from "@/lib/plans";
-import { lessonById } from "@/lib/lessons";
 import { languageDisplayName } from "@/lib/languages";
 import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
 
@@ -345,39 +344,3 @@ export async function POST(request: Request) {
   });
 }
 
-function str(v: unknown): string {
-  return typeof v === "string" ? v : "";
-}
-
-// Merge the AI's chosen lesson id + level-tailored fields with the FIXED
-// app-side library, so titles and visual metaphors stay consistent.
-function buildLesson(raw: unknown) {
-  if (!raw || typeof raw !== "object") return null;
-  const r = raw as Record<string, unknown>;
-  const id = typeof r.id === "number" ? r.id : parseInt(String(r.id ?? ""), 10);
-  const base = lessonById(id) ?? lessonById(1);
-  if (!base) return null;
-  return {
-    ...base,
-    shortExplanation: str(r.shortExplanation) || base.shortExplanation,
-    exampleJapaneseRuby: str(r.exampleJapaneseRuby) || base.exampleJapaneseRuby,
-    exampleEnglish: str(r.exampleEnglish) || base.exampleEnglish,
-    shortNote: str(r.shortNote) || base.shortNote,
-  };
-}
-
-function safeJson(content: string): Record<string, unknown> | null {
-  try {
-    return JSON.parse(content);
-  } catch {
-    const match = content.match(/\{[\s\S]*\}/);
-    if (match) {
-      try {
-        return JSON.parse(match[0]);
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  }
-}

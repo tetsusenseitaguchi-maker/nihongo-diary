@@ -222,12 +222,14 @@ export default function WritePage() {
       }
 
       // Parse full JSON after stream completes
-      const data = safeJson(buffer);
-      if (!data) {
+      const parsed = safeJson(buffer);
+      if (!parsed) {
         setCorrectError(t("write.networkError"));
         setLoading(false);
         return;
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = parsed as Record<string, any>;
 
       setUsedToday((n) => n + 1);
 
