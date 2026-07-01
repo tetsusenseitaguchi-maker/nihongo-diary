@@ -423,7 +423,6 @@ export function Attachments({
                 src={photoPreviewUrl}
                 alt="Photo preview"
                 className="h-24 w-24 shrink-0 rounded-xl object-cover"
-                style={{ imageOrientation: "from-image" }}
               />
               <div className="min-w-0">
                 <p className="truncate text-xs font-medium text-ink">
