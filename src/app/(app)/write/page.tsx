@@ -194,8 +194,9 @@ export default function WritePage() {
         }),
       });
 
-      const data = await res.json();
+      // Error responses are still JSON (not streamed) — check ok first
       if (!res.ok) {
+        const errData = await res.json().catch(() => ({})) as { error?: string; upgrade?: boolean };
         if (res.status === 429) {
           // Daily correction limit — show the friendly plan-specific banner, not a red error
           setShowUpgrade(true);
@@ -203,12 +204,31 @@ export default function WritePage() {
           // Force remaining=0 so the button disables immediately (avoids repeated 429 clicks)
           setUsedToday(limits.corrections);
         } else {
-          setCorrectError(data?.error || "Correction failed. Please try again.");
-          if (data?.upgrade) setShowUpgrade(true);
+          setCorrectError(errData?.error || "Correction failed. Please try again.");
+          if (errData?.upgrade) setShowUpgrade(true);
         }
         setLoading(false);
         return;
       }
+
+      // Read the plain-text stream and accumulate into a buffer
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+      }
+
+      // Parse full JSON after stream completes
+      const data = safeJson(buffer);
+      if (!data) {
+        setCorrectError(t("write.networkError"));
+        setLoading(false);
+        return;
+      }
+
       setUsedToday((n) => n + 1);
 
       // Map the API response into the shape the UI + Supabase use.
@@ -944,4 +964,16 @@ export default function WritePage() {
       )}
     </div>
   );
+}
+
+function safeJson(content: string): Record<string, unknown> | null {
+  try {
+    return JSON.parse(content);
+  } catch {
+    const match = content.match(/\{[\s\S]*\}/);
+    if (match) {
+      try { return JSON.parse(match[0]); } catch { /* fall through */ }
+    }
+    return null;
+  }
 }
