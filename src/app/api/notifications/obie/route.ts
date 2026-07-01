@@ -74,10 +74,12 @@ export async function POST() {
   }
 
   // ── Obie 2: Streak milestone ────────────────────────────────────────────
+  // 110-day window: covers the max streak milestone (100 days) with a 10-day buffer
   const { data: allDates } = await supabase
     .from("diary_entries")
     .select("diary_date")
     .eq("user_id", user.id)
+    .gte("diary_date", subtractDays(today, 110))
     .order("diary_date", { ascending: false });
 
   const dateSet = new Set((allDates ?? []).map((r) => r.diary_date as string));

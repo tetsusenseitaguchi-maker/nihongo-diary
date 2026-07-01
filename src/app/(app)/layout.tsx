@@ -40,13 +40,15 @@ export default async function AppLayout({
   const cookieStore = await cookies();
 
   if (user) {
+    // 400-day window: covers any realistic streak without fetching all-time entries on every page load
+    const streakCutoff = new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const [{ data: profile }, { data: dateData }] = await Promise.all([
       supabase
         .from("profiles")
         .select("display_name, username, avatar_url, preferred_language")
         .eq("id", user.id)
         .single(),
-      supabase.from("diary_entries").select("diary_date").eq("user_id", user.id),
+      supabase.from("diary_entries").select("diary_date").eq("user_id", user.id).gte("diary_date", streakCutoff),
     ]);
     name = profile?.display_name || profile?.username || user.email?.split("@")[0] || "Learner";
     initials = name.slice(0, 2).toUpperCase();
