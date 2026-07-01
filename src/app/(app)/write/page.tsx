@@ -104,7 +104,6 @@ export default function WritePage() {
   const [text, setText] = useState("");
   const [level, setLevel] = useState(1);
   const [style, setStyle] = useState(1);
-  const [matchScript, setMatchScript] = useState(true);
 
   // Prefill from /write?starter=... (e.g. when coming from a template)
   useEffect(() => {
@@ -192,7 +191,6 @@ export default function WritePage() {
           text,
           level: levels[level],
           style: styles[style],
-          matchScript,
         }),
       });
 
@@ -697,34 +695,6 @@ export default function WritePage() {
                 <Selector label={t("write.mood")} value={moods[mood]} onClick={() => cycle(setMood, moods.length)} />
                 <Selector label={t("write.weather")} value={weathers[weather]} onClick={() => cycle(setWeather, weathers.length)} />
               </div>
-
-              {/* match writer's script toggle */}
-              <button
-                type="button"
-                onClick={() => setMatchScript((v) => !v)}
-                aria-pressed={matchScript}
-                className={`mb-4 inline-flex items-center gap-2.5 rounded-full border px-3.5 py-2 text-left text-sm transition-colors ${
-                  matchScript
-                    ? "border-moss/50 bg-mint/50 text-pine"
-                    : "border-line bg-paper text-muted hover:border-moss/40"
-                }`}
-              >
-                <span
-                  className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-                    matchScript ? "bg-moss" : "bg-line"
-                  }`}
-                >
-                  <span
-                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-paper shadow-sm transition-all ${
-                      matchScript ? "left-[18px]" : "left-0.5"
-                    }`}
-                  />
-                </span>
-                <span className="leading-tight">
-                  <Furigana text="書(か)いた文字(もじ)に合(あ)わせる" className="font-jp font-semibold" />
-                  <span className="ml-1.5 text-xs text-muted">{t("write.matchScript")}</span>
-                </span>
-              </button>
 
               {/* notebook paper textarea */}
               <textarea
