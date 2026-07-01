@@ -278,6 +278,7 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         model: MODEL,
+        stream: true,
         temperature: 0.3,
         max_tokens: 3000,
         response_format: { type: "json_object" },
@@ -303,88 +304,45 @@ export async function POST(request: Request) {
     );
   }
 
-  const payload = await aiResponse.json();
-  const content: string | undefined = payload?.choices?.[0]?.message?.content;
-  if (!content) {
-    return NextResponse.json(
-      { error: "AI から結果を受け取れませんでした。もう一度お試しください。" },
-      { status: 502 },
-    );
-  }
+  // Pipe OpenAI SSE tokens → plain-text ReadableStream for the client
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
 
-  const parsed = safeJson(content);
-  if (!parsed) {
-    console.error("Invalid JSON from model:", content.slice(0, 500));
-    return NextResponse.json(
-      { error: "AI の返答を読み取れませんでした。もう一度お試しください。" },
-      { status: 502 },
-    );
-  }
+  const stream = new ReadableStream({
+    async start(controller) {
+      const reader = aiResponse.body!.getReader();
+      let sseBuffer = "";
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-  const result = {
-    original: typeof parsed.original === "string" && parsed.original ? parsed.original : text,
-    correctedJapaneseRuby: str(parsed.correctedJapaneseRuby),
-    naturalJapaneseRuby: str(parsed.naturalJapaneseRuby),
-    englishExplanation: str(parsed.englishExplanation),
-    correctionNote: str(parsed.correctionNote),
-    keyMistakes: Array.isArray(parsed.keyMistakes)
-      ? parsed.keyMistakes.map((m: Record<string, unknown>) => ({
-          mistake: str(m?.mistake),
-          mistakeRuby: str(m?.mistakeRuby),
-          correctionRuby: str(m?.correctionRuby),
-          explanation: str(m?.explanation),
-        }))
-      : [],
-    usefulVocabulary: Array.isArray(parsed.usefulVocabulary)
-      ? parsed.usefulVocabulary.map((v: Record<string, unknown>) => ({
-          word: str(v?.word),
-          reading: str(v?.reading),
-          meaning: str(v?.meaning),
-          exampleRuby: str(v?.exampleRuby),
-        }))
-      : [],
-    practiceSentenceRuby: str(parsed.practiceSentenceRuby),
-    relatedMiniLesson: buildLesson(parsed.relatedMiniLesson),
-    practiceDrills: Array.isArray(parsed.practiceDrills)
-      ? parsed.practiceDrills.map((d: Record<string, unknown>) => ({
-          type: str(d?.type) || "fill-in",
-          question: str(d?.question),
-          questionRuby: str(d?.questionRuby),
-          choices: Array.isArray(d?.choices) ? (d.choices as string[]).map(String) : [],
-          answer: str(d?.answer),
-          answerRuby: str(d?.answerRuby),
-          englishExplanation: str(d?.englishExplanation),
-        }))
-      : [],
-    nextVocab: Array.isArray(parsed.nextVocab)
-      ? parsed.nextVocab.map((v: Record<string, unknown>) => ({
-          word: str(v?.word),
-          reading: str(v?.reading),
-          meaning: str(v?.meaning),
-          level: str(v?.level),
-        })).filter((v: { word: string; reading: string; meaning: string; level: string }) => v.word && v.level)
-      : [],
-    nextGrammar: Array.isArray(parsed.nextGrammar)
-      ? parsed.nextGrammar.map((g: Record<string, unknown>) => ({
-          pattern: str(g?.pattern),
-          explanation: str(g?.explanation),
-          exampleRuby: str(g?.exampleRuby),
-        })).filter((g: { pattern: string; explanation: string; exampleRuby: string }) => g.pattern)
-      : [],
-    alternativeWords: Array.isArray(parsed.alternativeWords)
-      ? parsed.alternativeWords.map((a: Record<string, unknown>) => ({
-          original: str(a?.original),
-          alternative: str(a?.alternative),
-          alternativeReading: str(a?.alternativeReading),
-        })).filter((a: { original: string; alternative: string; alternativeReading: string }) => a.original && a.alternative)
-      : [],
-    diaryTitleRuby: str(parsed.diaryTitleRuby),
-    obieCheerRuby: str(parsed.obieCheerRuby),
-    obiePhraseRuby: str(parsed.obiePhraseRuby),
-    obiePhraseExplanation: str(parsed.obiePhraseExplanation),
-  };
+          sseBuffer += decoder.decode(value, { stream: true });
+          const lines = sseBuffer.split("\n");
+          sseBuffer = lines.pop() ?? "";
 
-  return NextResponse.json(result);
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const data = line.slice(6).trim();
+            if (data === "[DONE]") { controller.close(); return; }
+            try {
+              const evt = JSON.parse(data);
+              const delta = evt.choices?.[0]?.delta?.content;
+              if (typeof delta === "string") {
+                controller.enqueue(encoder.encode(delta));
+              }
+            } catch { /* 不正な SSE チャンクは無視 */ }
+          }
+        }
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
 }
 
 function str(v: unknown): string {
