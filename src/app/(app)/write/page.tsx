@@ -136,6 +136,7 @@ export default function WritePage() {
   const [places, setPlaces] = useState<DiaryPlace[]>([]);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [grammarReview, setGrammarReview] = useState<MistakeItem | null>(null);
+  const [partialCorrection, setPartialCorrection] = useState<{ corrected: string; natural: string } | null>(null);
 
   // Plan + usage
   const [plan, setPlan] = useState<Plan>("free");
@@ -182,6 +183,7 @@ export default function WritePage() {
     setShowUpgrade(false);
     setSaveError(null);
     setResult(null);
+    setPartialCorrection(null);
     setSavedEntryId(null);
     try {
       const res = await fetch("/api/correct", {
@@ -215,10 +217,19 @@ export default function WritePage() {
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let earlyShown = false;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
+        if (!earlyShown) {
+          const corrected = extractField(buffer, "correctedJapaneseRuby");
+          const natural   = extractField(buffer, "naturalJapaneseRuby");
+          if (corrected && natural) {
+            setPartialCorrection({ corrected, natural });
+            earlyShown = true;
+          }
+        }
       }
 
       // Parse full JSON after stream completes
@@ -305,6 +316,7 @@ export default function WritePage() {
           } satisfies MistakeItem;
         })(),
       };
+      setPartialCorrection(null);
       setResult(correction);
       setLoading(false);   // show result immediately; save happens next
 
@@ -922,6 +934,46 @@ export default function WritePage() {
         </div>
       </div>
 
+      {/* Early partial display — natural Japanese shown as soon as both corrected+natural fields arrive */}
+      {partialCorrection && !result && (
+        <section className="space-y-4 border-t border-line pt-8">
+          <div className="flex items-center gap-2">
+            <span>🌸</span>
+            <h2 className="font-serif text-2xl font-bold text-pine">
+              <Furigana text="添削結果(てんさくけっか)" />
+            </h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="gloss-card rounded-[var(--radius-card)] p-6">
+              <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-muted">
+                {t("correction.originalText")}
+              </p>
+              <p className="font-jp text-[15px] leading-loose text-ink/70">{text}</p>
+            </div>
+            <div
+              className="gloss-panel relative rounded-[var(--radius-card)] p-6"
+              style={{ "--color-tint": "var(--color-tint-sage)" } as CSSProperties}
+            >
+              <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-muted">
+                {t("correction.naturalJapanese")}
+              </p>
+              <p className="font-jp text-[15px] leading-loose text-ink">
+                <Furigana text={partialCorrection.natural} />
+              </p>
+            </div>
+          </div>
+          <div className="animate-pulse space-y-3 rounded-[var(--radius-card)] bg-paper p-6 shadow-card">
+            <div className="h-3 w-2/3 rounded bg-mint/50" />
+            <div className="h-3 w-1/2 rounded bg-mint/50" />
+            <div className="h-3 w-3/4 rounded bg-mint/50" />
+          </div>
+          <div className="animate-pulse space-y-3 rounded-[var(--radius-card)] bg-paper p-6 shadow-card">
+            <div className="h-3 w-1/2 rounded bg-mint/50" />
+            <div className="h-3 w-2/3 rounded bg-mint/50" />
+          </div>
+        </section>
+      )}
+
       {/* AI Teacher's Feedback */}
       {result && (
         <section className="space-y-4 border-t border-line pt-8">
@@ -966,6 +1018,12 @@ export default function WritePage() {
       )}
     </div>
   );
+}
+
+function extractField(buf: string, fieldName: string): string | null {
+  const re = new RegExp(`"${fieldName}"\\s*:\\s*"((?:[^"\\\\]|\\\\[\\s\\S])*)"`);
+  const m = buf.match(re);
+  return m ? m[1] : null;
 }
 
 function safeJson(content: string): Record<string, unknown> | null {
