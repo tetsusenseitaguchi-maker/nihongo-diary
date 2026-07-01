@@ -16,44 +16,58 @@ export function PushRegistrar() {
 }
 
 async function registerPush() {
+  console.log("[Push] registerPush() started");
+
   // Only run inside Capacitor native shell
   type CapWindow = Window & { Capacitor?: { isNativePlatform?: () => boolean } };
-  if (!(window as CapWindow).Capacitor?.isNativePlatform?.()) return;
+  const isNative = (window as CapWindow).Capacitor?.isNativePlatform?.();
+  console.log("[Push] isNativePlatform:", isNative);
+  if (!isNative) return;
 
   try {
     const { PushNotifications } = await import("@capacitor/push-notifications");
+    console.log("[Push] plugin imported");
 
     // Check current permission status
     let { receive: status } = await PushNotifications.checkPermissions();
+    console.log("[Push] permission status:", status);
 
     if (status === "prompt" || status === "prompt-with-rationale") {
-      // Only ask once — if the user has already been asked and denied,
-      // checkPermissions returns "denied" and we skip silently.
       const result = await PushNotifications.requestPermissions();
       status = result.receive;
+      console.log("[Push] after requestPermissions:", status);
     }
 
-    if (status !== "granted") return;
+    if (status !== "granted") {
+      console.log("[Push] not granted — stopping");
+      return;
+    }
 
-    // Register with APNs — triggers the "registration" event with the token
-    await PushNotifications.register();
-
+    // ★ Add listeners BEFORE calling register() to avoid missing the event
     PushNotifications.addListener("registration", async ({ value: token }) => {
+      console.log("[Push] token received:", token.slice(0, 12) + "...");
       try {
-        await fetch("/api/push/register", {
+        const res = await fetch("/api/push/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token }),
         });
-      } catch {
-        // Non-critical — token will be refreshed on next app launch
+        const data = await res.json();
+        console.log("[Push] register API response:", res.status, data);
+      } catch (e) {
+        console.error("[Push] fetch error:", e);
       }
     });
 
-    PushNotifications.addListener("registrationError", () => {
-      // Silent failure — push is a best-effort feature
+    PushNotifications.addListener("registrationError", (err) => {
+      console.error("[Push] registrationError:", err);
     });
-  } catch {
-    // @capacitor/push-notifications not available in browser/dev — ignore
+
+    console.log("[Push] calling register()");
+    await PushNotifications.register();
+    console.log("[Push] register() resolved");
+
+  } catch (e) {
+    console.error("[Push] outer catch:", e);
   }
 }
