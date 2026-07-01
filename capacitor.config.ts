@@ -30,6 +30,10 @@ const config: CapacitorConfig = {
       spinnerColor: "#e8f5e9",
       showSpinner: false,
     },
+    PushNotifications: {
+      // Show banner + play sound + update badge when app is in foreground
+      presentationOptions: ["badge", "sound", "alert"],
+    },
   },
 };
 

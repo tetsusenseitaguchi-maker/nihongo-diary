@@ -12,6 +12,7 @@ import { TourLauncher } from "@/components/TourLauncher";
 import { InstallPromptBanner } from "@/components/InstallPromptBanner";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ObieNotificationSyncer } from "@/components/ObieNotificationSyncer";
+import { PushRegistrar } from "@/components/PushRegistrar";
 import { createClient } from "@/lib/supabase/server";
 import { LocaleProvider } from "@/contexts/locale";
 import { normaliseLocale } from "@/lib/i18n";
@@ -81,6 +82,7 @@ export default async function AppLayout({
       <TourLauncher />
       <InstallPromptBanner />
       {userId && <ObieNotificationSyncer userId={userId} />}
+      {userId && <PushRegistrar />}
       <div className="min-h-screen bg-cream">
         {/* Desktop sidebar */}
         <aside className="fixed inset-y-0 left-0 z-30 hidden w-[264px] border-r border-line bg-paper lg:block">
