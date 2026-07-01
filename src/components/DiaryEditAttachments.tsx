@@ -154,6 +154,7 @@ export function DiaryEditAttachments({
             src={imageUrl}
             alt="Current photo"
             className="h-24 w-24 shrink-0 rounded-xl object-cover"
+            style={{ imageOrientation: "from-image" }}
           />
           <div className="flex flex-col gap-2">
             <p className="text-xs font-bold uppercase tracking-wide text-muted">

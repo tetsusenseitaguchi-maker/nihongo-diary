@@ -26,6 +26,7 @@ export function DiaryAttachments({
           src={imageUrl}
           alt="Diary photo"
           className="w-full max-w-sm rounded-2xl object-cover"
+          style={{ imageOrientation: "from-image" }}
         />
       )}
 
