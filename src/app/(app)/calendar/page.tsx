@@ -22,7 +22,7 @@ export default async function CalendarPage() {
 
   const { data } = await supabase
     .from("diary_entries")
-    .select("id, diary_date, title, original_text, corrected_japanese, english_explanation, level, correction_style")
+    .select("id, diary_date, title, original_text, level")
     .eq("user_id", user.id)
     .order("diary_date", { ascending: false });
 
