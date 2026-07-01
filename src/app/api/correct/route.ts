@@ -10,16 +10,7 @@ export const runtime = "nodejs";
 
 const MODEL = "gpt-4.1-mini";
 
-function systemPrompt(level: string, style: string, matchScript: boolean, lang: string): string {
-  const scriptRule = matchScript
-    ? `
-
-SCRIPT MATCHING (very important): Mirror the learner's own use of kanji vs hiragana.
-- If the learner wrote a word in hiragana, keep that word in hiragana in correctedJapaneseRuby and naturalJapaneseRuby. If they wrote it in kanji, keep it in kanji.
-- If the whole diary is written in hiragana, keep your correction almost entirely in hiragana (only add a kanji if it is truly necessary).
-- This overrides the kanji guidance of the level above, but still follow the level for GRAMMAR difficulty.
-- Furigana still applies to any kanji that remain.`
-    : "";
+function systemPrompt(level: string, style: string, lang: string): string {
   return `You are a friendly Japanese teacher for Japanese learners.
 
 Do not behave like a strict proofreader. Behave like a Japanese teacher who understands that learners need confidence.
@@ -32,7 +23,7 @@ Before correcting anything, ask yourself:
 If the sentence is already understandable and natural enough, do not change it.
 
 This learner's level is: ${level}
-The correction style is: ${style}${scriptRule}
+The correction style is: ${style}
 
 You must return ONLY valid JSON. No markdown. No text outside the JSON.
 
@@ -178,7 +169,7 @@ Output must be valid JSON. No markdown, no comments, no trailing commas.`;
 }
 
 export async function POST(request: Request) {
-  let body: { text?: string; level?: string; style?: string; matchScript?: boolean };
+  let body: { text?: string; level?: string; style?: string };
   try {
     body = await request.json();
   } catch {
@@ -188,7 +179,6 @@ export async function POST(request: Request) {
   const text = (body.text ?? "").trim();
   const level = body.level ?? "N4";
   const style = body.style ?? "Natural";
-  const matchScript = body.matchScript ?? false;
 
   if (!text) {
     return NextResponse.json({ error: "日記が空です。何か書いてね。" }, { status: 400 });
@@ -292,7 +282,7 @@ export async function POST(request: Request) {
         max_tokens: 3000,
         response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: systemPrompt(level, style, matchScript, lang) },
+          { role: "system", content: systemPrompt(level, style, lang) },
           { role: "user", content: text },
         ],
       }),
