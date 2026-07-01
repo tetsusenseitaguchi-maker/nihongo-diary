@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import sharp from "sharp";
 
 export const runtime = "nodejs";
 
@@ -49,9 +50,11 @@ export async function PATCH(
     if (photoFile && photoFile.size > 0) {
       const ext = (photoFile.name.split(".").pop() ?? "jpg").toLowerCase();
       const storagePath = `${user.id}/${id}.${ext}`;
+      const fileBuffer = Buffer.from(await photoFile.arrayBuffer());
+      const rotatedBuffer = await sharp(fileBuffer).rotate().toBuffer();
       const { error: upErr } = await supabase.storage
         .from("diary-images")
-        .upload(storagePath, photoFile, { contentType: photoFile.type, upsert: true });
+        .upload(storagePath, rotatedBuffer, { contentType: photoFile.type, upsert: true });
       if (upErr) {
         return NextResponse.json({ error: `Photo upload failed: ${upErr.message}` }, { status: 500 });
       }

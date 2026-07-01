@@ -352,16 +352,17 @@ export default function WritePage() {
     let audioPath: string | null = null;
 
     if (photoFile) {
-      const ext = photoFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
-      const storagePath = `${user.id}/${data.id}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("diary-images")
-        .upload(storagePath, photoFile, { contentType: photoFile.type });
-      if (upErr) {
+      const uploadFd = new FormData();
+      uploadFd.append("photo", photoFile);
+      uploadFd.append("entryId", data.id);
+      const upRes = await fetch("/api/diary/upload-image", { method: "POST", body: uploadFd });
+      if (!upRes.ok) {
         await supabase.from("diary_entries").delete().eq("id", data.id);
-        throw new Error(`Photo upload failed: ${upErr.message}`);
+        const upData = await upRes.json().catch(() => ({}));
+        throw new Error((upData as { error?: string }).error ?? "Photo upload failed");
       }
-      imagePath = storagePath;
+      const { path } = await upRes.json() as { path: string };
+      imagePath = path;
     }
 
     if (audioFile) {
