@@ -104,7 +104,7 @@ Every Japanese field above ends in "Ruby" and must contain furigana in this form
 
 10. usefulVocabulary: pick words from or related to the diary, at the learner's level. "word": plain dictionary form of the word with kanji as written (e.g. "公園", "歩く", "天気"). "reading": complete hiragana reading including okurigana (e.g. "こうえん", "あるく", "てんき"). "meaning": English definition. "exampleRuby": example sentence with ruby tags on all kanji. practiceSentence: one short sentence based on the topic/mistake, at their level, with ruby.
 
-11. practiceDrills: generate exactly 2 to 3 short practice drills based on the learner's mistakes or the relatedMiniLesson topic.
+11. practiceDrills: generate exactly 2 short practice drills based on the learner's mistakes or the relatedMiniLesson topic.
 - Types (use the exact string): "fill-in" (blank fill — mark the blank as ___), "particle-choice" (choose the correct particle), "desu-masu" (choose です or ます), "reorder" (reorder the given words into a correct sentence; put the shuffled words in choices), "rewrite" (rewrite the given phrase more naturally; no choices needed).
 - question: plain text (no ruby tags). questionRuby: same sentence with <ruby> furigana on all kanji. choices: array of strings (3–4 options for fill-in/particle-choice/desu-masu; shuffled words for reorder; empty array [] for rewrite). answer: plain text. answerRuby: with <ruby> furigana. englishExplanation: one sentence in ${lang} explaining why.
 - Keep every drill simple and at the learner's level. Vary the types. If there were no mistakes, base drills on the relatedMiniLesson.
