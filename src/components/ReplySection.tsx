@@ -55,12 +55,24 @@ export function ReplySection({
   const fk = parentType === "comment" ? "comment_id" : "peer_correction_id";
 
   async function loadReplies() {
-    const { data } = await supabase
-      .from("replies")
-      .select("id, author_id, body, created_at, profiles(username, display_name, avatar_url, country)")
-      .eq(fk, parentId)
-      .order("created_at", { ascending: true });
-    setReplies(((data ?? []) as unknown[]) as ReplyRow[]);
+    const [{ data }, { data: blockedByMe }, { data: blockedMe }] = await Promise.all([
+      supabase
+        .from("replies")
+        .select("id, author_id, body, created_at, profiles(username, display_name, avatar_url, country)")
+        .eq(fk, parentId)
+        .order("created_at", { ascending: true }),
+      supabase.from("blocks").select("blocked_id").eq("blocker_id", currentUserId),
+      supabase.from("blocks").select("blocker_id").eq("blocked_id", currentUserId),
+    ]);
+    // Mutual block filter: hide replies from users I've blocked or who've blocked me
+    const blockedIds = new Set<string>([
+      ...(blockedByMe ?? []).map((r) => r.blocked_id as string),
+      ...(blockedMe ?? []).map((r) => r.blocker_id as string),
+    ]);
+    const rows = (((data ?? []) as unknown[]) as ReplyRow[]).filter(
+      (r) => !blockedIds.has(r.author_id)
+    );
+    setReplies(rows);
     setLoaded(true);
   }
 
