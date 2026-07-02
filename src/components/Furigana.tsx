@@ -5,6 +5,10 @@ import { Fragment } from "react";
 //   漢字(かな) / 漢字（かな）           (hand-authored UI strings)
 
 const HAS_KANJI = /[一-鿿々〆ヶ]/;
+// Recovers a specific AI formatting glitch: <ruby>BASE</rt></ruby> with the
+// <rt> opening tag missing, where BASE is itself a kanji-run + hiragana
+// reading concatenated together (e.g. <ruby>友達ともだち</rt></ruby>).
+const KANJI_PLUS_READING = /^([一-鿿々〆ヶ]+)([ぁ-ん]+)$/;
 
 function stripTags(s: string): string {
   return s.replace(/<[^>]*>/g, "");
@@ -33,8 +37,11 @@ export function Furigana({
   );
 
   // Fresh RegExp per call — module-level /g regex shares lastIndex across concurrent renders
+  // [^<] (not [\s\S]) inside the well-formed alternative keeps a malformed
+  // <ruby> from lazily matching across into the NEXT tag's <rt>...</rt></ruby>,
+  // which would otherwise garble multiple words together.
   const TOKEN =
-    /<ruby>([\s\S]*?)<rt>([\s\S]*?)<\/rt><\/ruby>|([一-鿿々〆ヶ]+)[（(]([ぁ-んァ-ヶーゝゞ]+)[）)]/g;
+    /<ruby>([^<]*?)<rt>([^<]*?)<\/rt><\/ruby>|<ruby>([^<]*?)<\/rt><\/ruby>|([一-鿿々〆ヶ]+)[（(]([ぁ-んァ-ヶーゝゞ]+)[）)]/g;
 
   const nodes: React.ReactNode[] = [];
   let last = 0;
@@ -42,8 +49,24 @@ export function Furigana({
 
   while ((m = TOKEN.exec(processed)) !== null) {
     if (m.index > last) nodes.push(stripTags(processed.slice(last, m.index)));
-    const base = stripTags(m[1] !== undefined ? m[1] : m[3]);
-    const rt = stripTags(m[1] !== undefined ? m[2] : m[4]);
+
+    let base: string;
+    let rt: string;
+    if (m[1] !== undefined) {
+      // Well-formed <ruby>base<rt>reading</rt></ruby>
+      base = stripTags(m[1]);
+      rt = stripTags(m[2]);
+    } else if (m[3] !== undefined) {
+      // Malformed <ruby>base</rt></ruby> — <rt> opening tag missing.
+      const stripped = stripTags(m[3]);
+      const split = stripped.match(KANJI_PLUS_READING);
+      base = split ? split[1] : stripped;
+      rt = split ? split[2] : "";
+    } else {
+      // 漢字（かな）
+      base = stripTags(m[4]);
+      rt = stripTags(m[5]);
+    }
 
     if (!HAS_KANJI.test(base) || rt === base || !rt) {
       nodes.push(base);
