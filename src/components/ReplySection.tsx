@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ObiePhoto";
 import { relativeTime } from "@/lib/activity";
 import { useT } from "@/contexts/locale";
 import { countryFlag } from "@/lib/countryFlag";
+import { ReportButton } from "@/components/ReportButton";
 
 type ReplyProfile = {
   username: string | null;
@@ -161,7 +162,7 @@ export function ReplySection({
                       </div>
                       <p className="text-xs leading-relaxed text-ink/80">{r.body}</p>
                     </div>
-                    {r.author_id === currentUserId && (
+                    {r.author_id === currentUserId ? (
                       <button
                         type="button"
                         onClick={() => handleDelete(r.id)}
@@ -170,6 +171,8 @@ export function ReplySection({
                       >
                         ✕
                       </button>
+                    ) : (
+                      <ReportButton targetType="reply" targetId={r.id} className="shrink-0" />
                     )}
                   </li>
                 );
