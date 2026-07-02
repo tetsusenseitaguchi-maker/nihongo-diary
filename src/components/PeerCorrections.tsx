@@ -466,7 +466,7 @@ export function PeerCorrections({
                   value={correctedInput}
                   onChange={(e) => setCorrectedInput(e.target.value)}
                   placeholder={t("peerCorrection.correctionPlaceholder")}
-                  className="mt-1 block w-full rounded-xl border border-line bg-paper px-3 py-2 font-jp text-sm text-ink placeholder:text-muted focus:border-moss focus:outline-none"
+                  className="mt-1 block w-full rounded-xl border border-line bg-paper px-3 py-2 font-jp text-base text-ink placeholder:text-muted focus:border-moss focus:outline-none"
                   autoFocus
                 />
               </div>
@@ -479,7 +479,7 @@ export function PeerCorrections({
                   value={commentInput}
                   onChange={(e) => setCommentInput(e.target.value)}
                   placeholder={t("peerCorrection.commentPlaceholder")}
-                  className="mt-1 block w-full rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-moss focus:outline-none"
+                  className="mt-1 block w-full rounded-xl border border-line bg-paper px-3 py-2 text-base text-ink placeholder:text-muted focus:border-moss focus:outline-none"
                 />
               </div>
               {error && <p className="text-sm text-apricot">{error}</p>}
@@ -603,7 +603,7 @@ export function PeerCorrections({
                           type="text"
                           value={correctedInput}
                           onChange={(e) => setCorrectedInput(e.target.value)}
-                          className="block w-full rounded-xl border border-line bg-paper px-3 py-2 font-jp text-sm text-ink focus:border-moss focus:outline-none"
+                          className="block w-full rounded-xl border border-line bg-paper px-3 py-2 font-jp text-base text-ink focus:border-moss focus:outline-none"
                           autoFocus
                         />
                         <input
@@ -611,7 +611,7 @@ export function PeerCorrections({
                           value={commentInput}
                           onChange={(e) => setCommentInput(e.target.value)}
                           placeholder={t("peerCorrection.commentPlaceholder")}
-                          className="block w-full rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-moss focus:outline-none"
+                          className="block w-full rounded-xl border border-line bg-paper px-3 py-2 text-base text-ink placeholder:text-muted focus:border-moss focus:outline-none"
                         />
                         {error && <p className="text-sm text-apricot">{error}</p>}
                         <div className="flex gap-2">

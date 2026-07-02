@@ -251,7 +251,7 @@ export function CommentsSection({
           placeholder={t("comments.placeholder")}
           rows={2}
           maxLength={500}
-          className="flex-1 resize-none rounded-2xl border border-line bg-paper px-4 py-3 text-sm text-ink placeholder:text-muted focus:border-moss focus:outline-none"
+          className="flex-1 resize-none rounded-2xl border border-line bg-paper px-4 py-3 text-base text-ink placeholder:text-muted focus:border-moss focus:outline-none"
         />
         <button
           type="submit"

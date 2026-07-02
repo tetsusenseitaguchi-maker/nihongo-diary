@@ -188,7 +188,7 @@ export function ReplySection({
               onChange={(e) => setBody(e.target.value)}
               placeholder={t("reply.placeholder")}
               maxLength={500}
-              className="flex-1 rounded-xl border border-line bg-paper px-3 py-1.5 text-xs text-ink placeholder:text-muted focus:border-moss focus:outline-none"
+              className="flex-1 rounded-xl border border-line bg-paper px-3 py-1.5 text-base text-ink placeholder:text-muted focus:border-moss focus:outline-none"
             />
             <button
               type="submit"

@@ -141,7 +141,7 @@ export function ReportButton({
                   placeholder={t("report.placeholder")}
                   rows={4}
                   maxLength={MAX_REASON_LENGTH}
-                  className="mt-3 w-full resize-none rounded-xl border border-line bg-paper px-4 py-2.5 text-sm text-ink outline-none focus:border-red-400 disabled:opacity-60"
+                  className="mt-3 w-full resize-none rounded-xl border border-line bg-paper px-4 py-2.5 text-base text-ink outline-none focus:border-red-400 disabled:opacity-60"
                   autoFocus
                 />
                 {error && (
