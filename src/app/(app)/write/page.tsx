@@ -591,7 +591,7 @@ export default function WritePage() {
             ? t("write.correctionsLeft", { remaining, total: limits.corrections })
             : t("write.noCorrectionsLeft")}
         </span>
-        {plan === "free" && (
+        {!isIosApp && plan === "free" && (
           <a href="/upgrade" className="ml-auto font-semibold text-moss-600 hover:text-pine">
             {t("write.upgradeLink")}
           </a>

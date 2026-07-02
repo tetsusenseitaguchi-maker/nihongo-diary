@@ -13,6 +13,7 @@ import { InstallPromptBanner } from "@/components/InstallPromptBanner";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ObieNotificationSyncer } from "@/components/ObieNotificationSyncer";
 import { PushRegistrar } from "@/components/PushRegistrar";
+import { NativeGate } from "@/components/NativeGate";
 import { createClient } from "@/lib/supabase/server";
 import { LocaleProvider } from "@/contexts/locale";
 import { normaliseLocale } from "@/lib/i18n";
@@ -138,8 +139,12 @@ async function AppFooter() {
     <footer className="mt-12 border-t border-line pt-6 text-center text-xs leading-relaxed text-muted">
       <p>{t("footer.disclaimer")}</p>
       <p className="mt-1">
-        {t("footer.beta")} ·{" "}
-        <a href="/upgrade" className="font-semibold text-moss-600 hover:text-pine">{t("nav.upgrade")}</a> · {t("footer.terms")}
+        <NativeGate>
+          {t("footer.beta")} ·{" "}
+          <a href="/upgrade" className="font-semibold text-moss-600 hover:text-pine">{t("nav.upgrade")}</a>{" "}
+          ·{" "}
+        </NativeGate>
+        {t("footer.terms")}
       </p>
       <p className="mt-1">
         {t("footer.createdBy")}{" "}

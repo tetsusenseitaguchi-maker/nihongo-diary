@@ -5,6 +5,7 @@ import { getServerT } from "@/lib/i18n-server";
 import { normalizePlan } from "@/lib/plans";
 import { Card } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import { NativeGate } from "@/components/NativeGate";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,22 @@ export default async function UpgradeSuccessPage({ searchParams }: Props) {
     (PLAN_FEATURES as Record<string, readonly string[]>)[displayPlan] ?? PLAN_FEATURES.plus;
 
   return (
+    <NativeGate
+      fallback={
+        <div className="mx-auto flex max-w-lg flex-col items-center gap-6 py-8 text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-mint ring-4 ring-mint ring-offset-4 ring-offset-cream">
+            <Icon.check className="h-9 w-9 text-pine" />
+          </div>
+          <h1 className="font-serif text-3xl font-bold text-pine">{t("upgrade.nativeFallbackTitle")}</h1>
+          <Link
+            href="/dashboard"
+            className="w-full rounded-full bg-pine px-6 py-3 text-center font-bold text-cream shadow-lift transition-opacity hover:opacity-90"
+          >
+            {t("upgrade.nativeFallbackBack")}
+          </Link>
+        </div>
+      }
+    >
     <div className="mx-auto flex max-w-lg flex-col items-center gap-6 py-8 text-center">
       {/* Animated checkmark */}
       <div className="flex h-20 w-20 items-center justify-center rounded-full bg-mint ring-4 ring-mint ring-offset-4 ring-offset-cream">
@@ -93,5 +110,6 @@ export default async function UpgradeSuccessPage({ searchParams }: Props) {
         </Link>
       </div>
     </div>
+    </NativeGate>
   );
 }

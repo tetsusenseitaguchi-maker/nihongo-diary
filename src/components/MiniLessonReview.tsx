@@ -5,6 +5,7 @@ import { limitsFor, type Plan } from "@/lib/plans";
 import { MINI_LESSONS } from "@/lib/lessons";
 import { DrillList } from "@/components/PracticeDrills";
 import { Icon } from "@/components/icons";
+import { NativeGate } from "@/components/NativeGate";
 import { useT } from "@/contexts/locale";
 import type { PracticeDrill } from "@/lib/types";
 
@@ -90,15 +91,17 @@ export function MiniLessonReview({ plan }: { plan: Plan | null }) {
                 </div>
               </div>
 
-              <div className="mt-5 flex items-center gap-3 rounded-xl bg-sand/60 px-4 py-3">
-                <span className="text-lg">🔒</span>
-                <p className="text-sm font-medium text-ink/80">
-                  {t("review.availableOn")}
-                  <a href="/upgrade" className="font-semibold text-moss-600 hover:text-pine">
-                    {t("review.proAndAbove")}
-                  </a>
-                </p>
-              </div>
+              <NativeGate>
+                <div className="mt-5 flex items-center gap-3 rounded-xl bg-sand/60 px-4 py-3">
+                  <span className="text-lg">🔒</span>
+                  <p className="text-sm font-medium text-ink/80">
+                    {t("review.availableOn")}
+                    <a href="/upgrade" className="font-semibold text-moss-600 hover:text-pine">
+                      {t("review.proAndAbove")}
+                    </a>
+                  </p>
+                </div>
+              </NativeGate>
             </div>
           </div>
         </div>

@@ -9,6 +9,7 @@ import { ObiePhoto } from "@/components/ObiePhoto";
 import { MINI_LESSONS } from "@/lib/lessons";
 import { getLessonInLocale } from "@/lib/lesson-i18n";
 import { MiniLessonReview } from "@/components/MiniLessonReview";
+import { NativeGate } from "@/components/NativeGate";
 import { createClient } from "@/lib/supabase/client";
 import { normalizePlan, limitsFor, type Plan } from "@/lib/plans";
 import { useT, useLocale } from "@/contexts/locale";
@@ -176,21 +177,23 @@ export default function SupportPage() {
 
           {/* Upgrade banner for Free users */}
           {!canReadLibrary && (
-            <div className="flex items-center justify-between gap-4 rounded-[var(--radius-card)] border border-moss/30 bg-mint/30 px-5 py-4">
-              <div className="flex items-center gap-3">
-                <span className="text-xl">🔒</span>
-                <p className="text-sm font-medium text-pine">
-                  {t("support.lessonLocked")}
-                  <span className="ml-1 text-ink/70">{t("support.lessonLockedSub")}</span>
-                </p>
+            <NativeGate>
+              <div className="flex items-center justify-between gap-4 rounded-[var(--radius-card)] border border-moss/30 bg-mint/30 px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🔒</span>
+                  <p className="text-sm font-medium text-pine">
+                    {t("support.lessonLocked")}
+                    <span className="ml-1 text-ink/70">{t("support.lessonLockedSub")}</span>
+                  </p>
+                </div>
+                <a
+                  href="/upgrade"
+                  className="shrink-0 rounded-full bg-pine px-4 py-2 text-xs font-bold text-cream hover:opacity-90"
+                >
+                  {t("support.seePlans")}
+                </a>
               </div>
-              <a
-                href="/upgrade"
-                className="shrink-0 rounded-full bg-pine px-4 py-2 text-xs font-bold text-cream hover:opacity-90"
-              >
-                {t("support.seePlans")}
-              </a>
-            </div>
+            </NativeGate>
           )}
 
           {MINI_LESSONS.map((rawLesson) => {
@@ -279,10 +282,13 @@ export default function SupportPage() {
                       <div className="flex items-center gap-2 rounded-xl border border-dashed border-line bg-sand/30 px-4 py-3">
                         <span className="text-sm">🔒</span>
                         <p className="text-xs text-muted">
-                          {t("support.lockedContent")} —{" "}
-                          <a href="/upgrade" className="font-semibold text-moss-600 hover:text-pine">
-                            {t("support.seePlans")}
-                          </a>
+                          {t("support.lockedContent")}
+                          <NativeGate>
+                            {" "}—{" "}
+                            <a href="/upgrade" className="font-semibold text-moss-600 hover:text-pine">
+                              {t("support.seePlans")}
+                            </a>
+                          </NativeGate>
                         </p>
                       </div>
                     )}
