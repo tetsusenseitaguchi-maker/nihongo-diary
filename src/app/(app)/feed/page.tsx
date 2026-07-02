@@ -64,13 +64,18 @@ export default async function FeedPage() {
 
   const t = await getServerT();
 
-  // Who I follow
-  const { data: followRows } = await supabase
-    .from("follows")
-    .select("following_id")
-    .eq("follower_id", user.id);
+  // Who I follow, and who's blocked in either direction
+  const [{ data: followRows }, { data: blockedByMe }, { data: blockedMe }] = await Promise.all([
+    supabase.from("follows").select("following_id").eq("follower_id", user.id),
+    supabase.from("blocks").select("blocked_id").eq("blocker_id", user.id),
+    supabase.from("blocks").select("blocker_id").eq("blocked_id", user.id),
+  ]);
   const followingIds = (followRows ?? []).map((r) => r.following_id as string);
-  const feedUserIds = [user.id, ...followingIds];
+  const blockedUserIds = new Set<string>([
+    ...(blockedByMe ?? []).map((r) => r.blocked_id as string),
+    ...(blockedMe ?? []).map((r) => r.blocker_id as string),
+  ]);
+  const feedUserIds = [user.id, ...followingIds.filter((id) => !blockedUserIds.has(id))];
 
   // Compute 60-day window for streak calculation
   const since = new Date();
@@ -178,7 +183,7 @@ export default async function FeedPage() {
       rxMine.set(r.activity_id, [...(rxMine.get(r.activity_id) ?? []), r.reaction_type]);
   }
 
-  const excluded = new Set([user.id, ...followingIds]);
+  const excluded = new Set([user.id, ...followingIds, ...blockedUserIds]);
   const suggestions = (peopleData ?? [])
     .filter((p) => !excluded.has(p.id))
     .slice(0, 6) as Profile[];
