@@ -5,7 +5,7 @@ import { normalizePlan, limitsFor } from "@/lib/plans";
 import { lessonById } from "@/lib/lessons";
 import { languageDisplayName } from "@/lib/languages";
 import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
-import { normalizeRubyText } from "@/lib/furigana";
+import { normalizeRubyText, stripRubyText } from "@/lib/furigana";
 
 export const runtime = "nodejs";
 
@@ -134,18 +134,6 @@ function buildLesson(raw: unknown) {
     exampleEnglish: str(r.exampleEnglish) || base.exampleEnglish,
     shortNote: str(r.shortNote) || base.shortNote,
   };
-}
-
-function stripFurigana(text: string): string {
-  return text
-    .replace(
-      /([一-鿿々〆ヶ]+)(<ruby>([^<]*)<rt>)/g,
-      (_m, preK: string, rubyOpen: string, rubyBase: string) =>
-        rubyBase.startsWith(preK) ? rubyOpen : _m,
-    )
-    .replace(/<rt>[^<]*<\/rt>/g, "")
-    .replace(/<[^>]*>/g, "")
-    .trim();
 }
 
 export async function POST(request: Request) {
@@ -352,7 +340,7 @@ export async function POST(request: Request) {
     : [];
 
   const diaryTitleRaw = str(parsed.diaryTitleRuby);
-  const diaryTitle = diaryTitleRaw ? stripFurigana(diaryTitleRaw) || null : null;
+  const diaryTitle = diaryTitleRaw ? stripRubyText(diaryTitleRaw) || null : null;
 
   // ---- UPDATE diary entry ----
   const updatePayload: Record<string, unknown> = {

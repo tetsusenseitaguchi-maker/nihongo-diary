@@ -18,7 +18,7 @@ import { limitsFor, normalizePlan, PLAN_LABELS, PLAN_LIMITS, type Plan } from "@
 import { PRESET_TAGS, PRESET_TAG_KEYS } from "@/lib/tags";
 import { useT } from "@/contexts/locale";
 import { todayInTZ } from "@/lib/date-tz";
-import { normalizeRubyText } from "@/lib/furigana";
+import { normalizeRubyText, stripRubyText } from "@/lib/furigana";
 
 const DiaryMapPicker = dynamicLoad(
   () => import("@/components/DiaryMapPicker").then((m) => m.DiaryMapPicker),
@@ -356,17 +356,7 @@ export default function WritePage() {
       .insert({
         user_id: user.id,
         diary_date: diaryDate,
-        title: correction.diaryTitle
-          ? correction.diaryTitle
-              .replace(
-                /([一-鿿々〆ヶ]+)(<ruby>([^<]*)<rt>)/g,
-                (_m, preK: string, rubyOpen: string, rubyBase: string) =>
-                  rubyBase.startsWith(preK) ? rubyOpen : _m,
-              )
-              .replace(/<rt>[^<]*<\/rt>/g, "")
-              .replace(/<[^>]*>/g, "")
-              .trim() || null
-          : null,
+        title: correction.diaryTitle ? stripRubyText(correction.diaryTitle) || null : null,
         tags,
         original_text: correction.original,
         corrected_japanese: correction.corrected,
