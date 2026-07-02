@@ -5,6 +5,7 @@ import { normalizePlan, limitsFor } from "@/lib/plans";
 import { lessonById } from "@/lib/lessons";
 import { languageDisplayName } from "@/lib/languages";
 import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
+import { normalizeRubyText } from "@/lib/furigana";
 
 export const runtime = "nodejs";
 
@@ -308,13 +309,15 @@ export async function POST(request: Request) {
   }
 
   // ---- Map AI response (same shape as saveEntry in write/page.tsx) ----
-  const corrected = str(parsed.correctedJapaneseRuby) || str(parsed.correctedJapanese);
-  const natural = str(parsed.naturalJapaneseRuby) || str(parsed.naturalJapanese);
+  // normalizeRubyText() sanitizes AI-generated <ruby> markup before it's
+  // saved, so malformed tags never reach the DB in the first place.
+  const corrected = normalizeRubyText(str(parsed.correctedJapaneseRuby) || str(parsed.correctedJapanese));
+  const natural = normalizeRubyText(str(parsed.naturalJapaneseRuby) || str(parsed.naturalJapanese));
 
   const keyMistakes = Array.isArray(parsed.keyMistakes)
     ? (parsed.keyMistakes as Record<string, unknown>[]).map((m) => ({
-        before: str(m?.mistakeRuby) || str(m?.mistake),
-        after: str(m?.correctionRuby) || str(m?.correction),
+        before: normalizeRubyText(str(m?.mistakeRuby) || str(m?.mistake)),
+        after: normalizeRubyText(str(m?.correctionRuby) || str(m?.correction)),
         note: str(m?.explanation),
       }))
     : [];
@@ -323,8 +326,8 @@ export async function POST(request: Request) {
     const km = (Array.isArray(parsed.keyMistakes) ? parsed.keyMistakes as Record<string, unknown>[] : [])[0];
     if (!km || !km.mistake) return null;
     return {
-      before: str(km.mistakeRuby) || str(km.mistake),
-      after: str(km.correctionRuby),
+      before: normalizeRubyText(str(km.mistakeRuby) || str(km.mistake)),
+      after: normalizeRubyText(str(km.correctionRuby)),
       note: str(km.explanation),
     };
   })();
@@ -334,7 +337,7 @@ export async function POST(request: Request) {
         word: str(v?.word),
         reading: str(v?.reading),
         meaning: str(v?.meaning),
-        example: str(v?.exampleRuby) || str(v?.example),
+        example: normalizeRubyText(str(v?.exampleRuby) || str(v?.example)),
       }))
     : [];
 
@@ -360,7 +363,7 @@ export async function POST(request: Request) {
     key_mistakes: keyMistakes,
     grammar_focus: grammarFocus,
     useful_vocabulary: usefulVocabulary,
-    practice_sentence: str(parsed.practiceSentenceRuby) || str(parsed.practiceSentence),
+    practice_sentence: normalizeRubyText(str(parsed.practiceSentenceRuby) || str(parsed.practiceSentence)),
   };
 
   if (diaryTitle) {

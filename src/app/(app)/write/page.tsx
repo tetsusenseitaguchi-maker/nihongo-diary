@@ -18,6 +18,7 @@ import { limitsFor, normalizePlan, PLAN_LABELS, PLAN_LIMITS, type Plan } from "@
 import { PRESET_TAGS, PRESET_TAG_KEYS } from "@/lib/tags";
 import { useT } from "@/contexts/locale";
 import { todayInTZ } from "@/lib/date-tz";
+import { normalizeRubyText } from "@/lib/furigana";
 
 const DiaryMapPicker = dynamicLoad(
   () => import("@/components/DiaryMapPicker").then((m) => m.DiaryMapPicker),
@@ -246,16 +247,18 @@ export default function WritePage() {
 
       // Map the API response into the shape the UI + Supabase use.
       // We keep the ruby (furigana) versions for display.
+      // normalizeRubyText() sanitizes AI-generated <ruby> markup here, before
+      // it's shown OR saved, so malformed tags never reach the DB.
       const correction: Correction = {
         original: data.original ?? text,
-        corrected: data.correctedJapaneseRuby || data.correctedJapanese || "",
-        natural: data.naturalJapaneseRuby || data.naturalJapanese || "",
+        corrected: normalizeRubyText(data.correctedJapaneseRuby || data.correctedJapanese || ""),
+        natural: normalizeRubyText(data.naturalJapaneseRuby || data.naturalJapanese || ""),
         explanation: data.englishExplanation ?? "",
         correctionNote: data.correctionNote ?? "",
         mistakes: (data.keyMistakes ?? []).map(
           (m: { mistake?: string; mistakeRuby?: string; correction?: string; correctionRuby?: string; explanation?: string }) => ({
-            before: m.mistakeRuby || m.mistake || "",
-            after: m.correctionRuby || m.correction || "",
+            before: normalizeRubyText(m.mistakeRuby || m.mistake || ""),
+            after: normalizeRubyText(m.correctionRuby || m.correction || ""),
             note: m.explanation ?? "",
           }),
         ),
@@ -264,10 +267,10 @@ export default function WritePage() {
             word: v.word || (v.wordRuby ? v.wordRuby.replace(/<[^>]*>/g, "") : "") || "",
             reading: v.reading || "",
             meaning: v.meaning ?? "",
-            example: v.exampleRuby || v.example || "",
+            example: normalizeRubyText(v.exampleRuby || v.example || ""),
           }),
         ),
-        practice: { jp: data.practiceSentenceRuby || data.practiceSentence || "", en: "" },
+        practice: { jp: normalizeRubyText(data.practiceSentenceRuby || data.practiceSentence || ""), en: "" },
         relatedMiniLesson: data.relatedMiniLesson ?? null,
         practiceDrills: (data.practiceDrills ?? []).map(
           (d: { type?: string; question?: string; questionRuby?: string; choices?: string[]; answer?: string; answerRuby?: string; englishExplanation?: string }) => ({
@@ -310,8 +313,8 @@ export default function WritePage() {
           const km = (data.keyMistakes ?? [])[0];
           if (!km || !km.mistake) return null;
           return {
-            before: km.mistakeRuby || km.mistake || "",
-            after: km.correctionRuby || "",
+            before: normalizeRubyText(km.mistakeRuby || km.mistake || ""),
+            after: normalizeRubyText(km.correctionRuby || ""),
             note: km.explanation || "",
           } satisfies MistakeItem;
         })(),
