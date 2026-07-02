@@ -119,15 +119,24 @@ export function CommentsSection({
   const t = useT();
 
   async function fetchComments() {
-    const { data } = await supabase
-      .from("comments")
-      .select("id, user_id, body, created_at, profiles(username, display_name, avatar_url, country)")
-      .eq("diary_entry_id", diaryEntryId)
-      .order("created_at", { ascending: true });
+    const [{ data }, { data: blockedByMe }, { data: blockedMe }] = await Promise.all([
+      supabase
+        .from("comments")
+        .select("id, user_id, body, created_at, profiles(username, display_name, avatar_url, country)")
+        .eq("diary_entry_id", diaryEntryId)
+        .order("created_at", { ascending: true }),
+      supabase.from("blocks").select("blocked_id").eq("blocker_id", currentUserId),
+      supabase.from("blocks").select("blocker_id").eq("blocked_id", currentUserId),
+    ]);
+    // Mutual block filter: hide comments from users I've blocked or who've blocked me
+    const blockedIds = new Set<string>([
+      ...(blockedByMe ?? []).map((r) => r.blocked_id as string),
+      ...(blockedMe ?? []).map((r) => r.blocker_id as string),
+    ]);
     // Normalize the embedded profile (PostgREST may return object or array)
-    const rows = ((data ?? []) as unknown as Array<Omit<CommentRow, "profiles"> & { profiles: CommentProfile | CommentProfile[] | null }>).map(
-      (r) => ({ ...r, profiles: normalizeProfile(r.profiles) })
-    );
+    const rows = ((data ?? []) as unknown as Array<Omit<CommentRow, "profiles"> & { profiles: CommentProfile | CommentProfile[] | null }>)
+      .filter((r) => !blockedIds.has(r.user_id))
+      .map((r) => ({ ...r, profiles: normalizeProfile(r.profiles) }));
     setComments(rows);
   }
 
