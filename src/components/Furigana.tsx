@@ -34,12 +34,29 @@ export function Furigana({
   // FULL word and <ruby> only wraps a suffix or prefix fragment of it while
   // carrying the whole word's reading (e.g. 今日<ruby>日<rt>きょう</rt></ruby>,
   // 昨日<ruby>昨<rt>きの</rt></ruby>日) — merge onto the fuller preKanji instead.
+  // In the prefix-fragment case the AI sometimes splits the word a THIRD way,
+  // leaking the remainder right after </ruby> too (昨日<ruby>昨<rt>きの</rt></ruby>日).
+  // Consume that trailing leftover here so it can never render as a second
+  // visible copy of the word — duplicate text is worse than losing furigana.
   const processed = text.replace(
-    /([一-鿿々〆ヶ]+)(<ruby>([^<]*)<rt>)/g,
-    (match, preKanji: string, rubyOpen: string, rubyBase: string) => {
-      if (rubyBase.startsWith(preKanji)) return rubyOpen;
-      if (preKanji !== rubyBase && (preKanji.endsWith(rubyBase) || preKanji.startsWith(rubyBase))) {
-        return `<ruby>${preKanji}<rt>`;
+    /([一-鿿々〆ヶ]+)<ruby>([^<]*)<rt>([^<]*)<\/rt><\/ruby>([一-鿿々〆ヶ]*)/g,
+    (
+      match,
+      preKanji: string,
+      rubyBase: string,
+      reading: string,
+      trailing: string,
+    ) => {
+      if (rubyBase.startsWith(preKanji)) {
+        return `<ruby>${rubyBase}<rt>${reading}</rt></ruby>${trailing}`;
+      }
+      if (preKanji !== rubyBase && preKanji.startsWith(rubyBase)) {
+        const missing = preKanji.slice(rubyBase.length);
+        const newTrailing = missing && trailing.startsWith(missing) ? trailing.slice(missing.length) : trailing;
+        return `<ruby>${preKanji}<rt>${reading}</rt></ruby>${newTrailing}`;
+      }
+      if (preKanji !== rubyBase && preKanji.endsWith(rubyBase)) {
+        return `<ruby>${preKanji}<rt>${reading}</rt></ruby>${trailing}`;
       }
       return match;
     },
