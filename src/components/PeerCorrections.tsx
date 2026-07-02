@@ -9,6 +9,7 @@ import { useT } from "@/contexts/locale";
 import { countryFlag } from "@/lib/countryFlag";
 import { segmentJapanese } from "@/lib/segmenter";
 import { ReplySection } from "@/components/ReplySection";
+import { ReportButton } from "@/components/ReportButton";
 
 type ProfileSnap = {
   username: string | null;
@@ -563,8 +564,8 @@ export function PeerCorrections({
                         )}
                         <span className="text-xs text-muted">{relativeTime(c.created_at)}</span>
                       </div>
-                      {(isMine || isOwner) && !isEditing && (
-                        <div className="flex shrink-0 gap-1">
+                      {!isEditing && (
+                        <div className="flex shrink-0 items-center gap-1">
                           {isMine && (
                             <button
                               onClick={() => {
@@ -579,13 +580,18 @@ export function PeerCorrections({
                               <Icon.pen className="h-3.5 w-3.5" />
                             </button>
                           )}
-                          <button
-                            onClick={() => handleDelete(c.id)}
-                            className="rounded-full p-1.5 text-muted hover:bg-apricot/10 hover:text-apricot"
-                            aria-label={t("peerCorrection.deleteBtn")}
-                          >
-                            <Icon.trash className="h-3.5 w-3.5" />
-                          </button>
+                          {(isMine || isOwner) && (
+                            <button
+                              onClick={() => handleDelete(c.id)}
+                              className="rounded-full p-1.5 text-muted hover:bg-apricot/10 hover:text-apricot"
+                              aria-label={t("peerCorrection.deleteBtn")}
+                            >
+                              <Icon.trash className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                          {!isMine && (
+                            <ReportButton targetType="peer_correction" targetId={c.id} />
+                          )}
                         </div>
                       )}
                     </div>
