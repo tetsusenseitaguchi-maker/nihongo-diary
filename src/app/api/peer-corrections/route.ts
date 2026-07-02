@@ -19,35 +19,46 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const { data, error } = await supabase
-    .from("peer_corrections")
-    .select(
-      `id,
-       diary_entry_id,
-       corrector_id,
-       start_offset,
-       end_offset,
-       original_excerpt,
-       corrected_text,
-       comment,
-       corrector_level,
-       created_at,
-       updated_at,
-       profiles:corrector_id (
-         username,
-         display_name,
-         avatar_url,
-         country
-       )`
-    )
-    .eq("diary_entry_id", diaryEntryId)
-    .order("start_offset", { ascending: true });
+  const [{ data, error }, { data: blockedByMe }, { data: blockedMe }] = await Promise.all([
+    supabase
+      .from("peer_corrections")
+      .select(
+        `id,
+         diary_entry_id,
+         corrector_id,
+         start_offset,
+         end_offset,
+         original_excerpt,
+         corrected_text,
+         comment,
+         corrector_level,
+         created_at,
+         updated_at,
+         profiles:corrector_id (
+           username,
+           display_name,
+           avatar_url,
+           country
+         )`
+      )
+      .eq("diary_entry_id", diaryEntryId)
+      .order("start_offset", { ascending: true }),
+    supabase.from("blocks").select("blocked_id").eq("blocker_id", user.id),
+    supabase.from("blocks").select("blocker_id").eq("blocked_id", user.id),
+  ]);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ corrections: data ?? [] });
+  // Mutual block filter: hide corrections from correctors I've blocked or who've blocked me
+  const blockedIds = new Set<string>([
+    ...(blockedByMe ?? []).map((r) => r.blocked_id as string),
+    ...(blockedMe ?? []).map((r) => r.blocker_id as string),
+  ]);
+  const corrections = (data ?? []).filter((c) => !blockedIds.has(c.corrector_id as string));
+
+  return NextResponse.json({ corrections });
 }
 
 // POST /api/peer-corrections
