@@ -409,6 +409,11 @@ export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
         <div className="border-t border-line px-4 py-4 text-center text-xs leading-relaxed text-muted">
           <p>{t("landing.footer.disclaimer")}</p>
           <p className="mt-1">{t("landing.footer.beta")}</p>
+          <p className="mt-1">
+            <Link href="/terms" className="font-semibold text-moss-600 hover:text-pine">{t("landing.footer.termsLink")}</Link>
+            {" · "}
+            <Link href="/privacy" className="font-semibold text-moss-600 hover:text-pine">{t("landing.footer.privacyLink")}</Link>
+          </p>
         </div>
       </footer>
     </div>

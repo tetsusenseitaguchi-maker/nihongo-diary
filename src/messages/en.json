@@ -342,6 +342,8 @@
   "landing.footer.copy": "© 2026 Nihongo Diary · A daily Japanese writing habit",
   "landing.footer.disclaimer": "AI corrections may not be perfect. Please use them as learning support.",
   "landing.footer.beta": "Public beta · By using this app you agree to our Terms & Privacy.",
+  "landing.footer.termsLink": "Terms",
+  "landing.footer.privacyLink": "Privacy",
   "login.title": "Welcome back",
   "login.subtitle": "Log in to keep your streak going.",
   "login.email": "Email",
