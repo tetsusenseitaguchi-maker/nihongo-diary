@@ -8,6 +8,7 @@ import { UserSearch } from "@/components/UserSearch";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { InviteLinkButton } from "@/components/InviteLinkButton";
 import { ManageSubscriptionButton } from "@/components/ManageSubscriptionButton";
+import { DeleteAccountButton } from "@/components/DeleteAccountButton";
 import { computeStats, type DiaryRow } from "@/lib/diary";
 import { getServerT } from "@/lib/i18n-server";
 import { normalizePlan, PLAN_LABELS } from "@/lib/plans";
@@ -140,6 +141,15 @@ export default async function ProfilePage() {
           {t("profile.privacy.private3")}
           {" "}{t("profile.privacy.detail")}
         </p>
+      </Card>
+
+      {/* Danger Zone */}
+      <Card accent="none" className="!border-red-200 p-6">
+        <h2 className="font-serif text-lg font-bold text-red-600">{t("profile.deleteAccount.heading")}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-ink/75">{t("profile.deleteAccount.desc")}</p>
+        <div className="mt-4">
+          <DeleteAccountButton />
+        </div>
       </Card>
     </div>
   );
