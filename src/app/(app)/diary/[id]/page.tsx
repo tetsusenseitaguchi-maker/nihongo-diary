@@ -8,6 +8,7 @@ import { PublicToggle } from "@/components/PublicToggle";
 import { DiaryAttachments } from "@/components/DiaryAttachments";
 import { DiaryEditAttachments } from "@/components/DiaryEditAttachments";
 import { DeleteDiaryButton } from "@/components/DeleteDiaryButton";
+import { ReportButton } from "@/components/ReportButton";
 import { CommentsSection } from "@/components/CommentsSection";
 import { TagChips } from "@/components/TagChips";
 import { DiaryPlaceMap } from "@/components/DiaryPlaceMap";
@@ -165,10 +166,14 @@ export default async function DiaryDetailPage({
         </h1>
         {entry.level && <Badge tone="moss">{entry.level}</Badge>}
         {entry.correction_style && <Badge tone="sand">{entry.correction_style}</Badge>}
-        {isOwner && (
+        {isOwner ? (
           <span className="ml-auto flex items-center gap-2">
             <PublicToggle diaryId={id} initialPublic={Boolean(entry.is_public)} />
             <DeleteDiaryButton diaryId={id} redirectAfter />
+          </span>
+        ) : (
+          <span className="ml-auto">
+            <ReportButton targetType="diary_entry" targetId={id} />
           </span>
         )}
       </div>
