@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui";
 import { Avatar } from "@/components/ObiePhoto";
 import { FollowButton } from "@/components/FollowButton";
+import { BlockButton } from "@/components/BlockButton";
 import { TagChips } from "@/components/TagChips";
 import { computeStats, type DiaryRow } from "@/lib/diary";
 import { formatShort } from "@/lib/dates";
@@ -54,10 +55,11 @@ export default async function PublicProfilePage({
   const stats = computeStats(dateRows);
 
   // Follow counts
-  const [{ count: followers }, { count: followingCount }, { data: rel }] = await Promise.all([
+  const [{ count: followers }, { count: followingCount }, { data: rel }, { data: blockRel }] = await Promise.all([
     supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", profile.id),
     supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", profile.id),
     supabase.from("follows").select("id").eq("follower_id", user.id).eq("following_id", profile.id).maybeSingle(),
+    supabase.from("blocks").select("id").eq("blocker_id", user.id).eq("blocked_id", profile.id).maybeSingle(),
   ]);
 
   // Public diaries
@@ -99,7 +101,10 @@ export default async function PublicProfilePage({
                   {t("profile.editProfile")}
                 </Link>
               ) : (
-                <FollowButton targetUserId={profile.id} initialFollowing={Boolean(rel)} />
+                <span className="flex items-center gap-2">
+                  <FollowButton targetUserId={profile.id} initialFollowing={Boolean(rel)} />
+                  <BlockButton targetUserId={profile.id} initialBlocked={Boolean(blockRel)} />
+                </span>
               )}
             </div>
             {profile.level && (
