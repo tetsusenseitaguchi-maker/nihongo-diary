@@ -9,6 +9,7 @@ import { useT } from "@/contexts/locale";
 import { countryFlag } from "@/lib/countryFlag";
 import { WordTranslateText } from "@/components/WordTranslateText";
 import { ReplySection } from "@/components/ReplySection";
+import { ReportButton } from "@/components/ReportButton";
 
 type CommentProfile = {
   username: string | null;
@@ -225,7 +226,7 @@ export function CommentsSection({
                   currentUserId={currentUserId}
                 />
               </div>
-              {c.user_id === currentUserId && (
+              {c.user_id === currentUserId ? (
                 <button
                   onClick={() => handleDelete(c.id)}
                   className="shrink-0 rounded p-0.5 text-[11px] text-muted hover:text-red-500"
@@ -233,6 +234,8 @@ export function CommentsSection({
                 >
                   ✕
                 </button>
+              ) : (
+                <ReportButton targetType="comment" targetId={c.id} className="shrink-0" />
               )}
             </li>
           ))}
