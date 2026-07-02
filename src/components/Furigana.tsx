@@ -29,11 +29,20 @@ export function Furigana({
   if (!text) return null;
 
   // Strip kanji that immediately precede their own <ruby> tag
-  // e.g. AI outputs 公<ruby>公園<rt>... or 清水寺<ruby>清水寺<rt>... → remove the leading duplicate
+  // e.g. AI outputs 公<ruby>公園<rt>... or 清水寺<ruby>清水寺<rt>... → remove the leading duplicate.
+  // Also handles the fragment variant, where the preceding plain kanji is the
+  // FULL word and <ruby> only wraps a suffix or prefix fragment of it while
+  // carrying the whole word's reading (e.g. 今日<ruby>日<rt>きょう</rt></ruby>,
+  // 昨日<ruby>昨<rt>きの</rt></ruby>日) — merge onto the fuller preKanji instead.
   const processed = text.replace(
     /([一-鿿々〆ヶ]+)(<ruby>([^<]*)<rt>)/g,
-    (match, preKanji: string, rubyOpen: string, rubyBase: string) =>
-      rubyBase.startsWith(preKanji) ? rubyOpen : match,
+    (match, preKanji: string, rubyOpen: string, rubyBase: string) => {
+      if (rubyBase.startsWith(preKanji)) return rubyOpen;
+      if (preKanji !== rubyBase && (preKanji.endsWith(rubyBase) || preKanji.startsWith(rubyBase))) {
+        return `<ruby>${preKanji}<rt>`;
+      }
+      return match;
+    },
   );
 
   // Fresh RegExp per call — module-level /g regex shares lastIndex across concurrent renders
