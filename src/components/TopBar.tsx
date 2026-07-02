@@ -22,7 +22,7 @@ export function TopBar({
         <input
           type="search"
           placeholder="Search diaries, words, topics…"
-          className="w-full bg-transparent text-ink outline-none placeholder:text-muted"
+          className="w-full bg-transparent text-base text-ink outline-none placeholder:text-muted"
         />
       </label>
 

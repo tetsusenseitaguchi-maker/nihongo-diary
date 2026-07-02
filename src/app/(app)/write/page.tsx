@@ -697,7 +697,7 @@ export default function WritePage() {
                     }}
                     maxLength={20}
                     placeholder="カスタムタグ（Enter で追加）"
-                    className="flex-1 rounded-full border border-line bg-paper px-3 py-1 text-[11px] text-ink placeholder:text-muted focus:border-moss focus:outline-none"
+                    className="flex-1 rounded-full border border-line bg-paper px-3 py-1 text-base text-ink placeholder:text-muted focus:border-moss focus:outline-none"
                   />
                 </div>
                 {/* selected custom tags */}
