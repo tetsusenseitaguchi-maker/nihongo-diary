@@ -178,6 +178,34 @@
     border-radius: 999px;
   }
 
+  /* Material-style tap ripple — see src/lib/useRipple.ts */
+  .ripple-container {
+    position: relative;
+    overflow: hidden;
+  }
+  .ripple-effect {
+    position: absolute;
+    border-radius: 9999px;
+    background: currentColor;
+    opacity: 0.28;
+    transform: scale(0);
+    pointer-events: none;
+    animation: ripple-spread 500ms ease-out forwards;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ripple-effect {
+      animation: none;
+      opacity: 0;
+    }
+  }
+
+}
+
+@keyframes ripple-spread {
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
 }
 
 /* ── Ruby / furigana ─────────────────────────────────────────────────────────

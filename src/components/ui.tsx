@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useRipple } from "@/lib/useRipple";
 
 /* ----------------------------- Button ----------------------------- */
 
@@ -32,11 +35,18 @@ export function Button({
   size = "md",
   className = "",
   children,
+  onPointerDown,
   ...rest
 }: ButtonBase & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { ref, onPointerDown: ripple } = useRipple<HTMLButtonElement>();
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all focus-visible:outline-2 disabled:cursor-not-allowed disabled:opacity-60 ${variantClass[variant]} ${sizeClass[size]} ${className}`}
+      ref={ref}
+      onPointerDown={(e) => {
+        ripple(e);
+        onPointerDown?.(e);
+      }}
+      className={`ripple-container inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all focus-visible:outline-2 disabled:cursor-not-allowed disabled:opacity-60 ${variantClass[variant]} ${sizeClass[size]} ${className}`}
       {...rest}
     >
       {children}
@@ -51,10 +61,13 @@ export function LinkButton({
   className = "",
   children,
 }: ButtonBase & { href: string }) {
+  const { ref, onPointerDown } = useRipple<HTMLAnchorElement>();
   return (
     <Link
       href={href}
-      className={`inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all ${variantClass[variant]} ${sizeClass[size]} ${className}`}
+      ref={ref}
+      onPointerDown={onPointerDown}
+      className={`ripple-container inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all ${variantClass[variant]} ${sizeClass[size]} ${className}`}
     >
       {children}
     </Link>
