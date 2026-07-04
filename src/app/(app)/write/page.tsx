@@ -19,6 +19,7 @@ import { PRESET_TAGS, PRESET_TAG_KEYS } from "@/lib/tags";
 import { useT } from "@/contexts/locale";
 import { todayInTZ } from "@/lib/date-tz";
 import { normalizeRubyText, stripRubyText } from "@/lib/furigana";
+import { fixMasuIncompatibleBlank } from "@/lib/drills";
 
 const DiaryMapPicker = dynamicLoad(
   () => import("@/components/DiaryMapPicker").then((m) => m.DiaryMapPicker),
@@ -273,15 +274,16 @@ export default function WritePage() {
         practice: { jp: normalizeRubyText(data.practiceSentenceRuby || data.practiceSentence || ""), en: "" },
         relatedMiniLesson: data.relatedMiniLesson ?? null,
         practiceDrills: (data.practiceDrills ?? []).map(
-          (d: { type?: string; question?: string; questionRuby?: string; choices?: string[]; answer?: string; answerRuby?: string; englishExplanation?: string }) => ({
-            type: d.type ?? "fill-in",
-            question: d.question ?? "",
-            questionRuby: d.questionRuby ?? "",
-            choices: Array.isArray(d.choices) ? d.choices : [],
-            answer: d.answer ?? "",
-            answerRuby: d.answerRuby ?? "",
-            englishExplanation: d.englishExplanation ?? "",
-          })
+          (d: { type?: string; question?: string; questionRuby?: string; choices?: string[]; answer?: string; answerRuby?: string; englishExplanation?: string }) =>
+            fixMasuIncompatibleBlank({
+              type: d.type ?? "fill-in",
+              question: d.question ?? "",
+              questionRuby: d.questionRuby ?? "",
+              choices: Array.isArray(d.choices) ? d.choices : [],
+              answer: d.answer ?? "",
+              answerRuby: d.answerRuby ?? "",
+              englishExplanation: d.englishExplanation ?? "",
+            })
         ),
         nextVocab: (data.nextVocab ?? []).map(
           (v: { word?: string; reading?: string; meaning?: string; level?: string }) => ({

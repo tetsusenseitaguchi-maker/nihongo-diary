@@ -5,6 +5,7 @@ import { normalizePlan, limitsFor } from "@/lib/plans";
 import { lessonById } from "@/lib/lessons";
 import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
 import { languageDisplayName } from "@/lib/languages";
+import { fixMasuIncompatibleBlank } from "@/lib/drills";
 
 export const runtime = "nodejs";
 
@@ -166,15 +167,17 @@ Generate 5 drills that directly test understanding of this lesson's grammar poin
   }
 
   const drills = Array.isArray(parsed.drills)
-    ? parsed.drills.map((d: Record<string, unknown>) => ({
-        type: String(d?.type ?? "fill-in"),
-        question: String(d?.question ?? ""),
-        questionRuby: String(d?.questionRuby ?? ""),
-        choices: Array.isArray(d?.choices) ? (d.choices as unknown[]).map(String) : [],
-        answer: String(d?.answer ?? ""),
-        answerRuby: String(d?.answerRuby ?? ""),
-        englishExplanation: String(d?.englishExplanation ?? ""),
-      }))
+    ? parsed.drills.map((d: Record<string, unknown>) =>
+        fixMasuIncompatibleBlank({
+          type: String(d?.type ?? "fill-in"),
+          question: String(d?.question ?? ""),
+          questionRuby: String(d?.questionRuby ?? ""),
+          choices: Array.isArray(d?.choices) ? (d.choices as unknown[]).map(String) : [],
+          answer: String(d?.answer ?? ""),
+          answerRuby: String(d?.answerRuby ?? ""),
+          englishExplanation: String(d?.englishExplanation ?? ""),
+        }),
+      )
     : [];
 
   return NextResponse.json({ lessonTitle: lesson.title, drills });
