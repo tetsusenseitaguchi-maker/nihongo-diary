@@ -10,6 +10,7 @@ import { DiaryEditAttachments } from "@/components/DiaryEditAttachments";
 import { DeleteDiaryButton } from "@/components/DeleteDiaryButton";
 import { ReportButton } from "@/components/ReportButton";
 import { CommentsSection } from "@/components/CommentsSection";
+import { ReactionBar } from "@/components/ReactionBar";
 import { TagChips } from "@/components/TagChips";
 import { DiaryPlaceMap } from "@/components/DiaryPlaceMap";
 import { TranslateButton } from "@/components/TranslateButton";
@@ -70,6 +71,28 @@ export default async function DiaryDetailPage({
     .select("id, lat, lng, place_name")
     .eq("diary_entry_id", id);
   const places = (placesData ?? []) as { id: string; lat: number; lng: number; place_name: string | null }[];
+
+  // Fetch reaction data for this diary's activity row (same reactions shown in Feed)
+  const { data: activityRow } = await supabase
+    .from("activity_feed")
+    .select("id")
+    .eq("diary_entry_id", id)
+    .eq("activity_type", "wrote_diary")
+    .maybeSingle();
+  const activityId = activityRow?.id as string | undefined;
+
+  const reactionCounts: Record<string, number> = {};
+  const myReactions: string[] = [];
+  if (activityId) {
+    const { data: reactionData } = await supabase
+      .from("reactions")
+      .select("reaction_type, user_id")
+      .eq("activity_id", activityId);
+    for (const r of reactionData ?? []) {
+      reactionCounts[r.reaction_type] = (reactionCounts[r.reaction_type] ?? 0) + 1;
+      if (r.user_id === user.id) myReactions.push(r.reaction_type);
+    }
+  }
 
   // Fetch viewer's preferred language for translation
   const { data: viewerProfile } = await supabase
@@ -286,6 +309,15 @@ export default async function DiaryDetailPage({
             </div>
           )}
         </div>
+      )}
+
+      {/* Reactions — same as Feed, shown regardless of diary privacy */}
+      {activityId && (
+        <ReactionBar
+          activityId={activityId}
+          initialCounts={reactionCounts}
+          initialMine={myReactions}
+        />
       )}
 
       {/* Peer corrections — shown for any public diary */}
