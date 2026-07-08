@@ -165,7 +165,11 @@ export function CorrectionResult({
           <div className="gloss-card rounded-[var(--radius-card)] p-6">
             <Label en={t("correction.originalText")} jp="元(もと)の文(ぶん)" />
             <p className="font-jp text-[15px] leading-loose text-ink/70">
-              {correction.original}
+              {correction.originalRuby ? (
+                <Furigana text={correction.originalRuby} />
+              ) : (
+                correction.original
+              )}
             </p>
           </div>
         )}

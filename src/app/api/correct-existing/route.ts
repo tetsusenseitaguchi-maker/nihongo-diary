@@ -31,6 +31,7 @@ You must return ONLY valid JSON. No markdown. No text outside the JSON.
 Return this JSON structure:
 {
   "original": "",
+  "originalTextRuby": "",
   "correctedJapaneseRuby": "",
   "naturalJapaneseRuby": "",
   "englishExplanation": "",
@@ -55,7 +56,7 @@ Rules:
 1. Write ALL explanatory text in ${lang}. This includes: englishExplanation, correctionNote, every keyMistakes[].explanation, every usefulVocabulary[].meaning. Never explain grammar in Japanese.
    Keep ALL Japanese-language fields in Japanese. Those are learning targets — never translate them.
 
-2. Furigana: add furigana to ALL kanji in correctedJapaneseRuby, naturalJapaneseRuby, mistakeRuby, correctionRuby, exampleRuby, and practiceSentenceRuby. Use this exact format:
+2. Furigana: add furigana to ALL kanji in originalTextRuby, correctedJapaneseRuby, naturalJapaneseRuby, mistakeRuby, correctionRuby, exampleRuby, and practiceSentenceRuby. Use this exact format:
 <ruby>漢字<rt>かんじ</rt></ruby>
 CRITICAL furigana rules:
 - Put ONLY the kanji inside <ruby>, and put the kanji's reading inside <rt>. Okurigana (the hiragana that follows a kanji) MUST stay OUTSIDE the ruby tag.
@@ -80,6 +81,8 @@ CRITICAL furigana rules:
 6. Do NOT over-correct natural Japanese.
 
 7. correctedJapaneseRuby keeps the learner's structure (just fixes mistakes); naturalJapaneseRuby sounds more natural.
+
+7b. originalTextRuby: the learner's ORIGINAL text, character-for-character identical to what they wrote — including any mistakes. Do NOT fix, reword, or improve anything here. Add ONLY furigana, following rule 2 exactly. This is purely a reading aid for the unedited original.
 
 8. correctionNote: if the original is NOT wrong but a more natural option exists, put a short note. If nothing to add, use "".
 
@@ -301,6 +304,7 @@ export async function POST(request: Request) {
   // saved, so malformed tags never reach the DB in the first place.
   const corrected = normalizeRubyText(str(parsed.correctedJapaneseRuby) || str(parsed.correctedJapanese));
   const natural = normalizeRubyText(str(parsed.naturalJapaneseRuby) || str(parsed.naturalJapanese));
+  const originalRuby = normalizeRubyText(str(parsed.originalTextRuby));
 
   const keyMistakes = Array.isArray(parsed.keyMistakes)
     ? (parsed.keyMistakes as Record<string, unknown>[]).map((m) => ({
@@ -346,6 +350,7 @@ export async function POST(request: Request) {
   const updatePayload: Record<string, unknown> = {
     corrected_japanese: corrected,
     natural_japanese: natural,
+    original_text_ruby: originalRuby || null,
     english_explanation: str(parsed.englishExplanation),
     correction_note: str(parsed.correctionNote),
     key_mistakes: keyMistakes,

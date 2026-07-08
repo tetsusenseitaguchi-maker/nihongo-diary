@@ -106,6 +106,7 @@ export default async function DiaryDetailPage({
 
   const correction: Correction = {
     original: entry.original_text,
+    originalRuby: entry.original_text_ruby ?? undefined,
     corrected: entry.corrected_japanese ?? "",
     natural: entry.natural_japanese ?? "",
     explanation: entry.english_explanation ?? "",
@@ -277,7 +278,11 @@ export default async function DiaryDetailPage({
           <>
             <div className="rounded-2xl bg-mint/30 px-5 py-4">
               <p className="font-jp text-base leading-relaxed text-ink whitespace-pre-wrap">
-                {entry.original_text}
+                {entry.original_text_ruby ? (
+                  <Furigana text={entry.original_text_ruby} />
+                ) : (
+                  entry.original_text
+                )}
               </p>
             </div>
             <div className="rounded-2xl border border-dashed border-line bg-paper/60 px-6 py-8 text-center">
@@ -293,7 +298,11 @@ export default async function DiaryDetailPage({
         <div className="space-y-4">
           <div className="rounded-2xl bg-mint/30 px-5 py-4">
             <p className="font-jp text-base leading-relaxed text-ink whitespace-pre-wrap">
-              {entry.original_text}
+              {entry.original_text_ruby ? (
+                <Furigana text={entry.original_text_ruby} />
+              ) : (
+                entry.original_text
+              )}
             </p>
           </div>
           {entry.natural_japanese && (

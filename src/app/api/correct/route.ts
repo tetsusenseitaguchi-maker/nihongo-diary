@@ -29,6 +29,7 @@ You must return ONLY valid JSON. No markdown. No text outside the JSON.
 Return this JSON structure:
 {
   "original": "",
+  "originalTextRuby": "",
   "correctedJapaneseRuby": "",
   "naturalJapaneseRuby": "",
   "englishExplanation": "",
@@ -64,7 +65,7 @@ Rules:
 1. Write ALL explanatory text in ${lang}. This includes: englishExplanation, correctionNote, every keyMistakes[].explanation, every usefulVocabulary[].meaning, every practiceDrills[].englishExplanation, and relatedMiniLesson shortExplanation / exampleEnglish / shortNote. Never explain grammar in Japanese.
    Keep ALL Japanese-language fields in Japanese: correctedJapaneseRuby, naturalJapaneseRuby, all *Ruby fields, word, reading, question, answer. Those are learning targets — never translate them.
 
-2. Furigana: add furigana to ALL kanji in correctedJapaneseRuby, naturalJapaneseRuby, mistakeRuby, correctionRuby, exampleRuby, and practiceSentenceRuby. Use this exact format:
+2. Furigana: add furigana to ALL kanji in originalTextRuby, correctedJapaneseRuby, naturalJapaneseRuby, mistakeRuby, correctionRuby, exampleRuby, and practiceSentenceRuby. Use this exact format:
 <ruby>漢字<rt>かんじ</rt></ruby>
 CRITICAL furigana rules:
 - Put ONLY the kanji inside <ruby>, and put the kanji's reading inside <rt>. Okurigana (the hiragana that follows a kanji) MUST stay OUTSIDE the ruby tag.
@@ -96,6 +97,8 @@ Every Japanese field above ends in "Ruby" and must contain furigana in this form
 6. Do NOT over-correct natural Japanese. Japanese has many correct ways to say the same thing. Do not "fix" a sentence just because another phrasing exists. Expressions like 〜んです / 〜なんだ / 〜って感じです / 〜かなと思いました / 楽しかったんですよ are natural — leave them.
 
 7. correctedJapaneseRuby keeps the learner's structure (just fixes mistakes); naturalJapaneseRuby sounds more natural. For N5/N4 keep both simple even if a native might say something more advanced.
+
+7b. originalTextRuby: the learner's ORIGINAL text, character-for-character identical to what they wrote — including any mistakes. Do NOT fix, reword, or improve anything here. Add ONLY furigana, following rule 2 exactly. This is purely a reading aid for the unedited original.
 
 8. correctionNote: if the original is NOT wrong but a more natural option exists, put a short, friendly English note here, e.g. "This isn't a mistake, but 〜 sounds a little more natural." If there is nothing to add, use an empty string "".
 

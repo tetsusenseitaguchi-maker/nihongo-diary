@@ -89,6 +89,8 @@ export interface AlternativeWord {
 
 export interface Correction {
   original: string;
+  /** original, with <ruby> furigana on every kanji — same text, no corrections. */
+  originalRuby?: string;
   corrected: string;
   natural: string;
   explanation: string;
@@ -201,6 +203,7 @@ export interface DiaryRow {
   title: string | null;
   tags: string[];
   original_text: string;
+  original_text_ruby: string | null;
   corrected_japanese: string | null;
   natural_japanese: string | null;
   english_explanation: string | null;

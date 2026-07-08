@@ -252,6 +252,7 @@ export default function WritePage() {
       // it's shown OR saved, so malformed tags never reach the DB.
       const correction: Correction = {
         original: data.original ?? text,
+        originalRuby: normalizeRubyText(data.originalTextRuby || ""),
         corrected: normalizeRubyText(data.correctedJapaneseRuby || data.correctedJapanese || ""),
         natural: normalizeRubyText(data.naturalJapaneseRuby || data.naturalJapanese || ""),
         explanation: data.englishExplanation ?? "",
@@ -361,6 +362,7 @@ export default function WritePage() {
         title: correction.diaryTitle ? stripRubyText(correction.diaryTitle) || null : null,
         tags,
         original_text: correction.original,
+        original_text_ruby: correction.originalRuby || null,
         corrected_japanese: correction.corrected,
         natural_japanese: correction.natural,
         english_explanation: correction.explanation,
