@@ -14,6 +14,7 @@
     "@capacitor/ios": "^8.4.1",
     "@capacitor/push-notifications": "^8.1.1",
     "@capacitor/splash-screen": "^8.0.1",
+    "@revenuecat/purchases-capacitor": "^13.2.2",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.2",
     "@types/tiny-segmenter": "^0.2.0",

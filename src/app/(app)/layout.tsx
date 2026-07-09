@@ -13,6 +13,7 @@ import { InstallPromptBanner } from "@/components/InstallPromptBanner";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ObieNotificationSyncer } from "@/components/ObieNotificationSyncer";
 import { PushRegistrar } from "@/components/PushRegistrar";
+import { RevenueCatInit } from "@/components/RevenueCatInit";
 import { NativeGate } from "@/components/NativeGate";
 import { createClient } from "@/lib/supabase/server";
 import { LocaleProvider } from "@/contexts/locale";
@@ -86,6 +87,7 @@ export default async function AppLayout({
       <InstallPromptBanner />
       {userId && <ObieNotificationSyncer userId={userId} />}
       {userId && <PushRegistrar />}
+      {userId && <RevenueCatInit userId={userId} />}
       <div className="min-h-screen bg-cream">
         {/* Desktop sidebar */}
         <aside className="fixed inset-y-0 left-0 z-30 hidden w-[264px] border-r border-line bg-paper lg:block">
