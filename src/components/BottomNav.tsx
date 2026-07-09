@@ -5,6 +5,33 @@ import { usePathname } from "next/navigation";
 import { renderIcon } from "@/components/icons";
 import { mobileNavItems } from "@/lib/mock-data";
 import { useT } from "@/contexts/locale";
+import { useRipple } from "@/lib/useRipple";
+
+/** Same tap-ripple pattern as LinkButton in ui.tsx, one useRipple instance per link. */
+function NavLink({
+  href,
+  ariaLabel,
+  className,
+  children,
+}: {
+  href: string;
+  ariaLabel?: string;
+  className: string;
+  children: React.ReactNode;
+}) {
+  const { ref, onPointerDown } = useRipple<HTMLAnchorElement>();
+  return (
+    <Link
+      href={href}
+      ref={ref}
+      onPointerDown={onPointerDown}
+      aria-label={ariaLabel}
+      className={`ripple-container ${className}`}
+    >
+      {children}
+    </Link>
+  );
+}
 
 /** Map English mobile nav labels to i18n keys. */
 const MOB_KEYS: Record<string, string> = {
@@ -31,19 +58,19 @@ export function BottomNav() {
           if (isWrite) {
             return (
               <li key={item.label} className="flex items-end pb-2">
-                <Link
+                <NavLink
                   href={item.href}
-                  aria-label={label}
+                  ariaLabel={label}
                   className="grid h-12 w-12 -translate-y-2 place-items-center rounded-2xl bg-pine text-cream shadow-lift"
                 >
                   {renderIcon(item.icon, "h-6 w-6")}
-                </Link>
+                </NavLink>
               </li>
             );
           }
           return (
             <li key={item.label} className="flex-1">
-              <Link
+              <NavLink
                 href={item.href}
                 className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium ${
                   active ? "text-pine" : "text-muted"
@@ -51,7 +78,7 @@ export function BottomNav() {
               >
                 {renderIcon(item.icon, "h-5 w-5")}
                 {label}
-              </Link>
+              </NavLink>
             </li>
           );
         })}
