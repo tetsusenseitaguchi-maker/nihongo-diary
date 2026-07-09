@@ -4,14 +4,6 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { REACTIONS } from "@/lib/activity";
 
-// Not a hook — just replays the CSS keyframes on the clicked button via
-// direct DOM manipulation, same "no React state" spirit as useRipple.
-function triggerBounce(el: HTMLElement) {
-  el.classList.remove("reaction-bounce");
-  void el.offsetWidth; // force reflow so repeated rapid taps replay from 0%
-  el.classList.add("reaction-bounce");
-}
-
 export function ReactionBar({
   activityId,
   initialCounts,
@@ -64,11 +56,7 @@ export function ReactionBar({
         return (
           <button
             key={r.type}
-            onClick={(e) => {
-              triggerBounce(e.currentTarget);
-              toggle(r.type);
-            }}
-            onAnimationEnd={(e) => e.currentTarget.classList.remove("reaction-bounce")}
+            onClick={() => toggle(r.type)}
             disabled={busy === r.type}
             className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
               active
