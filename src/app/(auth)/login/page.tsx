@@ -42,6 +42,12 @@ function LoginForm() {
         <Field label={t("login.email")} type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
         <Field label={t("login.password")} type="password" value={password} onChange={setPassword} placeholder="••••••••" />
 
+        <p className="-mt-2 text-right text-sm">
+          <Link href="/forgot-password" className="font-semibold text-moss-600 hover:text-pine">
+            {t("login.forgotPasswordLink")}
+          </Link>
+        </p>
+
         {error && <p className="rounded-lg bg-apricot/10 px-3 py-2 text-sm text-apricot">{error}</p>}
 
         <Button type="submit" size="lg" disabled={loading} className="w-full">
