@@ -53,10 +53,27 @@ export async function POST(request: NextRequest) {
 
         if (!userId) break;
 
+        // Claims the Stripe billing rail for this user. Doesn't check the
+        // current billing_source first — checkout/route.ts's guard should
+        // prevent an apple_iap subscriber from reaching Stripe checkout at
+        // all, but if this fires anyway, log it loudly rather than silently
+        // dropping a charge the user already paid for.
+        const { data: before } = await supabase
+          .from("profiles")
+          .select("billing_source")
+          .eq("id", userId)
+          .single();
+        if (before?.billing_source === "apple_iap") {
+          console.warn(
+            `[stripe/webhook] checkout.session.completed for ${userId} — was already billing_source=apple_iap`,
+          );
+        }
+
         await supabase
           .from("profiles")
           .update({
             plan,
+            billing_source: "stripe",
             ...(customerId && { stripe_customer_id: customerId }),
             ...(subscriptionId && { stripe_subscription_id: subscriptionId }),
           })
@@ -74,10 +91,13 @@ export async function POST(request: NextRequest) {
         const planName = planFromPriceId(priceId);
         const newPlan = planForStatus(sub.status, planName);
 
+        // Don't clobber a user who has since moved to Apple IAP — see
+        // revenuecat/webhook/route.ts for the symmetric guard.
         await supabase
           .from("profiles")
           .update({ plan: newPlan, stripe_subscription_id: sub.id })
-          .eq("stripe_customer_id", customerId);
+          .eq("stripe_customer_id", customerId)
+          .neq("billing_source", "apple_iap");
         break;
       }
 
@@ -89,8 +109,9 @@ export async function POST(request: NextRequest) {
 
         await supabase
           .from("profiles")
-          .update({ plan: "free", stripe_subscription_id: null })
-          .eq("stripe_customer_id", customerId);
+          .update({ plan: "free", stripe_subscription_id: null, billing_source: null })
+          .eq("stripe_customer_id", customerId)
+          .neq("billing_source", "apple_iap");
         break;
       }
 
@@ -107,7 +128,8 @@ export async function POST(request: NextRequest) {
           await supabase
             .from("profiles")
             .update({ plan: "free" })
-            .eq("stripe_customer_id", customerId);
+            .eq("stripe_customer_id", customerId)
+            .neq("billing_source", "apple_iap");
         }
         break;
       }

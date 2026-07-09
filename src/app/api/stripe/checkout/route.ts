@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   // Fetch existing Stripe customer ID to consolidate billing history
   const { data: profile } = await supabase
     .from("profiles")
-    .select("stripe_customer_id, stripe_subscription_id, plan")
+    .select("stripe_customer_id, stripe_subscription_id, plan, billing_source")
     .eq("id", user.id)
     .single();
 
@@ -42,6 +42,21 @@ export async function POST(req: NextRequest) {
       {
         error: "You already have an active subscription. Manage your plan from the billing portal.",
         requiresPortal: true,
+      },
+      { status: 409 },
+    );
+  }
+
+  // Same idea, cross-platform: someone paying via Apple IAP shouldn't be
+  // able to start a separate Stripe subscription for the same account —
+  // that's the gap the revenuecat/webhook + stripe/webhook billing_source
+  // guards can't fully close on their own, since checkout/route.ts is the
+  // only place that runs *before* Stripe has ever heard of this attempt.
+  if (profile?.billing_source === "apple_iap") {
+    return NextResponse.json(
+      {
+        error: "You already have an active subscription via the App Store. Manage your plan from your iOS device's subscription settings.",
+        requiresPortal: false,
       },
       { status: 409 },
     );
