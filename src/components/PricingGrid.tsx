@@ -3,6 +3,7 @@ import { Card } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { type Plan } from "@/lib/plans";
 import { CheckoutButton } from "@/components/CheckoutButton";
+import { ManageSubscriptionButton } from "@/components/ManageSubscriptionButton";
 
 type Tier = {
   id: Plan;
@@ -117,11 +118,15 @@ const DEFAULT_LABELS: PricingLabels = {
  */
 export function PricingGrid({
   currentPlan,
+  hasActiveSubscription = false,
   mode = "landing",
   labels = DEFAULT_LABELS,
   translateFeature,
 }: {
   currentPlan?: Plan;
+  /** True when the viewer already has a Stripe subscription — switching
+   *  plans must go through the billing portal, not a fresh Checkout Session. */
+  hasActiveSubscription?: boolean;
   mode?: "landing" | "upgrade";
   labels?: PricingLabels;
   translateFeature?: (key: string) => string;
@@ -211,6 +216,8 @@ export function PricingGrid({
                   >
                     {labels.startFree}
                   </Link>
+                ) : mode === "upgrade" && hasActiveSubscription && (tier.id === "plus" || tier.id === "pro") ? (
+                  <ManageSubscriptionButton />
                 ) : labels.checkoutEnabled && (tier.id === "plus" || tier.id === "pro") ? (
                   <CheckoutButton plan={tier.id} />
                 ) : (

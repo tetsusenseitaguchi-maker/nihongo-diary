@@ -22,13 +22,29 @@ export async function POST(req: NextRequest) {
   // Fetch existing Stripe customer ID to consolidate billing history
   const { data: profile } = await supabase
     .from("profiles")
-    .select("stripe_customer_id, plan")
+    .select("stripe_customer_id, stripe_subscription_id, plan")
     .eq("id", user.id)
     .single();
 
   // Don't allow downgrade via checkout (same plan)
   if (profile?.plan === plan) {
     return NextResponse.json({ error: "Already on this plan" }, { status: 409 });
+  }
+
+  // Don't create a second subscription for someone who already has one — a
+  // fresh Checkout Session here would leave the old subscription active
+  // alongside the new one (double billing), and the webhook has no way to
+  // tell which subscription's events should win. Plan changes for existing
+  // subscribers go through the billing portal instead, which updates the
+  // existing subscription in place.
+  if (profile?.stripe_subscription_id) {
+    return NextResponse.json(
+      {
+        error: "You already have an active subscription. Manage your plan from the billing portal.",
+        requiresPortal: true,
+      },
+      { status: 409 },
+    );
   }
 
   try {

@@ -18,7 +18,7 @@ export default async function UpgradePage() {
   if (!user) redirect("/login");
 
   const [{ data: profile }, t] = await Promise.all([
-    supabase.from("profiles").select("plan, stripe_customer_id").eq("id", user.id).single(),
+    supabase.from("profiles").select("plan, stripe_customer_id, stripe_subscription_id").eq("id", user.id).single(),
     getServerT(),
   ]);
   const plan = normalizePlan(profile?.plan);
@@ -59,6 +59,7 @@ export default async function UpgradePage() {
       >
         <PricingGrid
           currentPlan={plan}
+          hasActiveSubscription={!!profile?.stripe_subscription_id}
           mode="upgrade"
           translateFeature={t}
           labels={{
