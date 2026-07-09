@@ -42,6 +42,8 @@ export async function POST(request: NextRequest) {
   const supabase = createAdminClient();
   const appUserId = event.app_user_id;
 
+  console.log("[revenuecat/webhook] received:", event.type, appUserId ?? "(no app_user_id)");
+
   try {
     switch (event.type) {
       // ─── New subscription purchased ─────────────────────────────────────
