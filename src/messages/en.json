@@ -286,6 +286,8 @@
   "pricing.startFree": "Start for free",
   "pricing.upgradeSoon": "Upgrade soon",
   "pricing.betaNotice": "Secure payment via Stripe. Cancel anytime from your account.",
+  "pricing.manageOnWeb": "Managed on the website",
+  "pricing.manageInApp": "Managed in the app",
   "history.subtitle": "History",
   "history.title": "Diary History",
   "history.noEntries": "No diaries yet.",
