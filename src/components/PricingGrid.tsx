@@ -3,7 +3,7 @@ import { Card } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { type Plan } from "@/lib/plans";
 import { CheckoutButton } from "@/components/CheckoutButton";
-import { ManageSubscriptionButton } from "@/components/ManageSubscriptionButton";
+import { PurchaseButton } from "@/components/PurchaseButton";
 
 type Tier = {
   id: Plan;
@@ -119,6 +119,7 @@ const DEFAULT_LABELS: PricingLabels = {
 export function PricingGrid({
   currentPlan,
   hasActiveSubscription = false,
+  billingSource = null,
   mode = "landing",
   labels = DEFAULT_LABELS,
   translateFeature,
@@ -127,6 +128,10 @@ export function PricingGrid({
   /** True when the viewer already has a Stripe subscription — switching
    *  plans must go through the billing portal, not a fresh Checkout Session. */
   hasActiveSubscription?: boolean;
+  /** Which billing rail (if any) the viewer's active subscription is on —
+   *  passed through to PurchaseButton to pick IAP vs Stripe vs "managed
+   *  elsewhere". */
+  billingSource?: "stripe" | "apple_iap" | null;
   mode?: "landing" | "upgrade";
   labels?: PricingLabels;
   translateFeature?: (key: string) => string;
@@ -216,9 +221,14 @@ export function PricingGrid({
                   >
                     {labels.startFree}
                   </Link>
-                ) : mode === "upgrade" && hasActiveSubscription && (tier.id === "plus" || tier.id === "pro") ? (
-                  <ManageSubscriptionButton />
-                ) : labels.checkoutEnabled && (tier.id === "plus" || tier.id === "pro") ? (
+                ) : mode === "upgrade" && (tier.id === "plus" || tier.id === "pro") ? (
+                  <PurchaseButton
+                    plan={tier.id}
+                    billingSource={billingSource}
+                    hasActiveSubscription={hasActiveSubscription}
+                    checkoutEnabled={labels.checkoutEnabled}
+                  />
+                ) : mode === "landing" && labels.checkoutEnabled && (tier.id === "plus" || tier.id === "pro") ? (
                   <CheckoutButton plan={tier.id} />
                 ) : (
                   <button

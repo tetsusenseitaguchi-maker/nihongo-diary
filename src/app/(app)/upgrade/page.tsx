@@ -1,11 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePlan, PLAN_LABELS } from "@/lib/plans";
 import { PricingGrid } from "@/components/PricingGrid";
-import { ManageSubscriptionButton } from "@/components/ManageSubscriptionButton";
-import { NativeGate } from "@/components/NativeGate";
-import { Card } from "@/components/ui";
 import { getServerT } from "@/lib/i18n-server";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +14,11 @@ export default async function UpgradePage() {
   if (!user) redirect("/login");
 
   const [{ data: profile }, t] = await Promise.all([
-    supabase.from("profiles").select("plan, stripe_customer_id, stripe_subscription_id").eq("id", user.id).single(),
+    supabase
+      .from("profiles")
+      .select("plan, stripe_customer_id, stripe_subscription_id, billing_source")
+      .eq("id", user.id)
+      .single(),
     getServerT(),
   ]);
   const plan = normalizePlan(profile?.plan);
@@ -37,42 +37,22 @@ export default async function UpgradePage() {
         </div>
       </div>
 
-      <NativeGate
-        fallback={
-          <Card className="mx-auto max-w-sm p-6 text-center">
-            <h2 className="font-serif text-lg font-bold text-pine">{t("upgrade.nativeFallbackTitle")}</h2>
-            <p className="mt-2 text-sm text-ink/70">
-              {profile?.stripe_customer_id
-                ? t("upgrade.nativeFallbackDescSub")
-                : t("upgrade.nativeFallbackDescFree")}
-            </p>
-            {profile?.stripe_customer_id && (
-              <div className="mt-4 flex justify-center">
-                <ManageSubscriptionButton />
-              </div>
-            )}
-            <Link href="/dashboard" className="mt-4 inline-block text-sm font-semibold text-moss-600 hover:text-pine">
-              {t("upgrade.nativeFallbackBack")}
-            </Link>
-          </Card>
-        }
-      >
-        <PricingGrid
-          currentPlan={plan}
-          hasActiveSubscription={!!profile?.stripe_subscription_id}
-          mode="upgrade"
-          translateFeature={t}
-          labels={{
-            mostPopular: t("pricing.mostPopular"),
-            comingSoon: t("pricing.comingSoon"),
-            currentPlan: t("pricing.currentPlan"),
-            startFree: t("pricing.startFree"),
-            upgradeSoon: t("pricing.upgradeSoon"),
-            betaNotice: t("pricing.betaNotice"),
-            checkoutEnabled: true,
-          }}
-        />
-      </NativeGate>
+      <PricingGrid
+        currentPlan={plan}
+        hasActiveSubscription={!!profile?.stripe_subscription_id}
+        billingSource={(profile?.billing_source as "stripe" | "apple_iap" | null) ?? null}
+        mode="upgrade"
+        translateFeature={t}
+        labels={{
+          mostPopular: t("pricing.mostPopular"),
+          comingSoon: t("pricing.comingSoon"),
+          currentPlan: t("pricing.currentPlan"),
+          startFree: t("pricing.startFree"),
+          upgradeSoon: t("pricing.upgradeSoon"),
+          betaNotice: t("pricing.betaNotice"),
+          checkoutEnabled: true,
+        }}
+      />
     </div>
   );
 }
