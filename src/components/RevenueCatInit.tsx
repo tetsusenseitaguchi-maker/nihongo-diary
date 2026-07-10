@@ -32,7 +32,7 @@ async function configurePurchases(userId: string) {
     // and self-documenting in case that ever changes.
     if (cap.getPlatform?.() === "ios") {
       await Purchases.configure({
-        apiKey: "test_hgxAFzLTypgtCAUcqGeFtkzCbHN",
+        apiKey: "appl_pNHqNZamBxQolzAUxeozAznswCn",
         appUserID: userId,
       });
     }
