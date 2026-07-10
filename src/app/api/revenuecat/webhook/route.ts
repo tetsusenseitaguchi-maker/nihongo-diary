@@ -58,10 +58,18 @@ export async function POST(request: NextRequest) {
         // apple_iap subscribers, but the guard there can't stop an existing
         // Stripe checkout in flight), log it loudly rather than silently
         // dropping a real purchase the user already paid for.
+        //
+        // Matches on profiles.id (== appUserId, since RevenueCatInit.tsx
+        // always configures Purchases with appUserID = the Supabase user's
+        // own id) rather than revenuecat_app_user_id — that column is only
+        // ever populated by a one-time migration backfill, so it's null for
+        // every user who signed up afterward and can't be relied on to
+        // match. Still opportunistically written below so it stays useful
+        // for anything else that wants to look a user up by it.
         const { data: before } = await supabase
           .from("profiles")
           .select("billing_source")
-          .eq("revenuecat_app_user_id", appUserId)
+          .eq("id", appUserId)
           .single();
         if (before?.billing_source === "stripe") {
           console.warn(
@@ -71,8 +79,8 @@ export async function POST(request: NextRequest) {
 
         await supabase
           .from("profiles")
-          .update({ plan, billing_source: "apple_iap" })
-          .eq("revenuecat_app_user_id", appUserId);
+          .update({ plan, billing_source: "apple_iap", revenuecat_app_user_id: appUserId })
+          .eq("id", appUserId);
         break;
       }
 
@@ -83,8 +91,8 @@ export async function POST(request: NextRequest) {
 
         await supabase
           .from("profiles")
-          .update({ plan, billing_source: "apple_iap" })
-          .eq("revenuecat_app_user_id", appUserId)
+          .update({ plan, billing_source: "apple_iap", revenuecat_app_user_id: appUserId })
+          .eq("id", appUserId)
           .neq("billing_source", "stripe");
         break;
       }
@@ -95,8 +103,8 @@ export async function POST(request: NextRequest) {
 
         await supabase
           .from("profiles")
-          .update({ plan: "free", billing_source: null })
-          .eq("revenuecat_app_user_id", appUserId)
+          .update({ plan: "free", billing_source: null, revenuecat_app_user_id: appUserId })
+          .eq("id", appUserId)
           .neq("billing_source", "stripe");
         break;
       }
