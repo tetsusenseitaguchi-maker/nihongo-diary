@@ -98,18 +98,25 @@ export default async function ProfilePage() {
         <LinkButton href="/feed" size="sm" variant="secondary">Feed を見る</LinkButton>
       </Card>
 
-      {/* Subscription management — shown when user has/had a paid plan */}
-      {profile?.stripe_customer_id && (
-        <Card className="flex items-center justify-between gap-4 p-5">
-          <div>
-            <p className="font-serif font-bold text-pine">
-              {PLAN_LABELS[normalizePlan(profile.plan)]}
-            </p>
-            <p className="mt-0.5 text-sm text-muted">{t("upgrade.currentPlan", { plan: PLAN_LABELS[normalizePlan(profile.plan)] })}</p>
-          </div>
+      {/* Plan overview — shown to everyone. Existing Stripe subscribers go
+          straight to the billing portal (1-click shortcut); everyone else
+          (Free, Apple IAP, never subscribed) goes to /upgrade, which already
+          knows how to route each of those states correctly. */}
+      <Card className="flex items-center justify-between gap-4 p-5">
+        <div>
+          <p className="font-serif font-bold text-pine">
+            {PLAN_LABELS[normalizePlan(profile?.plan)]}
+          </p>
+          <p className="mt-0.5 text-sm text-muted">{t("upgrade.currentPlan", { plan: PLAN_LABELS[normalizePlan(profile?.plan)] })}</p>
+        </div>
+        {profile?.billing_source === "stripe" ? (
           <ManageSubscriptionButton />
-        </Card>
-      )}
+        ) : (
+          <LinkButton href="/upgrade" size="sm" variant="secondary">
+            {t("profile.viewPlan")}
+          </LinkButton>
+        )}
+      </Card>
 
       {/* Invite friends */}
       {profile?.invite_code && (
