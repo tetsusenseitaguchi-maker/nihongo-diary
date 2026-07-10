@@ -3,6 +3,7 @@
 import { useT } from "@/contexts/locale";
 import { CheckoutButton } from "@/components/CheckoutButton";
 import { ManageSubscriptionButton } from "@/components/ManageSubscriptionButton";
+import { IAPPurchaseButton } from "@/components/IAPPurchaseButton";
 import type { PaidPlan } from "@/lib/stripe";
 
 // Same native-detection pattern as NativeGate.tsx: evaluated once at module
@@ -46,8 +47,7 @@ export function PurchaseButton({
     if (billingSource === "stripe") {
       return <ManagedElsewhereNotice text={t("pricing.manageOnWeb")} />;
     }
-    // TODO(next step): replace with <IAPPurchaseButton plan={plan} />
-    return <ManagedElsewhereNotice text={t("pricing.upgradeSoon")} />;
+    return <IAPPurchaseButton plan={plan} />;
   }
 
   // Web
