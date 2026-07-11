@@ -289,6 +289,7 @@
   "pricing.betaNotice": "Secure payment via Stripe. Cancel anytime from your account.",
   "pricing.manageOnWeb": "Managed on the website",
   "pricing.manageInApp": "Managed in the app",
+  "pricing.manageInAppInstructions": "Manage or cancel in Settings → Apple ID → Subscriptions",
   "history.subtitle": "History",
   "history.title": "Diary History",
   "history.noEntries": "No diaries yet.",

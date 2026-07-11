@@ -92,6 +92,10 @@ export type PricingLabels = {
   startFree: string;
   upgradeSoon: string;
   betaNotice: string;
+  /** Shown under the disabled "Current plan" button when billingSource is
+   *  "apple_iap" — points to Apple's subscription management (App Store
+   *  Review Guideline 3.1.2 requires an in-app path to cancel). */
+  manageInAppInstructions: string;
   /** When true, paid plan buttons become live Stripe checkout links */
   checkoutEnabled?: boolean;
 };
@@ -103,6 +107,7 @@ const DEFAULT_LABELS: PricingLabels = {
   startFree: "Start for free",
   upgradeSoon: "Upgrade soon",
   betaNotice: "Payments aren't live yet — this is a public beta. Pricing may change before launch.",
+  manageInAppInstructions: "Manage or cancel in Settings → Apple ID → Subscriptions",
 };
 
 /**
@@ -208,12 +213,24 @@ export function PricingGrid({
                     {labels.comingSoon}
                   </button>
                 ) : isCurrent ? (
-                  <button
-                    disabled
-                    className="w-full rounded-full border border-line bg-mint/50 px-4 py-2.5 text-sm font-semibold text-pine"
-                  >
-                    {labels.currentPlan}
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      disabled
+                      className="w-full rounded-full border border-line bg-mint/50 px-4 py-2.5 text-sm font-semibold text-pine"
+                    >
+                      {labels.currentPlan}
+                    </button>
+                    {billingSource === "apple_iap" && (
+                      <a
+                        href="https://apps.apple.com/account/subscriptions"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-center text-xs text-muted underline"
+                      >
+                        {labels.manageInAppInstructions}
+                      </a>
+                    )}
+                  </div>
                 ) : mode === "landing" && tier.id === "free" ? (
                   <Link
                     href="/signup"

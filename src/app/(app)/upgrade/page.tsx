@@ -50,6 +50,7 @@ export default async function UpgradePage() {
           startFree: t("pricing.startFree"),
           upgradeSoon: t("pricing.upgradeSoon"),
           betaNotice: t("pricing.betaNotice"),
+          manageInAppInstructions: t("pricing.manageInAppInstructions"),
           checkoutEnabled: true,
         }}
       />
