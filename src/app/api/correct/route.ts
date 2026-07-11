@@ -71,6 +71,11 @@ CRITICAL furigana rules:
 - Put ONLY the kanji inside <ruby>, and put the kanji's reading inside <rt>. Okurigana (the hiragana that follows a kanji) MUST stay OUTSIDE the ruby tag.
 - NEVER wrap hiragana or katakana in <ruby>. Only kanji get furigana.
 - The reading in <rt> must be the reading of the kanji only — never repeat the kana that is already visible.
+- Grammaticalized auxiliary verbs after the て-form (補助動詞) — てくる,
+  ていく, てある, ておく, てみる, てしまう — should be written in
+  hiragana, not kanji (write てくる, NOT て来る; ていく, NOT て行く),
+  since this reflects their grammaticalized meaning, even though 来る/
+  行く are otherwise common kanji at this level.
 Correct examples:
   見ました → <ruby>見<rt>み</rt></ruby>ました
   食べる → <ruby>食<rt>た</rt></ruby>べる
@@ -108,7 +113,19 @@ Every Japanese field above ends in "Ruby" and must contain furigana in this form
 
 11. practiceDrills: generate exactly 2 short practice drills based on the learner's mistakes or the relatedMiniLesson topic.
 - Types (use the exact string): "fill-in" (blank fill — mark the blank as ___), "particle-choice" (choose the correct particle), "desu-masu" (choose です or ます), "reorder" (reorder the given words into a correct sentence; put the shuffled words in choices), "rewrite" (rewrite the given phrase more naturally; no choices needed).
-- question: plain text (no ruby tags). questionRuby: same sentence with <ruby> furigana on all kanji. choices: array of strings (3–4 options for fill-in/particle-choice/desu-masu; shuffled words for reorder; empty array [] for rewrite). answer: plain text. answerRuby: with <ruby> furigana. englishExplanation: one sentence in ${lang} explaining why.
+- question: plain text (no ruby tags). questionRuby: same sentence with <ruby> furigana on all kanji. answer: plain text. answerRuby: with <ruby> furigana. englishExplanation: one sentence in ${lang} explaining why.
+- choices:
+  - fill-in: EXACTLY 2 options — the correct answer plus ONE plausible
+    wrong answer. Both must be complete, well-formed words/phrases
+    (never a truncated fragment like "行ってき"), and must be distinct
+    strings from each other.
+  - particle-choice / desu-masu: 3–4 options, all distinct from each other.
+  - reorder: shuffled words. rewrite: [].
+  - For every drill type that has choices, the array MUST include a
+    string that is character-for-character identical to "answer" — same
+    kanji/hiragana notation, not just the same reading (e.g. if answer
+    is "行ってきました", a choice must be "行ってきました", not "行って
+    来ました").
 - Keep every drill simple and at the learner's level. Vary the types. If there were no mistakes, base drills on the relatedMiniLesson.
 - Grammatical consistency (fill-in especially): the fixed text immediately before and after the blank — including the sentence ending — must connect naturally with the answer's actual grammatical form. Forms like 〜そう (様態/looks-like), 〜らしい, 〜ようだ, and 〜みたいだ cannot be directly followed by ます. If the correct answer is (or ends in) one of these forms, do NOT end the sentence in ます — use です instead, or rewrite the whole sentence so the fixed text around the blank fits that form naturally. Mentally fill in the blank and confirm the complete sentence is grammatical before finalizing.
 
