@@ -3,19 +3,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/contexts/locale";
 import type { PaidPlan } from "@/lib/stripe";
+import { IAP_PRODUCT_IDS } from "@/lib/revenuecat";
 
 interface Props {
   plan: PaidPlan;
   className?: string;
 }
-
-/** RevenueCat App Store product IDs — must match what's configured in both
- *  App Store Connect and the RevenueCat dashboard (see revenuecat/webhook
- *  route.ts's PRODUCT_ID_TO_PLAN for the server-side counterpart). */
-const PRODUCT_IDS: Record<PaidPlan, string> = {
-  plus: "com.nihongodiary.app.plus.monthly",
-  pro: "com.nihongodiary.app.pro.monthly",
-};
 
 export function IAPPurchaseButton({ plan, className }: Props) {
   const t = useT();
@@ -32,7 +25,7 @@ export function IAPPurchaseButton({ plan, className }: Props) {
       const { Purchases } = await import("@revenuecat/purchases-capacitor");
 
       const offerings = await Purchases.getOfferings();
-      const productId = PRODUCT_IDS[plan];
+      const productId = IAP_PRODUCT_IDS[plan];
       const pkg = offerings.current?.availablePackages.find(
         (p) => p.product.identifier === productId,
       );

@@ -4,6 +4,7 @@ import { Icon } from "@/components/icons";
 import { type Plan } from "@/lib/plans";
 import { CheckoutButton } from "@/components/CheckoutButton";
 import { PurchaseButton } from "@/components/PurchaseButton";
+import { PlanPrice } from "@/components/PlanPrice";
 
 type Tier = {
   id: Plan;
@@ -172,11 +173,17 @@ export function PricingGrid({
 
               <h2 className="font-serif text-xl font-bold text-pine">{tier.name}</h2>
               <p className="mt-1">
-                <span className="font-serif text-3xl font-bold text-pine">
-                  {tier.price}
-                </span>
-                {tier.cadence && (
-                  <span className="text-sm text-muted">{tier.cadence}</span>
+                {mode === "upgrade" && (tier.id === "plus" || tier.id === "pro") ? (
+                  <PlanPrice plan={tier.id} fallback={tier.price} cadence={tier.cadence} />
+                ) : (
+                  <>
+                    <span className="font-serif text-3xl font-bold text-pine">
+                      {tier.price}
+                    </span>
+                    {tier.cadence && (
+                      <span className="text-sm text-muted">{tier.cadence}</span>
+                    )}
+                  </>
                 )}
               </p>
 
