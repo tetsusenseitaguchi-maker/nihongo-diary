@@ -29,8 +29,24 @@ Rules:
    - question: plain text (no ruby). questionRuby: with <ruby> tags.
    - answer: plain text. answerRuby: with <ruby> tags.
    - choices: plain text strings (no ruby tags).
+   - Grammaticalized auxiliary verbs after the て-form (補助動詞) — てくる,
+     ていく, てある, ておく, てみる, てしまう — should be written in
+     hiragana, not kanji (write てくる, NOT て来る; ていく, NOT て行く),
+     since this reflects their grammaticalized meaning, even though 来る/
+     行く are otherwise common kanji at this level.
 3. englishExplanation: one clear ${lang} sentence explaining why the answer is correct.
-4. choices: 3–4 options for fill-in/particle-choice/desu-masu; shuffled words for reorder; [] for rewrite.
+4. choices:
+   - fill-in: EXACTLY 2 options — the correct answer plus ONE plausible
+     wrong answer. Both must be complete, well-formed words/phrases
+     (never a truncated fragment like "行ってき"), and must be distinct
+     strings from each other.
+   - particle-choice / desu-masu: 3–4 options, all distinct from each other.
+   - reorder: shuffled words. rewrite: [].
+   - For every drill type that has choices, the array MUST include a
+     string that is character-for-character identical to "answer" — same
+     kanji/hiragana notation, not just the same reading (e.g. if answer
+     is "行ってきました", a choice must be "行ってきました", not "行って
+     来ました").
 5. Keep every drill appropriate for ${level} level. Make them directly test the lesson's grammar point.
 6. Grammatical consistency (fill-in especially): the fixed text immediately before and after the blank — including the sentence ending — must connect naturally with the answer's actual grammatical form. Some forms cannot be directly followed by ます, such as 〜そう (様態/looks-like), 〜らしい, 〜ようだ, and 〜みたいだ. If the correct answer is (or ends in) one of these forms, do NOT end the sentence in ます — instead end it in です, or rewrite the whole sentence so the fixed text around the blank fits that form naturally. Before finalizing each fill-in drill, mentally fill in the blank and confirm the complete sentence reads as natural, grammatical Japanese.
 7. Return ONLY valid JSON. No markdown, no text outside the JSON.
