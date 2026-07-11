@@ -9,6 +9,7 @@ import { Icon } from "@/components/icons";
 import { GoalRing } from "@/components/GoalRing";
 import { Attachments } from "@/components/Attachments";
 import { CorrectionResult } from "@/components/CorrectionResult";
+import { PublicToggle } from "@/components/PublicToggle";
 import { Furigana } from "@/components/Furigana";
 import { Bilingual } from "@/components/Bilingual";
 import { templates, sampleDraft } from "@/lib/mock-data";
@@ -989,6 +990,7 @@ export default function WritePage() {
             ) : savedEntryId ? (
               <div className="flex items-center gap-3">
                 <span className="text-sm text-moss-600">✓ {t("write.savedMsg")}</span>
+                <PublicToggle diaryId={savedEntryId} initialPublic={false} />
                 <a
                   href={`/diary/${savedEntryId}`}
                   className="gloss-btn shrink-0 rounded-full px-4 py-2 text-sm font-semibold text-cream hover:brightness-105"
