@@ -6,6 +6,11 @@ const config: CapacitorConfig = {
   // webDir is required by Capacitor even in server-URL mode (used as fallback).
   // Using "public" — it already exists, is in git, and has static assets.
   webDir: "public",
+  // Lets middleware.ts tell native WebView requests apart from regular
+  // browser requests (see the "/" redirect there), so the landing page is
+  // never even sent to the native app — avoids a flash of it before
+  // NativeHomeRedirect.tsx's client-side redirect can fire.
+  appendUserAgent: "NihongoDiaryNativeApp",
   server: {
     // Load production site directly — no static export needed
     url: "https://nihongodiary.app",

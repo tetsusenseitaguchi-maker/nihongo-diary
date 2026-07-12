@@ -47,6 +47,17 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
+
+  // Native app requests never see the marketing landing page — redirect
+  // server-side before it's ever rendered, instead of relying solely on
+  // NativeHomeRedirect.tsx's client-side redirect (which can't fire until
+  // after the page has already been sent and painted once).
+  if (path === "/" && (request.headers.get("user-agent") ?? "").includes("NihongoDiaryNativeApp")) {
+    const url = request.nextUrl.clone();
+    url.pathname = user ? "/dashboard" : "/login";
+    return NextResponse.redirect(url);
+  }
+
   const isProtected = PROTECTED.some((p) => path === p || path.startsWith(p + "/"));
   const isAuthPage = AUTH_PAGES.some((p) => path === p);
 
