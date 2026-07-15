@@ -4,12 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { normalizePlan, limitsFor } from "@/lib/plans";
 import { languageDisplayName, SUPPORTED_LANGUAGES } from "@/lib/languages";
 import { todayInTZ } from "@/lib/date-tz";
+import { createChatCompletion, missingApiKeyError } from "@/lib/ai-provider";
 
 const SUPPORTED_CODES = SUPPORTED_LANGUAGES.map((l) => l.code) as string[];
 
 export const runtime = "nodejs";
-
-const MODEL = "gpt-4.1-mini";
 
 // POST { text: string, language: string }
 // Lightweight translation for short texts (comments, excerpts).
@@ -85,36 +84,29 @@ export async function POST(req: Request) {
   const targetLang = language && SUPPORTED_CODES.includes(language) ? language : "en";
   const targetDisplay = languageDisplayName(targetLang);
 
+  const missingKeyError = missingApiKeyError();
+  if (missingKeyError) {
+    console.error("[translate-text]", missingKeyError);
+    return NextResponse.json(
+      { error: "Translation service error. Please try again." },
+      { status: 503 }
+    );
+  }
+
   try {
-    const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          {
-            role: "system",
-            content: `You are a Japanese-to-${targetDisplay} translator. Translate the text into natural, conversational ${targetDisplay}. Output only the translation — no explanations, no quotation marks, no preamble.`,
-          },
-          { role: "user", content: text.trim() },
-        ],
-        max_tokens: 300,
-        temperature: 0.3,
-      }),
+    const result = await createChatCompletion({
+      jsonMode: false,
+      maxTokens: 300,
+      temperature: 0.3,
+      messages: [
+        {
+          role: "system",
+          content: `You are a Japanese-to-${targetDisplay} translator. Translate the text into natural, conversational ${targetDisplay}. Output only the translation — no explanations, no quotation marks, no preamble.`,
+        },
+        { role: "user", content: text.trim() },
+      ],
     });
-
-    if (!aiRes.ok) {
-      return NextResponse.json(
-        { error: "Translation service error. Please try again." },
-        { status: 503 }
-      );
-    }
-
-    const aiData = await aiRes.json();
-    const translation: string = aiData.choices?.[0]?.message?.content?.trim() ?? "";
+    const translation = result.content.trim();
 
     if (!translation) {
       return NextResponse.json({ error: "Translation returned empty." }, { status: 500 });

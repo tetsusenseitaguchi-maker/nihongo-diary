@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePlan } from "@/lib/plans";
 import { languageDisplayName } from "@/lib/languages";
 import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
+import { createChatCompletion, missingApiKeyError } from "@/lib/ai-provider";
 
 export const runtime = "nodejs";
 
-const MODEL = "gpt-4.1-mini";
 const FREE_VOCAB_LIMIT = 3;
 
 // ------------------------------------------------------------------ GET
@@ -92,21 +91,16 @@ export async function POST(req: Request) {
   let practice_question = "";
   let practice_answer = word;
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (apiKey) {
+  if (!missingApiKeyError()) {
     try {
-      const openai = new OpenAI({ apiKey });
-
       if (type === "grammar") {
         // For grammar entries, meaning and example are already provided.
         // AI only generates translation + practice.
         meaning = explanation || word;
         example_jp_ruby = exampleRuby || "";
 
-        const completion = await openai.chat.completions.create({
-          model: MODEL,
-          response_format: { type: "json_object" },
-          max_tokens: 300,
+        const result = await createChatCompletion({
+          maxTokens: 300,
           temperature: 0.7,
           messages: [
             {
@@ -126,16 +120,14 @@ Return ONLY a JSON object (no markdown):
             },
           ],
         });
-        const parsed = JSON.parse(completion.choices[0]?.message?.content ?? "{}");
+        const parsed = JSON.parse(result.content || "{}");
         example_translation = String(parsed.example_translation ?? "").trim();
         practice_question = String(parsed.practice_question ?? "").trim();
         practice_answer = String(parsed.practice_answer ?? word).trim();
       } else {
         // Vocabulary word generation (existing logic)
-        const completion = await openai.chat.completions.create({
-          model: MODEL,
-          response_format: { type: "json_object" },
-          max_tokens: 400,
+        const result = await createChatCompletion({
+          maxTokens: 400,
           temperature: 0.7,
           messages: [
             {
@@ -157,7 +149,7 @@ Return ONLY a JSON object (no markdown):
             },
           ],
         });
-        const parsed = JSON.parse(completion.choices[0]?.message?.content ?? "{}");
+        const parsed = JSON.parse(result.content || "{}");
         meaning = String(parsed.meaning ?? "").trim();
         example_jp_ruby = String(parsed.example_jp_ruby ?? "").trim();
         example_translation = String(parsed.example_translation ?? "").trim();

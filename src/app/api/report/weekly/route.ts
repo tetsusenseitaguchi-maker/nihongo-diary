@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePlan } from "@/lib/plans";
 import { languageDisplayName } from "@/lib/languages";
 import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
+import { createChatCompletion, missingApiKeyError } from "@/lib/ai-provider";
 
 export const runtime = "nodejs";
-const MODEL = "gpt-4.1-mini";
 
 export async function GET() {
   const supabase = await createClient();
@@ -123,10 +122,8 @@ export async function GET() {
 
   // AI practice suggestions — does NOT consume correction credits
   let aiSuggestions: string[] = [];
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (apiKey && entries.length > 0) {
+  if (entries.length > 0 && !missingApiKeyError()) {
     try {
-      const openai = new OpenAI({ apiKey });
       const mistakeContext = allMistakes
         .slice(0, 8)
         .map((m, i) => `${i + 1}. ${m.before} → ${m.after}: ${m.note}`)
@@ -162,15 +159,13 @@ Return ONLY a JSON object:
   ]
 }`;
 
-      const completion = await openai.chat.completions.create({
-        model: MODEL,
-        response_format: { type: "json_object" },
-        max_tokens: 350,
+      const result = await createChatCompletion({
+        maxTokens: 350,
         temperature: 0.7,
         messages: [{ role: "user", content }],
       });
 
-      const parsed = JSON.parse(completion.choices[0]?.message?.content ?? "{}");
+      const parsed = JSON.parse(result.content || "{}");
       aiSuggestions = Array.isArray(parsed.suggestions)
         ? parsed.suggestions.slice(0, 3).map(String).filter(Boolean)
         : [];

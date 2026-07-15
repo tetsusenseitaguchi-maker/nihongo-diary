@@ -6,10 +6,9 @@ import { lessonById } from "@/lib/lessons";
 import { languageDisplayName } from "@/lib/languages";
 import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
 import { normalizeRubyText, stripRubyText } from "@/lib/furigana";
+import { createChatCompletion, missingApiKeyError } from "@/lib/ai-provider";
 
 export const runtime = "nodejs";
-
-const MODEL = "gpt-4.1-mini";
 
 function systemPrompt(level: string, style: string, lang: string): string {
   return `You are a friendly Japanese teacher for Japanese learners.
@@ -237,52 +236,31 @@ export async function POST(request: Request) {
     );
   }
 
-  // ---- OpenAI ----
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "サーバーに OPENAI_API_KEY が設定されていません。" },
-      { status: 500 },
-    );
+  // ---- AI provider (OpenAI or Anthropic, switched via AI_PROVIDER) ----
+  const missingKeyError = missingApiKeyError();
+  if (missingKeyError) {
+    return NextResponse.json({ error: missingKeyError }, { status: 500 });
   }
 
-  let aiResponse: Response;
+  let content: string;
   try {
-    aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        temperature: 0.3,
-        max_tokens: 3000,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: systemPrompt(level, style, lang) },
-          { role: "user", content: text },
-        ],
-      }),
+    const result = await createChatCompletion({
+      temperature: 0.3,
+      maxTokens: 3000,
+      messages: [
+        { role: "system", content: systemPrompt(level, style, lang) },
+        { role: "user", content: text },
+      ],
     });
-  } catch {
-    return NextResponse.json(
-      { error: "AI サーバーに接続できませんでした。もう一度お試しください。" },
-      { status: 502 },
-    );
-  }
-
-  if (!aiResponse.ok) {
-    const detail = await aiResponse.text().catch(() => "");
-    console.error("[correct-existing] OpenAI error", aiResponse.status, detail);
+    content = result.content;
+  } catch (err) {
+    console.error("[correct-existing] AI error:", err);
     return NextResponse.json(
       { error: "AI の添削に失敗しました。少し待ってからもう一度お試しください。" },
       { status: 502 },
     );
   }
 
-  const payload = await aiResponse.json();
-  const content: string | undefined = payload?.choices?.[0]?.message?.content;
   if (!content) {
     return NextResponse.json(
       { error: "AI から結果を受け取れませんでした。もう一度お試しください。" },

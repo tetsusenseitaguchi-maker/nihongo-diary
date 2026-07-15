@@ -4,10 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { normalizePlan, limitsFor } from "@/lib/plans";
 import { languageDisplayName } from "@/lib/languages";
 import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
+import { createChatCompletionStream, missingApiKeyError } from "@/lib/ai-provider";
 
 export const runtime = "nodejs";
-
-const MODEL = "gpt-4.1-mini";
 
 function systemPrompt(level: string, style: string, lang: string): string {
   return `You are a friendly Japanese teacher for Japanese learners.
@@ -280,85 +279,28 @@ export async function POST(request: Request) {
     );
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "サーバーに OPENAI_API_KEY が設定されていません。" },
-      { status: 500 },
-    );
+  const missingKeyError = missingApiKeyError();
+  if (missingKeyError) {
+    return NextResponse.json({ error: missingKeyError }, { status: 500 });
   }
 
-  let aiResponse: Response;
+  let stream: ReadableStream<Uint8Array>;
   try {
-    aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        stream: true,
-        temperature: 0.3,
-        max_tokens: 3000,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: systemPrompt(level, style, lang) },
-          { role: "user", content: text },
-        ],
-      }),
+    stream = await createChatCompletionStream({
+      temperature: 0.3,
+      maxTokens: 3000,
+      messages: [
+        { role: "system", content: systemPrompt(level, style, lang) },
+        { role: "user", content: text },
+      ],
     });
-  } catch {
-    return NextResponse.json(
-      { error: "AI サーバーに接続できませんでした。もう一度お試しください。" },
-      { status: 502 },
-    );
-  }
-
-  if (!aiResponse.ok) {
-    const detail = await aiResponse.text().catch(() => "");
-    console.error("OpenAI error", aiResponse.status, detail);
+  } catch (err) {
+    console.error("[correct] AI error:", err);
     return NextResponse.json(
       { error: "AI の添削に失敗しました。少し待ってからもう一度お試しください。" },
       { status: 502 },
     );
   }
-
-  // Pipe OpenAI SSE tokens → plain-text ReadableStream for the client
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-
-  const stream = new ReadableStream({
-    async start(controller) {
-      const reader = aiResponse.body!.getReader();
-      let sseBuffer = "";
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          sseBuffer += decoder.decode(value, { stream: true });
-          const lines = sseBuffer.split("\n");
-          sseBuffer = lines.pop() ?? "";
-
-          for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
-            const data = line.slice(6).trim();
-            if (data === "[DONE]") { controller.close(); return; }
-            try {
-              const evt = JSON.parse(data);
-              const delta = evt.choices?.[0]?.delta?.content;
-              if (typeof delta === "string") {
-                controller.enqueue(encoder.encode(delta));
-              }
-            } catch { /* 不正な SSE チャンクは無視 */ }
-          }
-        }
-      } finally {
-        controller.close();
-      }
-    },
-  });
 
   return new Response(stream, {
     headers: { "Content-Type": "text/plain; charset=utf-8" },

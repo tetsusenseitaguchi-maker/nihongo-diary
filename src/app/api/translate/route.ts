@@ -4,12 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { normalizePlan, limitsFor } from "@/lib/plans";
 import { languageDisplayName, SUPPORTED_LANGUAGES } from "@/lib/languages";
 import { todayInTZ } from "@/lib/date-tz";
+import { createChatCompletion, missingApiKeyError } from "@/lib/ai-provider";
 
 const SUPPORTED_CODES = SUPPORTED_LANGUAGES.map((l) => l.code) as string[];
 
 export const runtime = "nodejs";
-
-const MODEL = "gpt-4.1-mini";
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -122,39 +121,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No Japanese text to translate" }, { status: 400 });
   }
 
-  // Call OpenAI (same fetch pattern as /api/correct)
+  const missingKeyError = missingApiKeyError();
+  if (missingKeyError) {
+    console.error("[translate]", missingKeyError);
+    return NextResponse.json(
+      { error: "Translation service error. Please try again." },
+      { status: 503 }
+    );
+  }
+
   try {
-    const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          {
-            role: "system",
-            content: `You are a Japanese-to-${targetDisplay} translator. Translate the diary entry into natural, conversational ${targetDisplay} that preserves the writer's personal voice and emotion. Output only the translation — no explanations, no quotation marks, no preamble.`,
-          },
-          { role: "user", content: source },
-        ],
-        max_tokens: 400,
-        temperature: 0.3,
-      }),
+    const result = await createChatCompletion({
+      jsonMode: false,
+      maxTokens: 400,
+      temperature: 0.3,
+      messages: [
+        {
+          role: "system",
+          content: `You are a Japanese-to-${targetDisplay} translator. Translate the diary entry into natural, conversational ${targetDisplay} that preserves the writer's personal voice and emotion. Output only the translation — no explanations, no quotation marks, no preamble.`,
+        },
+        { role: "user", content: source },
+      ],
     });
-
-    if (!aiRes.ok) {
-      const err = await aiRes.json().catch(() => ({}));
-      console.error("[translate] OpenAI error:", err);
-      return NextResponse.json(
-        { error: "Translation service error. Please try again." },
-        { status: 503 }
-      );
-    }
-
-    const aiData = await aiRes.json();
-    const translation: string = aiData.choices?.[0]?.message?.content?.trim() ?? "";
+    const translation = result.content.trim();
 
     if (!translation) {
       return NextResponse.json({ error: "Translation returned empty." }, { status: 500 });

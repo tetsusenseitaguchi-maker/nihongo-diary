@@ -6,10 +6,9 @@ import { lessonById } from "@/lib/lessons";
 import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
 import { languageDisplayName } from "@/lib/languages";
 import { fixMasuIncompatibleBlank, ensureAnswerInChoices } from "@/lib/drills";
+import { createChatCompletion, missingApiKeyError } from "@/lib/ai-provider";
 
 export const runtime = "nodejs";
-
-const MODEL = "gpt-4.1-mini";
 
 function systemPrompt(level: string, lang: string): string {
   return `You are a Japanese language drill generator for a learning app.
@@ -111,12 +110,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "サーバーに OPENAI_API_KEY が設定されていません。" },
-      { status: 500 },
-    );
+  const missingKeyError = missingApiKeyError();
+  if (missingKeyError) {
+    return NextResponse.json({ error: missingKeyError }, { status: 500 });
   }
 
   // Build the lesson context to inject into the user message
@@ -130,41 +126,25 @@ Note: ${lesson.shortNote}
 
 Generate 5 drills that directly test understanding of this lesson's grammar point.`;
 
-  let aiResponse: Response;
+  let content: string;
   try {
-    aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        temperature: 0.5,
-        max_tokens: 2000,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: systemPrompt(level, lang) },
-          { role: "user", content: lessonContext },
-        ],
-      }),
+    const result = await createChatCompletion({
+      temperature: 0.5,
+      maxTokens: 2000,
+      messages: [
+        { role: "system", content: systemPrompt(level, lang) },
+        { role: "user", content: lessonContext },
+      ],
     });
-  } catch {
-    return NextResponse.json(
-      { error: "AI サーバーに接続できませんでした。もう一度お試しください。" },
-      { status: 502 },
-    );
-  }
-
-  if (!aiResponse.ok) {
+    content = result.content;
+  } catch (err) {
+    console.error("[mini-lesson-drills] AI error:", err);
     return NextResponse.json(
       { error: "AI の問題生成に失敗しました。少し待ってからもう一度お試しください。" },
       { status: 502 },
     );
   }
 
-  const payload = await aiResponse.json();
-  const content: string | undefined = payload?.choices?.[0]?.message?.content;
   if (!content) {
     return NextResponse.json(
       { error: "AI から結果を受け取れませんでした。" },
