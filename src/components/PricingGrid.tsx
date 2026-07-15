@@ -5,6 +5,7 @@ import { type Plan } from "@/lib/plans";
 import { CheckoutButton } from "@/components/CheckoutButton";
 import { PurchaseButton } from "@/components/PurchaseButton";
 import { PlanPrice } from "@/components/PlanPrice";
+import { NativeGate } from "@/components/NativeGate";
 
 type Tier = {
   id: Plan;
@@ -97,6 +98,12 @@ export type PricingLabels = {
    *  "apple_iap" — points to Apple's subscription management (App Store
    *  Review Guideline 3.1.2 requires an in-app path to cancel). */
   manageInAppInstructions: string;
+  /** Free-tier price shown inside the native iOS shell in place of the
+   *  hardcoded USD "$0" (App Store Guideline 3.1.1 — no external prices). */
+  freeNativePrice?: string;
+  /** Footer notice shown inside the native iOS shell in place of the
+   *  Stripe payment line (which references an external payment mechanism). */
+  nativeBillingNotice?: string;
   /** When true, paid plan buttons become live Stripe checkout links */
   checkoutEnabled?: boolean;
 };
@@ -109,6 +116,8 @@ const DEFAULT_LABELS: PricingLabels = {
   upgradeSoon: "Upgrade soon",
   betaNotice: "Payments aren't live yet — this is a public beta. Pricing may change before launch.",
   manageInAppInstructions: "Manage or cancel in Settings → Apple ID → Subscriptions",
+  freeNativePrice: "Free",
+  nativeBillingNotice: "Manage your subscription in your Apple ID settings.",
 };
 
 /**
@@ -149,7 +158,7 @@ export function PricingGrid({
           const isCurrent = mode === "upgrade" && currentPlan === tier.id;
           const isComingSoon = tier.comingSoon === true;
 
-          return (
+          const card = (
             <Card
               key={tier.id}
               className={[
@@ -175,6 +184,20 @@ export function PricingGrid({
               <p className="mt-1">
                 {mode === "upgrade" && (tier.id === "plus" || tier.id === "pro") ? (
                   <PlanPrice plan={tier.id} fallback={tier.price} cadence={tier.cadence} />
+                ) : tier.id === "free" ? (
+                  // Native shows "Free" — the hardcoded "$0" is an external USD
+                  // price (App Store Guideline 3.1.1). Web is unchanged.
+                  <NativeGate
+                    fallback={
+                      <span className="font-serif text-3xl font-bold text-pine">
+                        {labels.freeNativePrice ?? DEFAULT_LABELS.freeNativePrice}
+                      </span>
+                    }
+                  >
+                    <span className="font-serif text-3xl font-bold text-pine">
+                      {tier.price}
+                    </span>
+                  </NativeGate>
                 ) : (
                   <>
                     <span className="font-serif text-3xl font-bold text-pine">
@@ -265,12 +288,29 @@ export function PricingGrid({
               </div>
             </Card>
           );
+
+          // Coming-soon tiers (e.g. Teacher) carry a hardcoded Stripe USD price
+          // and aren't registered as IAP products, so hide them entirely inside
+          // the native iOS shell (App Store Guideline 3.1.2).
+          return isComingSoon ? (
+            <NativeGate key={tier.id}>{card}</NativeGate>
+          ) : (
+            card
+          );
         })}
       </div>
 
-      <p className="text-center text-xs text-muted">
-        {labels.betaNotice}
-      </p>
+      <NativeGate
+        fallback={
+          <p className="text-center text-xs text-muted">
+            {labels.nativeBillingNotice ?? DEFAULT_LABELS.nativeBillingNotice}
+          </p>
+        }
+      >
+        <p className="text-center text-xs text-muted">
+          {labels.betaNotice}
+        </p>
+      </NativeGate>
     </div>
   );
 }

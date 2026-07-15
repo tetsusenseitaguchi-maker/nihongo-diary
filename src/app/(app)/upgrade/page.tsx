@@ -51,6 +51,8 @@ export default async function UpgradePage() {
           upgradeSoon: t("pricing.upgradeSoon"),
           betaNotice: t("pricing.betaNotice"),
           manageInAppInstructions: t("pricing.manageInAppInstructions"),
+          freeNativePrice: t("pricing.freeNativePrice"),
+          nativeBillingNotice: t("pricing.nativeBillingNotice"),
           checkoutEnabled: true,
         }}
       />

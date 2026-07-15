@@ -287,6 +287,8 @@
   "pricing.startFree": "Start for free",
   "pricing.upgradeSoon": "Upgrade soon",
   "pricing.betaNotice": "Secure payment via Stripe. Cancel anytime from your account.",
+  "pricing.freeNativePrice": "Free",
+  "pricing.nativeBillingNotice": "Manage your subscription in your Apple ID settings.",
   "pricing.manageOnWeb": "Managed on the website",
   "pricing.manageInApp": "Managed in the app",
   "pricing.manageInAppInstructions": "Manage or cancel in Settings → Apple ID → Subscriptions",
