@@ -28,6 +28,7 @@ Rules:
    - question: plain text (no ruby). questionRuby: with <ruby> tags.
    - answer: plain text. answerRuby: with <ruby> tags.
    - choices: plain text strings (no ruby tags).
+   - When a kanji is immediately followed by okurigana (the hiragana that completes a verb/adjective stem, e.g. 歩きました, 珍しい), it MUST use its kun'yomi (訓読み) reading — never the on'yomi (音読み) — and <rt> must contain the FULL kun'yomi reading, not a truncated single-mora guess. Correct: <ruby>歩<rt>ある</rt></ruby>きました, <ruby>珍<rt>めずら</rt></ruby>しい. Wrong: <ruby>歩<rt>あ</rt></ruby>きました (truncated reading), <ruby>珍<rt>ちん</rt></ruby>しい (on'yomi used instead of kun'yomi).
    - Grammaticalized auxiliary verbs after the て-form (補助動詞) — てくる,
      ていく, てある, ておく, てみる, てしまう — should be written in
      hiragana, not kanji (write てくる, NOT て来る; ていく, NOT て行く),

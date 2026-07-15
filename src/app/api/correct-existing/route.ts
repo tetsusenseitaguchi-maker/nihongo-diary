@@ -62,6 +62,7 @@ CRITICAL furigana rules:
 - Put ONLY the kanji inside <ruby>, and put the kanji's reading inside <rt>. Okurigana (the hiragana that follows a kanji) MUST stay OUTSIDE the ruby tag.
 - NEVER wrap hiragana or katakana in <ruby>. Only kanji get furigana.
 - The reading in <rt> must be the reading of the kanji only — never repeat the kana that is already visible.
+- When a kanji is immediately followed by okurigana (the hiragana that completes a verb/adjective stem, e.g. 歩きました, 珍しい), it MUST use its kun'yomi (訓読み) reading — never the on'yomi (音読み) — and <rt> must contain the FULL kun'yomi reading, not a truncated single-mora guess. Correct: <ruby>歩<rt>ある</rt></ruby>きました, <ruby>珍<rt>めずら</rt></ruby>しい. Wrong: <ruby>歩<rt>あ</rt></ruby>きました (truncated reading), <ruby>珍<rt>ちん</rt></ruby>しい (on'yomi used instead of kun'yomi).
 
 3. Furigana must be accurate and chosen from context.
 

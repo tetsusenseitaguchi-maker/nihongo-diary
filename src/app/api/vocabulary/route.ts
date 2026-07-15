@@ -112,6 +112,8 @@ Grammar pattern: ${word}
 Explanation: ${explanation || ""}
 Example sentence (with ruby furigana HTML): ${exampleRuby || ""}
 
+Furigana rule: when a kanji is immediately followed by okurigana (the hiragana that completes a verb/adjective stem, e.g. 歩きました, 珍しい), it MUST use its kun'yomi (訓読み) reading — never the on'yomi (音読み) — and <rt> must contain the FULL kun'yomi reading, not a truncated single-mora guess. Correct: <ruby>歩<rt>ある</rt></ruby>きました, <ruby>珍<rt>めずら</rt></ruby>しい. Wrong: <ruby>歩<rt>あ</rt></ruby>きました (truncated reading), <ruby>珍<rt>ちん</rt></ruby>しい (on'yomi used instead of kun'yomi).
+
 Return ONLY the raw JSON object. Do NOT wrap it in a markdown code block (no \`\`\`json, no \`\`\`, no other markdown):
 {
   "example_translation": "Translation of the example sentence into ${lang}",
@@ -139,6 +141,8 @@ Return ONLY the raw JSON object. Do NOT wrap it in a markdown code block (no \`\
 Word: ${word}
 Reading (hiragana): ${reading}
 ${jlptLevel ? `JLPT Level: ${jlptLevel}` : ""}
+
+Furigana rule: when a kanji is immediately followed by okurigana (the hiragana that completes a verb/adjective stem, e.g. 歩きました, 珍しい), it MUST use its kun'yomi (訓読み) reading — never the on'yomi (音読み) — and <rt> must contain the FULL kun'yomi reading, not a truncated single-mora guess. Correct: <ruby>歩<rt>ある</rt></ruby>きました, <ruby>珍<rt>めずら</rt></ruby>しい. Wrong: <ruby>歩<rt>あ</rt></ruby>きました (truncated reading), <ruby>珍<rt>ちん</rt></ruby>しい (on'yomi used instead of kun'yomi).
 
 Return ONLY the raw JSON object. Do NOT wrap it in a markdown code block (no \`\`\`json, no \`\`\`, no other markdown):
 {
