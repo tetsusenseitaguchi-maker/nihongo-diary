@@ -138,7 +138,7 @@ Suggest 2–3 specific, actionable practice activities for next week based on th
 Mistakes this week:
 ${mistakeContext}
 
-Return ONLY a JSON object:
+Return ONLY the raw JSON object. Do NOT wrap it in a markdown code block (no \`\`\`json, no \`\`\`, no other markdown):
 {
   "suggestions": [
     "suggestion 1 (1–2 sentences, concrete and actionable)",
@@ -151,7 +151,7 @@ IMPORTANT: Write ALL suggestion text in ${lang}. Japanese vocabulary and example
 
 A learner had a great week with no mistakes. Suggest 2 ways to keep challenging themselves.
 
-Return ONLY a JSON object:
+Return ONLY the raw JSON object. Do NOT wrap it in a markdown code block (no \`\`\`json, no \`\`\`, no other markdown):
 {
   "suggestions": [
     "challenge suggestion 1",

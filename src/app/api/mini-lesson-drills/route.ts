@@ -48,7 +48,7 @@ Rules:
      来ました").
 5. Keep every drill appropriate for ${level} level. Make them directly test the lesson's grammar point.
 6. Grammatical consistency (fill-in especially): the fixed text immediately before and after the blank — including the sentence ending — must connect naturally with the answer's actual grammatical form. Some forms cannot be directly followed by ます, such as 〜そう (様態/looks-like), 〜らしい, 〜ようだ, and 〜みたいだ. If the correct answer is (or ends in) one of these forms, do NOT end the sentence in ます — instead end it in です, or rewrite the whole sentence so the fixed text around the blank fits that form naturally. Before finalizing each fill-in drill, mentally fill in the blank and confirm the complete sentence reads as natural, grammatical Japanese.
-7. Return ONLY valid JSON. No markdown, no text outside the JSON.
+7. Return ONLY valid JSON. No markdown, no text outside the JSON. Do NOT wrap the JSON in a markdown code block (no \`\`\`json, no \`\`\`).
 
 JSON structure:
 {

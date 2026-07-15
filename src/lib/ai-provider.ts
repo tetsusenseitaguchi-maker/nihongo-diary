@@ -70,6 +70,20 @@ function logStopReason(label: string | undefined, provider: Provider, streamed: 
   console.log(`${tag} provider=${provider} streamed=${streamed} stop_reason=${stopReason ?? "null"}`);
 }
 
+/**
+ * Strips a markdown code fence (```json ... ``` or ``` ... ```) that wraps
+ * the ENTIRE response — models occasionally do this even when told not to.
+ * Only strips when the fence wraps the whole trimmed response, so a fence
+ * that's legitimately part of the content (rare, but possible) is left
+ * alone. Only meaningful when jsonMode !== false — never applied to
+ * plain-text output (e.g. translation), where a stray fence is left as-is.
+ */
+function stripCodeFences(content: string): string {
+  const trimmed = content.trim();
+  const match = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```\s*$/);
+  return match ? match[1].trim() : content;
+}
+
 const RAW_CONTENT_LOG_LIMIT = 4000;
 
 /** Logs the raw text the model returned, capped to avoid flooding logs. Diagnostic only. */
@@ -102,11 +116,12 @@ export async function createChatCompletion(
 
     logStopReason(params.label, provider, false, response.stop_reason);
 
-    const content = response.content
+    const rawContent = response.content
       .filter((block) => block.type === "text")
       .map((block) => (block as { text: string }).text)
       .join("");
-    logRawContent(params.label, content);
+    logRawContent(params.label, rawContent);
+    const content = params.jsonMode === false ? rawContent : stripCodeFences(rawContent);
     return { content, stopReason: response.stop_reason };
   }
 
@@ -124,8 +139,9 @@ export async function createChatCompletion(
 
   const finishReason = completion.choices[0]?.finish_reason ?? null;
   logStopReason(params.label, provider, false, finishReason);
-  const openaiContent = completion.choices[0]?.message?.content ?? "";
-  logRawContent(params.label, openaiContent);
+  const rawOpenaiContent = completion.choices[0]?.message?.content ?? "";
+  logRawContent(params.label, rawOpenaiContent);
+  const openaiContent = params.jsonMode === false ? rawOpenaiContent : stripCodeFences(rawOpenaiContent);
 
   return { content: openaiContent, stopReason: finishReason };
 }

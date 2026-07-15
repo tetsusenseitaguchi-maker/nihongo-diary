@@ -112,7 +112,7 @@ Grammar pattern: ${word}
 Explanation: ${explanation || ""}
 Example sentence (with ruby furigana HTML): ${exampleRuby || ""}
 
-Return ONLY a JSON object (no markdown):
+Return ONLY the raw JSON object. Do NOT wrap it in a markdown code block (no \`\`\`json, no \`\`\`, no other markdown):
 {
   "example_translation": "Translation of the example sentence into ${lang}",
   "practice_question": "A short Japanese sentence that demonstrates the grammar pattern, where the pattern itself is replaced by ___. Add <ruby>kanji<rt>reading</rt></ruby> tags to ALL kanji in the sentence. Do NOT wrap hiragana or katakana.",
@@ -140,7 +140,7 @@ Word: ${word}
 Reading (hiragana): ${reading}
 ${jlptLevel ? `JLPT Level: ${jlptLevel}` : ""}
 
-Return ONLY a JSON object (no markdown):
+Return ONLY the raw JSON object. Do NOT wrap it in a markdown code block (no \`\`\`json, no \`\`\`, no other markdown):
 {
   "meaning": "Clear 1-sentence definition in ${lang}",
   "example_jp_ruby": "Short natural Japanese sentence using the word. Wrap every KANJI character group with <ruby>kanji<rt>hiragana</rt></ruby>. Do NOT add ruby to hiragana or katakana.",

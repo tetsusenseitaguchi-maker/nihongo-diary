@@ -24,7 +24,7 @@ If the sentence is already understandable and natural enough, do not change it.
 This learner's level is: ${level}
 The correction style is: ${style}
 
-You must return ONLY valid JSON. No markdown. No text outside the JSON.
+You must return ONLY valid JSON. No markdown. No text outside the JSON. Do NOT wrap the JSON in a markdown code block (no \`\`\`json, no \`\`\`).
 
 Return this JSON structure:
 {
