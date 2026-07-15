@@ -70,6 +70,18 @@ function logStopReason(label: string | undefined, provider: Provider, streamed: 
   console.log(`${tag} provider=${provider} streamed=${streamed} stop_reason=${stopReason ?? "null"}`);
 }
 
+const RAW_CONTENT_LOG_LIMIT = 4000;
+
+/** Logs the raw text the model returned, capped to avoid flooding logs. Diagnostic only. */
+function logRawContent(label: string | undefined, content: string): void {
+  const tag = label ? `[${label}]` : "[ai-provider]";
+  const truncated = content.length > RAW_CONTENT_LOG_LIMIT;
+  console.log(
+    `${tag} raw content (len=${content.length}${truncated ? `, showing first ${RAW_CONTENT_LOG_LIMIT}` : ""}):`,
+    content.slice(0, RAW_CONTENT_LOG_LIMIT),
+  );
+}
+
 export async function createChatCompletion(
   params: ChatCompletionParams,
 ): Promise<{ content: string; stopReason: string | null }> {
@@ -94,6 +106,7 @@ export async function createChatCompletion(
       .filter((block) => block.type === "text")
       .map((block) => (block as { text: string }).text)
       .join("");
+    logRawContent(params.label, content);
     return { content, stopReason: response.stop_reason };
   }
 
@@ -111,8 +124,10 @@ export async function createChatCompletion(
 
   const finishReason = completion.choices[0]?.finish_reason ?? null;
   logStopReason(params.label, provider, false, finishReason);
+  const openaiContent = completion.choices[0]?.message?.content ?? "";
+  logRawContent(params.label, openaiContent);
 
-  return { content: completion.choices[0]?.message?.content ?? "", stopReason: finishReason };
+  return { content: openaiContent, stopReason: finishReason };
 }
 
 /**
@@ -153,9 +168,11 @@ export async function createChatCompletionStream(
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
         let reason: string | null = null;
+        let fullText = "";
         try {
           for await (const event of rawStream) {
             if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+              fullText += event.delta.text;
               controller.enqueue(encoder.encode(event.delta.text));
             } else if (event.type === "message_delta") {
               reason = event.delta?.stop_reason ?? reason;
@@ -163,11 +180,13 @@ export async function createChatCompletionStream(
           }
         } catch (err) {
           logStopReason(params.label, provider, true, "error");
+          logRawContent(params.label, fullText);
           rejectStopReason(err);
           controller.error(err);
           return;
         }
         logStopReason(params.label, provider, true, reason);
+        logRawContent(params.label, fullText);
         resolveStopReason(reason);
         controller.close();
       },
@@ -192,21 +211,25 @@ export async function createChatCompletionStream(
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       let reason: string | null = null;
+      let fullText = "";
       try {
         for await (const chunk of rawStream) {
           const delta = chunk.choices[0]?.delta?.content;
           if (typeof delta === "string") {
+            fullText += delta;
             controller.enqueue(encoder.encode(delta));
           }
           reason = chunk.choices[0]?.finish_reason ?? reason;
         }
       } catch (err) {
         logStopReason(params.label, provider, true, "error");
+        logRawContent(params.label, fullText);
         rejectStopReason(err);
         controller.error(err);
         return;
       }
       logStopReason(params.label, provider, true, reason);
+      logRawContent(params.label, fullText);
       resolveStopReason(reason);
       controller.close();
     },

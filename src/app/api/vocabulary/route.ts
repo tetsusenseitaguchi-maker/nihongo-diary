@@ -101,7 +101,7 @@ export async function POST(req: Request) {
 
         const result = await createChatCompletion({
           label: "vocabulary-grammar",
-          maxTokens: 300,
+          maxTokens: 1200,
           temperature: 0.7,
           messages: [
             {
@@ -129,7 +129,7 @@ Return ONLY a JSON object (no markdown):
         // Vocabulary word generation (existing logic)
         const result = await createChatCompletion({
           label: "vocabulary-word",
-          maxTokens: 400,
+          maxTokens: 1200,
           temperature: 0.7,
           messages: [
             {
@@ -158,8 +158,9 @@ Return ONLY a JSON object (no markdown):
         practice_question = String(parsed.practice_question ?? "").trim();
         practice_answer = String(parsed.practice_answer ?? word).trim();
       }
-    } catch {
+    } catch (err) {
       // AI failure is non-fatal — save with available data.
+      console.error(`[vocabulary] AI generation failed for type=${type}:`, err);
       if (type === "grammar") {
         meaning = explanation || word;
         example_jp_ruby = exampleRuby || "";
