@@ -7,6 +7,7 @@ import { languageDisplayName } from "@/lib/languages";
 import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
 import { normalizeRubyText, stripRubyText } from "@/lib/furigana";
 import { createChatCompletion, missingApiKeyError } from "@/lib/ai-provider";
+import { refundCorrection } from "@/lib/correction-refund";
 
 export const runtime = "nodejs";
 
@@ -242,12 +243,17 @@ export async function POST(request: Request) {
   }
 
   // ---- AI provider (OpenAI or Anthropic, switched via AI_PROVIDER) ----
+  // From here on, a correction slot has already been claimed above — any
+  // failure path must refund it via refund_correction() so the user's
+  // daily count doesn't drop for a request that produced no result.
   const missingKeyError = missingApiKeyError();
   if (missingKeyError) {
+    await refundCorrection(supabase, user.id, today);
     return NextResponse.json({ error: missingKeyError }, { status: 500 });
   }
 
   let content: string;
+  let stopReason: string | null = null;
   try {
     const result = await createChatCompletion({
       label: "correct-existing",
@@ -259,15 +265,27 @@ export async function POST(request: Request) {
       ],
     });
     content = result.content;
+    stopReason = result.stopReason;
   } catch (err) {
     console.error("[correct-existing] AI error:", err);
+    await refundCorrection(supabase, user.id, today);
     return NextResponse.json(
       { error: "AI の添削に失敗しました。少し待ってからもう一度お試しください。" },
       { status: 502 },
     );
   }
 
+  if (stopReason === "max_tokens") {
+    console.error("[correct-existing] truncated: stop_reason=max_tokens");
+    await refundCorrection(supabase, user.id, today);
+    return NextResponse.json(
+      { error: "AI の返答が長すぎて途中で切れました。もう一度お試しください。" },
+      { status: 502 },
+    );
+  }
+
   if (!content) {
+    await refundCorrection(supabase, user.id, today);
     return NextResponse.json(
       { error: "AI から結果を受け取れませんでした。もう一度お試しください。" },
       { status: 502 },
@@ -277,6 +295,7 @@ export async function POST(request: Request) {
   const parsed = safeJson(content);
   if (!parsed) {
     console.error("[correct-existing] Invalid JSON from model:", content.slice(0, 500));
+    await refundCorrection(supabase, user.id, today);
     return NextResponse.json(
       { error: "AI の返答を読み取れませんでした。もう一度お試しください。" },
       { status: 502 },

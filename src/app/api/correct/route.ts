@@ -5,6 +5,7 @@ import { normalizePlan, limitsFor } from "@/lib/plans";
 import { languageDisplayName } from "@/lib/languages";
 import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
 import { createChatCompletionStream, missingApiKeyError } from "@/lib/ai-provider";
+import { refundCorrection } from "@/lib/correction-refund";
 
 export const runtime = "nodejs";
 
@@ -284,14 +285,19 @@ export async function POST(request: Request) {
     );
   }
 
+  // From here on, a correction slot has already been claimed above — any
+  // failure path must refund it via refund_correction() so the user's
+  // daily count doesn't drop for a request that produced no result.
   const missingKeyError = missingApiKeyError();
   if (missingKeyError) {
+    await refundCorrection(supabase, user.id, today);
     return NextResponse.json({ error: missingKeyError }, { status: 500 });
   }
 
   let stream: ReadableStream<Uint8Array>;
+  let stopReason: Promise<string | null>;
   try {
-    stream = await createChatCompletionStream({
+    ({ stream, stopReason } = await createChatCompletionStream({
       label: "correct",
       temperature: 0.3,
       maxTokens: 8000,
@@ -299,14 +305,30 @@ export async function POST(request: Request) {
         { role: "system", content: systemPrompt(level, style, lang) },
         { role: "user", content: text },
       ],
-    });
+    }));
   } catch (err) {
     console.error("[correct] AI error:", err);
+    await refundCorrection(supabase, user.id, today);
     return NextResponse.json(
       { error: "AI の添削に失敗しました。少し待ってからもう一度お試しください。" },
       { status: 502 },
     );
   }
+
+  // The Response below streams to the client immediately; we can't know the
+  // outcome until the stream finishes, so the refund (if needed) happens
+  // asynchronously after the client has already received the response.
+  stopReason
+    .then((reason) => {
+      if (reason === "max_tokens") {
+        console.error("[correct] truncated: stop_reason=max_tokens");
+        return refundCorrection(supabase, user.id, today);
+      }
+    })
+    .catch((err) => {
+      console.error("[correct] stream error, refunding:", err);
+      return refundCorrection(supabase, user.id, today);
+    });
 
   return new Response(stream, {
     headers: { "Content-Type": "text/plain; charset=utf-8" },

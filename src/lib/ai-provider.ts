@@ -117,15 +117,24 @@ export async function createChatCompletion(
 
 /**
  * Returns a plain-text ReadableStream of the model's output, regardless of
- * provider. Callers pipe this straight through as the Response body — the
- * client-side stream/partial-JSON handling never needs to know which
- * provider produced it.
+ * provider, plus a `stopReason` promise that resolves once the stream ends
+ * (or rejects if it errored) — callers use this to decide whether to refund
+ * a consumed usage credit (e.g. stopReason === "max_tokens" means the JSON
+ * was truncated) without buffering the whole response themselves.
+ * The client-side stream/partial-JSON handling never needs to know which
+ * provider produced the plain-text bytes.
  */
 export async function createChatCompletionStream(
   params: ChatCompletionParams,
-): Promise<ReadableStream<Uint8Array>> {
+): Promise<{ stream: ReadableStream<Uint8Array>; stopReason: Promise<string | null> }> {
   const provider = getProvider();
   const encoder = new TextEncoder();
+  let resolveStopReason!: (value: string | null) => void;
+  let rejectStopReason!: (reason: unknown) => void;
+  const stopReason = new Promise<string | null>((resolve, reject) => {
+    resolveStopReason = resolve;
+    rejectStopReason = reject;
+  });
 
   if (provider === "anthropic") {
     const { apiKey, model } = PROVIDER_CONFIG.anthropic;
@@ -141,26 +150,30 @@ export async function createChatCompletionStream(
       stream: true,
     });
 
-    return new ReadableStream({
+    const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
-        let stopReason: string | null = null;
+        let reason: string | null = null;
         try {
           for await (const event of rawStream) {
             if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
               controller.enqueue(encoder.encode(event.delta.text));
             } else if (event.type === "message_delta") {
-              stopReason = event.delta?.stop_reason ?? stopReason;
+              reason = event.delta?.stop_reason ?? reason;
             }
           }
         } catch (err) {
-          logStopReason(params.label, provider, true, stopReason ?? "error");
+          logStopReason(params.label, provider, true, "error");
+          rejectStopReason(err);
           controller.error(err);
           return;
         }
-        logStopReason(params.label, provider, true, stopReason);
+        logStopReason(params.label, provider, true, reason);
+        resolveStopReason(reason);
         controller.close();
       },
     });
+
+    return { stream, stopReason };
   }
 
   const { apiKey, model } = PROVIDER_CONFIG.openai;
@@ -176,24 +189,28 @@ export async function createChatCompletionStream(
     messages: params.messages,
   });
 
-  return new ReadableStream({
+  const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      let finishReason: string | null = null;
+      let reason: string | null = null;
       try {
         for await (const chunk of rawStream) {
           const delta = chunk.choices[0]?.delta?.content;
           if (typeof delta === "string") {
             controller.enqueue(encoder.encode(delta));
           }
-          finishReason = chunk.choices[0]?.finish_reason ?? finishReason;
+          reason = chunk.choices[0]?.finish_reason ?? reason;
         }
       } catch (err) {
-        logStopReason(params.label, provider, true, finishReason ?? "error");
+        logStopReason(params.label, provider, true, "error");
+        rejectStopReason(err);
         controller.error(err);
         return;
       }
-      logStopReason(params.label, provider, true, finishReason);
+      logStopReason(params.label, provider, true, reason);
+      resolveStopReason(reason);
       controller.close();
     },
   });
+
+  return { stream, stopReason };
 }
