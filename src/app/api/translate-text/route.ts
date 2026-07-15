@@ -95,6 +95,7 @@ export async function POST(req: Request) {
 
   try {
     const result = await createChatCompletion({
+      label: "translate-text",
       jsonMode: false,
       maxTokens: 300,
       temperature: 0.3,

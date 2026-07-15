@@ -129,8 +129,9 @@ Generate 5 drills that directly test understanding of this lesson's grammar poin
   let content: string;
   try {
     const result = await createChatCompletion({
+      label: "mini-lesson-drills",
       temperature: 0.5,
-      maxTokens: 2000,
+      maxTokens: 4000,
       messages: [
         { role: "system", content: systemPrompt(level, lang) },
         { role: "user", content: lessonContext },

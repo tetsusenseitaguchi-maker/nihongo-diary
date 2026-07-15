@@ -100,6 +100,7 @@ export async function POST(req: Request) {
         example_jp_ruby = exampleRuby || "";
 
         const result = await createChatCompletion({
+          label: "vocabulary-grammar",
           maxTokens: 300,
           temperature: 0.7,
           messages: [
@@ -127,6 +128,7 @@ Return ONLY a JSON object (no markdown):
       } else {
         // Vocabulary word generation (existing logic)
         const result = await createChatCompletion({
+          label: "vocabulary-word",
           maxTokens: 400,
           temperature: 0.7,
           messages: [

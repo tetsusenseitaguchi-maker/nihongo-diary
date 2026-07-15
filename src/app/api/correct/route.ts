@@ -98,6 +98,11 @@ Every Japanese field above ends in "Ruby" and must contain furigana in this form
 - Natural (default): fix mistakes and make it sound natural; keep the original meaning and tone; don't over-correct tiny nuances.
 - Native: rewrite the way a native would naturally say it; structure/wording may change, but keep the intended meaning; if nuance changes, explain it in English.
 
+5b. Speech register (敬体/常体): Detect whether the learner's original text is written in polite/desu-masu form (敬体: です/ます) or plain/casual form (常体: だ・である・plain verb endings). Preserve that SAME register in BOTH correctedJapaneseRuby and naturalJapaneseRuby — this applies at every correction style, including Native.
+- If the original is 敬体 (です/ます), keep every sentence in です/ます. Do NOT introduce plain/casual endings (だ, けど, 〜んだ as a sentence-final form, etc.) even if they would sound "more natural" in isolation.
+- If the original is 常体 (plain/casual), keep it plain/casual. Do NOT switch to です/ます.
+- Never mix registers within the same passage (e.g. do not end a mostly-です/ます diary with a casual だ/けど sentence, or vice versa). If the learner's own text mixes registers inconsistently, pick the DOMINANT register (whichever appears more) and normalize naturalJapaneseRuby to that one register; correctedJapaneseRuby should still just fix clear mistakes without forcing a register change.
+
 6. Do NOT over-correct natural Japanese. Japanese has many correct ways to say the same thing. Do not "fix" a sentence just because another phrasing exists. Expressions like 〜んです / 〜なんだ / 〜って感じです / 〜かなと思いました / 楽しかったんですよ are natural — leave them.
 
 7. correctedJapaneseRuby keeps the learner's structure (just fixes mistakes); naturalJapaneseRuby sounds more natural. For N5/N4 keep both simple even if a native might say something more advanced.
@@ -287,8 +292,9 @@ export async function POST(request: Request) {
   let stream: ReadableStream<Uint8Array>;
   try {
     stream = await createChatCompletionStream({
+      label: "correct",
       temperature: 0.3,
-      maxTokens: 3000,
+      maxTokens: 8000,
       messages: [
         { role: "system", content: systemPrompt(level, style, lang) },
         { role: "user", content: text },

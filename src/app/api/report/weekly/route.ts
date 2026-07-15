@@ -160,6 +160,7 @@ Return ONLY a JSON object:
 }`;
 
       const result = await createChatCompletion({
+        label: "report-weekly",
         maxTokens: 350,
         temperature: 0.7,
         messages: [{ role: "user", content }],

@@ -20,6 +20,8 @@ interface ChatCompletionParams {
   maxTokens: number;
   /** Set to false for plain-text output (e.g. translation). Defaults to true. */
   jsonMode?: boolean;
+  /** Short tag (e.g. "correct", "mini-lesson-drills") prefixed to the stop-reason server log. */
+  label?: string;
 }
 
 type Provider = "openai" | "anthropic";
@@ -63,9 +65,14 @@ function splitSystem(messages: ChatMessage[]): {
   return { system, rest };
 }
 
+function logStopReason(label: string | undefined, provider: Provider, streamed: boolean, stopReason: string | null): void {
+  const tag = label ? `[${label}]` : "[ai-provider]";
+  console.log(`${tag} provider=${provider} streamed=${streamed} stop_reason=${stopReason ?? "null"}`);
+}
+
 export async function createChatCompletion(
   params: ChatCompletionParams,
-): Promise<{ content: string }> {
+): Promise<{ content: string; stopReason: string | null }> {
   const provider = getProvider();
 
   if (provider === "anthropic") {
@@ -81,11 +88,13 @@ export async function createChatCompletion(
       messages: rest,
     });
 
+    logStopReason(params.label, provider, false, response.stop_reason);
+
     const content = response.content
       .filter((block) => block.type === "text")
       .map((block) => (block as { text: string }).text)
       .join("");
-    return { content };
+    return { content, stopReason: response.stop_reason };
   }
 
   const { apiKey, model } = PROVIDER_CONFIG.openai;
@@ -100,7 +109,10 @@ export async function createChatCompletion(
     messages: params.messages,
   });
 
-  return { content: completion.choices[0]?.message?.content ?? "" };
+  const finishReason = completion.choices[0]?.finish_reason ?? null;
+  logStopReason(params.label, provider, false, finishReason);
+
+  return { content: completion.choices[0]?.message?.content ?? "", stopReason: finishReason };
 }
 
 /**
@@ -131,16 +143,21 @@ export async function createChatCompletionStream(
 
     return new ReadableStream({
       async start(controller) {
+        let stopReason: string | null = null;
         try {
           for await (const event of rawStream) {
             if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
               controller.enqueue(encoder.encode(event.delta.text));
+            } else if (event.type === "message_delta") {
+              stopReason = event.delta?.stop_reason ?? stopReason;
             }
           }
         } catch (err) {
+          logStopReason(params.label, provider, true, stopReason ?? "error");
           controller.error(err);
           return;
         }
+        logStopReason(params.label, provider, true, stopReason);
         controller.close();
       },
     });
@@ -161,17 +178,21 @@ export async function createChatCompletionStream(
 
   return new ReadableStream({
     async start(controller) {
+      let finishReason: string | null = null;
       try {
         for await (const chunk of rawStream) {
           const delta = chunk.choices[0]?.delta?.content;
           if (typeof delta === "string") {
             controller.enqueue(encoder.encode(delta));
           }
+          finishReason = chunk.choices[0]?.finish_reason ?? finishReason;
         }
       } catch (err) {
+        logStopReason(params.label, provider, true, finishReason ?? "error");
         controller.error(err);
         return;
       }
+      logStopReason(params.label, provider, true, finishReason);
       controller.close();
     },
   });
