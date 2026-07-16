@@ -10,18 +10,28 @@ const isNativeApp =
   typeof window !== "undefined" && !!(window as CapWindow).Capacitor?.isNativePlatform?.();
 
 /**
- * Shows the real App Store price (product.priceString) once fetched on
- * native; always shows the static fallback on web, and on native until the
- * fetch resolves (or if it fails) — never a blank/loading state.
+ * Shows the real App Store price (product.priceString) on native.
+ *
+ * Web shows the static USD `fallback`. Native NEVER shows the USD fallback —
+ * that price ($9/$19) is an external price under App Store Guideline 3.1.2 and
+ * would flash before the IAP price resolves (worse on slow connections). While
+ * the IAP price loads, native shows a skeleton instead.
+ *
+ * `isNative` is the server-authoritative flag (request UA); `isNativeApp` is
+ * the client-side check used to actually fetch. Either one suppresses the USD
+ * fallback, so the skeleton is rendered in the SSR HTML sent to the native app
+ * — not just swapped in after hydration.
  */
 export function PlanPrice({
   plan,
   fallback,
   cadence,
+  isNative = false,
 }: {
   plan: PaidPlan;
   fallback: string;
   cadence?: string;
+  isNative?: boolean;
 }) {
   const [price, setPrice] = useState<string | null>(null);
 
@@ -38,7 +48,7 @@ export function PlanPrice({
         );
         if (!cancelled && pkg) setPrice(pkg.product.priceString);
       } catch {
-        // Keep showing the static fallback.
+        // Keep showing the skeleton on native (never fall back to USD).
       }
     })();
 
@@ -47,9 +57,21 @@ export function PlanPrice({
     };
   }, [plan]);
 
+  // On native, never render the USD fallback — show the IAP price once loaded,
+  // otherwise a skeleton. On web, show the static fallback.
+  const suppressUsdFallback = isNative || isNativeApp;
+  const display = suppressUsdFallback ? price : fallback;
+
   return (
     <>
-      <span className="font-serif text-3xl font-bold text-pine">{price ?? fallback}</span>
+      {display ? (
+        <span className="font-serif text-3xl font-bold text-pine">{display}</span>
+      ) : (
+        <span
+          aria-hidden
+          className="inline-block h-8 w-16 animate-pulse rounded-md bg-line/50 align-middle"
+        />
+      )}
       {cadence && <span className="text-sm text-muted">{cadence}</span>}
     </>
   );

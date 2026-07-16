@@ -138,6 +138,7 @@ export function PricingGrid({
   mode = "landing",
   labels = DEFAULT_LABELS,
   translateFeature,
+  isNative = false,
 }: {
   currentPlan?: Plan;
   /** True when the viewer already has a Stripe subscription — switching
@@ -150,6 +151,12 @@ export function PricingGrid({
   mode?: "landing" | "upgrade";
   labels?: PricingLabels;
   translateFeature?: (key: string) => string;
+  /** True when the request came from the native iOS shell (detected
+   *  server-side via User-Agent). When set, external USD prices and the Stripe
+   *  footer are never rendered at all — not just hidden client-side by
+   *  <NativeGate/> (App Store Guideline 3.1.2). NativeGate stays as a
+   *  client-side second line of defense for requests where the UA is absent. */
+  isNative?: boolean;
 }) {
   return (
     <div className="space-y-5">
@@ -157,6 +164,11 @@ export function PricingGrid({
         {TIERS.map((tier) => {
           const isCurrent = mode === "upgrade" && currentPlan === tier.id;
           const isComingSoon = tier.comingSoon === true;
+
+          // Coming-soon tiers (e.g. Teacher) carry a hardcoded Stripe USD price
+          // and aren't registered as IAP products. On native, don't render them
+          // at all — server-side (App Store Guideline 3.1.2).
+          if (isNative && isComingSoon) return null;
 
           const card = (
             <Card
@@ -183,21 +195,29 @@ export function PricingGrid({
               <h2 className="font-serif text-xl font-bold text-pine">{tier.name}</h2>
               <p className="mt-1">
                 {mode === "upgrade" && (tier.id === "plus" || tier.id === "pro") ? (
-                  <PlanPrice plan={tier.id} fallback={tier.price} cadence={tier.cadence} />
+                  <PlanPrice plan={tier.id} fallback={tier.price} cadence={tier.cadence} isNative={isNative} />
                 ) : tier.id === "free" ? (
                   // Native shows "Free" — the hardcoded "$0" is an external USD
                   // price (App Store Guideline 3.1.1). Web is unchanged.
-                  <NativeGate
-                    fallback={
-                      <span className="font-serif text-3xl font-bold text-pine">
-                        {labels.freeNativePrice ?? DEFAULT_LABELS.freeNativePrice}
-                      </span>
-                    }
-                  >
+                  // Server-side when the native UA is known; NativeGate is the
+                  // client-side fallback for requests without the UA.
+                  isNative ? (
                     <span className="font-serif text-3xl font-bold text-pine">
-                      {tier.price}
+                      {labels.freeNativePrice ?? DEFAULT_LABELS.freeNativePrice}
                     </span>
-                  </NativeGate>
+                  ) : (
+                    <NativeGate
+                      fallback={
+                        <span className="font-serif text-3xl font-bold text-pine">
+                          {labels.freeNativePrice ?? DEFAULT_LABELS.freeNativePrice}
+                        </span>
+                      }
+                    >
+                      <span className="font-serif text-3xl font-bold text-pine">
+                        {tier.price}
+                      </span>
+                    </NativeGate>
+                  )
                 ) : (
                   <>
                     <span className="font-serif text-3xl font-bold text-pine">
@@ -289,9 +309,9 @@ export function PricingGrid({
             </Card>
           );
 
-          // Coming-soon tiers (e.g. Teacher) carry a hardcoded Stripe USD price
-          // and aren't registered as IAP products, so hide them entirely inside
-          // the native iOS shell (App Store Guideline 3.1.2).
+          // Web path: coming-soon tiers are still wrapped in NativeGate as a
+          // client-side fallback (the isNative server skip above already
+          // handles the native-UA case).
           return isComingSoon ? (
             <NativeGate key={tier.id}>{card}</NativeGate>
           ) : (
@@ -300,17 +320,23 @@ export function PricingGrid({
         })}
       </div>
 
-      <NativeGate
-        fallback={
-          <p className="text-center text-xs text-muted">
-            {labels.nativeBillingNotice ?? DEFAULT_LABELS.nativeBillingNotice}
-          </p>
-        }
-      >
+      {isNative ? (
         <p className="text-center text-xs text-muted">
-          {labels.betaNotice}
+          {labels.nativeBillingNotice ?? DEFAULT_LABELS.nativeBillingNotice}
         </p>
-      </NativeGate>
+      ) : (
+        <NativeGate
+          fallback={
+            <p className="text-center text-xs text-muted">
+              {labels.nativeBillingNotice ?? DEFAULT_LABELS.nativeBillingNotice}
+            </p>
+          }
+        >
+          <p className="text-center text-xs text-muted">
+            {labels.betaNotice}
+          </p>
+        </NativeGate>
+      )}
     </div>
   );
 }

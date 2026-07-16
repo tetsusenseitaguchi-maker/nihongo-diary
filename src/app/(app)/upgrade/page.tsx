@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { normalizePlan, PLAN_LABELS } from "@/lib/plans";
 import { PricingGrid } from "@/components/PricingGrid";
 import { getServerT } from "@/lib/i18n-server";
+import { isNativeRequest } from "@/lib/native";
 
 export const dynamic = "force-dynamic";
 
@@ -13,13 +14,14 @@ export default async function UpgradePage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: profile }, t] = await Promise.all([
+  const [{ data: profile }, t, isNative] = await Promise.all([
     supabase
       .from("profiles")
       .select("plan, stripe_customer_id, stripe_subscription_id, billing_source")
       .eq("id", user.id)
       .single(),
     getServerT(),
+    isNativeRequest(),
   ]);
   const plan = normalizePlan(profile?.plan);
 
@@ -42,6 +44,7 @@ export default async function UpgradePage() {
         hasActiveSubscription={!!profile?.stripe_subscription_id}
         billingSource={(profile?.billing_source as "stripe" | "apple_iap" | null) ?? null}
         mode="upgrade"
+        isNative={isNative}
         translateFeature={t}
         labels={{
           mostPopular: t("pricing.mostPopular"),

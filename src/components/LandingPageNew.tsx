@@ -5,11 +5,26 @@ import { Obie } from "@/components/Obie";
 import { Card } from "@/components/ui";
 import { Icon, renderIcon } from "@/components/icons";
 import { PublicLangSwitcher } from "@/components/PublicLangSwitcher";
+import { NativeGate } from "@/components/NativeGate";
 import { type Locale } from "@/lib/i18n";
 
 type T = (key: string, params?: Record<string, string | number>) => string;
 
-export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
+export function LandingPageNew({
+  t,
+  locale,
+  isNative = false,
+}: {
+  t: T;
+  locale: Locale;
+  /** True when served to the native iOS shell (detected server-side via UA).
+   *  The pricing section is then never rendered — external USD prices and
+   *  Stripe checkout links must not reach the native app (Guideline 3.1.2).
+   *  In practice middleware.ts already redirects native away from "/" before
+   *  this renders; this is a defense-in-depth server-side skip on top of that
+   *  and the client-side <NativeGate/> below. */
+  isNative?: boolean;
+}) {
   // Hero features — displayed large
   const heroFeatures: Array<{ icon: string; title: string; body: string }> = [
     { icon: "sparkle", title: t("lp.features.f1.title"), body: t("lp.features.f1.body") },
@@ -313,6 +328,13 @@ export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
       </section>
 
       {/* ── 8. PRICING ──────────────────────────────────── */}
+      {/* Hidden inside the native iOS shell: shows hardcoded USD prices and
+          links to the Stripe checkout flow (App Store Guideline 3.1.2).
+          Two layers: `isNative` skips rendering it server-side (never sent to
+          the native app), and <NativeGate/> removes it on client hydration for
+          requests where the native UA is absent. */}
+      {!isNative && (
+      <NativeGate>
       <section className="bg-sand/30">
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
           <h2 className="mx-auto max-w-2xl text-center font-serif text-3xl font-extrabold tracking-tight text-pine sm:text-4xl">
@@ -376,6 +398,8 @@ export function LandingPageNew({ t, locale }: { t: T; locale: Locale }) {
           </p>
         </div>
       </section>
+      </NativeGate>
+      )}
 
       {/* ── 9. FINAL CTA ────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-4 pb-24 pt-16 sm:px-6">
