@@ -418,6 +418,7 @@
   "stripe.upgradeToPlus": "Plus にアップグレード",
   "stripe.upgradeToPro": "Pro にアップグレード",
   "stripe.upgrading": "チェックアウトへ移動中...",
+  "iap.processing": "処理中...",
   "stripe.checkoutError": "エラーが発生しました。もう一度お試しください。",
   "stripe.success.title": "{plan} へようこそ！🎉",
   "stripe.success.subtitle": "サブスクリプションが有効になりました。",

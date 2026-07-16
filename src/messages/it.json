@@ -418,6 +418,7 @@
   "stripe.upgradeToPlus": "Passa a Plus",
   "stripe.upgradeToPro": "Passa a Pro",
   "stripe.upgrading": "Reindirizzamento al pagamento...",
+  "iap.processing": "Elaborazione...",
   "stripe.checkoutError": "Qualcosa e andato storto. Riprova.",
   "stripe.success.title": "Benvenuto su {plan}! 🎉",
   "stripe.success.subtitle": "Il tuo abbonamento e ora attivo.",

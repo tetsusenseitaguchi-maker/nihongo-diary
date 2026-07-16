@@ -418,6 +418,7 @@
   "stripe.upgradeToPlus": "Plus로 업그레이드",
   "stripe.upgradeToPro": "Pro로 업그레이드",
   "stripe.upgrading": "결제 페이지로 이동 중...",
+  "iap.processing": "처리 중...",
   "stripe.checkoutError": "오류가 발생했습니다. 다시 시도해주세요.",
   "stripe.success.title": "{plan}에 오신 것을 환영합니다! 🎉",
   "stripe.success.subtitle": "구독이 활성화되었습니다.",

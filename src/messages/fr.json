@@ -418,6 +418,7 @@
   "stripe.upgradeToPlus": "Passer a Plus",
   "stripe.upgradeToPro": "Passer a Pro",
   "stripe.upgrading": "Redirection vers le paiement...",
+  "iap.processing": "Traitement...",
   "stripe.checkoutError": "Une erreur s'est produite. Veuillez reessayer.",
   "stripe.success.title": "Bienvenue sur {plan} ! 🎉",
   "stripe.success.subtitle": "Votre abonnement est maintenant actif.",

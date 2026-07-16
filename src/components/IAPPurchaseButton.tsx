@@ -64,7 +64,9 @@ export function IAPPurchaseButton({ plan, className }: Props) {
           "w-full rounded-full bg-pine px-4 py-2.5 text-sm font-semibold text-cream transition-opacity hover:opacity-90 disabled:opacity-60"
         }
       >
-        {loading ? t("stripe.upgrading") : label}
+        {/* Neutral label — this is the IAP flow, not Stripe Checkout, so avoid
+            "Redirecting to checkout…" wording (App Store Guideline 3.1.2). */}
+        {loading ? t("iap.processing") : label}
       </button>
       {error && (
         <p className="mt-1.5 text-center text-xs text-red-500">

@@ -418,6 +418,7 @@
   "stripe.upgradeToPlus": "升级到 Plus",
   "stripe.upgradeToPro": "升级到 Pro",
   "stripe.upgrading": "正在跳转到结账页面...",
+  "iap.processing": "处理中...",
   "stripe.checkoutError": "出现了错误，请重试。",
   "stripe.success.title": "欢迎使用 {plan}！🎉",
   "stripe.success.subtitle": "您的订阅已激活。",

@@ -418,6 +418,7 @@
   "stripe.upgradeToPlus": "Actualizar a Plus",
   "stripe.upgradeToPro": "Actualizar a Pro",
   "stripe.upgrading": "Redirigiendo al pago...",
+  "iap.processing": "Procesando...",
   "stripe.checkoutError": "Algo salio mal. Por favor, intentalo de nuevo.",
   "stripe.success.title": "Bienvenido a {plan}! 🎉",
   "stripe.success.subtitle": "Tu suscripcion ya esta activa.",

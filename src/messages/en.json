@@ -473,6 +473,7 @@
   "stripe.upgradeToPlus": "Upgrade to Plus",
   "stripe.upgradeToPro": "Upgrade to Pro",
   "stripe.upgrading": "Redirecting to checkout...",
+  "iap.processing": "Processing...",
   "stripe.checkoutError": "Something went wrong. Please try again.",
   "stripe.success.title": "Welcome to {plan}! 🎉",
   "stripe.success.subtitle": "Your subscription is now active.",
