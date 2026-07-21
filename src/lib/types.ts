@@ -120,6 +120,31 @@ export interface Correction {
   obiePhraseExplanation?: string;
 }
 
+/** A single "previous point that was fixed" in the revise & recheck flow. */
+export interface RecheckFixedItem {
+  point: string;  // short label, in the user's UI language
+  detail: string; // one short confirming sentence, in the UI language
+}
+
+/** A single "problem that still remains" in the revise & recheck flow. */
+export interface RecheckRemainingItem {
+  point: string;          // short label, in the UI language
+  quoteRuby: string;      // offending phrase from the rewrite, Japanese with <ruby> furigana (may be "")
+  suggestionRuby: string; // suggested fix, Japanese with <ruby> furigana (may be "")
+  detail: string;         // one short explanation sentence, in the UI language
+}
+
+/**
+ * Lightweight diff feedback returned by /api/recheck after a learner rewrites
+ * their diary. NOT a full Correction — only "what got fixed / what remains".
+ */
+export interface RecheckResult {
+  fixed: RecheckFixedItem[];
+  remaining: RecheckRemainingItem[];
+  summary: string;             // short progress summary, in the UI language
+  encouragementRuby: string;   // warm Japanese cheer with <ruby> furigana
+}
+
 export interface DiaryEntry {
   id: string;
   date: string; // ISO date
