@@ -9,11 +9,12 @@ import { Icon } from "@/components/icons";
 import { GoalRing } from "@/components/GoalRing";
 import { Attachments } from "@/components/Attachments";
 import { CorrectionResult } from "@/components/CorrectionResult";
+import { RecheckResult } from "@/components/RecheckResult";
 import { PublicToggle } from "@/components/PublicToggle";
 import { Furigana } from "@/components/Furigana";
 import { Bilingual } from "@/components/Bilingual";
 import { templates, sampleDraft } from "@/lib/mock-data";
-import type { Level, CorrectionStyle, Correction, DiaryPlace, MistakeItem } from "@/lib/types";
+import type { Level, CorrectionStyle, Correction, DiaryPlace, MistakeItem, RecheckResult as RecheckResultData } from "@/lib/types";
 import { GrammarReviewCard } from "@/components/GrammarReviewCard";
 import { limitsFor, normalizePlan, PLAN_LABELS, PLAN_LIMITS, type Plan } from "@/lib/plans";
 import { PRESET_TAGS, PRESET_TAG_KEYS } from "@/lib/tags";
@@ -140,6 +141,13 @@ export default function WritePage() {
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [grammarReview, setGrammarReview] = useState<MistakeItem | null>(null);
   const [partialCorrection, setPartialCorrection] = useState<{ corrected: string; natural: string } | null>(null);
+
+  // Revise & recheck — lightweight follow-up flow, no correction credit consumed.
+  const [reviseMode, setReviseMode] = useState(false);
+  const [revisedText, setRevisedText] = useState("");
+  const [rechecking, setRechecking] = useState(false);
+  const [recheckError, setRecheckError] = useState<string | null>(null);
+  const [recheckResult, setRecheckResult] = useState<RecheckResultData | null>(null);
 
   // Plan + usage
   const [plan, setPlan] = useState<Plan>("free");
@@ -565,6 +573,65 @@ export default function WritePage() {
       setSaveError(err instanceof Error ? err.message : "Save failed");
     } finally {
       setSaving(false);
+    }
+  }
+
+  // Enter revise mode: prefill the editor with the learner's original text so
+  // they can rewrite it and get lightweight follow-up feedback.
+  function startRevise() {
+    if (!result) return;
+    setRevisedText(result.original || text);
+    setRecheckResult(null);
+    setRecheckError(null);
+    setReviseMode(true);
+  }
+
+  function cancelRevise() {
+    setReviseMode(false);
+    setRecheckError(null);
+  }
+
+  // Recheck: send original + previous feedback + rewrite to /api/recheck.
+  // Consumes NO correction credit — this never touches the usage counters.
+  async function handleRecheck() {
+    if (!result || !revisedText.trim() || rechecking) return;
+    setRechecking(true);
+    setRecheckError(null);
+    setRecheckResult(null);
+    try {
+      const res = await fetch("/api/recheck", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          originalText: result.original || text,
+          revisedText: revisedText.trim(),
+          previousMistakes: result.mistakes,
+          previousNatural: result.natural,
+          level: levels[level],
+        }),
+      });
+      if (!res.ok) {
+        const errData = (await res.json().catch(() => ({}))) as { error?: string };
+        setRecheckError(errData?.error || t("write.networkError"));
+        return;
+      }
+      const data = (await res.json()) as RecheckResultData;
+      // Sanitize AI-generated <ruby> markup before it is shown (same as handleCorrect).
+      setRecheckResult({
+        fixed: (data.fixed ?? []).map((f) => ({ point: f.point ?? "", detail: f.detail ?? "" })),
+        remaining: (data.remaining ?? []).map((r) => ({
+          point: r.point ?? "",
+          quoteRuby: normalizeRubyText(r.quoteRuby || ""),
+          suggestionRuby: normalizeRubyText(r.suggestionRuby || ""),
+          detail: r.detail ?? "",
+        })),
+        summary: data.summary ?? "",
+        encouragementRuby: normalizeRubyText(data.encouragementRuby || ""),
+      });
+    } catch {
+      setRecheckError(t("write.networkError"));
+    } finally {
+      setRechecking(false);
     }
   }
 
@@ -1015,6 +1082,62 @@ export default function WritePage() {
           <p className="pt-1 text-center text-xs text-muted">
             {t("write.aiDisclaimer")}
           </p>
+
+          {/* Revise & recheck — rewrite the diary and get lightweight diff feedback */}
+          <div className="rounded-[var(--radius-card)] border border-line bg-paper p-6 shadow-card">
+            {!reviseMode ? (
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-serif text-lg font-bold text-pine">
+                    <Furigana text="書(か)き直(なお)してみる" />
+                  </p>
+                  <p className="mt-0.5 text-sm text-ink/70">{t("recheck.introDesc")}</p>
+                </div>
+                <Button onClick={startRevise} variant="secondary" className="shrink-0">
+                  <Icon.sparkle className="h-4 w-4" /> {t("recheck.reviseBtn")}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span>✏️</span>
+                  <p className="font-serif text-lg font-bold text-pine">
+                    <Furigana text="書(か)き直(なお)し" />
+                  </p>
+                  <span className="text-sm font-medium text-muted">{t("recheck.editorTitle")}</span>
+                </div>
+                <p className="text-sm text-ink/70">{t("recheck.editorHint")}</p>
+                <textarea
+                  value={revisedText}
+                  onChange={(e) => setRevisedText(e.target.value)}
+                  rows={7}
+                  className="notebook block w-full resize-none rounded-lg border border-line bg-transparent px-3 pt-[7px] font-jp text-lg leading-[34px] text-ink placeholder:text-muted/60 focus:border-moss focus:outline-none"
+                />
+                <div className="flex flex-wrap items-center justify-end gap-3">
+                  <Button variant="ghost" onClick={cancelRevise} disabled={rechecking}>
+                    {t("recheck.cancel")}
+                  </Button>
+                  <Button onClick={handleRecheck} disabled={!revisedText.trim() || rechecking}>
+                    {rechecking ? (
+                      t("recheck.rechecking")
+                    ) : (
+                      <><Icon.sparkle className="h-4 w-4" /> {t("recheck.recheckBtn")}</>
+                    )}
+                  </Button>
+                </div>
+                {recheckError && (
+                  <p className="rounded-lg bg-apricot/10 px-3 py-2 text-sm text-apricot">
+                    {recheckError}
+                  </p>
+                )}
+                {recheckResult && (
+                  <div className="border-t border-line pt-4">
+                    <RecheckResult result={recheckResult} />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </section>
       )}
     </div>
