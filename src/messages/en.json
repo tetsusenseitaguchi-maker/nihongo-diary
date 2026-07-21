@@ -188,6 +188,8 @@
   "recheck.cancel": "Cancel",
   "recheck.recheckBtn": "Recheck",
   "recheck.rechecking": "Rechecking…",
+  "recheck.remaining": "{n} rechecks left",
+  "recheck.limitReached": "You've used all 3 rechecks for this entry.",
   "recheck.fixedTitle": "Fixed",
   "recheck.noFixed": "No previous points were fixed yet — give it another try!",
   "recheck.remainingTitle": "Still to work on",

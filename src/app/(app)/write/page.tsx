@@ -31,6 +31,10 @@ const DiaryMapPicker = dynamicLoad(
   }
 );
 
+// Max rechecks allowed per corrected diary entry (ephemeral, client-only —
+// resets when a fresh correction is run). No plan/billing/usage-counter involved.
+const RECHECK_LIMIT = 3;
+
 const levels: Level[] = ["N5", "N4", "N3", "Natural"];
 const styles: CorrectionStyle[] = ["Light", "Natural", "Native"];
 const styleJP: Record<CorrectionStyle, string> = {
@@ -148,6 +152,8 @@ export default function WritePage() {
   const [rechecking, setRechecking] = useState(false);
   const [recheckError, setRecheckError] = useState<string | null>(null);
   const [recheckResult, setRecheckResult] = useState<RecheckResultData | null>(null);
+  // Number of successful rechecks used for the current correction (resets on a new correction).
+  const [recheckCount, setRecheckCount] = useState(0);
 
   // Plan + usage
   const [plan, setPlan] = useState<Plan>("free");
@@ -196,6 +202,7 @@ export default function WritePage() {
     setResult(null);
     setPartialCorrection(null);
     setSavedEntryId(null);
+    setRecheckCount(0); // fresh correction → recheck allowance resets to RECHECK_LIMIT
     try {
       const res = await fetch("/api/correct", {
         method: "POST",
@@ -595,6 +602,7 @@ export default function WritePage() {
   // Consumes NO correction credit — this never touches the usage counters.
   async function handleRecheck() {
     if (!result || !revisedText.trim() || rechecking) return;
+    if (recheckCount >= RECHECK_LIMIT) return; // allowance used up for this entry
     setRechecking(true);
     setRecheckError(null);
     setRecheckResult(null);
@@ -628,6 +636,8 @@ export default function WritePage() {
         summary: data.summary ?? "",
         encouragementRuby: normalizeRubyText(data.encouragementRuby || ""),
       });
+      // Count only successful rechecks — failures/network errors never consume the allowance.
+      setRecheckCount((n) => n + 1);
     } catch {
       setRecheckError(t("write.networkError"));
     } finally {
@@ -1091,9 +1101,16 @@ export default function WritePage() {
                   <p className="font-serif text-lg font-bold text-pine">
                     <Furigana text="書(か)き直(なお)してみる" />
                   </p>
-                  <p className="mt-0.5 text-sm text-ink/70">{t("recheck.introDesc")}</p>
+                  <p className="mt-0.5 text-sm text-ink/70">
+                    {recheckCount >= RECHECK_LIMIT ? t("recheck.limitReached") : t("recheck.introDesc")}
+                  </p>
                 </div>
-                <Button onClick={startRevise} variant="secondary" className="shrink-0">
+                <Button
+                  onClick={startRevise}
+                  variant="secondary"
+                  className="shrink-0"
+                  disabled={recheckCount >= RECHECK_LIMIT}
+                >
                   <Icon.sparkle className="h-4 w-4" /> {t("recheck.reviseBtn")}
                 </Button>
               </div>
@@ -1113,17 +1130,27 @@ export default function WritePage() {
                   rows={7}
                   className="notebook block w-full resize-none rounded-lg border border-line bg-transparent px-3 pt-[7px] font-jp text-lg leading-[34px] text-ink placeholder:text-muted/60 focus:border-moss focus:outline-none"
                 />
-                <div className="flex flex-wrap items-center justify-end gap-3">
-                  <Button variant="ghost" onClick={cancelRevise} disabled={rechecking}>
-                    {t("recheck.cancel")}
-                  </Button>
-                  <Button onClick={handleRecheck} disabled={!revisedText.trim() || rechecking}>
-                    {rechecking ? (
-                      t("recheck.rechecking")
-                    ) : (
-                      <><Icon.sparkle className="h-4 w-4" /> {t("recheck.recheckBtn")}</>
-                    )}
-                  </Button>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-sm text-muted">
+                    {recheckCount >= RECHECK_LIMIT
+                      ? t("recheck.limitReached")
+                      : t("recheck.remaining", { n: RECHECK_LIMIT - recheckCount })}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <Button variant="ghost" onClick={cancelRevise} disabled={rechecking}>
+                      {t("recheck.cancel")}
+                    </Button>
+                    <Button
+                      onClick={handleRecheck}
+                      disabled={!revisedText.trim() || rechecking || recheckCount >= RECHECK_LIMIT}
+                    >
+                      {rechecking ? (
+                        t("recheck.rechecking")
+                      ) : (
+                        <><Icon.sparkle className="h-4 w-4" /> {t("recheck.recheckBtn")}</>
+                      )}
+                    </Button>
+                  </div>
                 </div>
                 {recheckError && (
                   <p className="rounded-lg bg-apricot/10 px-3 py-2 text-sm text-apricot">
