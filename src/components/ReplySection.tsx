@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar } from "@/components/ObiePhoto";
@@ -31,8 +31,8 @@ function resolveProfile(p: ReplyRow["profiles"]): ReplyProfile | null {
 
 /**
  * Inline reply thread for a single comment or peer correction.
- * Lazy-loads on first open; shows existing replies and a post form.
- * Replies are 1-level deep only (no nesting).
+ * Replies are always loaded on mount and shown expanded (1-level deep, no nesting).
+ * The "Reply" button only opens/closes the post form — it does not gate the reply list.
  */
 export function ReplySection({
   parentType,
@@ -45,7 +45,8 @@ export function ReplySection({
 }) {
   const t = useT();
   const supabase = createClient();
-  const [open, setOpen] = useState(false);
+  // formOpen controls ONLY the reply-writing form; the reply list is always shown.
+  const [formOpen, setFormOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [replies, setReplies] = useState<ReplyRow[]>([]);
   const [body, setBody] = useState("");
@@ -76,12 +77,17 @@ export function ReplySection({
     setLoaded(true);
   }
 
-  async function handleToggle() {
-    if (!open) {
-      if (!loaded) await loadReplies();
-      setOpen(true);
+  // Always load replies on mount so they show without opening the form.
+  useEffect(() => {
+    loadReplies();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parentId]);
+
+  function handleToggleForm() {
+    if (!formOpen) {
+      setFormOpen(true);
     } else {
-      setOpen(false);
+      setFormOpen(false);
       setBody("");
       setError("");
     }
@@ -112,28 +118,12 @@ export function ReplySection({
     setReplies((prev) => prev.filter((r) => r.id !== replyId));
   }
 
-  // Show count on toggle label once replies have been loaded
-  const toggleLabel = open
-    ? t("reply.close")
-    : loaded && replies.length > 0
-    ? `${t("reply.label")} (${replies.length})`
-    : t("reply.label");
-
   return (
     <div className="mt-2">
-      <button
-        type="button"
-        onClick={handleToggle}
-        className="text-[11px] font-semibold text-moss-600/70 transition-colors hover:text-pine"
-      >
-        {toggleLabel}
-      </button>
-
-      {open && (
-        <div className="mt-2 space-y-2 border-l-2 border-mint/60 pl-3">
-          {/* Existing replies */}
-          {loaded && replies.length > 0 && (
-            <ul className="space-y-2">
+      {/* Existing replies — always shown (no need to open the form) */}
+      {loaded && replies.length > 0 && (
+        <div className="mb-2 border-l-2 border-mint/60 pl-3">
+          <ul className="space-y-2">
               {replies.map((r) => {
                 const p = resolveProfile(r.profiles);
                 const name = p?.display_name || p?.username || "Learner";
@@ -189,9 +179,21 @@ export function ReplySection({
                   </li>
                 );
               })}
-            </ul>
-          )}
+          </ul>
+        </div>
+      )}
 
+      {/* Toggle for the reply-writing form only (not the reply list) */}
+      <button
+        type="button"
+        onClick={handleToggleForm}
+        className="text-[11px] font-semibold text-moss-600/70 transition-colors hover:text-pine"
+      >
+        {formOpen ? t("reply.close") : t("reply.label")}
+      </button>
+
+      {formOpen && (
+        <div className="mt-2 border-l-2 border-mint/60 pl-3">
           {/* Post form */}
           <form onSubmit={handleSubmit} className="flex gap-2">
             <input
