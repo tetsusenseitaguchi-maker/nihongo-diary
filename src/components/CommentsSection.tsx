@@ -9,6 +9,7 @@ import { useT } from "@/contexts/locale";
 import { countryFlag } from "@/lib/countryFlag";
 import { WordTranslateText } from "@/components/WordTranslateText";
 import { ReplySection } from "@/components/ReplySection";
+import { CommentReactionBar } from "@/components/CommentReactionBar";
 import { ReportButton } from "@/components/ReportButton";
 
 type CommentProfile = {
@@ -25,6 +26,9 @@ type CommentRow = {
   created_at: string;
   profiles: CommentProfile | null;
 };
+
+// Per-comment reaction summary: counts by emoji type + the viewer's own pick.
+type CommentReactions = { counts: Record<string, number>; mine: string | null };
 
 // Supabase PostgREST may return the embedded profile as an array or object
 // depending on whether it infers one-to-one vs one-to-many. Normalize here.
@@ -111,6 +115,7 @@ export function CommentsSection({
   viewerLanguage: string;
 }) {
   const [comments, setComments] = useState<CommentRow[]>([]);
+  const [reactions, setReactions] = useState<Record<string, CommentReactions>>({});
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -137,7 +142,30 @@ export function CommentsSection({
     const rows = ((data ?? []) as unknown as Array<Omit<CommentRow, "profiles"> & { profiles: CommentProfile | CommentProfile[] | null }>)
       .filter((r) => !blockedIds.has(r.user_id))
       .map((r) => ({ ...r, profiles: normalizeProfile(r.profiles) }));
+    // Fetch reactions BEFORE committing comments so the reaction bars mount
+    // with their data already present (they seed internal state from props).
+    const reactionMap = await fetchReactions(rows.map((r) => r.id));
+    setReactions(reactionMap);
     setComments(rows);
+  }
+
+  // Build a per-comment reaction summary (counts by type + the viewer's own
+  // reaction) for the given comment ids.
+  async function fetchReactions(commentIds: string[]): Promise<Record<string, CommentReactions>> {
+    const map: Record<string, CommentReactions> = {};
+    for (const id of commentIds) map[id] = { counts: {}, mine: null };
+    if (commentIds.length === 0) return map;
+    const { data } = await supabase
+      .from("comment_reactions")
+      .select("comment_id, reaction_type, user_id")
+      .in("comment_id", commentIds);
+    for (const row of (data ?? []) as Array<{ comment_id: string; reaction_type: string; user_id: string }>) {
+      const entry = map[row.comment_id];
+      if (!entry) continue;
+      entry.counts[row.reaction_type] = (entry.counts[row.reaction_type] ?? 0) + 1;
+      if (row.user_id === currentUserId) entry.mine = row.reaction_type;
+    }
+    return map;
   }
 
   useEffect(() => {
@@ -229,6 +257,11 @@ export function CommentsSection({
                   textClassName="mt-1 text-sm leading-relaxed text-ink/80"
                 />
                 <CommentTranslate body={c.body} viewerLanguage={viewerLanguage} />
+                <CommentReactionBar
+                  commentId={c.id}
+                  initialCounts={reactions[c.id]?.counts ?? {}}
+                  initialMine={reactions[c.id]?.mine ?? null}
+                />
                 <ReplySection
                   parentType="comment"
                   parentId={c.id}

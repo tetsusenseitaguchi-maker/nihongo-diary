@@ -5,6 +5,15 @@ export const REACTIONS: { type: string; label: string; emoji: string }[] = [
   { type: "congrats", label: "Congrats!", emoji: "🎉" },
 ];
 
+// Emoji reactions on comments. Unlike diary REACTIONS, a user may have at
+// most ONE of these per comment (see CommentReactionBar).
+export const COMMENT_REACTIONS: { type: string; emoji: string }[] = [
+  { type: "thumbsup", emoji: "👍" },
+  { type: "heart", emoji: "❤️" },
+  { type: "joy", emoji: "😂" },
+  { type: "tada", emoji: "🎉" },
+];
+
 export interface ActivityRow {
   id: string;
   user_id: string;
