@@ -10,7 +10,7 @@ export interface PlanLimits {
 }
 
 export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
-  free:             { corrections: 2,  maxChars: 300, lessonLibrary: false, reviewDrills: false, translation: true, translationsPerDay: 10 },
+  free:             { corrections: 1,  maxChars: 300, lessonLibrary: false, reviewDrills: false, translation: true, translationsPerDay: 10 },
   plus:             { corrections: 10, maxChars: 500, lessonLibrary: true,  reviewDrills: false, translation: true, translationsPerDay: null },
   pro:              { corrections: 25, maxChars: 500, lessonLibrary: true,  reviewDrills: true,  translation: true, translationsPerDay: null },
   teacher_feedback: { corrections: 25, maxChars: 500, lessonLibrary: true,  reviewDrills: true,  translation: true, translationsPerDay: null },
