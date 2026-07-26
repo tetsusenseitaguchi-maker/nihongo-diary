@@ -5,6 +5,7 @@ import { Logo } from "@/components/Logo";
 import { TopBar } from "@/components/TopBar";
 import { BottomNav } from "@/components/BottomNav";
 import { Avatar } from "@/components/ObiePhoto";
+import { Icon } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { TimezoneSyncer } from "@/components/TimezoneSyncer";
 import { InvitePendingHandler } from "@/components/InvitePendingHandler";
@@ -78,6 +79,9 @@ export default async function AppLayout({
   const cookieLang = cookieStore.get("NEXT_LOCALE")?.value;
   const locale = normaliseLocale(cookieLang || preferredLang);
   const initialMessages = await getInitialMessages(locale);
+  // Pass the resolved locale explicitly — getServerT() alone re-reads the
+  // cookie and would fall back to "en" when only the DB preference is set.
+  const t = await getServerT(locale);
 
   return (
     <LocaleProvider initialLocale={locale} initialMessages={initialMessages}>
@@ -102,6 +106,15 @@ export default async function AppLayout({
           <div className="flex h-16 items-center justify-between">
             <Logo href="/dashboard" size="sm" />
             <div className="flex items-center gap-2">
+              {/* Mobile-only entry point to the guide — the sidebar link that
+                  hosts it on desktop is hidden below lg. */}
+              <Link
+                href="/how-to-use"
+                aria-label={t("nav.howToUse")}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-paper transition-colors hover:border-moss"
+              >
+                <Icon.helpCircle className="h-5 w-5 text-ink/70" />
+              </Link>
               <LanguageSwitcher compact />
               {userId && <NotificationBell userId={userId} />}
               <Link href="/profile" aria-label="プロフィール" className="overflow-hidden rounded-full ring-1 ring-line hover:ring-moss">
