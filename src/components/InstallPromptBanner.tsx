@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useT } from "@/contexts/locale";
+import { useTour } from "@/contexts/tour";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -88,6 +89,7 @@ function Step({ num, icon, text }: { num: number; icon: React.ReactNode; text: s
 
 export function InstallPromptBanner() {
   const t = useT();
+  const { isActive: tourIsActive } = useTour();
   const [platform, setPlatform] = useState<Platform>(null);
   const [hasNativePrompt, setHasNativePrompt] = useState(false);
   const deferredRef = useRef<BeforeInstallPromptEvent | null>(null);
@@ -129,7 +131,10 @@ export function InstallPromptBanner() {
     }
   }
 
-  if (!mounted || !platform) return null;
+  // The banner is on a 1.5s timer and the tour starts at 0.8s, so a first
+  // visit on a phone fires both. Step aside while the tour runs; the state
+  // above is untouched, so the banner appears as usual once it ends.
+  if (!mounted || !platform || tourIsActive) return null;
 
   const banner = (
     <div
