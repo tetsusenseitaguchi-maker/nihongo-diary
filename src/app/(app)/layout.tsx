@@ -18,6 +18,7 @@ import { RevenueCatInit } from "@/components/RevenueCatInit";
 import { NativeGate } from "@/components/NativeGate";
 import { createClient } from "@/lib/supabase/server";
 import { LocaleProvider } from "@/contexts/locale";
+import { TourProvider } from "@/contexts/tour";
 import { normaliseLocale } from "@/lib/i18n";
 import { getInitialMessages, getServerT } from "@/lib/i18n-server";
 import { todayInTZ } from "@/lib/date-tz";
@@ -85,65 +86,70 @@ export default async function AppLayout({
 
   return (
     <LocaleProvider initialLocale={locale} initialMessages={initialMessages}>
-      <TimezoneSyncer />
-      <InvitePendingHandler />
-      <TourLauncher />
-      <InstallPromptBanner />
-      {userId && <ObieNotificationSyncer userId={userId} />}
-      {userId && <PushRegistrar />}
-      {userId && <RevenueCatInit userId={userId} />}
-      <div className="min-h-screen bg-cream">
-        {/* Desktop sidebar */}
-        <aside className="fixed inset-y-0 left-0 z-30 hidden w-[264px] border-r border-line bg-paper lg:block">
-          <Sidebar currentStreak={currentStreak} />
-        </aside>
+      {/* Wraps the whole (app) tree, not just the page, so layout-level pieces
+          (nav, header) are reachable from the tour as well. Renders nothing on
+          its own — the tour is invisible until an overlay is wired up. */}
+      <TourProvider>
+        <TimezoneSyncer />
+        <InvitePendingHandler />
+        <TourLauncher />
+        <InstallPromptBanner />
+        {userId && <ObieNotificationSyncer userId={userId} />}
+        {userId && <PushRegistrar />}
+        {userId && <RevenueCatInit userId={userId} />}
+        <div className="min-h-screen bg-cream">
+          {/* Desktop sidebar */}
+          <aside className="fixed inset-y-0 left-0 z-30 hidden w-[264px] border-r border-line bg-paper lg:block">
+            <Sidebar currentStreak={currentStreak} />
+          </aside>
 
-        {/* Mobile top header — pt covers status bar in PWA standalone (black-translucent) */}
-        <header
-          className="sticky top-0 z-20 border-b border-line bg-cream/90 px-4 backdrop-blur lg:hidden"
-          style={{ paddingTop: "env(safe-area-inset-top)" }}
-        >
-          <div className="flex h-16 items-center justify-between">
-            <Logo href="/dashboard" size="sm" />
-            <div className="flex items-center gap-2">
-              {/* Mobile-only entry point to the guide — the sidebar link that
-                  hosts it on desktop is hidden below lg. */}
-              <Link
-                href="/how-to-use"
-                aria-label={t("nav.howToUse")}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-paper transition-colors hover:border-moss"
-              >
-                <Icon.helpCircle className="h-5 w-5 text-ink/70" />
-              </Link>
-              <LanguageSwitcher compact />
-              {userId && <NotificationBell userId={userId} />}
-              <Link href="/profile" aria-label="プロフィール" className="overflow-hidden rounded-full ring-1 ring-line hover:ring-moss">
-                {avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={avatarUrl} alt={name} className="h-9 w-9 object-cover" />
-                ) : (
-                  <Avatar initials={initials} size={36} />
-                )}
-              </Link>
+          {/* Mobile top header — pt covers status bar in PWA standalone (black-translucent) */}
+          <header
+            className="sticky top-0 z-20 border-b border-line bg-cream/90 px-4 backdrop-blur lg:hidden"
+            style={{ paddingTop: "env(safe-area-inset-top)" }}
+          >
+            <div className="flex h-16 items-center justify-between">
+              <Logo href="/dashboard" size="sm" />
+              <div className="flex items-center gap-2">
+                {/* Mobile-only entry point to the guide — the sidebar link that
+                    hosts it on desktop is hidden below lg. */}
+                <Link
+                  href="/how-to-use"
+                  aria-label={t("nav.howToUse")}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-paper transition-colors hover:border-moss"
+                >
+                  <Icon.helpCircle className="h-5 w-5 text-ink/70" />
+                </Link>
+                <LanguageSwitcher compact />
+                {userId && <NotificationBell userId={userId} />}
+                <Link href="/profile" aria-label="プロフィール" className="overflow-hidden rounded-full ring-1 ring-line hover:ring-moss">
+                  {avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={avatarUrl} alt={name} className="h-9 w-9 object-cover" />
+                  ) : (
+                    <Avatar initials={initials} size={36} />
+                  )}
+                </Link>
+              </div>
             </div>
+          </header>
+
+          <div className="lg:pl-[264px]">
+            {/* Desktop top bar */}
+            <div className="sticky top-0 z-20 hidden border-b border-line bg-cream/85 px-6 py-3 backdrop-blur lg:block lg:px-10">
+              <TopBar name={name} initials={initials} avatarUrl={avatarUrl} userId={userId} />
+            </div>
+
+            <main className="mx-auto max-w-6xl overflow-x-hidden px-4 pb-24 pt-6 sm:px-6 lg:px-10 lg:pb-12 lg:pt-8">
+              {children}
+
+              <AppFooter />
+            </main>
           </div>
-        </header>
 
-        <div className="lg:pl-[264px]">
-          {/* Desktop top bar */}
-          <div className="sticky top-0 z-20 hidden border-b border-line bg-cream/85 px-6 py-3 backdrop-blur lg:block lg:px-10">
-            <TopBar name={name} initials={initials} avatarUrl={avatarUrl} userId={userId} />
-          </div>
-
-          <main className="mx-auto max-w-6xl overflow-x-hidden px-4 pb-24 pt-6 sm:px-6 lg:px-10 lg:pb-12 lg:pt-8">
-            {children}
-
-            <AppFooter />
-          </main>
+          <BottomNav />
         </div>
-
-        <BottomNav />
-      </div>
+      </TourProvider>
     </LocaleProvider>
   );
 }
