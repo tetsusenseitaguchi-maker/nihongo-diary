@@ -49,20 +49,29 @@ function findAnchorEls(def: TourStepDef): HTMLElement[] {
   return found;
 }
 
-/** Smallest rectangle containing all of them, plus breathing room. */
+/**
+ * Smallest rectangle containing all of them, plus breathing room, clipped to
+ * the viewport.
+ *
+ * The clipping matters: the feed timeline is one element taller than the
+ * screen, and an unclipped box leaves the mask with nothing to shade above or
+ * below the hole, and gives the bubble a negative top and a bottom past the
+ * end of the screen to position against. Highlighting the part the user can
+ * actually see is both correct and what the step means.
+ */
 function boundingRect(els: HTMLElement[]): TourRect | null {
   const rects = els.map((el) => el.getBoundingClientRect()).filter((r) => r.width > 0 || r.height > 0);
   if (rects.length === 0) return null;
-  const top = Math.min(...rects.map((r) => r.top));
-  const left = Math.min(...rects.map((r) => r.left));
-  const bottom = Math.max(...rects.map((r) => r.bottom));
-  const right = Math.max(...rects.map((r) => r.right));
-  return {
-    top: top - PAD,
-    left: left - PAD,
-    width: right - left + PAD * 2,
-    height: bottom - top + PAD * 2,
-  };
+
+  const top = Math.max(Math.min(...rects.map((r) => r.top)) - PAD, 0);
+  const left = Math.max(Math.min(...rects.map((r) => r.left)) - PAD, 0);
+  const bottom = Math.min(Math.max(...rects.map((r) => r.bottom)) + PAD, window.innerHeight);
+  const right = Math.min(Math.max(...rects.map((r) => r.right)) + PAD, window.innerWidth);
+
+  // Scrolled fully out of view — no hole, just an even shade.
+  if (bottom <= top || right <= left) return null;
+
+  return { top, left, width: right - left, height: bottom - top };
 }
 
 export function TourGuide() {

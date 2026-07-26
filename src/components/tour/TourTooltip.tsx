@@ -1,5 +1,6 @@
 "use client";
 
+import { useLayoutEffect, useRef, useState } from "react";
 import { useT } from "@/contexts/locale";
 import type { TourStepDef } from "@/lib/tour/steps";
 import type { TourRect } from "./TourMask";
@@ -7,30 +8,57 @@ import type { TourRect } from "./TourMask";
 /**
  * The speech-bubble card. Sits next to the hole when there is one, centred
  * otherwise, and is always clickable even though the mask around it is not.
+ *
+ * Placement works off the card's measured height rather than an estimate.
+ * Guessing does not survive eight locales — German runs long, and a card that
+ * is taller than assumed hangs off the bottom of the screen.
  */
 
 const GAP = 14;
 const MARGIN = 16;
-/** Enough room for a title, two lines of body text and the buttons. */
-const MIN_SPACE_BELOW = 180;
 
-function position(rect: TourRect | null, width: number, avoidBottom: number): React.CSSProperties {
+function clamp(value: number, lo: number, hi: number): number {
+  return Math.min(Math.max(value, lo), hi);
+}
+
+function position(
+  rect: TourRect | null,
+  width: number,
+  avoidBottom: number,
+  cardH: number,
+): React.CSSProperties {
   const winW = window.innerWidth;
   const winH = window.innerHeight;
   // Everything below this line belongs to the sample sheet, if one is showing.
   const usableH = winH - avoidBottom;
+  const minTop = MARGIN;
+  const maxTop = Math.max(MARGIN, usableH - cardH - MARGIN);
 
   if (!rect) {
-    return { top: usableH / 2, left: "50%", transform: "translate(-50%, -50%)", width };
+    return {
+      top: clamp(usableH / 2 - cardH / 2, minTop, maxTop),
+      left: "50%",
+      transform: "translateX(-50%)",
+      width,
+    };
   }
-  const left = Math.min(Math.max(rect.left, MARGIN), Math.max(MARGIN, winW - width - MARGIN));
-  const spaceBelow = usableH - (rect.top + rect.height);
-  // Below the target when it fits, otherwise above — whichever side has more
-  // room. Keeps the bubble off the bottom nav on phones.
-  if (spaceBelow >= MIN_SPACE_BELOW || spaceBelow > rect.top) {
-    return { top: rect.top + rect.height + GAP, left, width };
+
+  const left = clamp(rect.left, MARGIN, Math.max(MARGIN, winW - width - MARGIN));
+  const below = rect.top + rect.height + GAP;
+  const above = rect.top - GAP - cardH;
+
+  let top: number;
+  if (below + cardH + MARGIN <= usableH) {
+    top = below;
+  } else if (above >= MARGIN) {
+    top = above;
+  } else {
+    // Neither side has room — the target is taller than the screen, as the
+    // feed timeline is. Sit at the bottom of the usable area, on top of the
+    // highlight. Those steps are inert, so covering part of it is harmless.
+    top = maxTop;
   }
-  return { bottom: winH - rect.top + GAP, left, width };
+  return { top: clamp(top, minTop, maxTop), left, width };
 }
 
 export function TourTooltip({
@@ -54,6 +82,8 @@ export function TourTooltip({
   onSkip: () => void;
 }) {
   const t = useT();
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const [cardH, setCardH] = useState(0);
   const width = Math.min(320, window.innerWidth - MARGIN * 2);
   const isFirst = step === 0;
   const isLast = step === total - 1;
@@ -61,10 +91,29 @@ export function TourTooltip({
   // control, so they deliberately have no Next button.
   const waitsForClick = def.mode === "click";
 
+  // Re-measures when the text changes with the step or the locale, and when a
+  // narrow screen reflows the card to more lines.
+  useLayoutEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const update = () => setCardH(el.getBoundingClientRect().height);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div
+      ref={cardRef}
       className="fixed rounded-2xl bg-paper shadow-2xl"
-      style={{ ...position(rect, width, avoidBottom), pointerEvents: "auto" }}
+      style={{
+        ...position(rect, width, avoidBottom, cardH),
+        pointerEvents: "auto",
+        // One frame with no measurement yet: stay invisible rather than
+        // appear in the wrong place and jump.
+        visibility: cardH === 0 ? "hidden" : "visible",
+      }}
       role="dialog"
       aria-modal="true"
       aria-label={t(def.titleKey)}
