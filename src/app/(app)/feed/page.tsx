@@ -221,7 +221,9 @@ export default async function FeedPage() {
     <div className="space-y-5">
       <div>
         <p className="text-sm font-medium text-muted">{t("feed.subtitle")}</p>
-        <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-pine">{t("feed.title")}</h1>
+        {/* Fallback anchor for the tour: the timeline element does not exist
+            when the feed is empty. */}
+        <h1 data-tour="feed-heading" className="mt-1 font-serif text-3xl font-bold tracking-tight text-pine">{t("feed.title")}</h1>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">

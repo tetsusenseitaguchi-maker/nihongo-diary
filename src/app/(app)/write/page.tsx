@@ -801,7 +801,7 @@ export default function WritePage() {
               </div>
 
               {/* selectors */}
-              <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4" data-tour="write-options">
                 <Selector label={t("write.level")} value={levels[level]} onClick={() => cycle(setLevel, levels.length)} />
                 <Selector label={t("write.style")} value={styleJP[styles[style]]} onClick={() => setStyle((n) => (n+1)%styles.length)} />
                 <Selector label={t("write.mood")} value={moods[mood]} onClick={() => cycle(setMood, moods.length)} />
@@ -810,6 +810,7 @@ export default function WritePage() {
 
               {/* notebook paper textarea */}
               <textarea
+                data-tour="write-editor"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="今日は、…"
@@ -867,7 +868,7 @@ export default function WritePage() {
                     </Button>
                   </>
                 )}
-                <Button onClick={handleCorrect} disabled={!text.trim() || overLimit || loading || seekingPeer || justSaving || remaining <= 0}>
+                <Button data-tour="write-correct" onClick={handleCorrect} disabled={!text.trim() || overLimit || loading || seekingPeer || justSaving || remaining <= 0}>
                   {loading ? (
                     t("write.correcting")
                   ) : remaining <= 0 ? (

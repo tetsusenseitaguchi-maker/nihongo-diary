@@ -288,7 +288,7 @@ export function FeedTimeline({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-tour="feed-timeline">
       {items.map((item) => (
         <FeedCard key={item.activityId} item={item} />
       ))}

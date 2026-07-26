@@ -7,6 +7,7 @@ import { ObiePhoto } from "@/components/ObiePhoto";
 import { renderIcon } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { navItems } from "@/lib/mock-data";
+import { tourAnchor } from "@/lib/tour/steps";
 import { useT } from "@/contexts/locale";
 
 const primary = navItems.slice(0, 6);
@@ -59,6 +60,7 @@ export function Sidebar({ onNavigate, currentStreak = 0 }: { onNavigate?: () => 
     return (
       <Link
         href={item.href}
+        data-tour={tourAnchor(item.href)}
         onClick={onNavigate}
         className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors ${
           active

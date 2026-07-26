@@ -61,7 +61,10 @@ export default async function DashboardPage() {
               <p className="mt-3 text-sm text-ink/70">
                 <Furigana text="小(ちい)さな一歩(いっぽ)を、毎日(まいにち)。" />
               </p>
-              <LinkButton href="/write" className="mt-5">
+              {/* data-tour: the tour spotlights this CTA. Three separate
+                  a[href="/write"] elements live on this page, so the anchor
+                  says which one is meant. */}
+              <LinkButton href="/write" className="mt-5" data-tour="write-cta">
                 <Icon.pen className="h-4 w-4" /> {t("dashboard.writeCTA")}
               </LinkButton>
             </div>

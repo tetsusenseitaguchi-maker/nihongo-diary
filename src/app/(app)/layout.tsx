@@ -115,6 +115,7 @@ export default async function AppLayout({
                     hosts it on desktop is hidden below lg. */}
                 <Link
                   href="/how-to-use"
+                  data-tour="nav-how-to-use"
                   aria-label={t("nav.howToUse")}
                   className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-paper transition-colors hover:border-moss"
                 >

@@ -60,7 +60,8 @@ export function LinkButton({
   size = "md",
   className = "",
   children,
-}: ButtonBase & { href: string }) {
+  ...rest
+}: ButtonBase & { href: string } & React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const { ref, onPointerDown } = useRipple<HTMLAnchorElement>();
   return (
     <Link
@@ -68,6 +69,7 @@ export function LinkButton({
       ref={ref}
       onPointerDown={onPointerDown}
       className={`ripple-container inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all ${variantClass[variant]} ${sizeClass[size]} ${className}`}
+      {...rest}
     >
       {children}
     </Link>

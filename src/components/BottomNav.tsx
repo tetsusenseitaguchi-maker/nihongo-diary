@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { renderIcon } from "@/components/icons";
 import { mobileNavItems } from "@/lib/mock-data";
+import { tourAnchor } from "@/lib/tour/steps";
 import { useT } from "@/contexts/locale";
 
 /** Map English mobile nav labels to i18n keys. */
@@ -33,6 +34,7 @@ export function BottomNav() {
               <li key={item.label} className="flex items-end pb-2">
                 <Link
                   href={item.href}
+                  data-tour={tourAnchor(item.href)}
                   aria-label={label}
                   className="grid h-12 w-12 -translate-y-2 place-items-center rounded-2xl bg-pine text-cream shadow-lift"
                 >
@@ -45,6 +47,7 @@ export function BottomNav() {
             <li key={item.label} className="flex-1">
               <Link
                 href={item.href}
+                data-tour={tourAnchor(item.href)}
                 className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium ${
                   active ? "text-pine" : "text-muted"
                 }`}
