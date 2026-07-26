@@ -37,6 +37,14 @@ export interface TourStepDef {
    * the first one that is currently visible. Empty for centred modals.
    */
   anchors: string[];
+  /**
+   * Spotlight every visible anchor at once, as one bounding box, instead of
+   * just the first. Only for anchors that sit next to each other: on a phone
+   * the hero CTA and the bottom-nav pencil are both visible but at opposite
+   * ends of the screen, and combining those would cut a hole the size of the
+   * whole page.
+   */
+  combine?: boolean;
   mode: TourStepMode;
   /**
    * For "click" steps: arriving at this pathname advances the tour. This is
@@ -81,7 +89,10 @@ export const TOUR_SCENARIO: TourStepDef[] = [
   {
     id: "editor",
     route: "/write",
+    // Adjacent siblings — the settings row sits directly above the textarea,
+    // so one box around both is what the step is describing.
     anchors: ["write-options", "write-editor"],
+    combine: true,
     mode: "point",
     titleKey: "tour.editor.title",
     descKey: "tour.editor.desc",

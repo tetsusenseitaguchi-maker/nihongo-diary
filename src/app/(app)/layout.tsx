@@ -19,6 +19,7 @@ import { NativeGate } from "@/components/NativeGate";
 import { createClient } from "@/lib/supabase/server";
 import { LocaleProvider } from "@/contexts/locale";
 import { TourProvider } from "@/contexts/tour";
+import { TourGuide } from "@/components/tour/TourGuide";
 import { normaliseLocale } from "@/lib/i18n";
 import { getInitialMessages, getServerT } from "@/lib/i18n-server";
 import { todayInTZ } from "@/lib/date-tz";
@@ -90,6 +91,7 @@ export default async function AppLayout({
           (nav, header) are reachable from the tour as well. Renders nothing on
           its own — the tour is invisible until an overlay is wired up. */}
       <TourProvider>
+        <TourGuide />
         <TimezoneSyncer />
         <InvitePendingHandler />
         <TourLauncher />
