@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { useTour } from "@/contexts/tour";
 import { TOUR_SCENARIO, anchorSelector, type TourStepDef } from "@/lib/tour/steps";
+import { hasSeenTour, markTourSeen } from "@/lib/tour/seen";
 import { TourMask, type TourRect } from "./TourMask";
 import { TourTooltip } from "./TourTooltip";
 import { TourSampleSheet, sampleSheetHeight } from "./TourSampleSheet";
@@ -22,6 +23,8 @@ const PAD = 8;
 /** A page can still be mounting right after a navigation — keep looking. */
 const LOCATE_RETRY_MS = 100;
 const LOCATE_MAX_TRIES = 20;
+/** Breather between the dashboard appearing and the tour taking it over. */
+const AUTO_START_DELAY_MS = 800;
 
 function isVisible(el: HTMLElement): boolean {
   const r = el.getBoundingClientRect();
@@ -101,17 +104,31 @@ export function TourGuide() {
   useEffect(() => setSampleOpen(false), [step, isActive]);
 
   /**
-   * Temporary launcher for development: /dashboard?tour=1.
-   * Part 3 replaces this with the real "first visit" check, and this effect
-   * goes away with it. Guarded by a ref so that stopping the tour while the
-   * query string is still in the URL does not immediately restart it.
+   * First visit: start the tour by itself.
+   *
+   * Only on /dashboard. Step 1 belongs to that route, so starting anywhere
+   * else would have the route watcher call the tour abandoned the moment the
+   * user pressed Start. Every way in leads here anyway — signup finishes at
+   * /profile-setup and pushes to /dashboard, login and the iOS app both land
+   * on /dashboard — so one check covers new and returning users alike.
+   *
+   * The flag is written when the tour starts, not when it finishes. Writing
+   * on completion would mean anyone who skips or wanders off gets it again on
+   * every single visit to the dashboard, since an abandoned tour restarts
+   * from step 0. Once automatically is enough; the guide page can relaunch it
+   * on demand and neither reads nor writes this flag.
    */
   useEffect(() => {
     if (!hydrated || isActive || autoStartedRef.current) return;
     if (pathname !== "/dashboard") return;
-    if (new URLSearchParams(window.location.search).get("tour") !== "1") return;
-    autoStartedRef.current = true;
-    start();
+    if (hasSeenTour()) return;
+    // Let the dashboard finish painting first.
+    const timer = setTimeout(() => {
+      autoStartedRef.current = true;
+      markTourSeen();
+      start();
+    }, AUTO_START_DELAY_MS);
+    return () => clearTimeout(timer);
   }, [hydrated, isActive, pathname, start]);
 
   /**
