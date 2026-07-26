@@ -80,13 +80,25 @@ export function TourGuide() {
 
   const [mounted, setMounted] = useState(false);
   const [rect, setRect] = useState<TourRect | null>(null);
+  /**
+   * Whether the sample sheet has been opened on the current step. Local on
+   * purpose: it is presentation state, not part of the saved tour, so a
+   * reload lands back on the step with the sheet closed and the step list —
+   * and TOUR_VERSION with it — stays untouched.
+   */
+  const [sampleOpen, setSampleOpen] = useState(false);
   const targetsRef = useRef<HTMLElement[]>([]);
   const rafRef = useRef<number | null>(null);
   const autoStartedRef = useRef(false);
 
   const def = isActive ? TOUR_SCENARIO[step] : undefined;
+  const sampleShowing = def?.sample === true && sampleOpen;
 
   useEffect(() => setMounted(true), []);
+
+  // Leaving the step — forwards, backwards, or out of the tour — closes the
+  // sheet, so coming back to this step starts from the explanation again.
+  useEffect(() => setSampleOpen(false), [step, isActive]);
 
   /**
    * Temporary launcher for development: /dashboard?tour=1.
@@ -166,10 +178,10 @@ export function TourGuide() {
       }
       targetsRef.current = els;
 
-      // Sample steps put a sheet across the bottom of the screen, so the
-      // target is parked in the upper third instead of the middle — otherwise
-      // the sheet covers the very thing being pointed at.
-      const focus = def.sample ? 0.3 : 0.5;
+      // An open sample sheet covers the bottom of the screen, so the target
+      // moves up to the top third — otherwise the sheet hides the very thing
+      // being pointed at. Closing the sheet brings it back to the middle.
+      const focus = sampleShowing ? 0.3 : 0.5;
       const r = els[0].getBoundingClientRect();
       const offBy = r.top + r.height / 2 - window.innerHeight * focus;
       const offScreen = r.top < 0 || r.bottom > window.innerHeight;
@@ -203,7 +215,7 @@ export function TourGuide() {
         rafRef.current = null;
       }
     };
-  }, [isActive, def, pathname, measure]);
+  }, [isActive, def, pathname, measure, sampleShowing]);
 
   /** Escape leaves the tour, like the Skip button. */
   useEffect(() => {
@@ -224,13 +236,22 @@ export function TourGuide() {
     // first-time visitor who gets both does not end up with this one buried.
     <div className="fixed inset-0" style={{ zIndex: 10000, pointerEvents: "none" }}>
       <TourMask rect={rect} clickThrough={def.mode === "click"} />
-      {def.sample && <TourSampleSheet />}
+      {sampleShowing && <TourSampleSheet />}
       <TourTooltip
         def={def}
         step={step}
         total={TOUR_SCENARIO.length}
         rect={rect}
-        avoidBottom={def.sample ? sampleSheetHeight() : 0}
+        avoidBottom={sampleShowing ? sampleSheetHeight() : 0}
+        sample={
+          def.sample
+            ? {
+                open: sampleOpen,
+                onShow: () => setSampleOpen(true),
+                onClose: () => setSampleOpen(false),
+              }
+            : undefined
+        }
         onNext={next}
         onPrev={prev}
         onSkip={stop}

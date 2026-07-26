@@ -733,5 +733,7 @@
   "tour.done.title": "完成！",
   "tour.done.desc": "以后可以随时从「使用指南」重新查看。祝写作愉快！",
   "tour.sample.badge": "示例",
-  "tour.sample.note": "这是示例结果，你的日记还没有被添削。"
+  "tour.sample.note": "这是示例结果，你的日记还没有被添削。",
+  "tour.sample.show": "看示例",
+  "tour.sample.close": "关闭"
 }

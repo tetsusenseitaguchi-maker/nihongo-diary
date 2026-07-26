@@ -733,5 +733,7 @@
   "tour.done.title": "Fertig!",
   "tour.done.desc": "Du findest diese Anleitung jederzeit unter „Anleitung“ wieder. Viel Spaß beim Schreiben!",
   "tour.sample.badge": "Beispiel",
-  "tour.sample.note": "Beispielergebnis – dein Tagebuch wurde noch nicht korrigiert."
+  "tour.sample.note": "Beispielergebnis – dein Tagebuch wurde noch nicht korrigiert.",
+  "tour.sample.show": "Beispiel ansehen",
+  "tour.sample.close": "Schließen"
 }

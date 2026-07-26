@@ -67,6 +67,7 @@ export function TourTooltip({
   total,
   rect,
   avoidBottom = 0,
+  sample,
   onNext,
   onPrev,
   onSkip,
@@ -77,6 +78,11 @@ export function TourTooltip({
   rect: TourRect | null;
   /** Height reserved at the bottom of the screen, e.g. by the sample sheet. */
   avoidBottom?: number;
+  /**
+   * Present only on the step that has a sample to show. The primary button
+   * opens the sample first and moves on only once it has been seen.
+   */
+  sample?: { open: boolean; onShow: () => void; onClose: () => void };
   onNext: () => void;
   onPrev: () => void;
   onSkip: () => void;
@@ -152,14 +158,30 @@ export function TourTooltip({
             {t("tour.prev")}
           </button>
         )}
+        {/* While the sample sheet is open, offer a way back to the plain step
+            so the screen it covers can be looked at again. */}
+        {sample?.open && (
+          <button
+            onClick={sample.onClose}
+            className="rounded-xl border border-line px-3 py-2 text-sm font-medium text-pine transition-colors hover:bg-mint/40"
+          >
+            {t("tour.sample.close")}
+          </button>
+        )}
         {waitsForClick ? (
           <p className="flex-1 text-center text-sm font-semibold text-moss-600">{t("tour.clickHint")}</p>
         ) : (
           <button
-            onClick={onNext}
+            onClick={sample && !sample.open ? sample.onShow : onNext}
             className="flex-1 rounded-xl bg-pine px-4 py-2 text-sm font-bold text-cream transition-opacity hover:opacity-90"
           >
-            {isFirst ? t("tour.start") : isLast ? t("tour.finish") : t("tour.next")}
+            {sample && !sample.open
+              ? t("tour.sample.show")
+              : isFirst
+                ? t("tour.start")
+                : isLast
+                  ? t("tour.finish")
+                  : t("tour.next")}
           </button>
         )}
       </div>

@@ -733,5 +733,7 @@
   "tour.done.title": "È tutto!",
   "tour.done.desc": "Puoi rivedere questa guida quando vuoi da «Come usare». Buona scrittura!",
   "tour.sample.badge": "Esempio",
-  "tour.sample.note": "Risultato di esempio: il tuo diario non è ancora stato corretto."
+  "tour.sample.note": "Risultato di esempio: il tuo diario non è ancora stato corretto.",
+  "tour.sample.show": "Vedi esempio",
+  "tour.sample.close": "Chiudi"
 }

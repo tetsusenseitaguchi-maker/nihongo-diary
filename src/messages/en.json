@@ -833,5 +833,7 @@
   "tour.done.title": "That's it!",
   "tour.done.desc": "You can reopen this guide any time from How to Use. Enjoy your writing!",
   "tour.sample.badge": "Sample",
-  "tour.sample.note": "Example result — your diary has not been corrected yet."
+  "tour.sample.note": "Example result — your diary has not been corrected yet.",
+  "tour.sample.show": "See example",
+  "tour.sample.close": "Close"
 }

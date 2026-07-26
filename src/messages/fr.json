@@ -733,5 +733,7 @@
   "tour.done.title": "C'est tout !",
   "tour.done.desc": "Vous pouvez revoir ce guide à tout moment dans « Guide ». Bonne écriture !",
   "tour.sample.badge": "Exemple",
-  "tour.sample.note": "Résultat d'exemple : votre journal n'a pas encore été corrigé."
+  "tour.sample.note": "Résultat d'exemple : votre journal n'a pas encore été corrigé.",
+  "tour.sample.show": "Voir l'exemple",
+  "tour.sample.close": "Fermer"
 }

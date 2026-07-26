@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { CorrectionResult } from "@/components/CorrectionResult";
 import { mockCorrection } from "@/lib/mock-data";
 import { useT } from "@/contexts/locale";
@@ -30,11 +31,24 @@ export function sampleSheetHeight(): number {
 
 export function TourSampleSheet() {
   const t = useT();
+  // Slides up on mount: the sheet appears when the user asks to see the
+  // example, and the movement is what connects the two.
+  const [slidIn, setSlidIn] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setSlidIn(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   return (
     <div
       className="fixed inset-x-0 bottom-0 overflow-hidden rounded-t-2xl border-t border-line bg-cream shadow-2xl"
-      style={{ height: sampleSheetHeight(), pointerEvents: "none" }}
+      style={{
+        height: sampleSheetHeight(),
+        pointerEvents: "none",
+        transform: slidIn ? "translateY(0)" : "translateY(100%)",
+        transition: "transform 220ms ease-out",
+      }}
       // Decorative: the bubble above already explains what this is, and the
       // canned diary is not the user's own writing.
       aria-hidden="true"

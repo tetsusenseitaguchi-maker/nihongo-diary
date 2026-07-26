@@ -733,5 +733,7 @@
   "tour.done.title": "これで完了です",
   "tour.done.desc": "使い方はいつでも「使い方」から見返せます。楽しんで書いてください！",
   "tour.sample.badge": "サンプル",
-  "tour.sample.note": "これは例です。まだ添削は行われていません。"
+  "tour.sample.note": "これは例です。まだ添削は行われていません。",
+  "tour.sample.show": "例を見る",
+  "tour.sample.close": "閉じる"
 }
