@@ -54,10 +54,11 @@ export interface TourStepDef {
   titleKey: string;
   descKey: string;
   /**
-   * Show the static sample correction sheet (step 3 only). The sheet reuses
-   * CorrectionResult with mockCorrection, so no /api/correct call is made and
-   * no correction credit is consumed. Its container MUST be pointer-events:
-   * none — CorrectionResult's vocabulary buttons write to Supabase for real.
+   * Offer the static sample correction sheet (step 3 only). The sheet reuses
+   * CorrectionResult with a canned correction, so no /api/correct call is
+   * made and no correction credit is consumed. It scrolls, so anything in it
+   * can be reached: see TourSampleSheet for the three layers that keep the
+   * vocabulary Save buttons — real writes to /api/vocabulary — out of it.
    */
   sample?: boolean;
 }
