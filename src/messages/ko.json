@@ -731,5 +731,7 @@
   "tour.feed.title": "학습 피드",
   "tour.feed.desc": "다른 학습자가 공개한 일기입니다. 반응을 남기거나 첨삭을 해 주고, 팔로우할 수도 있습니다.",
   "tour.done.title": "끝났습니다!",
-  "tour.done.desc": "'사용법'에서 언제든지 다시 볼 수 있습니다. 즐겁게 써 보세요!"
+  "tour.done.desc": "'사용법'에서 언제든지 다시 볼 수 있습니다. 즐겁게 써 보세요!",
+  "tour.sample.badge": "예시",
+  "tour.sample.note": "예시 결과입니다. 아직 첨삭은 이루어지지 않았습니다."
 }

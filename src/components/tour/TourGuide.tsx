@@ -7,6 +7,7 @@ import { useTour } from "@/contexts/tour";
 import { TOUR_SCENARIO, anchorSelector, type TourStepDef } from "@/lib/tour/steps";
 import { TourMask, type TourRect } from "./TourMask";
 import { TourTooltip } from "./TourTooltip";
+import { TourSampleSheet, sampleSheetHeight } from "./TourSampleSheet";
 
 /**
  * The interactive onboarding tour: mask, bubble, and the rules that move it
@@ -156,11 +157,19 @@ export function TourGuide() {
       }
       targetsRef.current = els;
 
+      // Sample steps put a sheet across the bottom of the screen, so the
+      // target is parked in the upper third instead of the middle — otherwise
+      // the sheet covers the very thing being pointed at.
+      const focus = def.sample ? 0.3 : 0.5;
       const r = els[0].getBoundingClientRect();
-      if (r.top < 0 || r.bottom > window.innerHeight) {
+      const offBy = r.top + r.height / 2 - window.innerHeight * focus;
+      const offScreen = r.top < 0 || r.bottom > window.innerHeight;
+      if (offScreen || (def.sample && Math.abs(offBy) > 24)) {
         // Smooth scrolling is fine: the scroll listener below re-measures on
         // every frame of the animation, so the hole tracks the element.
-        els[0].scrollIntoView({ block: "center", behavior: "smooth" });
+        // A fixed-position target (the bottom nav) never needs this — it is
+        // always on screen, so neither condition fires.
+        window.scrollBy({ top: offBy, behavior: "smooth" });
       }
       schedule();
 
@@ -206,11 +215,13 @@ export function TourGuide() {
     // first-time visitor who gets both does not end up with this one buried.
     <div className="fixed inset-0" style={{ zIndex: 10000, pointerEvents: "none" }}>
       <TourMask rect={rect} clickThrough={def.mode === "click"} />
+      {def.sample && <TourSampleSheet />}
       <TourTooltip
         def={def}
         step={step}
         total={TOUR_SCENARIO.length}
         rect={rect}
+        avoidBottom={def.sample ? sampleSheetHeight() : 0}
         onNext={next}
         onPrev={prev}
         onSkip={stop}

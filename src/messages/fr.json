@@ -731,5 +731,7 @@
   "tour.feed.title": "Le fil d'actualité",
   "tour.feed.desc": "Les journaux publics des autres apprenants. Réagissez, proposez une correction et suivez qui vous voulez.",
   "tour.done.title": "C'est tout !",
-  "tour.done.desc": "Vous pouvez revoir ce guide à tout moment dans « Guide ». Bonne écriture !"
+  "tour.done.desc": "Vous pouvez revoir ce guide à tout moment dans « Guide ». Bonne écriture !",
+  "tour.sample.badge": "Exemple",
+  "tour.sample.note": "Résultat d'exemple : votre journal n'a pas encore été corrigé."
 }

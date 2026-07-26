@@ -731,5 +731,7 @@
   "tour.feed.title": "El Feed",
   "tour.feed.desc": "Diarios públicos de otros estudiantes. Reacciona, deja una corrección y sigue a quien quieras.",
   "tour.done.title": "¡Listo!",
-  "tour.done.desc": "Puedes volver a ver esta guía cuando quieras en «Como usar». ¡Disfruta escribiendo!"
+  "tour.done.desc": "Puedes volver a ver esta guía cuando quieras en «Como usar». ¡Disfruta escribiendo!",
+  "tour.sample.badge": "Ejemplo",
+  "tour.sample.note": "Resultado de ejemplo: tu diario aún no se ha corregido."
 }

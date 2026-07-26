@@ -831,5 +831,7 @@
   "tour.feed.title": "The Feed",
   "tour.feed.desc": "Public diaries from other learners. React, leave a correction, and follow the people you like.",
   "tour.done.title": "That's it!",
-  "tour.done.desc": "You can reopen this guide any time from How to Use. Enjoy your writing!"
+  "tour.done.desc": "You can reopen this guide any time from How to Use. Enjoy your writing!",
+  "tour.sample.badge": "Sample",
+  "tour.sample.note": "Example result — your diary has not been corrected yet."
 }

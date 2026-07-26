@@ -731,5 +731,7 @@
   "tour.feed.title": "Der Feed",
   "tour.feed.desc": "Öffentliche Tagebücher anderer Lernender. Reagiere, hinterlasse eine Korrektur und folge, wem du magst.",
   "tour.done.title": "Fertig!",
-  "tour.done.desc": "Du findest diese Anleitung jederzeit unter „Anleitung“ wieder. Viel Spaß beim Schreiben!"
+  "tour.done.desc": "Du findest diese Anleitung jederzeit unter „Anleitung“ wieder. Viel Spaß beim Schreiben!",
+  "tour.sample.badge": "Beispiel",
+  "tour.sample.note": "Beispielergebnis – dein Tagebuch wurde noch nicht korrigiert."
 }

@@ -14,14 +14,17 @@ const MARGIN = 16;
 /** Enough room for a title, two lines of body text and the buttons. */
 const MIN_SPACE_BELOW = 180;
 
-function position(rect: TourRect | null, width: number): React.CSSProperties {
-  if (!rect) {
-    return { top: "50%", left: "50%", transform: "translate(-50%, -50%)", width };
-  }
+function position(rect: TourRect | null, width: number, avoidBottom: number): React.CSSProperties {
   const winW = window.innerWidth;
   const winH = window.innerHeight;
+  // Everything below this line belongs to the sample sheet, if one is showing.
+  const usableH = winH - avoidBottom;
+
+  if (!rect) {
+    return { top: usableH / 2, left: "50%", transform: "translate(-50%, -50%)", width };
+  }
   const left = Math.min(Math.max(rect.left, MARGIN), Math.max(MARGIN, winW - width - MARGIN));
-  const spaceBelow = winH - (rect.top + rect.height);
+  const spaceBelow = usableH - (rect.top + rect.height);
   // Below the target when it fits, otherwise above — whichever side has more
   // room. Keeps the bubble off the bottom nav on phones.
   if (spaceBelow >= MIN_SPACE_BELOW || spaceBelow > rect.top) {
@@ -35,6 +38,7 @@ export function TourTooltip({
   step,
   total,
   rect,
+  avoidBottom = 0,
   onNext,
   onPrev,
   onSkip,
@@ -43,6 +47,8 @@ export function TourTooltip({
   step: number;
   total: number;
   rect: TourRect | null;
+  /** Height reserved at the bottom of the screen, e.g. by the sample sheet. */
+  avoidBottom?: number;
   onNext: () => void;
   onPrev: () => void;
   onSkip: () => void;
@@ -58,7 +64,7 @@ export function TourTooltip({
   return (
     <div
       className="fixed rounded-2xl bg-paper shadow-2xl"
-      style={{ ...position(rect, width), pointerEvents: "auto" }}
+      style={{ ...position(rect, width, avoidBottom), pointerEvents: "auto" }}
       role="dialog"
       aria-modal="true"
       aria-label={t(def.titleKey)}
