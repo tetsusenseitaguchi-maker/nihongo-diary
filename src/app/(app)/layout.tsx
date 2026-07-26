@@ -9,7 +9,6 @@ import { Icon } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { TimezoneSyncer } from "@/components/TimezoneSyncer";
 import { InvitePendingHandler } from "@/components/InvitePendingHandler";
-import { TourLauncher } from "@/components/TourLauncher";
 import { InstallPromptBanner } from "@/components/InstallPromptBanner";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ObieNotificationSyncer } from "@/components/ObieNotificationSyncer";
@@ -94,7 +93,6 @@ export default async function AppLayout({
         <TourGuide />
         <TimezoneSyncer />
         <InvitePendingHandler />
-        <TourLauncher />
         <InstallPromptBanner />
         {userId && <ObieNotificationSyncer userId={userId} />}
         {userId && <PushRegistrar />}

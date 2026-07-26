@@ -248,9 +248,8 @@ export function TourGuide() {
 
   return createPortal(
     // The wrapper itself must not catch clicks — the mask panels and the
-    // bubble opt back in individually. z-index sits one above the old
-    // TourOverlay's 9999 so that, in the window before part 3 retires it, a
-    // first-time visitor who gets both does not end up with this one buried.
+    // bubble opt back in individually. The z-index clears everything the app
+    // puts on screen: the bottom nav and sidebar sit at 30, the header at 20.
     <div className="fixed inset-0" style={{ zIndex: 10000, pointerEvents: "none" }}>
       <TourMask rect={rect} clickThrough={def.mode === "click"} />
       {sampleShowing && <TourSampleSheet />}

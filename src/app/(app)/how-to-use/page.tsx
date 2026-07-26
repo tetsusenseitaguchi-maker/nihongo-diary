@@ -1,6 +1,6 @@
 import { getServerT } from "@/lib/i18n-server";
 import { GuideAccordion } from "@/components/GuideAccordion";
-import { RestartTourButton } from "@/components/TourLauncher";
+import { TourRestartButton } from "@/components/tour/TourRestartButton";
 
 export default async function HowToUsePage() {
   const t = await getServerT();
@@ -27,7 +27,7 @@ export default async function HowToUsePage() {
 
       {/* Tour launcher */}
       <div>
-        <RestartTourButton />
+        <TourRestartButton />
       </div>
 
       {/* Feature accordion */}
