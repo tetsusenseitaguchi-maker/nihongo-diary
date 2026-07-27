@@ -4,13 +4,18 @@ import { createClient } from "@/lib/supabase/server";
 import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
 import { languageDisplayName } from "@/lib/languages";
 import { createChatCompletion, missingApiKeyError } from "@/lib/ai-provider";
+import { normalizePlan } from "@/lib/plans";
+import { RECHECK_LIMITS } from "@/lib/recheck-limits";
+import { todayInTZ } from "@/lib/date-tz";
 
 export const runtime = "nodejs";
 
 // Lightweight "revise & recheck" endpoint.
 // Unlike /api/correct this does NOT run a full correction and, importantly,
-// consumes NO correction credit — it never touches usage_limits /
-// correction_count / try_use_correction. Any logged-in user may call it.
+// consumes NO correction credit — it never touches correction_count /
+// try_use_correction / refund_correction. Free plans do claim one
+// usage_limits.recheck_count slot per day via try_use_recheck(); paid plans
+// call no RPC at all and are capped client-side per correction.
 // It compares the learner's rewrite against the ORIGINAL diary + the PREVIOUS
 // feedback and returns only a short diff: what got fixed and what still needs
 // work. Model is claude-haiku-4-5 (ai-provider default).
@@ -101,7 +106,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "元の日記と書き直した文の両方が必要です。" }, { status: 400 });
   }
 
-  // ---- Auth only. NO plan gating, NO correction-count consumption. ----
+  // ---- Auth. Free plans get a daily cap; NO correction-count consumption. ----
   const supabase = await createClient();
   const {
     data: { user },
@@ -113,13 +118,61 @@ export async function POST(request: Request) {
   // Resolve UI language for the explanations (cookie-first, same as /api/correct).
   const { data: profile } = await supabase
     .from("profiles")
-    .select("preferred_language")
+    .select("plan, preferred_language, timezone")
     .eq("id", user.id)
     .single();
   const cookieStore = await cookies();
   const cookieLang = cookieStore.get(LOCALE_COOKIE)?.value;
   const langCode = normaliseLocale(cookieLang || profile?.preferred_language || "en");
   const lang = languageDisplayName(langCode);
+  const plan = normalizePlan(profile?.plan);
+
+  // ---- Daily recheck cap (Free only) ----
+  // Paid plans keep their existing behaviour: no RPC, no counter, capped
+  // client-side at RECHECK_LIMIT rechecks per correction. Only Free gets a
+  // server-enforced per-day allowance, so this never runs for a paying user.
+  //
+  // try_use_recheck() (supabase/add-recheck-limit.sql) touches only
+  // usage_limits.recheck_count — correction_count and translation_count are
+  // never read or written here.
+  if (plan === "free") {
+    // Timezone resolution: user_tz cookie → profile.timezone → UTC
+    // (same order as /api/correct, so "today" means the same day everywhere).
+    const rawTz = cookieStore.get("user_tz")?.value;
+    let tz = "UTC";
+    if (rawTz) {
+      try {
+        const decoded = decodeURIComponent(rawTz);
+        new Intl.DateTimeFormat("en-CA", { timeZone: decoded });
+        tz = decoded;
+      } catch { /* invalid cookie value — fall through */ }
+    }
+    if (tz === "UTC" && profile?.timezone && profile.timezone !== "UTC") {
+      try {
+        new Intl.DateTimeFormat("en-CA", { timeZone: profile.timezone });
+        tz = profile.timezone;
+      } catch { /* invalid DB value — fall through */ }
+    }
+
+    const { data: allowed, error: rpcError } = await supabase.rpc("try_use_recheck", {
+      p_user_id: user.id,
+      p_date: todayInTZ(tz),
+      p_limit: RECHECK_LIMITS.free,
+    });
+
+    if (rpcError) {
+      // Fail OPEN, unlike /api/correct's try_use_correction. Recheck was
+      // unlimited before this cap existed and consumes no correction credit,
+      // so a broken RPC losing the cap is a smaller harm than a broken RPC
+      // taking a working feature away from everyone. Logged so it surfaces.
+      console.error("[recheck] try_use_recheck error, allowing through:", rpcError.message, "code:", rpcError.code);
+    } else if (!allowed) {
+      return NextResponse.json(
+        { error: "daily_recheck_limit_reached", upgrade: true, plan, limit: RECHECK_LIMITS.free },
+        { status: 429 },
+      );
+    }
+  }
 
   const missingKeyError = missingApiKeyError();
   if (missingKeyError) {

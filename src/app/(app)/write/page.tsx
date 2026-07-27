@@ -17,6 +17,7 @@ import { templates, sampleDraft } from "@/lib/mock-data";
 import type { Level, CorrectionStyle, Correction, DiaryPlace, MistakeItem, RecheckResult as RecheckResultData } from "@/lib/types";
 import { GrammarReviewCard } from "@/components/GrammarReviewCard";
 import { buildMiniLessonFromAI } from "@/lib/lessons";
+import { RECHECK_LIMITS } from "@/lib/recheck-limits";
 import { limitsFor, normalizePlan, PLAN_LABELS, PLAN_LIMITS, type Plan } from "@/lib/plans";
 import { PRESET_TAGS, PRESET_TAG_KEYS } from "@/lib/tags";
 import { useT } from "@/contexts/locale";
@@ -154,7 +155,13 @@ export default function WritePage() {
   const [recheckError, setRecheckError] = useState<string | null>(null);
   const [recheckResult, setRecheckResult] = useState<RecheckResultData | null>(null);
   // Number of successful rechecks used for the current correction (resets on a new correction).
+  // Paid plans are capped this way; Free is capped per calendar day instead — see recheckUsedToday.
   const [recheckCount, setRecheckCount] = useState(0);
+  // Free only: rechecks already used today, read from usage_limits.recheck_count on mount.
+  // Unlike recheckCount this does NOT reset when a new correction runs.
+  const [recheckUsedToday, setRecheckUsedToday] = useState(0);
+  // Set when /api/recheck returns 429 so Free users can be pointed at an upgrade.
+  const [showRecheckUpgrade, setShowRecheckUpgrade] = useState(false);
 
   // Plan + usage
   const [plan, setPlan] = useState<Plan>("free");
@@ -169,6 +176,15 @@ export default function WritePage() {
   const limits = limitsFor(plan);
   const remaining = Math.max(0, limits.corrections - usedToday);
 
+  // Recheck allowance. Free is capped per calendar day and enforced server-side
+  // by try_use_recheck(); paid plans keep the existing per-correction cap and
+  // never hit the RPC, so their behaviour here is unchanged.
+  const isFreePlan = plan === "free";
+  const recheckLimit = isFreePlan ? RECHECK_LIMITS.free : RECHECK_LIMIT;
+  const recheckUsed = isFreePlan ? recheckUsedToday : recheckCount;
+  const recheckLeft = Math.max(0, recheckLimit - recheckUsed);
+  const recheckExhausted = recheckLeft <= 0;
+
   useEffect(() => {
     (async () => {
       const supabase = createClient();
@@ -179,11 +195,12 @@ export default function WritePage() {
       const today = todayInTZ(getClientTZ());
       const [{ data: prof }, { data: usage }, { data: reviewRow }] = await Promise.all([
         supabase.from("profiles").select("plan").eq("id", user.id).single(),
-        supabase.from("usage_limits").select("correction_count").eq("user_id", user.id).eq("usage_date", today).maybeSingle(),
+        supabase.from("usage_limits").select("correction_count, recheck_count").eq("user_id", user.id).eq("usage_date", today).maybeSingle(),
         supabase.from("diary_entries").select("grammar_focus").eq("user_id", user.id).not("grammar_focus", "is", null).lt("diary_date", today).order("diary_date", { ascending: false }).limit(1).maybeSingle(),
       ]);
       setPlan(normalizePlan(prof?.plan));
       setUsedToday(usage?.correction_count ?? 0);
+      setRecheckUsedToday(usage?.recheck_count ?? 0);
       if (reviewRow?.grammar_focus) setGrammarReview(reviewRow.grammar_focus as MistakeItem);
     })();
   }, []);
@@ -607,10 +624,11 @@ export default function WritePage() {
   // Consumes NO correction credit — this never touches the usage counters.
   async function handleRecheck() {
     if (!result || !revisedText.trim() || rechecking) return;
-    if (recheckCount >= RECHECK_LIMIT) return; // allowance used up for this entry
+    if (recheckExhausted) return; // allowance used up (per entry on paid, per day on Free)
     setRechecking(true);
     setRecheckError(null);
     setRecheckResult(null);
+    setShowRecheckUpgrade(false);
     try {
       const res = await fetch("/api/recheck", {
         method: "POST",
@@ -624,7 +642,16 @@ export default function WritePage() {
         }),
       });
       if (!res.ok) {
-        const errData = (await res.json().catch(() => ({}))) as { error?: string };
+        const errData = (await res.json().catch(() => ({}))) as { error?: string; limit?: number };
+        if (res.status === 429) {
+          // Free plan used today's allowance. Pin the counter to the limit so
+          // the button stays disabled instead of inviting another 429, and
+          // offer the upgrade (suppressed inside the iOS app).
+          setRecheckUsedToday(errData?.limit ?? RECHECK_LIMITS.free);
+          setRecheckError(null);
+          setShowRecheckUpgrade(true);
+          return;
+        }
         setRecheckError(errData?.error || t("write.networkError"));
         return;
       }
@@ -642,7 +669,10 @@ export default function WritePage() {
         encouragementRuby: normalizeRubyText(data.encouragementRuby || ""),
       });
       // Count only successful rechecks — failures/network errors never consume the allowance.
+      // Both counters advance: recheckCount caps paid plans per correction,
+      // recheckUsedToday mirrors the server-side daily count used for Free.
       setRecheckCount((n) => n + 1);
+      setRecheckUsedToday((n) => n + 1);
     } catch {
       setRecheckError(t("write.networkError"));
     } finally {
@@ -1108,14 +1138,18 @@ export default function WritePage() {
                     <Furigana text="書(か)き直(なお)してみる" />
                   </p>
                   <p className="mt-0.5 text-sm text-ink/70">
-                    {recheckCount >= RECHECK_LIMIT ? t("recheck.limitReached") : t("recheck.introDesc")}
+                    {!recheckExhausted
+                      ? t("recheck.introDesc")
+                      : isFreePlan
+                        ? t("recheck.limitReachedDaily")
+                        : t("recheck.limitReached", { n: recheckLimit })}
                   </p>
                 </div>
                 <Button
                   onClick={startRevise}
                   variant="secondary"
                   className="shrink-0"
-                  disabled={recheckCount >= RECHECK_LIMIT}
+                  disabled={recheckExhausted}
                 >
                   <Icon.sparkle className="h-4 w-4" /> {t("recheck.reviseBtn")}
                 </Button>
@@ -1138,9 +1172,11 @@ export default function WritePage() {
                 />
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <span className="text-sm text-muted">
-                    {recheckCount >= RECHECK_LIMIT
-                      ? t("recheck.limitReached")
-                      : t("recheck.remaining", { n: RECHECK_LIMIT - recheckCount })}
+                    {!recheckExhausted
+                      ? t("recheck.remaining", { n: recheckLeft })
+                      : isFreePlan
+                        ? t("recheck.limitReachedDaily")
+                        : t("recheck.limitReached", { n: recheckLimit })}
                   </span>
                   <div className="flex items-center gap-3">
                     <Button variant="ghost" onClick={cancelRevise} disabled={rechecking}>
@@ -1148,7 +1184,7 @@ export default function WritePage() {
                     </Button>
                     <Button
                       onClick={handleRecheck}
-                      disabled={!revisedText.trim() || rechecking || recheckCount >= RECHECK_LIMIT}
+                      disabled={!revisedText.trim() || rechecking || recheckExhausted}
                     >
                       {rechecking ? (
                         t("recheck.rechecking")
@@ -1167,6 +1203,22 @@ export default function WritePage() {
                   <div className="border-t border-line pt-4">
                     <RecheckResult result={recheckResult} />
                   </div>
+                )}
+              </div>
+            )}
+            {showRecheckUpgrade && isFreePlan && (
+              <div className="gloss-panel mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] p-4" style={{ ["--tint" as string]: "var(--color-tint-sand)" } as CSSProperties}>
+                <p className="text-sm text-ink/80">
+                  {t("recheck.limitReachedFree", {
+                    limit: RECHECK_LIMITS.free,
+                    plusLimit: RECHECK_LIMITS.plus,
+                  })}
+                </p>
+                {/* iOS native app: hide all paid upgrade CTAs (App Store policy) */}
+                {!isIosApp && (
+                  <a href="/upgrade" className="gloss-btn shrink-0 rounded-full px-4 py-2 text-sm font-semibold text-cream hover:brightness-105">
+                    {t("write.upgradeToPlus")}
+                  </a>
                 )}
               </div>
             )}
