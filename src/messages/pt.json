@@ -226,5 +226,21 @@
   "translate.hide": "Hide",
   "translate.show": "Show translation",
   "translate.tapWord": "Tap a word",
-  "translate.tapWordOff": "Done"
+  "translate.tapWordOff": "Done",
+  "recheck.introDesc": "Reescreva seu diário usando o feedback acima e receba uma nova verificação rápida.",
+  "recheck.reviseBtn": "Reescrever",
+  "recheck.editorTitle": "Reescrever e verificar",
+  "recheck.editorHint": "Edite seu diário abaixo e verifique de novo para ver o que melhorou e o que ainda precisa de trabalho.",
+  "recheck.cancel": "Cancelar",
+  "recheck.recheckBtn": "Verificar de novo",
+  "recheck.rechecking": "Verificando…",
+  "recheck.remaining": "Restam {n} verificações",
+  "recheck.limitReached": "Você usou todas as {n} verificações deste diário.",
+  "recheck.limitReachedDaily": "A verificação de hoje acabou 🌸 Reinicia amanhã.",
+  "recheck.limitReachedFree": "A sua verificação de hoje ({limit}) acabou 🌸 Reinicia amanhã. O Plus dá {plusLimit} por diário.",
+  "recheck.fixedTitle": "Corrigido",
+  "recheck.noFixed": "Nenhum dos pontos anteriores foi corrigido ainda — tente de novo!",
+  "recheck.remainingTitle": "Ainda para melhorar",
+  "recheck.noRemaining": "よくできました！ (Muito bem — não há mais nada para corrigir!)",
+  "recheck.obieTitle": "Obie diz"
 }
