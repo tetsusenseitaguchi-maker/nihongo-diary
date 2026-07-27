@@ -16,6 +16,7 @@ import { Bilingual } from "@/components/Bilingual";
 import { templates, sampleDraft } from "@/lib/mock-data";
 import type { Level, CorrectionStyle, Correction, DiaryPlace, MistakeItem, RecheckResult as RecheckResultData } from "@/lib/types";
 import { GrammarReviewCard } from "@/components/GrammarReviewCard";
+import { buildMiniLessonFromAI } from "@/lib/lessons";
 import { limitsFor, normalizePlan, PLAN_LABELS, PLAN_LIMITS, type Plan } from "@/lib/plans";
 import { PRESET_TAGS, PRESET_TAG_KEYS } from "@/lib/tags";
 import { useT } from "@/contexts/locale";
@@ -289,7 +290,11 @@ export default function WritePage() {
           }),
         ),
         practice: { jp: normalizeRubyText(data.practiceSentenceRuby || data.practiceSentence || ""), en: "" },
-        relatedMiniLesson: data.relatedMiniLesson ?? null,
+        // The AI returns only { id, shortExplanation, exampleJapaneseRuby,
+        // exampleEnglish, shortNote }; buildMiniLessonFromAI fills in title /
+        // order / visualImage / points from MINI_LESSONS so CorrectionResult
+        // has a complete MiniLesson to render.
+        relatedMiniLesson: buildMiniLessonFromAI(data.relatedMiniLesson),
         practiceDrills: (data.practiceDrills ?? []).map(
           (d: { type?: string; question?: string; questionRuby?: string; choices?: string[]; answer?: string; answerRuby?: string; englishExplanation?: string }) =>
             ensureAnswerInChoices(

@@ -136,26 +136,26 @@ Every Japanese field above ends in "Ruby" and must contain furigana in this form
 - Grammatical consistency (fill-in especially): the fixed text immediately before and after the blank — including the sentence ending — must connect naturally with the answer's actual grammatical form. Forms like 〜そう (様態/looks-like), 〜らしい, 〜ようだ, and 〜みたいだ cannot be directly followed by ます. If the correct answer is (or ends in) one of these forms, do NOT end the sentence in ます — use です instead, or rewrite the whole sentence so the fixed text around the blank fits that form naturally. Mentally fill in the blank and confirm the complete sentence is grammatical before finalizing.
 
 12. relatedMiniLesson: choose the ONE most relevant lesson for the learner's main grammar point, by id, from this FIXED list:
-1 = Hiragana (hiragana reading / writing)
-2 = Katakana (katakana reading / foreign word writing)
-3 = Sentence Structure (word order / sentence structure)
-4 = Topic & は (は as topic marker)
-5 = Particles 1: を, に, で (particle mistakes: を に で)
-6 = Particles 2: へ, から, まで, と, も (particle mistakes: へ から まで と も)
-7 = は vs が (は vs が choice)
-8 = Nouns & です (nouns / です usage)
-9 = Adjectives: い & な (adjective form い / な)
-10 = Verb Types: Ichidan & Godan (verb group identification)
-11 = ます Form (polite verb form / ます conjugation)
-12 = Dictionary & ない Form (plain form / negative form)
-13 = Past Form (past tense mistakes)
-14 = Te-form: How to Make It (て-form formation)
-15 = Te-form Uses (て-form patterns: てください てもいい てから)
-16 = 〜ている & 〜てある (progressive / resulting state / prepared state)
-17 = 〜てみる / 〜ておく / 〜てしまう (nuanced て-form helpers)
-18 = 〜てくる & 〜ていく (directional change expressions)
-19 = Reasons: から & ので (reason expressions)
-20 = Wants & Invitations (たい / ましょう / ませんか)
+1 = Hiragana
+2 = Katakana
+3 = Sentence Structure
+4 = Topic & は
+5 = Particles 1: を, に, で
+6 = Particles 2: へ, から, まで, と, も
+7 = は vs が
+8 = Nouns & です
+9 = Adjectives: い & な
+10 = Verb Types: Ichidan & Godan
+11 = ます Form
+12 = Dictionary & ない Form
+13 = Past Form
+14 = Te-form: How to Make It
+15 = Te-form Uses (てください / てもいい / てから)
+16 = 〜ている & 〜てある (progressive / resulting / prepared state)
+17 = 〜てみる / 〜ておく / 〜てしまう
+18 = 〜てくる & 〜ていく (directional change)
+19 = Reasons: から & ので
+20 = Wants & Invitations
 Return only: id (1-20), shortExplanation (in ${lang}, tailored to the learner's level), exampleJapaneseRuby (with <ruby> furigana, tailored to level — keep in Japanese), exampleEnglish (in ${lang}), shortNote (in ${lang}, friendly). If nothing clearly fits, use id 3. Do NOT invent new lessons or change titles.
 
 13. nextVocab: suggest exactly 3 vocabulary words the learner could use in a future diary about the SAME topic. These must be one JLPT level above the learner's current level (${level} → one step up: N5→N4, N4→N3, N3→N2, N2→N1, N1/Natural→advanced N1). Choose words that fit naturally into the diary's specific topic/context. Do NOT pick words the learner already used. For each:

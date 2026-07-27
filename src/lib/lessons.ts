@@ -1488,3 +1488,37 @@ export function lessonById(id: number | undefined | null): MiniLesson | null {
   if (!id) return null;
   return MINI_LESSONS.find((l) => l.id === id) ?? null;
 }
+
+function str(v: unknown): string {
+  return typeof v === "string" ? v : "";
+}
+
+/**
+ * Turns the AI's `relatedMiniLesson` payload — which carries only
+ * { id, shortExplanation, exampleJapaneseRuby, exampleEnglish, shortNote } —
+ * into a complete MiniLesson by filling in title / order / visualImage /
+ * points / commonMistakes from the fixed curriculum in MINI_LESSONS.
+ *
+ * The AI no longer receives the lesson bodies in its prompt (only the id
+ * list), so the lesson content must be resolved here instead. Spread order
+ * matters: the static lesson is the base, and each AI-written field wins when
+ * it is non-empty — so the level-tailored wording the learner sees is
+ * unchanged, and the static text is only a fallback for missing fields.
+ *
+ * Mirrors buildLesson() in /api/correct-existing, which already did this
+ * server-side for the "correct an existing diary" flow.
+ */
+export function buildMiniLessonFromAI(raw: unknown): MiniLesson | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const id = typeof r.id === "number" ? r.id : parseInt(String(r.id ?? ""), 10);
+  const base = lessonById(id) ?? lessonById(1);
+  if (!base) return null;
+  return {
+    ...base,
+    shortExplanation: str(r.shortExplanation) || base.shortExplanation,
+    exampleJapaneseRuby: str(r.exampleJapaneseRuby) || base.exampleJapaneseRuby,
+    exampleEnglish: str(r.exampleEnglish) || base.exampleEnglish,
+    shortNote: str(r.shortNote) || base.shortNote,
+  };
+}
