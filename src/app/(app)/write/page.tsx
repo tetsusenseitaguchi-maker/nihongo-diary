@@ -1124,7 +1124,9 @@ export default function WritePage() {
               {saveError}
             </p>
           )}
-          <CorrectionResult correction={result} />
+          {/* Free corrections never generate drills (see includeDrills in
+              /api/correct), so show the locked placeholder rather than a gap. */}
+          <CorrectionResult correction={result} locked={{ drills: isFreePlan }} />
           <p className="pt-1 text-center text-xs text-muted">
             {t("write.aiDisclaimer")}
           </p>

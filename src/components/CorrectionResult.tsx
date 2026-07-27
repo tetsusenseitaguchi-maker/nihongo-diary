@@ -71,9 +71,17 @@ function Label({ en, jp }: { en: string; jp: string }) {
 export function CorrectionResult({
   correction,
   showOriginal = true,
+  locked,
 }: {
   correction: Correction;
   showOriginal?: boolean;
+  /**
+   * Sections to render as a locked placeholder instead of content, so a Free
+   * learner can see the feature exists without it being generated for them.
+   * Only the write page passes this — every other caller omits it and renders
+   * exactly as before.
+   */
+  locked?: { drills?: boolean };
 }) {
   const t = useT();
   const { locale } = useLocale();
@@ -454,8 +462,29 @@ export function CorrectionResult({
         </div>
       )}
 
-      {/* Practice Drills — only shown when AI returned drills (write page) */}
-      <PracticeDrills drills={correction.practiceDrills} />
+      {/* Practice Drills — only shown when AI returned drills (write page).
+          On Free the drills are never generated, so show a locked placeholder
+          instead of nothing at all. The upgrade wording and the link are both
+          suppressed inside the iOS app (App Store Guideline 3.1.1): the lock
+          and the frame still render, but with no plan name and no CTA. */}
+      {locked?.drills ? (
+        <div className="flex flex-col items-center gap-2 rounded-[var(--radius-card)] border border-dashed border-line px-6 py-8 text-center">
+          <h3 className="font-serif text-lg font-bold text-ink/55">{t("locked.drills.title")}</h3>
+          <p className="max-w-sm text-sm text-ink/65">
+            {isIosApp ? t("locked.drills.descIos") : t("locked.drills.desc")}
+          </p>
+          {!isIosApp && (
+            <a
+              href="/upgrade"
+              className="gloss-btn mt-1 rounded-full px-4 py-2 text-sm font-semibold text-cream hover:brightness-105"
+            >
+              {t("locked.upgradeBtn")}
+            </a>
+          )}
+        </div>
+      ) : (
+        <PracticeDrills drills={correction.practiceDrills} />
+      )}
 
       {/* Obie encouragement */}
       <div className="gloss-green flex items-center gap-4 rounded-[var(--radius-card)] p-6">
