@@ -69,21 +69,23 @@ function Label({ en, jp }: { en: string; jp: string }) {
 }
 
 /**
- * Placeholder for a section a Free learner doesn't get. The content is never
- * generated for them, so this shows the padlocked frame instead of a gap.
+ * Placeholder for the paid sections a Free learner doesn't get. The content is
+ * never generated for them, so this shows one padlocked frame instead of a gap.
  *
- * Inside the iOS app the copy switches to a neutral line and the upgrade link
- * is dropped (App Store Guideline 3.1.1). Both branches live here so every
- * locked section gets the same treatment from one place — the placeholder is
- * shown on every Free correction, so this guard is the one that matters most.
+ * Inside the iOS app the title AND the body switch to neutral wording and the
+ * upgrade link is dropped (App Store Guideline 3.1.1). The title needs its own
+ * iOS variant because the web one names the plan. All three branches live here
+ * so the guard has a single copy — this frame renders on every Free correction.
  */
 function LockedSection({
   titleKey,
+  titleIosKey,
   descKey,
   descIosKey,
   isIosApp,
 }: {
   titleKey: string;
+  titleIosKey: string;
   descKey: string;
   descIosKey: string;
   isIosApp: boolean;
@@ -91,7 +93,9 @@ function LockedSection({
   const t = useT();
   return (
     <div className="flex flex-col items-center gap-2 rounded-[var(--radius-card)] border border-dashed border-line px-6 py-8 text-center">
-      <h3 className="font-serif text-lg font-bold text-ink/55">{t(titleKey)}</h3>
+      <h3 className="font-serif text-lg font-bold text-ink/55">
+        {isIosApp ? t(titleIosKey) : t(titleKey)}
+      </h3>
       <p className="max-w-sm text-sm text-ink/65">{isIosApp ? t(descIosKey) : t(descKey)}</p>
       {!isIosApp && (
         <a
@@ -446,15 +450,22 @@ export function CorrectionResult({
         </div>
       )}
 
-      {/* Mini Lesson Preview — not generated on Free, so show the locked frame. */}
-      {locked?.miniLesson && (
+      {/* One locked frame standing in for both paid sections. Free gets neither
+          the mini lesson nor the drills, and two padlocked cards with two
+          buttons crowded the result — so they share a single card here, in the
+          mini lesson's usual slot. The drills block below renders nothing when
+          locked. */}
+      {locked?.miniLesson && locked?.drills && (
         <LockedSection
-          titleKey="locked.miniLesson.title"
-          descKey="locked.miniLesson.desc"
-          descIosKey="locked.miniLesson.descIos"
+          titleKey="locked.combined.title"
+          titleIosKey="locked.combined.titleIos"
+          descKey="locked.combined.desc"
+          descIosKey="locked.combined.descIos"
           isIosApp={isIosApp}
         />
       )}
+
+      {/* Mini Lesson Preview */}
       {miniLesson && (
         <div className="gloss-card overflow-hidden rounded-[var(--radius-card)]">
           <div className="flex items-center justify-between gap-2 bg-pine px-5 py-3">
@@ -508,17 +519,8 @@ export function CorrectionResult({
       )}
 
       {/* Practice Drills — only shown when AI returned drills (write page).
-          On Free they are never generated, so show the locked frame instead. */}
-      {locked?.drills ? (
-        <LockedSection
-          titleKey="locked.drills.title"
-          descKey="locked.drills.desc"
-          descIosKey="locked.drills.descIos"
-          isIosApp={isIosApp}
-        />
-      ) : (
-        <PracticeDrills drills={correction.practiceDrills} />
-      )}
+          When locked, the combined frame above already covers this section. */}
+      {!locked?.drills && <PracticeDrills drills={correction.practiceDrills} />}
 
       {/* Obie encouragement */}
       <div className="gloss-green flex items-center gap-4 rounded-[var(--radius-card)] p-6">
