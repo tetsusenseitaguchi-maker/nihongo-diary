@@ -9,22 +9,44 @@ import { refundCorrection } from "@/lib/correction-refund";
 
 export const runtime = "nodejs";
 
-function systemPrompt(level: string, style: string, lang: string, includeDrills: boolean): string {
-  // Practice drills are a paid-plan feature. For Free we drop them from the
-  // prompt entirely — the JSON schema, rule 1's field list, and rule 11 — so
-  // the model never generates them and the request doesn't pay output tokens
-  // for a section that is never shown. PracticeDrills renders null for an
-  // empty array, so the UI needs no change.
+function systemPrompt(
+  level: string,
+  style: string,
+  lang: string,
+  includeDrills: boolean,
+  includeMiniLesson: boolean,
+): string {
+  // Practice drills and the mini-lesson preview are paid-plan features. For
+  // Free we drop each from the prompt entirely — the JSON schema, rule 1's
+  // field list, and the rule itself — so the model never generates them and
+  // the request doesn't pay output tokens for a section that is never shown.
+  // The client already guards both (PracticeDrills renders null for an empty
+  // array; buildMiniLessonFromAI returns null for a missing payload).
   //
-  // When includeDrills is true the assembled prompt is byte-for-byte identical
-  // to the previous unconditional one, so paid-plan corrections are unaffected.
+  // ⚠️ The two flags must move together. Rule 11 tells the model to base
+  // drills on "the relatedMiniLesson topic", so includeDrills without
+  // includeMiniLesson would point the prompt at a field it no longer asks
+  // for. /api/correct sets both from the same plan test; if a caller ever
+  // needs to split them, rule 11's two references have to be conditional too.
+  //
+  // With both flags true the assembled prompt is byte-for-byte identical to
+  // the previous unconditional one, so paid-plan corrections are unaffected.
   const drillsSchema = includeDrills
     ? `  "practiceDrills": [
     { "type": "", "question": "", "questionRuby": "", "choices": [], "answer": "", "answerRuby": "", "englishExplanation": "" }
   ],
 `
     : "";
-  const drillsInRule1 = includeDrills ? " every practiceDrills[].englishExplanation," : "";
+  // Each fragment carries its own leading comma so rule 1's list closes with a
+  // period no matter which combination is active.
+  const drillsInRule1 = includeDrills ? ", every practiceDrills[].englishExplanation" : "";
+  const miniLessonInRule1 = includeMiniLesson
+    ? ", and relatedMiniLesson shortExplanation / exampleEnglish / shortNote"
+    : "";
+  const miniLessonSchema = includeMiniLesson
+    ? `  "relatedMiniLesson": { "id": 1, "shortExplanation": "", "exampleJapaneseRuby": "", "exampleEnglish": "", "shortNote": "" },
+`
+    : "";
   const drillsRule = includeDrills
     ? `11. practiceDrills: generate exactly 2 short practice drills based on the learner's mistakes or the relatedMiniLesson topic.
 - Types (use the exact string): "fill-in" (blank fill — mark the blank as ___), "particle-choice" (choose the correct particle), "desu-masu" (choose です or ます), "reorder" (reorder the given words into a correct sentence; put the shuffled words in choices), "rewrite" (rewrite the given phrase more naturally; no choices needed).
@@ -43,6 +65,32 @@ function systemPrompt(level: string, style: string, lang: string, includeDrills:
     来ました").
 - Keep every drill simple and at the learner's level. Vary the types. If there were no mistakes, base drills on the relatedMiniLesson.
 - Grammatical consistency (fill-in especially): the fixed text immediately before and after the blank — including the sentence ending — must connect naturally with the answer's actual grammatical form. Forms like 〜そう (様態/looks-like), 〜らしい, 〜ようだ, and 〜みたいだ cannot be directly followed by ます. If the correct answer is (or ends in) one of these forms, do NOT end the sentence in ます — use です instead, or rewrite the whole sentence so the fixed text around the blank fits that form naturally. Mentally fill in the blank and confirm the complete sentence is grammatical before finalizing.
+
+`
+    : "";
+  const miniLessonRule = includeMiniLesson
+    ? `12. relatedMiniLesson: choose the ONE most relevant lesson for the learner's main grammar point, by id, from this FIXED list:
+1 = Hiragana
+2 = Katakana
+3 = Sentence Structure
+4 = Topic & は
+5 = Particles 1: を, に, で
+6 = Particles 2: へ, から, まで, と, も
+7 = は vs が
+8 = Nouns & です
+9 = Adjectives: い & な
+10 = Verb Types: Ichidan & Godan
+11 = ます Form
+12 = Dictionary & ない Form
+13 = Past Form
+14 = Te-form: How to Make It
+15 = Te-form Uses (てください / てもいい / てから)
+16 = 〜ている & 〜てある (progressive / resulting / prepared state)
+17 = 〜てみる / 〜ておく / 〜てしまう
+18 = 〜てくる & 〜ていく (directional change)
+19 = Reasons: から & ので
+20 = Wants & Invitations
+Return only: id (1-20), shortExplanation (in ${lang}, tailored to the learner's level), exampleJapaneseRuby (with <ruby> furigana, tailored to level — keep in Japanese), exampleEnglish (in ${lang}), shortNote (in ${lang}, friendly). If nothing clearly fits, use id 3. Do NOT invent new lessons or change titles.
 
 `
     : "";
@@ -77,8 +125,7 @@ Return this JSON structure:
     { "word": "", "reading": "", "meaning": "", "exampleRuby": "" }
   ],
   "practiceSentenceRuby": "",
-  "relatedMiniLesson": { "id": 1, "shortExplanation": "", "exampleJapaneseRuby": "", "exampleEnglish": "", "shortNote": "" },
-${drillsSchema}  "nextVocab": [
+${miniLessonSchema}${drillsSchema}  "nextVocab": [
     { "word": "", "reading": "", "meaning": "", "level": "" }
   ],
   "nextGrammar": [
@@ -95,7 +142,7 @@ ${drillsSchema}  "nextVocab": [
 
 Rules:
 
-1. Write ALL explanatory text in ${lang}. This includes: englishExplanation, correctionNote, every keyMistakes[].explanation, every usefulVocabulary[].meaning,${drillsInRule1} and relatedMiniLesson shortExplanation / exampleEnglish / shortNote. Never explain grammar in Japanese.
+1. Write ALL explanatory text in ${lang}. This includes: englishExplanation, correctionNote, every keyMistakes[].explanation, every usefulVocabulary[].meaning${drillsInRule1}${miniLessonInRule1}. Never explain grammar in Japanese.
    Keep ALL Japanese-language fields in Japanese: correctedJapaneseRuby, naturalJapaneseRuby, all *Ruby fields, word, reading, question, answer. Those are learning targets — never translate them.
 
 2. Furigana: add furigana to ALL kanji in originalTextRuby, correctedJapaneseRuby, naturalJapaneseRuby, mistakeRuby, correctionRuby, exampleRuby, and practiceSentenceRuby. Use this exact format:
@@ -150,30 +197,7 @@ Every Japanese field above ends in "Ruby" and must contain furigana in this form
 
 10. usefulVocabulary: pick words from or related to the diary, at the learner's level. "word": plain dictionary form of the word with kanji as written (e.g. "公園", "歩く", "天気"). "reading": complete hiragana reading including okurigana (e.g. "こうえん", "あるく", "てんき"). "meaning": English definition. "exampleRuby": example sentence with ruby tags on all kanji. practiceSentence: one short sentence based on the topic/mistake, at their level, with ruby.
 
-${drillsRule}12. relatedMiniLesson: choose the ONE most relevant lesson for the learner's main grammar point, by id, from this FIXED list:
-1 = Hiragana
-2 = Katakana
-3 = Sentence Structure
-4 = Topic & は
-5 = Particles 1: を, に, で
-6 = Particles 2: へ, から, まで, と, も
-7 = は vs が
-8 = Nouns & です
-9 = Adjectives: い & な
-10 = Verb Types: Ichidan & Godan
-11 = ます Form
-12 = Dictionary & ない Form
-13 = Past Form
-14 = Te-form: How to Make It
-15 = Te-form Uses (てください / てもいい / てから)
-16 = 〜ている & 〜てある (progressive / resulting / prepared state)
-17 = 〜てみる / 〜ておく / 〜てしまう
-18 = 〜てくる & 〜ていく (directional change)
-19 = Reasons: から & ので
-20 = Wants & Invitations
-Return only: id (1-20), shortExplanation (in ${lang}, tailored to the learner's level), exampleJapaneseRuby (with <ruby> furigana, tailored to level — keep in Japanese), exampleEnglish (in ${lang}), shortNote (in ${lang}, friendly). If nothing clearly fits, use id 3. Do NOT invent new lessons or change titles.
-
-13. nextVocab: suggest exactly 3 vocabulary words the learner could use in a future diary about the SAME topic. These must be one JLPT level above the learner's current level (${level} → one step up: N5→N4, N4→N3, N3→N2, N2→N1, N1/Natural→advanced N1). Choose words that fit naturally into the diary's specific topic/context. Do NOT pick words the learner already used. For each:
+${drillsRule}${miniLessonRule}13. nextVocab: suggest exactly 3 vocabulary words the learner could use in a future diary about the SAME topic. These must be one JLPT level above the learner's current level (${level} → one step up: N5→N4, N4→N3, N3→N2, N2→N1, N1/Natural→advanced N1). Choose words that fit naturally into the diary's specific topic/context. Do NOT pick words the learner already used. For each:
 - "word": kanji form as in a dictionary (e.g. "散策" not "さんさく")
 - "reading": complete hiragana reading including okurigana (e.g. "さんさく")
 - "meaning": a short definition in ${lang} (one short phrase, not a full sentence)
@@ -250,10 +274,12 @@ export async function POST(request: Request) {
   const lang = languageDisplayName(langCode);
   const limits = limitsFor(plan);
 
-  // Practice drills are a paid-plan feature — Free corrections skip them so the
-  // model isn't asked to generate a section Free users are never shown. Same
-  // plan test as /api/report/weekly; reads plan only, changes no plan logic.
+  // Practice drills and the mini-lesson preview are paid-plan features — Free
+  // corrections skip both so the model isn't asked to generate sections Free
+  // users are never shown. Same plan test as /api/report/weekly; reads plan
+  // only, changes no plan logic. Keep these two in step — see systemPrompt().
   const includeDrills = plan !== "free";
+  const includeMiniLesson = plan !== "free";
 
   // Character limit
   if (text.length > limits.maxChars) {
@@ -323,7 +349,7 @@ export async function POST(request: Request) {
       temperature: 0.3,
       maxTokens: 8000,
       messages: [
-        { role: "system", content: systemPrompt(level, style, lang, includeDrills) },
+        { role: "system", content: systemPrompt(level, style, lang, includeDrills, includeMiniLesson) },
         { role: "user", content: text },
       ],
     }));
