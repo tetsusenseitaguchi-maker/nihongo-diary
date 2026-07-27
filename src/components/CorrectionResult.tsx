@@ -68,6 +68,43 @@ function Label({ en, jp }: { en: string; jp: string }) {
   );
 }
 
+/**
+ * Placeholder for a section a Free learner doesn't get. The content is never
+ * generated for them, so this shows the padlocked frame instead of a gap.
+ *
+ * Inside the iOS app the copy switches to a neutral line and the upgrade link
+ * is dropped (App Store Guideline 3.1.1). Both branches live here so every
+ * locked section gets the same treatment from one place — the placeholder is
+ * shown on every Free correction, so this guard is the one that matters most.
+ */
+function LockedSection({
+  titleKey,
+  descKey,
+  descIosKey,
+  isIosApp,
+}: {
+  titleKey: string;
+  descKey: string;
+  descIosKey: string;
+  isIosApp: boolean;
+}) {
+  const t = useT();
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-[var(--radius-card)] border border-dashed border-line px-6 py-8 text-center">
+      <h3 className="font-serif text-lg font-bold text-ink/55">{t(titleKey)}</h3>
+      <p className="max-w-sm text-sm text-ink/65">{isIosApp ? t(descIosKey) : t(descKey)}</p>
+      {!isIosApp && (
+        <a
+          href="/upgrade"
+          className="gloss-btn mt-1 rounded-full px-4 py-2 text-sm font-semibold text-cream hover:brightness-105"
+        >
+          {t("locked.upgradeBtn")}
+        </a>
+      )}
+    </div>
+  );
+}
+
 export function CorrectionResult({
   correction,
   showOriginal = true,
@@ -81,7 +118,7 @@ export function CorrectionResult({
    * Only the write page passes this — every other caller omits it and renders
    * exactly as before.
    */
-  locked?: { drills?: boolean };
+  locked?: { drills?: boolean; miniLesson?: boolean };
 }) {
   const t = useT();
   const { locale } = useLocale();
@@ -409,7 +446,15 @@ export function CorrectionResult({
         </div>
       )}
 
-      {/* Mini Lesson Preview */}
+      {/* Mini Lesson Preview — not generated on Free, so show the locked frame. */}
+      {locked?.miniLesson && (
+        <LockedSection
+          titleKey="locked.miniLesson.title"
+          descKey="locked.miniLesson.desc"
+          descIosKey="locked.miniLesson.descIos"
+          isIosApp={isIosApp}
+        />
+      )}
       {miniLesson && (
         <div className="gloss-card overflow-hidden rounded-[var(--radius-card)]">
           <div className="flex items-center justify-between gap-2 bg-pine px-5 py-3">
@@ -463,25 +508,14 @@ export function CorrectionResult({
       )}
 
       {/* Practice Drills — only shown when AI returned drills (write page).
-          On Free the drills are never generated, so show a locked placeholder
-          instead of nothing at all. The upgrade wording and the link are both
-          suppressed inside the iOS app (App Store Guideline 3.1.1): the lock
-          and the frame still render, but with no plan name and no CTA. */}
+          On Free they are never generated, so show the locked frame instead. */}
       {locked?.drills ? (
-        <div className="flex flex-col items-center gap-2 rounded-[var(--radius-card)] border border-dashed border-line px-6 py-8 text-center">
-          <h3 className="font-serif text-lg font-bold text-ink/55">{t("locked.drills.title")}</h3>
-          <p className="max-w-sm text-sm text-ink/65">
-            {isIosApp ? t("locked.drills.descIos") : t("locked.drills.desc")}
-          </p>
-          {!isIosApp && (
-            <a
-              href="/upgrade"
-              className="gloss-btn mt-1 rounded-full px-4 py-2 text-sm font-semibold text-cream hover:brightness-105"
-            >
-              {t("locked.upgradeBtn")}
-            </a>
-          )}
-        </div>
+        <LockedSection
+          titleKey="locked.drills.title"
+          descKey="locked.drills.desc"
+          descIosKey="locked.drills.descIos"
+          isIosApp={isIosApp}
+        />
       ) : (
         <PracticeDrills drills={correction.practiceDrills} />
       )}
