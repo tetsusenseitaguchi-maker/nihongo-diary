@@ -9,7 +9,43 @@ import { refundCorrection } from "@/lib/correction-refund";
 
 export const runtime = "nodejs";
 
-function systemPrompt(level: string, style: string, lang: string): string {
+function systemPrompt(level: string, style: string, lang: string, includeDrills: boolean): string {
+  // Practice drills are a paid-plan feature. For Free we drop them from the
+  // prompt entirely — the JSON schema, rule 1's field list, and rule 11 — so
+  // the model never generates them and the request doesn't pay output tokens
+  // for a section that is never shown. PracticeDrills renders null for an
+  // empty array, so the UI needs no change.
+  //
+  // When includeDrills is true the assembled prompt is byte-for-byte identical
+  // to the previous unconditional one, so paid-plan corrections are unaffected.
+  const drillsSchema = includeDrills
+    ? `  "practiceDrills": [
+    { "type": "", "question": "", "questionRuby": "", "choices": [], "answer": "", "answerRuby": "", "englishExplanation": "" }
+  ],
+`
+    : "";
+  const drillsInRule1 = includeDrills ? " every practiceDrills[].englishExplanation," : "";
+  const drillsRule = includeDrills
+    ? `11. practiceDrills: generate exactly 2 short practice drills based on the learner's mistakes or the relatedMiniLesson topic.
+- Types (use the exact string): "fill-in" (blank fill — mark the blank as ___), "particle-choice" (choose the correct particle), "desu-masu" (choose です or ます), "reorder" (reorder the given words into a correct sentence; put the shuffled words in choices), "rewrite" (rewrite the given phrase more naturally; no choices needed).
+- question: plain text (no ruby tags). questionRuby: same sentence with <ruby> furigana on all kanji. answer: plain text. answerRuby: with <ruby> furigana. englishExplanation: one sentence in ${lang} explaining why.
+- choices:
+  - fill-in: EXACTLY 2 options — the correct answer plus ONE plausible
+    wrong answer. Both must be complete, well-formed words/phrases
+    (never a truncated fragment like "行ってき"), and must be distinct
+    strings from each other.
+  - particle-choice / desu-masu: 3–4 options, all distinct from each other.
+  - reorder: shuffled words. rewrite: [].
+  - For every drill type that has choices, the array MUST include a
+    string that is character-for-character identical to "answer" — same
+    kanji/hiragana notation, not just the same reading (e.g. if answer
+    is "行ってきました", a choice must be "行ってきました", not "行って
+    来ました").
+- Keep every drill simple and at the learner's level. Vary the types. If there were no mistakes, base drills on the relatedMiniLesson.
+- Grammatical consistency (fill-in especially): the fixed text immediately before and after the blank — including the sentence ending — must connect naturally with the answer's actual grammatical form. Forms like 〜そう (様態/looks-like), 〜らしい, 〜ようだ, and 〜みたいだ cannot be directly followed by ます. If the correct answer is (or ends in) one of these forms, do NOT end the sentence in ます — use です instead, or rewrite the whole sentence so the fixed text around the blank fits that form naturally. Mentally fill in the blank and confirm the complete sentence is grammatical before finalizing.
+
+`
+    : "";
   return `You are a friendly Japanese teacher for Japanese learners.
 
 Do not behave like a strict proofreader. Behave like a Japanese teacher who understands that learners need confidence.
@@ -42,10 +78,7 @@ Return this JSON structure:
   ],
   "practiceSentenceRuby": "",
   "relatedMiniLesson": { "id": 1, "shortExplanation": "", "exampleJapaneseRuby": "", "exampleEnglish": "", "shortNote": "" },
-  "practiceDrills": [
-    { "type": "", "question": "", "questionRuby": "", "choices": [], "answer": "", "answerRuby": "", "englishExplanation": "" }
-  ],
-  "nextVocab": [
+${drillsSchema}  "nextVocab": [
     { "word": "", "reading": "", "meaning": "", "level": "" }
   ],
   "nextGrammar": [
@@ -62,7 +95,7 @@ Return this JSON structure:
 
 Rules:
 
-1. Write ALL explanatory text in ${lang}. This includes: englishExplanation, correctionNote, every keyMistakes[].explanation, every usefulVocabulary[].meaning, every practiceDrills[].englishExplanation, and relatedMiniLesson shortExplanation / exampleEnglish / shortNote. Never explain grammar in Japanese.
+1. Write ALL explanatory text in ${lang}. This includes: englishExplanation, correctionNote, every keyMistakes[].explanation, every usefulVocabulary[].meaning,${drillsInRule1} and relatedMiniLesson shortExplanation / exampleEnglish / shortNote. Never explain grammar in Japanese.
    Keep ALL Japanese-language fields in Japanese: correctedJapaneseRuby, naturalJapaneseRuby, all *Ruby fields, word, reading, question, answer. Those are learning targets — never translate them.
 
 2. Furigana: add furigana to ALL kanji in originalTextRuby, correctedJapaneseRuby, naturalJapaneseRuby, mistakeRuby, correctionRuby, exampleRuby, and practiceSentenceRuby. Use this exact format:
@@ -117,25 +150,7 @@ Every Japanese field above ends in "Ruby" and must contain furigana in this form
 
 10. usefulVocabulary: pick words from or related to the diary, at the learner's level. "word": plain dictionary form of the word with kanji as written (e.g. "公園", "歩く", "天気"). "reading": complete hiragana reading including okurigana (e.g. "こうえん", "あるく", "てんき"). "meaning": English definition. "exampleRuby": example sentence with ruby tags on all kanji. practiceSentence: one short sentence based on the topic/mistake, at their level, with ruby.
 
-11. practiceDrills: generate exactly 2 short practice drills based on the learner's mistakes or the relatedMiniLesson topic.
-- Types (use the exact string): "fill-in" (blank fill — mark the blank as ___), "particle-choice" (choose the correct particle), "desu-masu" (choose です or ます), "reorder" (reorder the given words into a correct sentence; put the shuffled words in choices), "rewrite" (rewrite the given phrase more naturally; no choices needed).
-- question: plain text (no ruby tags). questionRuby: same sentence with <ruby> furigana on all kanji. answer: plain text. answerRuby: with <ruby> furigana. englishExplanation: one sentence in ${lang} explaining why.
-- choices:
-  - fill-in: EXACTLY 2 options — the correct answer plus ONE plausible
-    wrong answer. Both must be complete, well-formed words/phrases
-    (never a truncated fragment like "行ってき"), and must be distinct
-    strings from each other.
-  - particle-choice / desu-masu: 3–4 options, all distinct from each other.
-  - reorder: shuffled words. rewrite: [].
-  - For every drill type that has choices, the array MUST include a
-    string that is character-for-character identical to "answer" — same
-    kanji/hiragana notation, not just the same reading (e.g. if answer
-    is "行ってきました", a choice must be "行ってきました", not "行って
-    来ました").
-- Keep every drill simple and at the learner's level. Vary the types. If there were no mistakes, base drills on the relatedMiniLesson.
-- Grammatical consistency (fill-in especially): the fixed text immediately before and after the blank — including the sentence ending — must connect naturally with the answer's actual grammatical form. Forms like 〜そう (様態/looks-like), 〜らしい, 〜ようだ, and 〜みたいだ cannot be directly followed by ます. If the correct answer is (or ends in) one of these forms, do NOT end the sentence in ます — use です instead, or rewrite the whole sentence so the fixed text around the blank fits that form naturally. Mentally fill in the blank and confirm the complete sentence is grammatical before finalizing.
-
-12. relatedMiniLesson: choose the ONE most relevant lesson for the learner's main grammar point, by id, from this FIXED list:
+${drillsRule}12. relatedMiniLesson: choose the ONE most relevant lesson for the learner's main grammar point, by id, from this FIXED list:
 1 = Hiragana
 2 = Katakana
 3 = Sentence Structure
@@ -235,6 +250,11 @@ export async function POST(request: Request) {
   const lang = languageDisplayName(langCode);
   const limits = limitsFor(plan);
 
+  // Practice drills are a paid-plan feature — Free corrections skip them so the
+  // model isn't asked to generate a section Free users are never shown. Same
+  // plan test as /api/report/weekly; reads plan only, changes no plan logic.
+  const includeDrills = plan !== "free";
+
   // Character limit
   if (text.length > limits.maxChars) {
     return NextResponse.json(
@@ -303,7 +323,7 @@ export async function POST(request: Request) {
       temperature: 0.3,
       maxTokens: 8000,
       messages: [
-        { role: "system", content: systemPrompt(level, style, lang) },
+        { role: "system", content: systemPrompt(level, style, lang, includeDrills) },
         { role: "user", content: text },
       ],
     }));
