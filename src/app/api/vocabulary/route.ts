@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { normalizePlan } from "@/lib/plans";
 import { languageDisplayName } from "@/lib/languages";
 import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
+import { normalizeRubyText } from "@/lib/furigana";
 import { createChatCompletion, missingApiKeyError } from "@/lib/ai-provider";
 
 export const runtime = "nodejs";
@@ -176,6 +177,11 @@ Return ONLY the raw JSON object. Do NOT wrap it in a markdown code block (no \`\
   }
 
   // ---- Insert ----
+  // normalizeRubyText() sanitizes <ruby> markup and forces known compounds to
+  // their dictionary reading (READING_DICTIONARY) before anything is stored.
+  // Applied here rather than at each assignment so it covers every path that
+  // can fill these fields: the word prompt, the grammar prompt, the caller-
+  // supplied exampleRuby, and the AI-failure fallbacks.
   const { data, error } = await supabase
     .from("vocabulary_entries")
     .insert({
@@ -184,9 +190,9 @@ Return ONLY the raw JSON object. Do NOT wrap it in a markdown code block (no \`\
       reading: reading || "",
       jlpt_level: jlptLevel ?? null,
       meaning: meaning || word,
-      example_jp_ruby: example_jp_ruby || null,
+      example_jp_ruby: normalizeRubyText(example_jp_ruby) || null,
       example_translation: example_translation || null,
-      practice_question: practice_question || null,
+      practice_question: normalizeRubyText(practice_question) || null,
       practice_answer: practice_answer || null,
       entry_type: type,
     })

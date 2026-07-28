@@ -6,6 +6,7 @@ import { lessonById } from "@/lib/lessons";
 import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
 import { languageDisplayName } from "@/lib/languages";
 import { fixMasuIncompatibleBlank, ensureAnswerInChoices } from "@/lib/drills";
+import { normalizeRubyText } from "@/lib/furigana";
 import { createChatCompletion, missingApiKeyError } from "@/lib/ai-provider";
 
 export const runtime = "nodejs";
@@ -164,16 +165,21 @@ Generate 5 drills that directly test understanding of this lesson's grammar poin
     );
   }
 
+  // normalizeRubyText() sanitizes the AI's <ruby> markup and forces known
+  // compounds to their dictionary reading (READING_DICTIONARY), same as
+  // /api/correct-existing does. Only the *Ruby fields carry markup; question/
+  // answer/choices are plain text and are left untouched so the strict
+  // `choice === answer` comparison in PracticeDrills.tsx still matches.
   const drills = Array.isArray(parsed.drills)
     ? parsed.drills.map((d: Record<string, unknown>) =>
         ensureAnswerInChoices(
           fixMasuIncompatibleBlank({
             type: String(d?.type ?? "fill-in"),
             question: String(d?.question ?? ""),
-            questionRuby: String(d?.questionRuby ?? ""),
+            questionRuby: normalizeRubyText(String(d?.questionRuby ?? "")),
             choices: Array.isArray(d?.choices) ? (d.choices as unknown[]).map(String) : [],
             answer: String(d?.answer ?? ""),
-            answerRuby: String(d?.answerRuby ?? ""),
+            answerRuby: normalizeRubyText(String(d?.answerRuby ?? "")),
             englishExplanation: String(d?.englishExplanation ?? ""),
           }),
         ),
