@@ -152,6 +152,16 @@ CRITICAL furigana rules:
 - NEVER wrap hiragana or katakana in <ruby>. Only kanji get furigana.
 - The reading in <rt> must be the reading of the kanji only — never repeat the kana that is already visible.
 - When a kanji is immediately followed by okurigana (the hiragana that completes a verb/adjective stem, e.g. 歩きました, 珍しい), it MUST use its kun'yomi (訓読み) reading — never the on'yomi (音読み) — and <rt> must contain the FULL kun'yomi reading, not a truncated single-mora guess. Correct: <ruby>歩<rt>ある</rt></ruby>きました, <ruby>珍<rt>めずら</rt></ruby>しい. Wrong: <ruby>歩<rt>あ</rt></ruby>きました (truncated reading), <ruby>珍<rt>ちん</rt></ruby>しい (on'yomi used instead of kun'yomi).
+- Beware of kanji whose on'yomi is far more frequent in compounds (熟語) than their kun'yomi: when such a kanji appears with okurigana it is a VERB, so the kun'yomi always wins — never let a familiar compound (診察=しんさつ, 観光=かんこう, 空気=くうき, 生活=せいかつ, 会話=かいわ) pull the reading toward on'yomi. Frequently misread verbs, always read this way:
+  診て → <ruby>診<rt>み</rt></ruby>て / 診る → <ruby>診<rt>み</rt></ruby>る (みて・みる, NEVER しん — 目を診てもらいました = <ruby>目<rt>め</rt></ruby>を<ruby>診<rt>み</rt></ruby>てもらいました)
+  観る → <ruby>観<rt>み</rt></ruby>る (みる, NEVER かん)
+  空いて → <ruby>空<rt>す</rt></ruby>いて (すいて, NEVER くう; 席が空く/手が空く is <ruby>空<rt>あ</rt></ruby>く — pick from context)
+  生きる → <ruby>生<rt>い</rt></ruby>きる (いきる, NEVER せい)
+  下さい → <ruby>下<rt>くだ</rt></ruby>さい (ください, NEVER か/げ)
+  行って → <ruby>行<rt>い</rt></ruby>って (いって, NEVER こう; only 行う conjugates as <ruby>行<rt>おこな</rt></ruby>って)
+  分かる → <ruby>分<rt>わ</rt></ruby>かる (わかる, NEVER ぶん/ふん)
+  話す → <ruby>話<rt>はな</rt></ruby>す (はなす, NEVER わ)
+  Other verbs of the same type: open — 開ける <ruby>開<rt>あ</rt></ruby>ける (NEVER かい), 通う <ruby>通<rt>かよ</rt></ruby>う (NEVER つう), 直す <ruby>直<rt>なお</rt></ruby>す (NEVER ちょく), 決める <ruby>決<rt>き</rt></ruby>める (NEVER けつ), 続ける <ruby>続<rt>つづ</rt></ruby>ける (NEVER ぞく), 覚える <ruby>覚<rt>おぼ</rt></ruby>える (NEVER かく), 感じる is the exception — a する-type verb, so <ruby>感<rt>かん</rt></ruby>じる is CORRECT.
 - Grammaticalized auxiliary verbs after the て-form (補助動詞) — てくる,
   ていく, てある, ておく, てみる, てしまう — should be written in
   hiragana, not kanji (write てくる, NOT て来る; ていく, NOT て行く),
@@ -165,7 +175,7 @@ Correct examples:
 Wrong (do NOT do this): <ruby>見ました<rt>みました</rt></ruby>, <ruby>は<rt>は</rt></ruby>, <ruby>可愛かった<rt>かわいかった</rt></ruby>
 Every Japanese field above ends in "Ruby" and must contain furigana in this format.
 
-3. Furigana must be accurate and chosen from context (今日=きょう, 日本語=にほんご, 行った=いった, 良かった=よかった, 大人=おとな).
+3. Furigana must be accurate and chosen from context (今日=きょう, 日本語=にほんご, 行った=いった, 良かった=よかった, 大人=おとな, 診て=みて, 観て=みて, 空いて=すいて, 生きて=いきて, 下さい=ください, 分かった=わかった, 話して=はなして).
 
 4. Match the learner's level in grammar AND kanji:
 - N5: mostly hiragana; only very common kanji (私, 人, 日, 本, 日本, 日本語, 学校, 先生, 友達, 食べる, 飲む, 行く, 見る, 来る); very simple, short grammar; avoid 〜ため/〜によって/〜ということ etc.
