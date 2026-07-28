@@ -9,9 +9,11 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { InviteLinkButton } from "@/components/InviteLinkButton";
 import { ManageSubscriptionButton } from "@/components/ManageSubscriptionButton";
 import { DeleteAccountButton } from "@/components/DeleteAccountButton";
+import { RestorePurchasesButton } from "@/components/RestorePurchasesButton";
 import { computeStats, type DiaryRow } from "@/lib/diary";
 import { getServerT } from "@/lib/i18n-server";
 import { normalizePlan, PLAN_LABELS } from "@/lib/plans";
+import { isNativeRequest } from "@/lib/native";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +41,7 @@ export default async function ProfilePage() {
     supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", user.id),
   ]);
 
-  const t = await getServerT();
+  const [t, isNative] = await Promise.all([getServerT(), isNativeRequest()]);
   const name = profile?.display_name || profile?.username || "Learner";
   const initials = name.slice(0, 2).toUpperCase();
 
@@ -117,6 +119,18 @@ export default async function ProfilePage() {
           </LinkButton>
         )}
       </Card>
+
+      {/* Restore Purchases — second entry point, so a returning subscriber can
+          restore without first walking into the purchase screen (App Store
+          Review Guideline 3.1.1). Native only; on web there is no App Store
+          receipt to restore. */}
+      {isNative && (
+        <Card className="p-5">
+          <p className="font-serif font-bold text-pine">{t("iap.restore")}</p>
+          <p className="mt-0.5 mb-3 text-sm text-muted">{t("iap.restoreHint")}</p>
+          <RestorePurchasesButton />
+        </Card>
+      )}
 
       {/* Invite friends */}
       {profile?.invite_code && (

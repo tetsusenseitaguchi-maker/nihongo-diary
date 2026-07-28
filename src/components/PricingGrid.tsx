@@ -6,6 +6,7 @@ import { CheckoutButton } from "@/components/CheckoutButton";
 import { PurchaseButton } from "@/components/PurchaseButton";
 import { PlanPrice } from "@/components/PlanPrice";
 import { NativeGate } from "@/components/NativeGate";
+import { RestorePurchasesButton } from "@/components/RestorePurchasesButton";
 
 type Tier = {
   id: Plan;
@@ -330,6 +331,17 @@ export function PricingGrid({
           );
         })}
       </div>
+
+      {/* Restore Purchases — App Store Review Guideline 3.1.1 requires a
+          discrete control the user can tap. Native only: there is nothing to
+          restore on web (Stripe), and the RevenueCat plugin is a native
+          plugin. Placed above the billing notice so it sits with the purchase
+          buttons rather than below the legal footnotes. */}
+      {isNative && (
+        <div className="mx-auto max-w-xs">
+          <RestorePurchasesButton />
+        </div>
+      )}
 
       {isNative ? (
         <p className="text-center text-xs text-muted">
