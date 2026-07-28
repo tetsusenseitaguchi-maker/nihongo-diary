@@ -16,6 +16,8 @@ import { Bilingual } from "@/components/Bilingual";
 import { templates, sampleDraft } from "@/lib/mock-data";
 import type { Level, CorrectionStyle, Correction, DiaryPlace, MistakeItem, RecheckResult as RecheckResultData } from "@/lib/types";
 import { GrammarReviewCard } from "@/components/GrammarReviewCard";
+import { WritingPromptCard } from "@/components/WritingPromptCard";
+import { promptForDate, randomPromptExcept, type WritingPrompt } from "@/lib/writing-prompts";
 import { buildMiniLessonFromAI } from "@/lib/lessons";
 import { RECHECK_LIMITS } from "@/lib/recheck-limits";
 import { limitsFor, normalizePlan, PLAN_LABELS, PLAN_LIMITS, type Plan } from "@/lib/plans";
@@ -146,6 +148,9 @@ export default function WritePage() {
   const [places, setPlaces] = useState<DiaryPlace[]>([]);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [grammarReview, setGrammarReview] = useState<MistakeItem | null>(null);
+  // Today's writing prompt. Starts null and is filled in from an effect — the
+  // choice depends on the user_tz cookie, which does not exist during SSR.
+  const [prompt, setPrompt] = useState<WritingPrompt | null>(null);
   const [partialCorrection, setPartialCorrection] = useState<{ corrected: string; natural: string } | null>(null);
 
   // Revise & recheck — lightweight follow-up flow, no correction credit consumed.
@@ -186,6 +191,11 @@ export default function WritePage() {
   const recheckExhausted = recheckLeft <= 0;
 
   useEffect(() => {
+    // Pick today's prompt here rather than during render: getClientTZ() reads
+    // document.cookie, and a render-time choice would differ between the SSR
+    // markup and the client (hydration mismatch). Runs before the auth check
+    // below so the prompt shows even while the session is still loading.
+    setPrompt(promptForDate(todayInTZ(getClientTZ())));
     (async () => {
       const supabase = createClient();
       const {
@@ -838,6 +848,14 @@ export default function WritePage() {
                   </div>
                 )}
               </div>
+
+              {/* today's writing prompt — a hint only; never inserted into the text */}
+              {prompt && (
+                <WritingPromptCard
+                  prompt={prompt}
+                  onAnother={() => setPrompt((p) => randomPromptExcept(p?.id))}
+                />
+              )}
 
               {/* selectors */}
               <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4" data-tour="write-options">
