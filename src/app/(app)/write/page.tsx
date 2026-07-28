@@ -18,6 +18,7 @@ import type { Level, CorrectionStyle, Correction, DiaryPlace, MistakeItem, Reche
 import { GrammarReviewCard } from "@/components/GrammarReviewCard";
 import { WritingPromptCard } from "@/components/WritingPromptCard";
 import { TrainDiagram } from "@/components/TrainDiagram";
+import { HintsSection } from "@/components/HintsSection";
 import { promptForDate, randomPromptExcept, type WritingPrompt } from "@/lib/writing-prompts";
 import { buildMiniLessonFromAI } from "@/lib/lessons";
 import { RECHECK_LIMITS } from "@/lib/recheck-limits";
@@ -850,16 +851,16 @@ export default function WritePage() {
                 )}
               </div>
 
-              {/* today's writing prompt — a hint only; never inserted into the text */}
-              {prompt && (
-                <WritingPromptCard
-                  prompt={prompt}
-                  onAnother={() => setPrompt((p) => randomPromptExcept(p?.id))}
-                />
-              )}
-
-              {/* word-order band — always present, collapsed once dismissed */}
-              <TrainDiagram />
+              {/* hints — one collapsed band; hint content never touches the text */}
+              <HintsSection>
+                {prompt && (
+                  <WritingPromptCard
+                    prompt={prompt}
+                    onAnother={() => setPrompt((p) => randomPromptExcept(p?.id))}
+                  />
+                )}
+                <TrainDiagram />
+              </HintsSection>
 
               {/* selectors */}
               <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4" data-tour="write-options">

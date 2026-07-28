@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import { Furigana } from "@/components/Furigana";
 import { Icon } from "@/components/icons";
 import { ObiePhoto } from "@/components/ObiePhoto";
 import { useT } from "@/contexts/locale";
-import { hasSeenWordOrder, markWordOrderSeen } from "@/lib/word-order-seen";
 
 /**
  * "Japanese word order" — a four-car train shown above the diary editor.
@@ -57,21 +56,12 @@ export function TrainDiagram() {
   const panelId = `${baseId}-panel`;
   const headerId = `${baseId}-header`;
 
-  // Starts closed so the server and client render the same markup; the
-  // first-visit expansion happens in the effect below.
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (!hasSeenWordOrder()) setOpen(true);
-  }, []);
-
-  function toggle() {
-    const next = !open;
-    // Collapsing is the signal that they are done with it — from then on the
-    // band starts closed on every visit.
-    if (!next) markWordOrderSeen();
-    setOpen(next);
-  }
+  // Open by default. This band now lives inside the collapsed Hints section,
+  // which is what keeps the editor quiet — so opening Hints has to reveal the
+  // diagram itself, not a second closed band with nothing in it. The toggle
+  // stays for anyone who wants to fold it away while Hints is open; that is
+  // per-mount only, deliberately not remembered.
+  const [open, setOpen] = useState(true);
 
   return (
     <div className="mb-4 rounded-xl border border-line bg-mint/30">
@@ -80,7 +70,7 @@ export function TrainDiagram() {
         id={headerId}
         aria-expanded={open}
         aria-controls={panelId}
-        onClick={toggle}
+        onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center gap-2 px-3 py-2 text-left"
       >
         <span aria-hidden>🚃</span>
