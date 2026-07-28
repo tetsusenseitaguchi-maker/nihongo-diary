@@ -1,4 +1,5 @@
 import type { MiniLesson } from "@/lib/types";
+import { normalizeRubyText } from "@/lib/furigana";
 
 // FIXED curriculum order — never randomized, never reordered by the AI.
 export const MINI_LESSONS: MiniLesson[] = [
@@ -1517,7 +1518,10 @@ export function buildMiniLessonFromAI(raw: unknown): MiniLesson | null {
   return {
     ...base,
     shortExplanation: str(r.shortExplanation) || base.shortExplanation,
-    exampleJapaneseRuby: str(r.exampleJapaneseRuby) || base.exampleJapaneseRuby,
+    // Only the AI's override is normalized — the MINI_LESSONS fallback is
+    // hand-written and already correct. normalizeRubyText("") returns "", so
+    // an empty/missing AI field still falls through to the static text.
+    exampleJapaneseRuby: normalizeRubyText(str(r.exampleJapaneseRuby)) || base.exampleJapaneseRuby,
     exampleEnglish: str(r.exampleEnglish) || base.exampleEnglish,
     shortNote: str(r.shortNote) || base.shortNote,
   };

@@ -312,16 +312,20 @@ export default function WritePage() {
         // order / visualImage / points from MINI_LESSONS so CorrectionResult
         // has a complete MiniLesson to render.
         relatedMiniLesson: buildMiniLessonFromAI(data.relatedMiniLesson),
+        // Same treatment as /api/mini-lesson-drills: only the *Ruby fields are
+        // normalized, so both drill sources apply READING_DICTIONARY alike.
+        // question / answer / choices stay plain text — PracticeDrills.tsx
+        // matches a choice with a strict `choice === answer` comparison.
         practiceDrills: (data.practiceDrills ?? []).map(
           (d: { type?: string; question?: string; questionRuby?: string; choices?: string[]; answer?: string; answerRuby?: string; englishExplanation?: string }) =>
             ensureAnswerInChoices(
               fixMasuIncompatibleBlank({
                 type: d.type ?? "fill-in",
                 question: d.question ?? "",
-                questionRuby: d.questionRuby ?? "",
+                questionRuby: normalizeRubyText(d.questionRuby ?? ""),
                 choices: Array.isArray(d.choices) ? d.choices : [],
                 answer: d.answer ?? "",
-                answerRuby: d.answerRuby ?? "",
+                answerRuby: normalizeRubyText(d.answerRuby ?? ""),
                 englishExplanation: d.englishExplanation ?? "",
               }),
             )
