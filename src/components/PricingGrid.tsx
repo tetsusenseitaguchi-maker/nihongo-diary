@@ -104,6 +104,14 @@ export type PricingLabels = {
   /** Footer notice shown inside the native iOS shell in place of the
    *  Stripe payment line (which references an external payment mechanism). */
   nativeBillingNotice?: string;
+  /** Renewal wording shown above the legal links (App Store Review
+   *  Guideline 3.1.2(c) — the purchase screen must state the subscription
+   *  renews until cancelled). */
+  legalIntro?: string;
+  /** Link labels for the EULA (/terms) and privacy policy (/privacy). Both
+   *  links must be on the purchase screen itself (Guideline 3.1.2(c)). */
+  termsLink?: string;
+  privacyLink?: string;
   /** When true, paid plan buttons become live Stripe checkout links */
   checkoutEnabled?: boolean;
 };
@@ -118,6 +126,9 @@ const DEFAULT_LABELS: PricingLabels = {
   manageInAppInstructions: "Manage or cancel in Settings → Apple ID → Subscriptions",
   freeNativePrice: "Free",
   nativeBillingNotice: "Manage your subscription in your Apple ID settings.",
+  legalIntro: "Subscriptions renew automatically until cancelled.",
+  termsLink: "Terms of Use (EULA)",
+  privacyLink: "Privacy Policy",
 };
 
 /**
@@ -337,6 +348,24 @@ export function PricingGrid({
           </p>
         </NativeGate>
       )}
+
+      {/* Renewal terms + EULA / privacy links, directly below the purchase
+          buttons. Required on the subscription purchase screen itself by App
+          Store Review Guideline 3.1.2(c) (the App Store rejection of build 3
+          cited this). Rendered on web too — the same disclosure is expected
+          there, and keeping one code path avoids the links silently
+          disappearing if the native detection ever changes. Same-origin
+          routes, so <Link> navigates in place inside the iOS WebView. */}
+      <p className="text-center text-xs text-muted">
+        {labels.legalIntro ?? DEFAULT_LABELS.legalIntro}{" "}
+        <Link href="/terms" className="font-semibold text-moss-600 underline hover:text-pine">
+          {labels.termsLink ?? DEFAULT_LABELS.termsLink}
+        </Link>
+        {" · "}
+        <Link href="/privacy" className="font-semibold text-moss-600 underline hover:text-pine">
+          {labels.privacyLink ?? DEFAULT_LABELS.privacyLink}
+        </Link>
+      </p>
     </div>
   );
 }

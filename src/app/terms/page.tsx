@@ -14,7 +14,7 @@ export default function TermsPage() {
         </Link>
 
         <h1 className="mt-6 font-serif text-3xl font-bold text-pine">Terms of Service</h1>
-        <p className="mt-2 text-sm text-muted">Last updated: July 2, 2026</p>
+        <p className="mt-2 text-sm text-muted">Last updated: July 28, 2026</p>
         <p className="mt-2 text-sm text-muted">
           Nihongo Diary is operated by Tetta Taguchi, a sole proprietor (individual business)
           based in Sapporo, Japan.
@@ -70,9 +70,27 @@ export default function TermsPage() {
           <section>
             <h2 className="font-serif text-xl font-bold text-pine">6. Subscriptions &amp; Payments</h2>
             <p className="mt-3">
-              Some features require a paid subscription, billed and processed through Stripe.
-              Subscriptions renew automatically until cancelled. You can manage or cancel your
-              subscription at any time from the Profile page.
+              Some features require a paid subscription. How your subscription is billed and
+              cancelled depends on where you signed up for it:
+            </p>
+            <ul className="mt-3 list-disc space-y-2 pl-5">
+              <li>
+                <strong className="font-semibold text-ink">On the web</strong> — payment is
+                billed and processed through Stripe. You can manage or cancel your subscription
+                at any time from the Profile page.
+              </li>
+              <li>
+                <strong className="font-semibold text-ink">In the iOS app</strong> — payment is
+                billed and processed through Apple In-App Purchase, and is charged to your Apple
+                ID account at confirmation of purchase. You can manage or cancel your
+                subscription at any time in Settings → your Apple ID → Subscriptions. We cannot
+                cancel an App Store subscription on your behalf.
+              </li>
+            </ul>
+            <p className="mt-3">
+              In both cases the subscription renews automatically for the same period, at the
+              same price, until you cancel it. Cancelling stops future renewals; it does not
+              refund the period already paid for.
             </p>
           </section>
 
