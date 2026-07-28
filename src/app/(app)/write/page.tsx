@@ -17,6 +17,7 @@ import { templates, sampleDraft } from "@/lib/mock-data";
 import type { Level, CorrectionStyle, Correction, DiaryPlace, MistakeItem, RecheckResult as RecheckResultData } from "@/lib/types";
 import { GrammarReviewCard } from "@/components/GrammarReviewCard";
 import { WritingPromptCard } from "@/components/WritingPromptCard";
+import { TrainDiagram } from "@/components/TrainDiagram";
 import { promptForDate, randomPromptExcept, type WritingPrompt } from "@/lib/writing-prompts";
 import { buildMiniLessonFromAI } from "@/lib/lessons";
 import { RECHECK_LIMITS } from "@/lib/recheck-limits";
@@ -856,6 +857,9 @@ export default function WritePage() {
                   onAnother={() => setPrompt((p) => randomPromptExcept(p?.id))}
                 />
               )}
+
+              {/* word-order band — always present, collapsed once dismissed */}
+              <TrainDiagram />
 
               {/* selectors */}
               <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4" data-tour="write-options">
