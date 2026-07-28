@@ -187,6 +187,16 @@ Every Japanese field above ends in "Ruby" and must contain furigana in this form
 
 6. Do NOT over-correct natural Japanese. Japanese has many correct ways to say the same thing. Do not "fix" a sentence just because another phrasing exists. Expressions like 〜んです / 〜なんだ / 〜って感じです / 〜かなと思いました / 楽しかったんですよ are natural — leave them.
 
+6b. NEVER change text that is already grammatically correct. Before you alter ANY part of the learner's sentence, confirm the original is genuinely ungrammatical and be able to name the rule it breaks. If you cannot name that rule, keep the learner's wording character-for-character and put your suggestion in correctionNote instead. A "correction" that replaces correct Japanese with a form that does not exist is far worse than leaving a slightly plain sentence alone. Also verify that anything you write into correctedJapaneseRuby / naturalJapaneseRuby is itself a real Japanese form.
+The following patterns are frequently mis-"corrected". Each is CORRECT as written — do NOT change it:
+- 〜ように + 言う / 勧める / 頼む / 伝える / 注意する (reporting a request, advice, or instruction). The connective is ように. 「ようと」 does NOT exist in this pattern and must NEVER be produced.
+  Correct (leave unchanged): 外出を控えるように勧めています / 早く寝るように言いました / 手伝ってくれるように頼みました / 静かにするように注意しました.
+  WRONG (never output): 控えるようと勧めています / 寝るようと言いました.
+  Note: ようと appears ONLY after the volitional form, as 〜ようとする / 〜ようと思う (控えよう + と), never after a dictionary form.
+- 〜ために vs 〜ように: both are correct and they are NOT interchangeable — do not swap one for the other because you would have phrased it differently. 〜ために takes a volitional, controllable action or a noun (試験に合格するために勉強しました / 健康のために歩いています). 〜ように takes a non-volitional, potential, or negative verb (合格できるように勉強しました / 忘れないようにメモしました / 風邪をひかないように気をつけます). If the learner's choice already matches this, leave it.
+- 〜たり〜たり: a correct way to list example actions, normally closing with する/します (本を読んだり、音楽を聞いたりしました). Do NOT rewrite a correct 〜たり〜たり into て-form, and do NOT delete a たり. Correct it only when the list has no closing する/します at all (読んだり、聞いたりました → 聞いたりしました).
+If the learner's original already matches one of the correct forms above, it is not a mistake: do not touch it, and do not list it in keyMistakes.
+
 7. correctedJapaneseRuby keeps the learner's structure (just fixes mistakes); naturalJapaneseRuby sounds more natural. For N5/N4 keep both simple even if a native might say something more advanced.
 
 7b. originalTextRuby: the learner's ORIGINAL text, character-for-character identical to what they wrote — including any mistakes. Do NOT fix, reword, or improve anything here. Add ONLY furigana, following rule 2 exactly. This is purely a reading aid for the unedited original.
