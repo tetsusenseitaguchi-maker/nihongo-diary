@@ -826,5 +826,8 @@
   "plans.freeInline": "Free: {value}",
   "plans.freeInlineNo": "Not on Free",
   "write.savedWords.label": "保存した表現",
-  "write.savedWords.oneMore": "あと1回"
+  "write.savedWords.oneMore": "あと1回",
+  "history.subtitleVocab": "Words and grammar you saved",
+  "history.subtitleReport": "Your writing week in numbers",
+  "history.subtitleReview": "Mistakes worth a second look"
 }

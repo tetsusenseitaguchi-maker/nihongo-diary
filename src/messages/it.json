@@ -826,5 +826,8 @@
   "plans.freeInline": "Free: {value}",
   "plans.freeInlineNo": "Not on Free",
   "write.savedWords.label": "Le tue parole salvate",
-  "write.savedWords.oneMore": "ancora 1"
+  "write.savedWords.oneMore": "ancora 1",
+  "history.subtitleVocab": "Words and grammar you saved",
+  "history.subtitleReport": "Your writing week in numbers",
+  "history.subtitleReview": "Mistakes worth a second look"
 }
