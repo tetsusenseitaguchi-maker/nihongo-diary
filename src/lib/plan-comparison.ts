@@ -178,6 +178,7 @@ export const COMPARISON_GROUPS: ComparisonGroup[] = [
         // the two plans.
         id: "practiceDrills",
         labelKey: "plans.row.practiceDrills",
+        noteKey: "plans.note.practiceDrills",
         cells: { free: { kind: "no" }, plus: { kind: "yes" }, pro: { kind: "yes" } },
       },
       {
@@ -186,6 +187,7 @@ export const COMPARISON_GROUPS: ComparisonGroup[] = [
         // two rows below — Free can read that one's titles.
         id: "miniLessonInCorrection",
         labelKey: "plans.row.miniLessonInCorrection",
+        noteKey: "plans.note.miniLessonInCorrection",
         cells: { free: { kind: "no" }, plus: { kind: "yes" }, pro: { kind: "yes" } },
       },
     ],
@@ -204,6 +206,7 @@ export const COMPARISON_GROUPS: ComparisonGroup[] = [
         // tells users "Titles and short previews are visible below".
         id: "lessonLibrary",
         labelKey: "plans.row.lessonLibrary",
+        noteKey: "plans.note.lessonLibrary",
         cells: {
           free: { kind: "i18n", key: "plans.value.titlesOnly" },
           plus: { kind: "yes" },
@@ -217,6 +220,7 @@ export const COMPARISON_GROUPS: ComparisonGroup[] = [
         // unimplemented 100-item vocabulary cap is gone.
         id: "reviewDrills",
         labelKey: "plans.row.reviewDrills",
+        noteKey: "plans.note.reviewDrills",
         cells: { free: { kind: "no" }, plus: { kind: "no" }, pro: { kind: "yes" } },
       },
     ],
@@ -247,6 +251,7 @@ export const COMPARISON_GROUPS: ComparisonGroup[] = [
         // after the Free early-return above.
         id: "reportStreak",
         labelKey: "plans.row.reportStreak",
+        noteKey: "plans.note.reportStreak",
         cells: { free: { kind: "no" }, plus: { kind: "yes" }, pro: { kind: "yes" } },
       },
     ],
@@ -258,7 +263,7 @@ export const COMPARISON_GROUPS: ComparisonGroup[] = [
  *
  * Kept here so this file is the complete inventory of what the table asks
  * of the message catalogue: 11 row labels + 3 group headings + 6 value
- * phrases + 2 notes above, plus the 7 below — 29 keys in all.
+ * phrases + 7 notes above, plus the 7 below — 34 keys in all.
  *
  * `teacher` is rendered under the table inside <NativeGate>: it names a USD
  * price and a tier that is not an IAP product, so it must not reach the
