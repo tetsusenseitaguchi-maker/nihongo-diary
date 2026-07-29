@@ -9,6 +9,7 @@ import { SUPPORTED_LANGUAGES } from "@/lib/languages";
 import { LOCALE_COOKIE } from "@/lib/i18n";
 import { useLocale, useT } from "@/contexts/locale";
 import { COUNTRIES, countryFlag } from "@/lib/countryFlag";
+import { hasSeenPlansIntro, isNewAccount } from "@/lib/plans-intro/seen";
 import type { Locale } from "@/lib/i18n";
 
 const levels = ["N5", "N4", "N3", "N2", "N1"];
@@ -30,6 +31,16 @@ export default function ProfileSetupPage() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [preferredLang, setPreferredLang] = useState("en");
   const [country, setCountry] = useState("");
+  /**
+   * profiles.created_at, read only to decide where saving sends the user.
+   *
+   * This page is not new-user-only: profile/page.tsx and dashboard/page.tsx
+   * both link here as "Edit profile", so every existing account passes through
+   * it. Starts null and stays null on any read failure, which resolves to
+   * /dashboard — the plan intro must never open in front of someone who
+   * already pays.
+   */
+  const [createdAt, setCreatedAt] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -50,6 +61,9 @@ export default function ProfileSetupPage() {
         setAvatarUrl(data.avatar_url ?? "");
         setPreferredLang(data.preferred_language ?? "en");
         setCountry(data.country ?? "");
+        // Already fetched by the select("*") above — no extra round trip, and
+        // no new column: created_at has been on profiles since schema.sql.
+        setCreatedAt(data.created_at ?? null);
       }
       setLoading(false);
     })();
@@ -127,7 +141,24 @@ export default function ProfileSetupPage() {
       setSaving(false);
       return;
     }
-    router.push("/dashboard");
+    /*
+      The paid-plan intro shows once, to genuinely new accounts only.
+
+      Both conditions have to hold, and they guard different things. The
+      localStorage flag is what makes it once — it is written when the user
+      takes "Start writing for free" off that screen. isNewAccount is what
+      keeps it away from everyone else: this page is also "Edit profile", so
+      without it every established account, the paying ones included, would be
+      routed to a plan pitch every time they changed their bio. It fails
+      closed, so an unreadable created_at also lands on /dashboard.
+
+      /welcome-plans repeats the same isNewAccount check server-side. This one
+      spares the round trip; that one is the guarantee, since it also covers
+      anyone reaching the URL directly.
+    */
+    const showPlansIntro = !hasSeenPlansIntro() && isNewAccount(createdAt);
+
+    router.push(showPlansIntro ? "/welcome-plans" : "/dashboard");
     router.refresh();
   }
 

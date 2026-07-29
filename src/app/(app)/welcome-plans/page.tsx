@@ -2,9 +2,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePlan } from "@/lib/plans";
 import { PricingGrid } from "@/components/PricingGrid";
-import { LinkButton } from "@/components/ui";
+import { PlansIntroSkipButton } from "@/components/PlansIntroSkipButton";
 import { getServerT } from "@/lib/i18n-server";
 import { isNativeRequest } from "@/lib/native";
+import { isNewAccount } from "@/lib/plans-intro/seen";
 
 /**
  * One-time "here are the paid plans" screen, shown straight after signup.
@@ -23,22 +24,6 @@ import { isNativeRequest } from "@/lib/native";
  * force-dynamic because isNativeRequest() reads headers(), same as /upgrade.
  */
 export const dynamic = "force-dynamic";
-
-/**
- * How recently the account must have been created for this screen to show.
- *
- * The real "show it once" flag is localStorage (see the follow-up step; same
- * pattern as lib/tour/seen.ts). This is the server-side backstop underneath
- * it: /profile-setup is *not* new-user-only — it is also the "Edit profile"
- * destination from profile/page.tsx and dashboard/page.tsx — so without this
- * check an existing subscriber editing their profile could be routed to a
- * plan-pitch screen. profiles.created_at already exists (schema.sql), so this
- * costs no migration and no new column.
- *
- * Seven days rather than hours: signup with email confirmation on can leave a
- * real gap between the row being created and the user finishing setup.
- */
-const NEW_ACCOUNT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 export default async function WelcomePlansPage() {
   const supabase = await createClient();
@@ -63,12 +48,15 @@ export default async function WelcomePlansPage() {
     isNativeRequest(),
   ]);
 
-  // Fail closed. A missing profile row or a missing/unparseable created_at
-  // means we cannot prove this is a new account, and the wrong failure mode
-  // here is showing a plan pitch to a paying user — so anything uncertain
-  // goes quietly to the dashboard instead.
-  const createdAtMs = profile?.created_at ? Date.parse(profile.created_at) : NaN;
-  if (!Number.isFinite(createdAtMs) || Date.now() - createdAtMs > NEW_ACCOUNT_WINDOW_MS) {
+  // The server-side backstop under the localStorage flag, and the reason
+  // /profile-setup can route here at all: that screen is not new-user-only —
+  // it is also the "Edit profile" destination from profile/page.tsx and
+  // dashboard/page.tsx — so an existing subscriber must never land on a plan
+  // pitch by editing their profile. isNewAccount fails closed, so a missing
+  // row or an unreadable created_at goes quietly to the dashboard. Shared with
+  // profile-setup, which has to reach the same verdict or the user would be
+  // sent here and bounced straight back.
+  if (!isNewAccount(profile?.created_at)) {
     redirect("/dashboard");
   }
 
@@ -94,9 +82,7 @@ export default async function WelcomePlansPage() {
         scrolled past this one.
       */}
       <div className="mx-auto max-w-xs">
-        <LinkButton href="/dashboard" variant="secondary" size="lg" className="w-full">
-          {t("welcomePlans.skip")}
-        </LinkButton>
+        <PlansIntroSkipButton label={t("welcomePlans.skip")} />
         <p className="mt-2 text-center text-xs text-muted">{t("welcomePlans.skipHint")}</p>
       </div>
 
@@ -155,9 +141,7 @@ export default async function WelcomePlansPage() {
       />
 
       <div className="mx-auto max-w-xs">
-        <LinkButton href="/dashboard" variant="secondary" size="lg" className="w-full">
-          {t("welcomePlans.skip")}
-        </LinkButton>
+        <PlansIntroSkipButton label={t("welcomePlans.skip")} />
       </div>
     </div>
   );

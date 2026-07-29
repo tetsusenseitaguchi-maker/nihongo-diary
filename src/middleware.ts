@@ -10,6 +10,7 @@ const PROTECTED = [
   "/feed",
   "/profile",
   "/profile-setup",
+  "/welcome-plans",
   "/diary",
   "/how-to-use",
   "/places",
