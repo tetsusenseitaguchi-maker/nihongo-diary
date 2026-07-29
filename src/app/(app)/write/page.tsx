@@ -19,6 +19,7 @@ import { GrammarReviewCard } from "@/components/GrammarReviewCard";
 import { WritingPromptCard } from "@/components/WritingPromptCard";
 import { TrainDiagram } from "@/components/TrainDiagram";
 import { HintsSection } from "@/components/HintsSection";
+import { SavedWordsRow, type SavedWord } from "@/components/SavedWordsRow";
 import { promptForDate, randomPromptExcept, type WritingPrompt } from "@/lib/writing-prompts";
 import { buildMiniLessonFromAI } from "@/lib/lessons";
 import { RECHECK_LIMITS } from "@/lib/recheck-limits";
@@ -201,6 +202,10 @@ export default function WritePage() {
   // Set when /api/recheck returns 429 so Free users can be pointed at an upgrade.
   const [showRecheckUpgrade, setShowRecheckUpgrade] = useState(false);
 
+  // Words the learner saved and has not graduated yet — shown above the editor.
+  // Empty array is also the "nothing saved" state; SavedWordsRow renders nothing.
+  const [savedWords, setSavedWords] = useState<SavedWord[]>([]);
+
   // Plan + usage
   const [plan, setPlan] = useState<Plan>("free");
   const [usedToday, setUsedToday] = useState(0);
@@ -236,15 +241,32 @@ export default function WritePage() {
       } = await supabase.auth.getUser();
       if (!user) return;
       const today = todayInTZ(getClientTZ());
-      const [{ data: prof }, { data: usage }, { data: reviewRow }] = await Promise.all([
+      const [{ data: prof }, { data: usage }, { data: reviewRow }, { data: savedWordRows }] = await Promise.all([
         supabase.from("profiles").select("plan").eq("id", user.id).single(),
         supabase.from("usage_limits").select("correction_count, recheck_count").eq("user_id", user.id).eq("usage_date", today).maybeSingle(),
         supabase.from("diary_entries").select("grammar_focus").eq("user_id", user.id).not("grammar_focus", "is", null).lt("diary_date", today).order("diary_date", { ascending: false }).limit(1).maybeSingle(),
+        // Saved words for the reminder row above the editor. Added to this
+        // existing Promise.all rather than as its own request or a call to
+        // /api/vocabulary — it rides along with queries already in flight.
+        // Unfinished words only, closest to graduating first. nullsFirst: false
+        // because the deployed use_count column's nullability is unverified and
+        // Postgres sorts NULLs first on DESC, which would put untouched words
+        // ahead of the nearly-graduated ones.
+        supabase
+          .from("vocabulary_entries")
+          .select("id, word, reading, use_count")
+          .eq("user_id", user.id)
+          .eq("entry_type", "word")
+          .is("graduated_at", null)
+          .order("use_count", { ascending: false, nullsFirst: false })
+          .order("created_at", { ascending: false })
+          .limit(3),
       ]);
       setPlan(normalizePlan(prof?.plan));
       setUsedToday(usage?.correction_count ?? 0);
       setRecheckUsedToday(usage?.recheck_count ?? 0);
       if (reviewRow?.grammar_focus) setGrammarReview(reviewRow.grammar_focus as MistakeItem);
+      if (savedWordRows) setSavedWords(savedWordRows as SavedWord[]);
     })();
   }, []);
 
@@ -907,6 +929,11 @@ export default function WritePage() {
                 )}
                 <TrainDiagram />
               </HintsSection>
+
+              {/* Saved-word reminder — outside the Hints band on purpose, since
+                  that band is collapsed on every mount and this needs to be
+                  seen without being opened. Renders nothing when empty. */}
+              <SavedWordsRow words={savedWords} />
 
               {/* selectors */}
               <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4" data-tour="write-options">

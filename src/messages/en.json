@@ -910,5 +910,7 @@
   "plans.note.reviewDrills": "AI-generated drills for a mini lesson, on the Support tab. Pro only.",
   "plans.note.reportStreak": "Your streak always shows in the sidebar. This is the streak line inside the Weekly Report.",
   "plans.freeInline": "Free: {value}",
-  "plans.freeInlineNo": "Not on Free"
+  "plans.freeInlineNo": "Not on Free",
+  "write.savedWords.label": "Your saved words",
+  "write.savedWords.oneMore": "1 more"
 }
