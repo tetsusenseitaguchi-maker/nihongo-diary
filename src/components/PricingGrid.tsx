@@ -7,6 +7,8 @@ import { PurchaseButton } from "@/components/PurchaseButton";
 import { PlanPrice } from "@/components/PlanPrice";
 import { NativeGate } from "@/components/NativeGate";
 import { RestorePurchasesButton } from "@/components/RestorePurchasesButton";
+import { PlanComparisonTable, type PlanColumnMeta } from "@/components/PlanComparisonTable";
+import { COMPARISON_PLANS, type ComparisonPlan } from "@/lib/plan-comparison";
 
 type Tier = {
   id: Plan;
@@ -88,6 +90,27 @@ export const TIERS: Tier[] = [
   },
 ];
 
+/**
+ * Prices for the table layout, read off the very TIERS entries the cards use.
+ *
+ * Built here rather than inside PlanComparisonTable: that component is
+ * imported above, so reaching back into it for TIERS would close an import
+ * cycle. Sharing one source also means the two layouts cannot end up quoting
+ * different prices for the same plan.
+ */
+const TABLE_COLUMNS: Record<ComparisonPlan, PlanColumnMeta> = COMPARISON_PLANS.reduce(
+  (acc, id) => {
+    const tier = TIERS.find((candidate) => candidate.id === id);
+    acc[id] = {
+      priceFallback: tier?.price ?? "",
+      cadence: tier?.cadence,
+      highlight: tier?.highlight,
+    };
+    return acc;
+  },
+  {} as Record<ComparisonPlan, PlanColumnMeta>,
+);
+
 export type PricingLabels = {
   mostPopular: string;
   comingSoon: string;
@@ -148,6 +171,7 @@ export function PricingGrid({
   hasActiveSubscription = false,
   billingSource = null,
   mode = "landing",
+  layout = "cards",
   labels = DEFAULT_LABELS,
   translateFeature,
   isNative = false,
@@ -161,8 +185,20 @@ export function PricingGrid({
    *  elsewhere". */
   billingSource?: "stripe" | "apple_iap" | null;
   mode?: "landing" | "upgrade";
+  /**
+   * How the tiers are presented. Defaults to the cards so every existing
+   * caller keeps its exact output; "table" swaps in PlanComparisonTable.
+   *
+   * Only the tier presentation changes. Everything below it in this component
+   * — Restore Purchases, the Stripe/Apple footer swap, and the renewal terms
+   * with the EULA and privacy links — is rendered once and shared by both
+   * layouts, so no App Store requirement can go missing from one of them.
+   */
+  layout?: "cards" | "table";
   labels?: PricingLabels;
-  translateFeature?: (key: string) => string;
+  /** Widened to carry vars: two table cells interpolate {n}. Every existing
+   *  caller already passes a translator of this shape. */
+  translateFeature?: (key: string, vars?: Record<string, string | number>) => string;
   /** True when the request came from the native iOS shell (detected
    *  server-side via User-Agent). When set, external USD prices and the Stripe
    *  footer are never rendered at all — not just hidden client-side by
@@ -170,8 +206,29 @@ export function PricingGrid({
    *  client-side second line of defense for requests where the UA is absent. */
   isNative?: boolean;
 }) {
+  // Same fallback the feature list uses below: with no translator the keys
+  // show through rather than the component failing.
+  const t = translateFeature ?? ((key: string) => key);
+
   return (
     <div className="space-y-5">
+      {layout === "table" && (
+        <PlanComparisonTable
+          columns={TABLE_COLUMNS}
+          currentPlan={currentPlan}
+          hasActiveSubscription={hasActiveSubscription}
+          billingSource={billingSource}
+          isNative={isNative}
+          checkoutEnabled={labels.checkoutEnabled}
+          t={t}
+        />
+      )}
+
+      {/* Wrapper only. The card markup below deliberately keeps its original
+          indentation so this stays a two-line change instead of a re-indent
+          of ~170 lines that would bury any real edit — the same shape as
+          LandingPageNew's `{!isNative && (` guard around its pricing block. */}
+      {layout === "cards" && (
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {TIERS.map((tier) => {
           const isCurrent = mode === "upgrade" && currentPlan === tier.id;
@@ -331,6 +388,7 @@ export function PricingGrid({
           );
         })}
       </div>
+      )}
 
       {/* Restore Purchases — App Store Review Guideline 3.1.1 requires a
           discrete control the user can tap. Native only: there is nothing to
