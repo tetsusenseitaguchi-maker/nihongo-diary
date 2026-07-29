@@ -17,6 +17,10 @@ import { vocabWordText } from "@/lib/furigana";
  * hint blocks pushed the editor off screen, and a row that grows to three lines
  * on a 375px screen would undo that.
  *
+ * Staying one line must not be paid for by the surrounding layout, though —
+ * see the comment on the scroll container. Nothing in here may contribute an
+ * intrinsic width, or the notebook grows with it.
+ *
  * The chips are plain spans, not buttons. Tapping a word does not write into
  * the textarea — the same rule WritingPromptCard follows ("it never writes into
  * the textarea and never blocks anything"). This is a reminder, not an input.
@@ -54,15 +58,32 @@ export function SavedWordsRow({ words }: { words: SavedWord[] }) {
   if (words.length === 0) return null;
 
   return (
-    <div className="mb-3 flex items-center gap-2">
-      <span className="shrink-0 text-[10px] font-bold uppercase tracking-wide text-muted">
-        📖 {t("write.savedWords.label")}
+    <div
+      role="group"
+      aria-label={t("write.savedWords.label")}
+      className="mb-3 flex items-center gap-2"
+    >
+      {/* Icon-only under sm. The label is the widest fixed part of the row, and
+          on a 320px screen it left the chips an 82px window. Same disclosure
+          idiom WritingPromptCard uses for its 🎲 button. The text is decorative
+          once the group above carries it as an accessible name. */}
+      <span
+        aria-hidden
+        className="shrink-0 text-[10px] font-bold uppercase tracking-wide text-muted"
+      >
+        📖<span className="hidden sm:inline"> {t("write.savedWords.label")}</span>
       </span>
 
-      {/* min-w-0 is what lets this shrink below its content width so the
-          overflow actually scrolls; w-max keeps the chips from being squashed. */}
+      {/* min-w-0 lets this flex item shrink below its content so the overflow
+          scrolls. The inner track must NOT carry w-max: width: max-content
+          propagates as this item's min-content contribution all the way up to
+          the notebook column, which is a grid item with min-width: auto — the
+          track then grows past the card and drags the ruled lines out with it.
+          min-w-0 here floors the used width but does not stop that propagation.
+          The chips keep their own shrink-0 and the row never wraps, so they are
+          not squashed without it. */}
       <div className="min-w-0 flex-1 overflow-x-auto">
-        <div className="flex w-max items-center gap-1.5">
+        <div className="flex items-center gap-1.5">
           {words.map((w) => {
             // The quiet nudge asked for: marked only on the last word before
             // graduation, so it reads as "nearly there" rather than as a
