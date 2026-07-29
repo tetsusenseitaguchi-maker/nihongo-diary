@@ -272,23 +272,27 @@ function GroupRows({
         // read as one band instead of a highlighted row with a loose line
         // underneath.
         const tint = row.emphasis ? "bg-mint/40" : "";
-        // When a note follows, it carries the row's bottom padding. Keeping
-        // py-2.5 on both put 10px between a label and its own note, which is
-        // what made those rows look out of step with their values.
-        const pad = row.noteKey ? "pt-2.5 pb-0.5" : "py-2.5";
         return (
           // Fragment, not <>: a row plus its optional note are two <tr>s, and
           // the key has to sit on what map() returns.
           <Fragment key={row.id}>
             <tr className={`border-t border-line/60 ${tint}`}>
-              {/* align-middle throughout. Table cells default to
-                  vertical-align: baseline, which lines up the *first* line of
-                  each cell — so a label that wrapped to two lines sat with its
-                  first line against a single-line value and everything looked
-                  a row out. */}
+              {/*
+                align-baseline, and every cell carries the same py-2.5.
+
+                Baseline is what a comparison table wants and what middle got
+                wrong: "3 / correction" wraps to two lines in a ~71px column
+                while its label "Revise & recheck" is one, so centring put the
+                label level with the gap between the value's two lines — the
+                label reading as though it had dropped below its own row.
+                Aligning first-line baselines instead puts the label next to
+                the value's first line whatever either of them wraps to, and
+                it holds across the size step on the emphasis rows too, where
+                the values are a size larger than their labels.
+              */}
               <th
                 scope="row"
-                className={`${pad} pr-2 text-left align-middle leading-snug ${
+                className={`py-2.5 pr-2 text-left align-baseline leading-snug ${
                   row.emphasis ? "font-semibold text-ink" : "font-medium text-ink/80"
                 }`}
               >
@@ -297,7 +301,7 @@ function GroupRows({
               {COMPARISON_PLANS.map((p) => (
                 <td
                   key={p}
-                  className={`${pad} px-1 text-center align-middle leading-snug ${
+                  className={`px-1 py-2.5 text-center align-baseline leading-snug ${
                     row.emphasis ? "text-sm font-bold text-pine sm:text-base" : "text-ink/80"
                   }`}
                 >
@@ -307,15 +311,22 @@ function GroupRows({
             </tr>
 
             {row.noteKey && (
-              // Spans the full width rather than sitting under the label: at
-              // 38% of a 340px table the label column is ~130px, and these
-              // notes would stack six lines deep in it.
+              /*
+                A row of its own, so the note cannot lengthen the row above it
+                or shift the values: baseline alignment is settled by the first
+                line of each cell, and this is not in any of them.
+
+                Full width rather than tucked under the label because at 38% of
+                a 340px table that column is ~130px, where these would stack
+                six lines deep. The negative offset closes the gap the row
+                above's bottom padding leaves, without making that row's
+                padding differ from every other row's.
+              */
               <tr className={tint}>
-                <td
-                  colSpan={COMPARISON_PLANS.length + 1}
-                  className="pb-2.5 pr-2 text-left text-[11px] leading-snug text-muted"
-                >
-                  {t(row.noteKey)}
+                <td colSpan={COMPARISON_PLANS.length + 1} className="pb-2.5 pr-2 text-left">
+                  <span className="-mt-1.5 block text-[11px] leading-snug text-muted">
+                    {t(row.noteKey)}
+                  </span>
                 </td>
               </tr>
             )}
