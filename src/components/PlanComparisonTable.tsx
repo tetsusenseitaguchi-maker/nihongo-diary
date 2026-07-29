@@ -1,5 +1,5 @@
-import { Fragment } from "react";
 import { Icon } from "@/components/icons";
+import { NoteTooltip } from "@/components/NoteTooltip";
 import { PlanPrice } from "@/components/PlanPrice";
 import { PurchaseButton } from "@/components/PurchaseButton";
 import { NativeGate } from "@/components/NativeGate";
@@ -174,8 +174,8 @@ export function PlanComparisonTable({
           </thead>
 
           <tbody>
-            {COMPARISON_GROUPS.map((group) => (
-              <GroupRows key={group.id} group={group} t={t} />
+            {COMPARISON_GROUPS.map((group, i) => (
+              <GroupRows key={group.id} group={group} isFirst={i === 0} t={t} />
             ))}
           </tbody>
         </table>
@@ -272,96 +272,86 @@ function FreePrice({ label }: { label: string }) {
 
 function GroupRows({
   group,
+  isFirst,
   t,
 }: {
   group: (typeof COMPARISON_GROUPS)[number];
+  /** The first group already has the header's rule above it. */
+  isFirst: boolean;
   t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
   return (
     <>
+      {/* The only rules left in the body. With one under every row the table
+          read as a grid of boxes; the groups are the divisions that carry
+          meaning, and the rows separate themselves by banding instead. */}
       <tr>
         <th
           scope="colgroup"
           colSpan={COMPARISON_PLANS.length + 1}
-          className="pb-1 pt-5 text-left text-[11px] font-bold uppercase tracking-wide text-moss-600"
+          className={`pb-1 pt-5 text-left text-[11px] font-bold uppercase tracking-wide text-moss-600 ${
+            isFirst ? "" : "border-t border-line"
+          }`}
         >
           {t(group.headingKey)}
         </th>
       </tr>
 
-      {group.rows.map((row) => {
-        // The tint has to cover the note row as well, so a row and its note
-        // read as one band instead of a highlighted row with a loose line
-        // underneath.
-        const tint = row.emphasis ? "bg-mint/40" : "";
+      {group.rows.map((row, i) => {
+        // Banding in place of rules. Emphasis keeps its mint, so the four rows
+        // whose numbers climb still read as one block, and everything else
+        // alternates against the page.
+        const tint = row.emphasis ? "bg-mint/40" : i % 2 === 1 ? "bg-sand/30" : "";
         return (
-          // Fragment, not <>: a row plus its optional note are two <tr>s, and
-          // the key has to sit on what map() returns.
-          <Fragment key={row.id}>
-            <tr className={`border-t border-line/60 ${tint}`}>
-              {/*
-                align-baseline, and every cell carries the same py-2.5.
+          <tr key={row.id} className={tint}>
+            {/*
+              align-baseline, and every cell carries the same py-2.5.
 
-                Baseline is what a comparison table wants and what middle got
-                wrong: "3 / correction" wraps to two lines in a ~71px column
-                while its label "Revise & recheck" is one, so centring put the
-                label level with the gap between the value's two lines — the
-                label reading as though it had dropped below its own row.
-                Aligning first-line baselines instead puts the label next to
-                the value's first line whatever either of them wraps to, and
-                it holds across the size step on the emphasis rows too, where
-                the values are a size larger than their labels.
-              */}
-              <th
-                scope="row"
-                className={`py-2.5 pr-2 text-left align-baseline leading-snug ${
-                  row.emphasis ? "font-semibold text-ink" : "font-medium text-ink/80"
+              Baseline is what a comparison table wants and what middle got
+              wrong: "3 / correction" wraps to two lines in a narrow column
+              while its label "Revise & recheck" is one, so centring put the
+              label level with the gap between the value's two lines — the
+              label reading as though it had dropped below its own row.
+              Aligning first-line baselines instead puts the label next to the
+              value's first line whatever either of them wraps to, and it holds
+              across the size step on the emphasis rows too, where the values
+              are a size larger than their labels.
+            */}
+            <th
+              scope="row"
+              className={`py-2.5 pr-2 text-left align-baseline leading-snug ${
+                row.emphasis ? "font-semibold text-ink" : "font-medium text-ink/80"
+              }`}
+            >
+              {t(row.labelKey)}
+              {/* Folded away rather than dropped. Both notes are what keep
+                  their row from overstating itself, so NoteTooltip keeps the
+                  text in the DOM for assistive technology whether it is
+                  showing or not. */}
+              {row.noteKey && (
+                <NoteTooltip text={t(row.noteKey)} label={t(K.noteToggle)} />
+              )}
+            </th>
+            {COMPARISON_PLANS.map((p) => (
+              // No horizontal padding, and a step down in size below sm. The
+              // ordinary cells hold the longest strings — at 375px
+              // "3 / correction" comes to ~70px against a ~69px content box
+              // with px-0.5, so the padding is the difference between one line
+              // and two. The cells are centred, so they still read as
+              // separated. Emphasis cells are short numbers and keep their
+              // size.
+              <td
+                key={p}
+                className={`px-0 py-2.5 text-center align-baseline leading-snug ${
+                  row.emphasis
+                    ? "text-sm font-bold text-pine sm:text-base"
+                    : "text-[11px] text-ink/80 sm:text-sm"
                 }`}
               >
-                {t(row.labelKey)}
-              </th>
-              {COMPARISON_PLANS.map((p) => (
-                // No horizontal padding, and a step down in size below sm.
-                // The ordinary cells hold the longest strings — at 375px
-                // "3 / correction" comes to ~70px against a ~69px content box
-                // with px-0.5, so the padding is the difference between one
-                // line and two. The cells are centred, so they still read as
-                // separated. Emphasis cells are short numbers and keep their
-                // size.
-                <td
-                  key={p}
-                  className={`px-0 py-2.5 text-center align-baseline leading-snug ${
-                    row.emphasis
-                      ? "text-sm font-bold text-pine sm:text-base"
-                      : "text-[11px] text-ink/80 sm:text-sm"
-                  }`}
-                >
-                  <CellValue cell={row.cells[p]} t={t} />
-                </td>
-              ))}
-            </tr>
-
-            {row.noteKey && (
-              /*
-                A row of its own, so the note cannot lengthen the row above it
-                or shift the values: baseline alignment is settled by the first
-                line of each cell, and this is not in any of them.
-
-                Full width rather than tucked under the label because at 38% of
-                a 340px table that column is ~130px, where these would stack
-                six lines deep. The negative offset closes the gap the row
-                above's bottom padding leaves, without making that row's
-                padding differ from every other row's.
-              */
-              <tr className={tint}>
-                <td colSpan={COMPARISON_PLANS.length + 1} className="pb-2.5 pr-2 text-left">
-                  <span className="-mt-1.5 block text-[11px] leading-snug text-muted">
-                    {t(row.noteKey)}
-                  </span>
-                </td>
-              </tr>
-            )}
-          </Fragment>
+                <CellValue cell={row.cells[p]} t={t} />
+              </td>
+            ))}
+          </tr>
         );
       })}
     </>

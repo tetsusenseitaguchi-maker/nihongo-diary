@@ -258,7 +258,7 @@ export const COMPARISON_GROUPS: ComparisonGroup[] = [
  *
  * Kept here so this file is the complete inventory of what the table asks
  * of the message catalogue: 11 row labels + 3 group headings + 6 value
- * phrases + 2 notes above, plus the 6 below — 28 keys in all.
+ * phrases + 2 notes above, plus the 7 below — 29 keys in all.
  *
  * `teacher` is rendered under the table inside <NativeGate>: it names a USD
  * price and a tier that is not an IAP product, so it must not reach the
@@ -268,6 +268,8 @@ export const COMPARISON_CHROME_KEYS = {
   caption: "plans.a11y.caption",
   included: "plans.a11y.included",
   notIncluded: "plans.a11y.notIncluded",
+  /** Accessible name for the "?" that opens a row's note. */
+  noteToggle: "plans.a11y.noteToggle",
   commonFeatures: "plans.footer.commonFeatures",
   teacherTitle: "plans.teacher.title",
   teacherDesc: "plans.teacher.desc",

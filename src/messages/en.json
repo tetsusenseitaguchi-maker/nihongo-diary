@@ -902,5 +902,6 @@
   "plans.a11y.notIncluded": "Not included",
   "plans.footer.commonFeatures": "All plans include unlimited diary saves, full correction details, next-word and grammar suggestions, Obie, and Feed / follows / reactions.",
   "plans.teacher.title": "Teacher · Coming soon",
-  "plans.teacher.desc": "Everything in Pro, plus personal feedback from Tetsu-sensei. Limited spots."
+  "plans.teacher.desc": "Everything in Pro, plus personal feedback from Tetsu-sensei. Limited spots.",
+  "plans.a11y.noteToggle": "More information"
 }
