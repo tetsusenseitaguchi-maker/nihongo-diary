@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { normalizePlan } from "@/lib/plans";
 import { PricingGrid } from "@/components/PricingGrid";
 import { PlansIntroSkipButton } from "@/components/PlansIntroSkipButton";
+import { PlansIntroSeenMarker } from "@/components/PlansIntroSeenMarker";
 import { getServerT } from "@/lib/i18n-server";
 import { isNativeRequest } from "@/lib/native";
 import { isNewAccount } from "@/lib/plans-intro/seen";
@@ -64,6 +65,13 @@ export default async function WelcomePlansPage() {
 
   return (
     <div className="space-y-6">
+      {/* Renders nothing; writes the "shown" flag as soon as this mounts.
+          Marking on the way out was not enough — leaving by subscribing never
+          touches the skip control, so a new subscriber editing their profile
+          inside the account window used to meet the pitch again. Same rule the
+          tour follows: shown once, not dismissed once. */}
+      <PlansIntroSeenMarker />
+
       <div className="text-center">
         <p className="text-sm font-medium text-muted">{t("welcomePlans.label")}</p>
         <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-pine">

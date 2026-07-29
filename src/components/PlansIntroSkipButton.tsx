@@ -1,35 +1,33 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui";
+import { LinkButton } from "@/components/ui";
 import { markPlansIntroSeen } from "@/lib/plans-intro/seen";
 
 /**
  * "Start writing for free" — the way out of the plan intro.
  *
- * A client component because /welcome-plans is a Server Component and the flag
- * that stops the screen coming back lives in localStorage. Taking this route
- * is the signal that the user has read the screen and declined, so it is the
- * moment the flag is written.
+ * A real link to /dashboard, not a button that navigates. Leaving this screen
+ * is a navigation: an anchor keeps middle-click, open-in-new-tab and the
+ * right-click menu working, and it still goes somewhere if the click handler
+ * never runs. An earlier version used <Button onClick={router.push}> and threw
+ * all of that away for no gain.
  *
- * push without refresh: /welcome-plans and /dashboard share the (app) layout,
- * so there is nothing to re-fetch, and the pair together is a documented
- * hazard in this codebase.
+ * A client component only because the flag lives in localStorage and
+ * /welcome-plans is a Server Component. The flag is written on mount too, by
+ * PlansIntroSeenMarker — that is the one that guarantees "shown once", since
+ * a user can also leave this screen by subscribing. Marking here as well is
+ * belt and braces, and the write is idempotent.
  */
 export function PlansIntroSkipButton({ label }: { label: string }) {
-  const router = useRouter();
-
   return (
-    <Button
+    <LinkButton
+      href="/dashboard"
       variant="secondary"
       size="lg"
       className="w-full"
-      onClick={() => {
-        markPlansIntroSeen();
-        router.push("/dashboard");
-      }}
+      onClick={() => markPlansIntroSeen()}
     >
       {label}
-    </Button>
+    </LinkButton>
   );
 }
