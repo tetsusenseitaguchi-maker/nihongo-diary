@@ -39,11 +39,25 @@ export default async function UpgradePage() {
         </div>
       </div>
 
+      {/*
+        layout="table" — the comparison table replaces the tier cards here,
+        after running on /welcome-plans first. Only the tiers change shape.
+        Everything the App Store requires below them is rendered by PricingGrid
+        outside the swapped region and is byte-identical under either layout:
+        Restore Purchases (3.1.1), the Stripe-to-Apple footer swap, and the
+        renewal terms with the EULA and privacy links (3.1.2(c), which build 3
+        was rejected over). The table itself keeps PlanPrice on both paid
+        columns, so the native shell still never sees a USD figure.
+
+        This is the live purchase screen: mode="upgrade" and the labels below
+        are unchanged, and reverting is deleting this one prop.
+      */}
       <PricingGrid
         currentPlan={plan}
         hasActiveSubscription={!!profile?.stripe_subscription_id}
         billingSource={(profile?.billing_source as "stripe" | "apple_iap" | null) ?? null}
         mode="upgrade"
+        layout="table"
         isNative={isNative}
         translateFeature={t}
         labels={{
