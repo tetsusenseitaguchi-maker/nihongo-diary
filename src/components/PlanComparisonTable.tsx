@@ -94,11 +94,14 @@ export function PlanComparisonTable({
           {/* 38% for the labels, the rest split three ways. colgroup rather
               than per-cell widths so the group heading rows, which span the
               whole table, cannot pull the columns out of alignment. */}
+          {/* 36/21.3×3 rather than 38/20.7×3: at 375px the table is ~343px,
+              so every point taken off the labels is ~1px back on each value
+              column, and the values are what were overflowing. */}
           <colgroup>
-            <col style={{ width: "38%" }} />
-            <col style={{ width: "20.66%" }} />
-            <col style={{ width: "20.67%" }} />
-            <col style={{ width: "20.67%" }} />
+            <col style={{ width: "36%" }} />
+            <col style={{ width: "21.33%" }} />
+            <col style={{ width: "21.33%" }} />
+            <col style={{ width: "21.34%" }} />
           </colgroup>
 
           <thead>
@@ -124,7 +127,17 @@ export function PlanComparisonTable({
                     <span className="block font-serif text-sm font-bold text-pine sm:text-base">
                       {PLAN_LABELS[p]}
                     </span>
-                    <span className="mt-0.5 block leading-tight">
+                    {/*
+                      PlanPrice hardcodes text-3xl and a w-16 skeleton, both
+                      sized for the cards. A value column is ~73px at 375px, so
+                      a "$19" plus an inline "/month" ran straight out of the
+                      cell. PlanPrice is shared with the card layout and is not
+                      modified, so the size is capped from out here instead:
+                      inside this wrapper the only .font-serif is PlanPrice's
+                      price (the plan name is a sibling above) and the only
+                      .animate-pulse is its skeleton.
+                    */}
+                    <span className="mt-0.5 block leading-tight [&_.animate-pulse]:w-10 [&_.font-serif]:text-xl sm:[&_.animate-pulse]:w-16 sm:[&_.font-serif]:text-2xl">
                       {p === "free" ? (
                         // The hardcoded "$0" is an external USD price under
                         // Guideline 3.1.1. Server-side when the native UA is
@@ -137,14 +150,23 @@ export function PlanComparisonTable({
                           </NativeGate>
                         )
                       ) : (
-                        <PlanPrice
-                          plan={p}
-                          fallback={col.priceFallback}
-                          cadence={col.cadence}
-                          isNative={isNative}
-                        />
+                        <PlanPrice plan={p} fallback={col.priceFallback} isNative={isNative} />
                       )}
                     </span>
+                    {/*
+                      The cadence is rendered here instead of being handed to
+                      PlanPrice, which puts it inline beside the price — the
+                      pair is what overflowed. On its own line it always fits.
+                      It is not dropped on small screens: Guideline 3.1.2(c)
+                      wants the billing period stated on the purchase screen
+                      itself, so hiding it below sm would trade a layout bug
+                      for a review one.
+                    */}
+                    {col.cadence && (
+                      <span className="mt-0.5 block text-[10px] leading-none text-muted">
+                        {col.cadence}
+                      </span>
+                    )}
                   </th>
                 );
               })}
@@ -299,10 +321,19 @@ function GroupRows({
                 {t(row.labelKey)}
               </th>
               {COMPARISON_PLANS.map((p) => (
+                // No horizontal padding, and a step down in size below sm.
+                // The ordinary cells hold the longest strings — at 375px
+                // "3 / correction" comes to ~70px against a ~69px content box
+                // with px-0.5, so the padding is the difference between one
+                // line and two. The cells are centred, so they still read as
+                // separated. Emphasis cells are short numbers and keep their
+                // size.
                 <td
                   key={p}
-                  className={`px-1 py-2.5 text-center align-baseline leading-snug ${
-                    row.emphasis ? "text-sm font-bold text-pine sm:text-base" : "text-ink/80"
+                  className={`px-0 py-2.5 text-center align-baseline leading-snug ${
+                    row.emphasis
+                      ? "text-sm font-bold text-pine sm:text-base"
+                      : "text-[11px] text-ink/80 sm:text-sm"
                   }`}
                 >
                   <CellValue cell={row.cells[p]} t={t} />
