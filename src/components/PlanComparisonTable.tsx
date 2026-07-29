@@ -107,7 +107,20 @@ export function PlanComparisonTable({
               {COMPARISON_PLANS.map((p) => {
                 const col = columns[p];
                 return (
-                  <th key={p} scope="col" className="px-1 pb-3 pt-1 text-center align-bottom">
+                  <th key={p} scope="col" className="px-1 pb-3 pt-1 text-center align-top">
+                    {/* Fixed-height slot, rendered for every column whether or
+                        not it has a badge. Previously the badge existed only
+                        under Plus and pushed that column's name and price out
+                        of line with Free and Pro. align-top plus a
+                        single-line name then puts all three names at the same
+                        y whatever the price below them does. */}
+                    <span className="mb-1 flex h-5 items-center justify-center">
+                      {col.highlight && (
+                        <span className="rounded-full bg-mint px-2 py-0.5 text-[10px] font-bold text-pine">
+                          {t("pricing.mostPopular")}
+                        </span>
+                      )}
+                    </span>
                     <span className="block font-serif text-sm font-bold text-pine sm:text-base">
                       {PLAN_LABELS[p]}
                     </span>
@@ -132,11 +145,6 @@ export function PlanComparisonTable({
                         />
                       )}
                     </span>
-                    {col.highlight && (
-                      <span className="mt-1 inline-block rounded-full bg-mint px-2 py-0.5 text-[10px] font-bold text-pine">
-                        {t("pricing.mostPopular")}
-                      </span>
-                    )}
                   </th>
                 );
               })}
@@ -227,8 +235,17 @@ export function PlanComparisonTable({
   );
 }
 
+/**
+ * The free column's price.
+ *
+ * Carries PlanPrice's exact classes for the price itself, deliberately: the
+ * paid columns render through PlanPrice, which hardcodes text-3xl, and a
+ * smaller size here gave the three header cells different line heights and
+ * so different baselines. PlanPrice is shared with the card layout and is
+ * not modified, so this side matches it instead.
+ */
 function FreePrice({ label }: { label: string }) {
-  return <span className="font-serif text-xl font-bold text-pine sm:text-2xl">{label}</span>;
+  return <span className="font-serif text-3xl font-bold text-pine">{label}</span>;
 }
 
 function GroupRows({
@@ -250,46 +267,61 @@ function GroupRows({
         </th>
       </tr>
 
-      {group.rows.map((row) => (
-        // Fragment, not <>: a row plus its optional note are two <tr>s, and
-        // the key has to sit on what map() returns.
-        <Fragment key={row.id}>
-          <tr className="border-t border-line/60">
-            <th
-              scope="row"
-              className={`py-2.5 pr-2 text-left font-medium leading-snug ${
-                row.emphasis ? "text-ink" : "text-ink/80"
-              }`}
-            >
-              {t(row.labelKey)}
-            </th>
-            {COMPARISON_PLANS.map((p) => (
-              <td
-                key={p}
-                className={`px-1 py-2.5 text-center leading-snug ${
-                  row.emphasis ? "font-bold text-pine" : "text-ink/80"
+      {group.rows.map((row) => {
+        // The tint has to cover the note row as well, so a row and its note
+        // read as one band instead of a highlighted row with a loose line
+        // underneath.
+        const tint = row.emphasis ? "bg-mint/40" : "";
+        // When a note follows, it carries the row's bottom padding. Keeping
+        // py-2.5 on both put 10px between a label and its own note, which is
+        // what made those rows look out of step with their values.
+        const pad = row.noteKey ? "pt-2.5 pb-0.5" : "py-2.5";
+        return (
+          // Fragment, not <>: a row plus its optional note are two <tr>s, and
+          // the key has to sit on what map() returns.
+          <Fragment key={row.id}>
+            <tr className={`border-t border-line/60 ${tint}`}>
+              {/* align-middle throughout. Table cells default to
+                  vertical-align: baseline, which lines up the *first* line of
+                  each cell — so a label that wrapped to two lines sat with its
+                  first line against a single-line value and everything looked
+                  a row out. */}
+              <th
+                scope="row"
+                className={`${pad} pr-2 text-left align-middle leading-snug ${
+                  row.emphasis ? "font-semibold text-ink" : "font-medium text-ink/80"
                 }`}
               >
-                <CellValue cell={row.cells[p]} t={t} />
-              </td>
-            ))}
-          </tr>
-
-          {row.noteKey && (
-            // Spans the full width rather than sitting under the label: at
-            // 38% of a 340px table the label column is ~130px, and these
-            // notes would stack six lines deep in it.
-            <tr>
-              <td
-                colSpan={COMPARISON_PLANS.length + 1}
-                className="pb-2.5 pr-2 text-left text-[11px] leading-snug text-muted"
-              >
-                {t(row.noteKey)}
-              </td>
+                {t(row.labelKey)}
+              </th>
+              {COMPARISON_PLANS.map((p) => (
+                <td
+                  key={p}
+                  className={`${pad} px-1 text-center align-middle leading-snug ${
+                    row.emphasis ? "text-sm font-bold text-pine sm:text-base" : "text-ink/80"
+                  }`}
+                >
+                  <CellValue cell={row.cells[p]} t={t} />
+                </td>
+              ))}
             </tr>
-          )}
-        </Fragment>
-      ))}
+
+            {row.noteKey && (
+              // Spans the full width rather than sitting under the label: at
+              // 38% of a 340px table the label column is ~130px, and these
+              // notes would stack six lines deep in it.
+              <tr className={tint}>
+                <td
+                  colSpan={COMPARISON_PLANS.length + 1}
+                  className="pb-2.5 pr-2 text-left text-[11px] leading-snug text-muted"
+                >
+                  {t(row.noteKey)}
+                </td>
+              </tr>
+            )}
+          </Fragment>
+        );
+      })}
     </>
   );
 }
