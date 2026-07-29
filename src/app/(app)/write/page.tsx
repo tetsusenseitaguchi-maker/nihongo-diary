@@ -20,6 +20,7 @@ import { WritingPromptCard } from "@/components/WritingPromptCard";
 import { TrainDiagram } from "@/components/TrainDiagram";
 import { HintsSection } from "@/components/HintsSection";
 import { SavedWordsRow, type SavedWord } from "@/components/SavedWordsRow";
+import type { UsedExpression } from "@/lib/learned-display";
 import { promptForDate, randomPromptExcept, type WritingPrompt } from "@/lib/writing-prompts";
 import { buildMiniLessonFromAI } from "@/lib/lessons";
 import { RECHECK_LIMITS } from "@/lib/recheck-limits";
@@ -92,18 +93,38 @@ function getClientTZ(): string {
  * router.push で遷移する。SPA 遷移なら通常はリクエストが生き残るが、
  * ハードナビゲーションやタブを閉じた場合に落ちるのを防ぐ。
  *
- * 戻り値を見ないのは意図的。/api/learned/scan は失敗しても 200 +
- * { ok: false } を返す設計で、UI に出すものが何もない。卒業の表示は
- * 別ステップで、次にその画面を開いたときに DB から読む形にする。
+ * onResult は「使えた」演出を出すためだけの任意のフック。渡しても
+ * 上の3点は変わらない — await しないので保存フローは待たされず、
+ * 失敗しても呼ばれないだけで、例外は外に出ない。演出を出す画面
+ * （handleCorrect / handleSave）だけが渡す。保存後すぐ router.push で
+ * 離れる経路は渡さない — 表示する画面がもう無い。
+ *
+ * /api/learned/scan は失敗しても 200 + { ok: false } を返す設計なので、
+ * ok を見てから呼ぶ。呼ばれなければ演出が出ないだけで、記録は
+ * サーバー側で完了している。
  */
-function scanLearnedInBackground(diaryEntryId: string): void {
+interface ScanResponse {
+  ok?: boolean;
+  used?: { id: string; word: string; matchedText: string; useCount: number }[];
+  graduated?: string[];
+}
+
+function scanLearnedInBackground(
+  diaryEntryId: string,
+  onResult?: (result: ScanResponse) => void,
+): void {
   try {
     void fetch("/api/learned/scan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ diaryEntryId }),
       keepalive: true,
-    }).catch(() => {});
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: ScanResponse | null) => {
+        if (data?.ok && onResult) onResult(data);
+      })
+      .catch(() => {});
   } catch {
     /* 何もしない — 保存はすでに成功している */
   }
@@ -202,9 +223,15 @@ export default function WritePage() {
   // Set when /api/recheck returns 429 so Free users can be pointed at an upgrade.
   const [showRecheckUpgrade, setShowRecheckUpgrade] = useState(false);
 
-  // Words the learner saved and has not graduated yet — shown above the editor.
-  // Empty array is also the "nothing saved" state; SavedWordsRow renders nothing.
+  // Words the learner saved and has not graduated yet. Two consumers: the
+  // reminder row above the editor shows the first three, and the scan result
+  // looks up readings here by id (see applyScanResult). Empty array is also the
+  // "nothing saved" state; SavedWordsRow renders nothing.
   const [savedWords, setSavedWords] = useState<SavedWord[]>([]);
+
+  // Saved expressions this diary actually used, filled in when the scan answers.
+  // Only ever shown next to a correction result on this page.
+  const [usedExpressions, setUsedExpressions] = useState<UsedExpression[]>([]);
 
   // Plan + usage
   const [plan, setPlan] = useState<Plan>("free");
@@ -258,9 +285,12 @@ export default function WritePage() {
           .eq("user_id", user.id)
           .eq("entry_type", "word")
           .is("graduated_at", null)
+          // No limit: the row below only shows the first three, but the scan
+          // result needs to look up a reading for ANY word it matched, which
+          // may be further down the list. id/word/reading/use_count is a tiny
+          // payload even for a heavy saver.
           .order("use_count", { ascending: false, nullsFirst: false })
-          .order("created_at", { ascending: false })
-          .limit(3),
+          .order("created_at", { ascending: false }),
       ]);
       setPlan(normalizePlan(prof?.plan));
       setUsedToday(usage?.correction_count ?? 0);
@@ -270,6 +300,36 @@ export default function WritePage() {
     })();
   }, []);
 
+
+  /**
+   * scan のレスポンスを、そのまま描ける形に整えて state に入れる。
+   *
+   * ここでやっているのは2つだけ:
+   *   ・reading の補完 — scan は読みを返さない。返させると scan ルートの
+   *     変更になるので、この画面が既に持っている単語リストから id で引く。
+   *     引けなければ null で、その語はふりがな無しで出る（取りこぼし側）。
+   *   ・graduated の付与 — レスポンスの graduated 配列は「この保存で
+   *     ちょうど閾値に達した」id だけ。既に卒業済みの語は scan の候補から
+   *     外れているので、ここに紛れ込むことはない。
+   */
+  function applyScanResult(result: ScanResponse) {
+    const used = result.used ?? [];
+    if (used.length === 0) return;
+
+    const justGraduated = new Set(result.graduated ?? []);
+    const readingById = new Map(savedWords.map((w) => [w.id, w.reading]));
+
+    setUsedExpressions(
+      used.map((u) => ({
+        id: u.id,
+        word: u.word,
+        matchedText: u.matchedText,
+        useCount: u.useCount,
+        reading: readingById.get(u.id) ?? null,
+        graduated: justGraduated.has(u.id),
+      })),
+    );
+  }
 
   const len = text.trim().length;
   const maxChars = limits.maxChars;
@@ -285,6 +345,9 @@ export default function WritePage() {
     setResult(null);
     setPartialCorrection(null);
     setSavedEntryId(null);
+    // A new correction is a new diary — clear the previous one's "used it"
+    // panel so it cannot linger next to a result it has nothing to do with.
+    setUsedExpressions([]);
     setRecheckCount(0); // fresh correction → recheck allowance resets to RECHECK_LIMIT
     try {
       const res = await fetch("/api/correct", {
@@ -450,7 +513,9 @@ export default function WritePage() {
       // 保存の try/catch/finally の外で投げる。保存が失敗した回は id が
       // null のままなので呼ばない。scanLearnedInBackground は throw も
       // reject もしないので、添削フロー側の catch を誤って踏むこともない。
-      if (autoSavedId) scanLearnedInBackground(autoSavedId);
+      // 添削結果はこの時点で既に画面に出ているので、演出は少し遅れて
+      // 現れる（日記が保存されるまで照合は走れないため、原理的にそうなる）。
+      if (autoSavedId) scanLearnedInBackground(autoSavedId, applyScanResult);
     } catch {
       setCorrectError(t("write.networkError"));
       setLoading(false);
@@ -653,6 +718,8 @@ export default function WritePage() {
     // 添削なしでも original_text は学習者自身の文なので、照合対象として
     // 正しい（AI の書き換えではない）。添削ありだけを対象にすると、
     // 添削回数を節約している人が永久に「使えた」を得られなくなる。
+    // onResult は渡さない — 直後に router.push で離れるので、演出を
+    // 出す画面がもう無い。記録はサーバー側で変わらず行われる。
     if (savedId) scanLearnedInBackground(savedId);
   }
 
@@ -686,7 +753,8 @@ export default function WritePage() {
     } finally {
       setSaving(false);
     }
-    if (savedId) scanLearnedInBackground(savedId);
+    // 手動リトライでも添削結果は画面に出たままなので、演出を出す。
+    if (savedId) scanLearnedInBackground(savedId, applyScanResult);
   }
 
   // Enter revise mode: prefill the editor with the learner's original text so
@@ -933,7 +1001,10 @@ export default function WritePage() {
               {/* Saved-word reminder — outside the Hints band on purpose, since
                   that band is collapsed on every mount and this needs to be
                   seen without being opened. Renders nothing when empty. */}
-              <SavedWordsRow words={savedWords} />
+              {/* slice(0, 3): the query now returns every unfinished word so the
+                  scan result can look up readings, but the row still shows the
+                  three closest to graduating, exactly as before. */}
+              <SavedWordsRow words={savedWords.slice(0, 3)} />
 
               {/* selectors */}
               <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4" data-tour="write-options">
@@ -1230,6 +1301,7 @@ export default function WritePage() {
           <CorrectionResult
             correction={result}
             locked={{ drills: isFreePlan, miniLesson: isFreePlan }}
+            usedExpressions={usedExpressions}
           />
           <p className="pt-1 text-center text-xs text-muted">
             {t("write.aiDisclaimer")}

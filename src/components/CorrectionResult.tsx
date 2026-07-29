@@ -6,6 +6,8 @@ import type { Correction } from "@/lib/types";
 import { ObiePhoto } from "@/components/ObiePhoto";
 import { Furigana } from "@/components/Furigana";
 import { PracticeDrills } from "@/components/PracticeDrills";
+import { LearnedUsedPanel } from "@/components/LearnedUsedPanel";
+import type { UsedExpression } from "@/lib/learned-display";
 import { useT, useLocale } from "@/contexts/locale";
 import { getLessonInLocale } from "@/lib/lesson-i18n";
 import { vocabWordText } from "@/lib/furigana";
@@ -113,6 +115,7 @@ export function CorrectionResult({
   correction,
   showOriginal = true,
   locked,
+  usedExpressions,
 }: {
   correction: Correction;
   showOriginal?: boolean;
@@ -123,6 +126,20 @@ export function CorrectionResult({
    * exactly as before.
    */
   locked?: { drills?: boolean; miniLesson?: boolean };
+  /**
+   * Saved expressions this diary actually used, from /api/learned/scan.
+   *
+   * Same opt-in shape as `locked`: only the write page passes it, because only
+   * there does a diary get saved and scanned while the result is on screen.
+   * History and diary detail render a stored correction with no scan attached,
+   * and the tour sample must not claim the learner used anything — all three
+   * omit it and are unchanged.
+   *
+   * Arrives a beat after the rest of the result: the scan cannot run until the
+   * diary row exists, so this is undefined on first paint and fills in when the
+   * response lands.
+   */
+  usedExpressions?: UsedExpression[];
 }) {
   const t = useT();
   const { locale } = useLocale();
@@ -206,6 +223,15 @@ export function CorrectionResult({
             </p>
           </div>
         </div>
+      )}
+
+      {/* "You used a word you saved" — sits right under Obie's cheer so it
+          lands in the praise band at the top, where it is seen without
+          scrolling, and pairs with Next Steps further down: this is the payoff
+          for words saved from an earlier correction, that is where the next
+          ones get saved. Renders nothing when the prop is absent or empty. */}
+      {usedExpressions && usedExpressions.length > 0 && (
+        <LearnedUsedPanel used={usedExpressions} />
       )}
 
       {/* Original + Natural */}

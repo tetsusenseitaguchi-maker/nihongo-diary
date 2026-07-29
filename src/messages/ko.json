@@ -829,5 +829,10 @@
   "write.savedWords.oneMore": "1번 더",
   "history.subtitleVocab": "Words and grammar you saved",
   "history.subtitleReport": "Your writing week in numbers",
-  "history.subtitleReview": "Mistakes worth a second look"
+  "history.subtitleReview": "Mistakes worth a second look",
+  "learned.usedTitle": "You used a word you saved!",
+  "learned.usedSubtitle": "Use it three times and it graduates from your list.",
+  "learned.graduatedTitle": "Mastered it!",
+  "learned.graduatedBody": "Three diaries, three uses. This one is part of your Japanese now. 🐶",
+  "learned.stampLabel": "使えました"
 }

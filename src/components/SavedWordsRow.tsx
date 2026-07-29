@@ -3,6 +3,7 @@
 import { Furigana } from "@/components/Furigana";
 import { useT } from "@/contexts/locale";
 import { vocabWordText } from "@/lib/furigana";
+import { GRADUATION_AT } from "@/lib/learned-display";
 
 /**
  * One always-visible line above the editor listing words the learner saved to
@@ -38,19 +39,6 @@ export type SavedWord = {
   /** Nullability is not guaranteed by the deployed schema, so treat null as 0. */
   use_count: number | null;
 };
-
-/**
- * Mirrors GRADUATION_THRESHOLD (3) from learned-match.ts.
- *
- * Not imported from there on purpose: learned-match.ts pulls in segmenter.ts,
- * which does `new TinySegmenter()` at module scope. That is a real side effect,
- * so no bundler can tree-shake it away, and importing one number drags the
- * whole segmenter into the /write client bundle, which does not otherwise
- * contain it. Measured: importing it moves /write's First Load JS from 312 kB
- * to 321 kB. Duplicating one number is the cheaper trade — but if the
- * threshold ever changes, it has to change in both places.
- */
-const GRADUATION_AT = 3;
 
 export function SavedWordsRow({ words }: { words: SavedWord[] }) {
   const t = useT();
