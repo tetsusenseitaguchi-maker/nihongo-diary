@@ -117,12 +117,24 @@ export default async function WelcomePlansPage() {
         and <CheckoutButton/> on web — Stripe is unreachable from the iOS app by
         construction. Both are read here rather than assumed null so that a user
         who has already bought sees the correct state.
+
+        layout="table" is the first place the comparison table is rendered, and
+        this screen is deliberately the first: nothing routes here yet, so it
+        can be checked on a device before /upgrade — the actual purchase
+        screen — is switched over. /upgrade stays on the cards until then.
+        The table drops Teacher on web too, not only on native, since Teacher
+        is unbuyable and PLAN_LIMITS gives it Pro's limits exactly; it appears
+        as a NativeGate'd note underneath instead. Everything the App Store
+        requires below the tiers — Restore Purchases, the Apple billing notice,
+        the renewal terms and the EULA/privacy links — is rendered by
+        PricingGrid itself and is identical under either layout.
       */}
       <PricingGrid
         currentPlan={plan}
         hasActiveSubscription={!!profile?.stripe_subscription_id}
         billingSource={(profile?.billing_source as "stripe" | "apple_iap" | null) ?? null}
         mode="upgrade"
+        layout="table"
         isNative={isNative}
         translateFeature={t}
         labels={{
