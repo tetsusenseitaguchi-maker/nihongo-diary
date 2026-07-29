@@ -1,5 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { cookies } from "next/headers";
+// Learned Items の照合。サーバー内なので HTTP で自分を叩き直さず、
+// export された POST をそのまま呼ぶ（scan 側のロジックは無変更）。
+import { POST as scanLearned } from "@/app/api/learned/scan/route";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePlan, limitsFor } from "@/lib/plans";
 import { lessonById } from "@/lib/lessons";
@@ -390,6 +393,37 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+
+  // ---- Learned Items: 「使えた」照合 ----
+  // 保存（update）が成功した後だけ走らせる。照合対象は original_text で、
+  // ここで書き換えた corrected_japanese / natural_japanese は使わない。
+  //
+  // ⚠️ 指示は「await しない（fire-and-forget）」だが、サーバー側で素の
+  //    unawaited promise にすると、レスポンスを返した時点で実行環境
+  //    （Vercel）が関数を止めてしまい、照合が走らないことがある。
+  //    after() はレスポンス後の実行を保証する Next.js の枠組みなので、
+  //    「リクエストをブロックしない」という意図は満たしつつ、確実に動く。
+  //    レスポンスはこの下の return で先に返るので、添削の応答は1msも遅れない。
+  //
+  // 同じリクエストスコープで呼ぶため cookies() がそのまま見え、認証を
+  // 引き継げる（scan 側も RLS 前提の anon クライアントのまま動く）。
+  after(async () => {
+    try {
+      // Request の URL は Request コンストラクタが絶対 URL を要求するだけの
+      // ダミー。scan ハンドラは req.json() しか読まず req.url は見ない。
+      await scanLearned(
+        new Request("http://internal/api/learned/scan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ diaryEntryId: entryId }),
+        }),
+      );
+    } catch (err) {
+      // scan 側は設計上投げないが、万一投げてもここで止める。
+      // 添削結果はすでに保存済みなので、学習者の日記には影響しない。
+      console.error("[correct-existing] learned scan failed:", err);
+    }
+  });
 
   return NextResponse.json({ ok: true });
 }

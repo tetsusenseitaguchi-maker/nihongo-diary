@@ -77,6 +77,37 @@ function getClientTZ(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 }
 
+/**
+ * 「保存した表現を日記で使えたか」の照合を投げるだけの関数。
+ *
+ * 日記保存のおまけなので、保存の成否には絶対に影響させない。そのために:
+ *   ・await しない（呼び出し側の保存フローを1msも待たせない）
+ *   ・.catch(() => {}) で reject を握りつぶす（unhandled rejection も出さない）
+ *   ・全体を try/catch で包む（fetch 自体が同期的に投げても外に出さない）
+ * つまりこの関数は throw もしないし reject もしない。だから呼び出し側の
+ * try ブロックの外に置ける（置いている）。
+ *
+ * keepalive: true — handleJustSave / handleSeekPeerCorrection は直後に
+ * router.push で遷移する。SPA 遷移なら通常はリクエストが生き残るが、
+ * ハードナビゲーションやタブを閉じた場合に落ちるのを防ぐ。
+ *
+ * 戻り値を見ないのは意図的。/api/learned/scan は失敗しても 200 +
+ * { ok: false } を返す設計で、UI に出すものが何もない。卒業の表示は
+ * 別ステップで、次にその画面を開いたときに DB から読む形にする。
+ */
+function scanLearnedInBackground(diaryEntryId: string): void {
+  try {
+    void fetch("/api/learned/scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ diaryEntryId }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    /* 何もしない — 保存はすでに成功している */
+  }
+}
+
 function jpDate(iso: string) {
   const d = new Date(iso + "T00:00:00");
   return d.toLocaleDateString("ja-JP", {
@@ -384,14 +415,20 @@ export default function WritePage() {
 
       // Auto-save: diary is persisted as part of the correction flow
       setSaving(true);
+      let autoSavedId: string | null = null;
       try {
         const id = await saveEntry(correction);
+        autoSavedId = id;
         setSavedEntryId(id);
       } catch (err) {
         setSaveError(err instanceof Error ? err.message : "Save failed");
       } finally {
         setSaving(false);
       }
+      // 保存の try/catch/finally の外で投げる。保存が失敗した回は id が
+      // null のままなので呼ばない。scanLearnedInBackground は throw も
+      // reject もしないので、添削フロー側の catch を誤って踏むこともない。
+      if (autoSavedId) scanLearnedInBackground(autoSavedId);
     } catch {
       setCorrectError(t("write.networkError"));
       setLoading(false);
@@ -582,28 +619,35 @@ export default function WritePage() {
     if (!text.trim() || overLimit || loading || seekingPeer || justSaving || saving) return;
     setSeekingPeer(true);
     setSeekPeerError(null);
+    let savedId: string | null = null;
     try {
-      const id = await saveWithoutCorrection({ isPublic: true, seekingPeerCorrection: true });
-      router.push(`/diary/${id}`);
+      savedId = await saveWithoutCorrection({ isPublic: true, seekingPeerCorrection: true });
+      router.push(`/diary/${savedId}`);
     } catch (err) {
       setSeekPeerError(err instanceof Error ? err.message : t("write.seekPeerError"));
     } finally {
       setSeekingPeer(false);
     }
+    // 添削なしでも original_text は学習者自身の文なので、照合対象として
+    // 正しい（AI の書き換えではない）。添削ありだけを対象にすると、
+    // 添削回数を節約している人が永久に「使えた」を得られなくなる。
+    if (savedId) scanLearnedInBackground(savedId);
   }
 
   async function handleJustSave() {
     if (!text.trim() || overLimit || loading || justSaving || saving) return;
     setJustSaving(true);
     setJustSaveError(null);
+    let savedId: string | null = null;
     try {
-      const id = await saveWithoutCorrection();
-      router.push(`/diary/${id}`);
+      savedId = await saveWithoutCorrection();
+      router.push(`/diary/${savedId}`);
     } catch (err) {
       setJustSaveError(err instanceof Error ? err.message : t("write.justSaveError"));
     } finally {
       setJustSaving(false);
     }
+    if (savedId) scanLearnedInBackground(savedId);
   }
 
   // Manual save retry — only reachable when auto-save failed.
@@ -611,14 +655,16 @@ export default function WritePage() {
     if (!result || savedEntryId) return;
     setSaving(true);
     setSaveError(null);
+    let savedId: string | null = null;
     try {
-      const id = await saveEntry(result);
-      setSavedEntryId(id);
+      savedId = await saveEntry(result);
+      setSavedEntryId(savedId);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : "Save failed");
     } finally {
       setSaving(false);
     }
+    if (savedId) scanLearnedInBackground(savedId);
   }
 
   // Enter revise mode: prefill the editor with the learner's original text so
