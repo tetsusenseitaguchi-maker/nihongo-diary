@@ -908,5 +908,7 @@
   "plans.note.miniLessonInCorrection": "A grammar lesson matched to the mistake in your correction.",
   "plans.note.lessonLibrary": "The 20 lessons you can read on the Support tab.",
   "plans.note.reviewDrills": "AI-generated drills for a mini lesson, on the Support tab. Pro only.",
-  "plans.note.reportStreak": "Your streak always shows in the sidebar. This is the streak line inside the Weekly Report."
+  "plans.note.reportStreak": "Your streak always shows in the sidebar. This is the streak line inside the Weekly Report.",
+  "plans.freeInline": "Free: {value}",
+  "plans.freeInlineNo": "Not on Free"
 }

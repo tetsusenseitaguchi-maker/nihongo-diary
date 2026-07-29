@@ -2,6 +2,9 @@ import { Icon } from "@/components/icons";
 import { NoteTooltip } from "@/components/NoteTooltip";
 import { PlanPrice } from "@/components/PlanPrice";
 import { PurchaseButton } from "@/components/PurchaseButton";
+// Still needed below the table: the Teacher note is web-only. The free
+// column's "$0" → "Free" swap used it too, and that use is gone with the
+// column.
 import { NativeGate } from "@/components/NativeGate";
 import { PLAN_LABELS } from "@/lib/plans";
 import {
@@ -38,6 +41,36 @@ import {
  * in-app subscription-management link for Apple subscribers, and PurchaseButton
  * itself. Teacher is absent by design — see plan-comparison.ts.
  */
+
+/**
+ * The plans that get a column of their own.
+ *
+ * Free is not one of them — it appears under each row's label instead, as
+ * "Free: 1". Three columns left ~73px each at 375px, which is where the
+ * price overflow, the wrapped values and the two-line labels all came from;
+ * two columns give the labels ~143px and the values ~96px and the crowding
+ * goes away.
+ *
+ * Deliberately local, and deliberately not COMPARISON_PLANS. plan-comparison.ts
+ * still lists all three and still carries every free value — this is a
+ * presentation choice about which of them get a column, and the purchase
+ * buttons below the table go on iterating COMPARISON_PLANS so Free keeps its
+ * "Current plan" entry.
+ */
+const COLUMN_PLANS = ["plus", "pro"] as const satisfies readonly ComparisonPlan[];
+
+/** The plan shown inline under each label rather than in a column. */
+const INLINE_PLAN: ComparisonPlan = "free";
+
+/**
+ * i18n for the inline free line.
+ *
+ * Not added to COMPARISON_CHROME_KEYS: that inventory belongs to
+ * plan-comparison.ts, which this change deliberately leaves alone. These two
+ * keys exist only because of how this component chooses to lay the table out.
+ */
+const FREE_INLINE_KEY = "plans.freeInline";
+const FREE_INLINE_NO_KEY = "plans.freeInlineNo";
 
 /** Per-column display data the table cannot derive from PLAN_LIMITS. */
 export interface PlanColumnMeta {
@@ -91,32 +124,33 @@ export function PlanComparisonTable({
         <table className="w-full min-w-[340px] table-fixed border-collapse text-xs sm:text-sm">
           <caption className="sr-only">{t(K.caption)}</caption>
 
-          {/* 38% for the labels, the rest split three ways. colgroup rather
-              than per-cell widths so the group heading rows, which span the
-              whole table, cannot pull the columns out of alignment. */}
-          {/* 36/21.3×3 rather than 38/20.7×3: at 375px the table is ~343px,
-              so every point taken off the labels is ~1px back on each value
-              column, and the values are what were overflowing. */}
+          {/* One column per COLUMN_PLANS entry, plus the labels. colgroup
+              rather than per-cell widths so the group heading rows, which span
+              the whole table, cannot pull the columns out of alignment.
+              44/28/28 at 375px is ~143px for a label and ~96px for a value,
+              against ~115px and ~73px on three columns — enough that the
+              longest values and all but one label now hold a single line. */}
           <colgroup>
-            <col style={{ width: "36%" }} />
-            <col style={{ width: "21.33%" }} />
-            <col style={{ width: "21.33%" }} />
-            <col style={{ width: "21.34%" }} />
+            <col style={{ width: "44%" }} />
+            <col style={{ width: "28%" }} />
+            <col style={{ width: "28%" }} />
           </colgroup>
 
           <thead>
             <tr className="border-b border-line">
               <td />
-              {COMPARISON_PLANS.map((p) => {
+              {COLUMN_PLANS.map((p) => {
                 const col = columns[p];
                 return (
                   <th key={p} scope="col" className="px-1 pb-3 pt-1 text-center align-top">
                     {/* Fixed-height slot, rendered for every column whether or
-                        not it has a badge. Previously the badge existed only
-                        under Plus and pushed that column's name and price out
-                        of line with Free and Pro. align-top plus a
-                        single-line name then puts all three names at the same
-                        y whatever the price below them does. */}
+                        not it has a badge. Keep it: only Plus has a badge, and
+                        without the slot reserved it pushes Plus's name and
+                        price down while Pro's stay up — the misalignment this
+                        was added to fix. Two columns give the badge more room
+                        horizontally; they do not remove the need for the slot.
+                        align-top plus a single-line name then puts both names
+                        at the same y whatever the price below them does. */}
                     <span className="mb-1 flex h-5 items-center justify-center">
                       {col.highlight && (
                         <span className="rounded-full bg-mint px-2 py-0.5 text-[10px] font-bold text-pine">
@@ -128,30 +162,22 @@ export function PlanComparisonTable({
                       {PLAN_LABELS[p]}
                     </span>
                     {/*
+                      Every column here is a paid plan, so every price goes
+                      through PlanPrice — which shows the real StoreKit
+                      priceString on native and never falls back to the USD
+                      figure (Guidelines 3.1.1 / 3.1.2). Dropping the free
+                      column took its "$0" → "Free" swap with it, one fewer
+                      place a USD string could reach the native shell.
+
                       PlanPrice hardcodes text-3xl and a w-16 skeleton, both
-                      sized for the cards. A value column is ~73px at 375px, so
-                      a "$19" plus an inline "/month" ran straight out of the
-                      cell. PlanPrice is shared with the card layout and is not
-                      modified, so the size is capped from out here instead:
-                      inside this wrapper the only .font-serif is PlanPrice's
-                      price (the plan name is a sibling above) and the only
-                      .animate-pulse is its skeleton.
+                      sized for the cards, and is shared with that layout so it
+                      is not modified. The size is capped from out here
+                      instead: inside this wrapper the only .font-serif is
+                      PlanPrice's price (the plan name is a sibling above) and
+                      the only .animate-pulse is its skeleton.
                     */}
                     <span className="mt-0.5 block leading-tight [&_.animate-pulse]:w-10 [&_.font-serif]:text-xl sm:[&_.animate-pulse]:w-16 sm:[&_.font-serif]:text-2xl">
-                      {p === "free" ? (
-                        // The hardcoded "$0" is an external USD price under
-                        // Guideline 3.1.1. Server-side when the native UA is
-                        // known; NativeGate covers requests where it isn't.
-                        isNative ? (
-                          <FreePrice label={t("pricing.freeNativePrice")} />
-                        ) : (
-                          <NativeGate fallback={<FreePrice label={t("pricing.freeNativePrice")} />}>
-                            <FreePrice label={col.priceFallback} />
-                          </NativeGate>
-                        )
-                      ) : (
-                        <PlanPrice plan={p} fallback={col.priceFallback} isNative={isNative} />
-                      )}
+                      <PlanPrice plan={p} fallback={col.priceFallback} isNative={isNative} />
                     </span>
                     {/*
                       The cadence is rendered here instead of being handed to
@@ -258,16 +284,30 @@ export function PlanComparisonTable({
 }
 
 /**
- * The free column's price.
+ * The free tier's value for a row, as the line that sits under its label.
  *
- * Carries PlanPrice's exact classes for the price itself, deliberately: the
- * paid columns render through PlanPrice, which hardcodes text-3xl, and a
- * smaller size here gave the three header cells different line heights and
- * so different baselines. PlanPrice is shared with the card layout and is
- * not modified, so this side matches it instead.
+ * "Not on Free" rather than "Free: —" where the tier does not get the feature.
+ * A bare dash worked while Free had a column, because the header said which
+ * plan the cell belonged to; under a label it reads as a missing value rather
+ * than an absent feature.
+ *
+ * Returns a string, not a node, so the "yes" case borrows the sr-only wording
+ * the table already uses for a tick and nothing has to interpolate an icon.
  */
-function FreePrice({ label }: { label: string }) {
-  return <span className="font-serif text-3xl font-bold text-pine">{label}</span>;
+function freeInline(
+  cell: Cell,
+  t: (key: string, vars?: Record<string, string | number>) => string,
+): string {
+  switch (cell.kind) {
+    case "no":
+      return t(FREE_INLINE_NO_KEY);
+    case "num":
+      return t(FREE_INLINE_KEY, { value: cell.n });
+    case "i18n":
+      return t(FREE_INLINE_KEY, { value: t(cell.key, cell.vars) });
+    case "yes":
+      return t(FREE_INLINE_KEY, { value: t(K.included) });
+  }
 }
 
 function GroupRows({
@@ -288,7 +328,7 @@ function GroupRows({
       <tr>
         <th
           scope="colgroup"
-          colSpan={COMPARISON_PLANS.length + 1}
+          colSpan={COLUMN_PLANS.length + 1}
           className={`pb-1 pt-5 text-left text-[11px] font-bold uppercase tracking-wide text-moss-600 ${
             isFirst ? "" : "border-t border-line"
           }`}
@@ -331,8 +371,24 @@ function GroupRows({
               {row.noteKey && (
                 <NoteTooltip text={t(row.noteKey)} label={t(K.noteToggle)} />
               )}
+              {/*
+                Free, inline. Small and grey rather than a column of its own,
+                which is the point: as an equal third column the free tier
+                competed with the paid ones, and this table exists because the
+                cards before it made Free look like the richer choice.
+
+                Every row carries it, including the ones Free does not get.
+                There is no "Free" column header any more, so the word has to
+                be on each line or the number underneath a label means nothing.
+                Below the label rather than beside it, so the first line — and
+                with it the row's baseline, and the values aligned to it — does
+                not move.
+              */}
+              <span className="mt-0.5 block text-[10px] font-normal leading-snug text-muted">
+                {freeInline(row.cells[INLINE_PLAN], t)}
+              </span>
             </th>
-            {COMPARISON_PLANS.map((p) => (
+            {COLUMN_PLANS.map((p) => (
               // No horizontal padding, and a step down in size below sm. The
               // ordinary cells hold the longest strings — at 375px
               // "3 / correction" comes to ~70px against a ~69px content box
