@@ -139,6 +139,55 @@ export function tokenize(plainText: string): string[] {
   return mergeInflections(segmentJapanese(plainText));
 }
 
+/* ── 自他対応ペアの除外表 ──────────────────────────────────────────────
+   語幹が漢字1文字になる動詞は、自他のペア相手にも前方一致してしまう。
+   例: 見る の語幹は 見 なので、見せました の「見」に当たり、
+       かなガード（直後が せ = かな）も通ってしまう。
+   形態素辞書を持たない限り一般解はないので、実測で誤マッチしたものだけを
+   手書きで並べる。値は「その語として数えてはいけない表層形の先頭」。
+
+   ⚠️ この表に入れる基準は「実際に誤マッチしたこと」。
+   閉まる/閉める・上がる/上げる・下がる/下げる・起きる/起こす・
+   落ちる/落とす・集まる/集める・決まる/決める・始まる/始める・
+   終わる/終える・変わる/変える の10ペアは、語幹が2文字以上あるため
+   すでに正しく弾けている（検証済み）。冗長な行は置かない。
+
+   ⚠️ 副作用として、一部の仮定形・可能形も弾かれる：
+       入る の 入れば / 開く の 開けば / 切る の 切れます /
+       付く の 付けば / 続く の 続けば / 届く の 届けば
+   いずれも初級の日記にはほぼ出ない形で、外すと「使えた」が
+   過剰にカウントされる側に倒れる。取りこぼす方を選んでいる。 */
+const PARTNER_EXCLUSIONS: Record<string, readonly string[]> = {
+  // 語幹 見 — 見せる の全活用が 見せ で始まる
+  "見る": ["見せ"],
+  // 語幹 出 — 出る と 出す は語幹が同じ1文字なので、双方向に必要
+  "出る": ["出し", "出さ", "出そ", "出す"],
+  "出す": ["出る", "出ま", "出て", "出た", "出な", "出よ", "出ら", "出れ"],
+  // 語幹 入 — 入れる の全活用が 入れ で始まる
+  "入る": ["入れ"],
+  // 語幹 開 — 開ける の全活用が 開け で始まる
+  "開く": ["開け"],
+  // 語幹 着 — 着せる の全活用が 着せ で始まる
+  "着る": ["着せ"],
+  // 語幹 切 — 切れる の全活用が 切れ で始まる
+  "切る": ["切れ"],
+  // 語幹 付 — 付ける の全活用が 付け で始まる
+  "付く": ["付け"],
+  // 語幹 消 — 消える の全活用が 消え で始まる（逆方向 消える は語幹 消え で安全）
+  "消す": ["消え"],
+  // 語幹 続 — 続ける の全活用が 続け で始まる
+  "続く": ["続け"],
+  // 語幹 届 — 届ける の全活用が 届け で始まる
+  "届く": ["届け"],
+};
+
+/** 表層形が、保存語の自他ペア相手の活用形か。true なら別語なので数えない。 */
+function isPartnerForm(word: string, surface: string): boolean {
+  const forbidden = PARTNER_EXCLUSIONS[word.trim()];
+  if (!forbidden) return false;
+  return forbidden.some((prefix) => surface.startsWith(prefix));
+}
+
 /**
  * 語が日記に現れるか。現れた表層形を返す（無ければ null）。
  *
@@ -152,8 +201,12 @@ export function tokenize(plainText: string): string[] {
  * 「でし」「た」を貼り付けて1トークンにしてしまうため、完全一致だけでは
  * 取りこぼす。かなガードがあるので 元気・天気予報 には当たらない。
  *
+ * かなガードでは足りない唯一の穴が自他対応ペア（見る × 見せて）で、
+ * そこだけ PARTNER_EXCLUSIONS の手書き表で塞いでいる。
+ *
  * かなのみの語 — トークン境界が信頼できないので生文字列の部分一致。
  * MIN_KANA_ONLY_LENGTH 未満は偶然の一致が怖いので照合しない。
+ * こちらは自他ペアの対象外（ペアはどちらも漢字を含むため）。
  */
 export function findMatch(word: string, tokens: string[], plainText: string): string | null {
   const stem = stemOf(word);
@@ -166,6 +219,10 @@ export function findMatch(word: string, tokens: string[], plainText: string): st
 
   for (const tk of tokens) {
     if (!tk.startsWith(stem)) continue;
+    // 自他ペアの相手側は別語。break ではなく continue — 本文に
+    // 「窓が開いて、ドアを開けました」のように両方出る場合、
+    // 開く は 開いて の側で正しく拾えるようにする。
+    if (isPartnerForm(word, tk)) continue;
     if (tk.length === stem.length) return tk;
     if (IS_KANA.test(tk[stem.length])) return tk;
   }
