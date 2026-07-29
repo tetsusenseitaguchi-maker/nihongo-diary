@@ -783,5 +783,10 @@
   "tour.sample.badge": "Exemple",
   "tour.sample.note": "Résultat d'exemple : votre journal n'a pas encore été corrigé.",
   "tour.sample.show": "Voir l'exemple",
-  "tour.sample.close": "Fermer"
+  "tour.sample.close": "Fermer",
+  "welcomePlans.label": "Plans",
+  "welcomePlans.title": "Your free account is ready",
+  "welcomePlans.description": "Everything here is optional — the free plan is yours to keep. Take a look at what Plus and Pro add, or jump straight in. 🌸",
+  "welcomePlans.skip": "Start writing for free",
+  "welcomePlans.skipHint": "You can see plans any time from your profile."
 }

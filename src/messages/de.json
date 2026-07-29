@@ -783,5 +783,10 @@
   "tour.sample.badge": "Beispiel",
   "tour.sample.note": "Beispielergebnis – dein Tagebuch wurde noch nicht korrigiert.",
   "tour.sample.show": "Beispiel ansehen",
-  "tour.sample.close": "Schließen"
+  "tour.sample.close": "Schließen",
+  "welcomePlans.label": "Plans",
+  "welcomePlans.title": "Your free account is ready",
+  "welcomePlans.description": "Everything here is optional — the free plan is yours to keep. Take a look at what Plus and Pro add, or jump straight in. 🌸",
+  "welcomePlans.skip": "Start writing for free",
+  "welcomePlans.skipHint": "You can see plans any time from your profile."
 }

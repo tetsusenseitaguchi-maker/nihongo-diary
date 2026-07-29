@@ -783,5 +783,10 @@
   "tour.sample.badge": "예시",
   "tour.sample.note": "예시 결과입니다. 아직 첨삭은 이루어지지 않았습니다.",
   "tour.sample.show": "예시 보기",
-  "tour.sample.close": "닫기"
+  "tour.sample.close": "닫기",
+  "welcomePlans.label": "Plans",
+  "welcomePlans.title": "Your free account is ready",
+  "welcomePlans.description": "Everything here is optional — the free plan is yours to keep. Take a look at what Plus and Pro add, or jump straight in. 🌸",
+  "welcomePlans.skip": "Start writing for free",
+  "welcomePlans.skipHint": "You can see plans any time from your profile."
 }
