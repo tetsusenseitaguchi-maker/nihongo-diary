@@ -174,6 +174,14 @@ CRITICAL furigana rules:
   恋しい → <ruby>恋<rt>こい</rt></ruby>しい (こいしい, NEVER れん)
   悲しい → <ruby>悲<rt>かな</rt></ruby>しい (かなしい, NEVER ひ)
   Other adjectives of the same type: 難しい <ruby>難<rt>むずか</rt></ruby>しい (NEVER なん), 新しい <ruby>新<rt>あたら</rt></ruby>しい (NEVER しん), 楽しい <ruby>楽<rt>たの</rt></ruby>しい (NEVER らく/がく), 苦しい <ruby>苦<rt>くる</rt></ruby>しい (NEVER く), 美しい <ruby>美<rt>うつく</rt></ruby>しい (NEVER び), 厳しい <ruby>厳<rt>きび</rt></ruby>しい (NEVER げん), 優しい <ruby>優<rt>やさ</rt></ruby>しい (NEVER ゆう), 正しい <ruby>正<rt>ただ</rt></ruby>しい (NEVER せい).
+- A SEPARATE trap from the on'yomi one above, and it catches readings that are all correct kun'yomi: many kanji carry SEVERAL kun'yomi, and the okurigana decides which. Read the okurigana first, then — where the okurigana alone is not enough — the context. Never pick from the kanji alone; the most familiar reading is not the default:
+  止む → <ruby>止<rt>や</rt></ruby>む (やむ — something ongoing stops of its own accord: 雨が止む, 風が止む, 音が止む). 止まる/止める are <ruby>止<rt>と</rt></ruby>まる / <ruby>止<rt>と</rt></ruby>める (とまる・とめる — something that moves halts or is halted: 電車が止まる, 車を止める). Test: weather, sound or an ongoing phenomenon → やむ; a vehicle, machine or motion → とまる. 雨が止んだ = <ruby>雨<rt>あめ</rt></ruby>が<ruby>止<rt>や</rt></ruby>んだ, NEVER とんだ.
+  空く → <ruby>空<rt>あ</rt></ruby>く (あく — a seat or slot becomes free: 席が空く, 手が空く) / <ruby>空<rt>す</rt></ruby>く (すく — becomes less crowded, or hunger: 電車が空く, お腹が空く). Never くう. Same word as in the on'yomi list above; the split between あく and すく is the part decided by context.
+  開く → <ruby>開<rt>ひら</rt></ruby>く (ひらく — something is unfolded or spread open, typically transitive with を: 本を開く, 目を開く, 会を開く) / <ruby>開<rt>あ</rt></ruby>く (あく — intransitive, becomes open: 店が開く, ドアが開く). 開ける is always <ruby>開<rt>あ</rt></ruby>ける.
+  生む → <ruby>生<rt>う</rt></ruby>む (うむ) / 生きる → <ruby>生<rt>い</rt></ruby>きる (いきる) / 生える → <ruby>生<rt>は</rt></ruby>える (はえる). One kanji, three readings, settled entirely by the okurigana — no context needed.
+  下がる → <ruby>下<rt>さ</rt></ruby>がる (さがる — moves down or decreases: 温度が下がる) / 下る → <ruby>下<rt>くだ</rt></ruby>る (くだる — travels down along something: 坂を下る) / 下りる → <ruby>下<rt>お</rt></ruby>りる (おりる — gets off, or comes down from a height: 電車を下りる, 階段を下りる).
+  上がる → <ruby>上<rt>あ</rt></ruby>がる (あがる — rises or goes up: 値段が上がる, 部屋に上がる) / 上る → <ruby>上<rt>のぼ</rt></ruby>る (のぼる — climbs along something: 坂を上る, 階段を上る).
+  入る → <ruby>入<rt>はい</rt></ruby>る (はいる — enters) / 入れる → <ruby>入<rt>い</rt></ruby>れる (いれる — puts something in). 気に入る is the exception: <ruby>気<rt>き</rt></ruby>に<ruby>入<rt>い</rt></ruby>る (きにいる, NEVER きにはいる).
 - Grammaticalized auxiliary verbs after the て-form (補助動詞) — てくる,
   ていく, てある, ておく, てみる, てしまう — should be written in
   hiragana, not kanji (write てくる, NOT て来る; ていく, NOT て行く),
@@ -187,7 +195,7 @@ Correct examples:
 Wrong (do NOT do this): <ruby>見ました<rt>みました</rt></ruby>, <ruby>は<rt>は</rt></ruby>, <ruby>可愛かった<rt>かわいかった</rt></ruby>
 Every Japanese field above ends in "Ruby" and must contain furigana in this format.
 
-3. Furigana must be accurate and chosen from context (今日=きょう, 日本語=にほんご, 行った=いった, 良かった=よかった, 大人=おとな, 診て=みて, 観て=みて, 空いて=すいて, 生きて=いきて, 下さい=ください, 分かった=わかった, 話して=はなして, 激しい=はげしい, 細かい=こまかい, 細い=ほそい).
+3. Furigana must be accurate and chosen from context (今日=きょう, 日本語=にほんご, 行った=いった, 良かった=よかった, 大人=おとな, 診て=みて, 観て=みて, 空いて=すいて, 生きて=いきて, 下さい=ください, 分かった=わかった, 話して=はなして, 激しい=はげしい, 細かい=こまかい, 細い=ほそい, 止んだ=やんだ, 止まった=とまった, 入った=はいった, 気に入った=きにいった).
 
 4. Match the learner's level in grammar AND kanji:
 - N5: mostly hiragana; only very common kanji (私, 人, 日, 本, 日本, 日本語, 学校, 先生, 友達, 食べる, 飲む, 行く, 見る, 来る); very simple, short grammar; avoid 〜ため/〜によって/〜ということ etc.
