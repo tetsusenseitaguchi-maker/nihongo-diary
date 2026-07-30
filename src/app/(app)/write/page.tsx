@@ -14,7 +14,7 @@ import { PublicToggle } from "@/components/PublicToggle";
 import { Furigana } from "@/components/Furigana";
 import { Bilingual } from "@/components/Bilingual";
 import { templates, sampleDraft } from "@/lib/mock-data";
-import type { Level, CorrectionStyle, Correction, DiaryPlace, MistakeItem, VocabItem, NextVocabItem, AlternativeWord, RecheckResult as RecheckResultData } from "@/lib/types";
+import type { Level, CorrectionStyle, Correction, DiaryPlace, DrillType, MistakeItem, VocabItem, NextVocabItem, AlternativeWord, RecheckResult as RecheckResultData } from "@/lib/types";
 import { GrammarReviewCard } from "@/components/GrammarReviewCard";
 import { WritingPromptCard } from "@/components/WritingPromptCard";
 import { TrainDiagram } from "@/components/TrainDiagram";
@@ -404,8 +404,7 @@ export default function WritePage() {
         setLoading(false);
         return;
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data = parsed as Record<string, any>;
+      const data = parsed;
 
       setUsedToday((n) => n + 1);
 
@@ -413,37 +412,39 @@ export default function WritePage() {
       // We keep the ruby (furigana) versions for display.
       // normalizeRubyText() sanitizes AI-generated <ruby> markup here, before
       // it's shown OR saved, so malformed tags never reach the DB.
+      //
+      // Every field goes through str() / objArr() — see their definitions at
+      // the bottom of this file. Reading `data` as `any` let a field be
+      // assigned with no sanitizing and no complaint; now each one has to
+      // state what it does. Which transform is correct per field is a separate
+      // question, and four of them are still wrong (see below).
       const correction: Correction = {
-        original: data.original ?? text,
-        originalRuby: normalizeRubyText(data.originalTextRuby || ""),
-        corrected: normalizeRubyText(data.correctedJapaneseRuby || data.correctedJapanese || ""),
-        natural: normalizeRubyText(data.naturalJapaneseRuby || data.naturalJapanese || ""),
-        explanation: data.englishExplanation ?? "",
-        correctionNote: data.correctionNote ?? "",
-        mistakes: (data.keyMistakes ?? []).map(
-          (m: { mistake?: string; mistakeRuby?: string; correction?: string; correctionRuby?: string; explanation?: string }) => ({
-            before: normalizeRubyText(m.mistakeRuby || m.mistake || ""),
-            after: normalizeRubyText(m.correctionRuby || m.correction || ""),
-            note: m.explanation ?? "",
-          }),
-        ),
+        original: typeof data.original === "string" ? data.original : text,
+        originalRuby: normalizeRubyText(str(data.originalTextRuby)),
+        corrected: normalizeRubyText(str(data.correctedJapaneseRuby) || str(data.correctedJapanese)),
+        natural: normalizeRubyText(str(data.naturalJapaneseRuby) || str(data.naturalJapanese)),
+        explanation: str(data.englishExplanation),
+        correctionNote: str(data.correctionNote),
+        mistakes: objArr(data.keyMistakes).map((m) => ({
+          before: normalizeRubyText(str(m.mistakeRuby) || str(m.mistake)),
+          after: normalizeRubyText(str(m.correctionRuby) || str(m.correction)),
+          note: str(m.explanation),
+        })),
         // sanitizeReading() drops a reading that cannot belong to its word
         // (歩く/ある — rule 2's kanji-only <rt> habit bleeding into the
         // standalone reading field). This runs before saveEntry() writes
         // useful_vocabulary, so the broken value never reaches the DB, where
         // the weekly report would read it back too.
-        vocabulary: (data.usefulVocabulary ?? []).map(
-          (v: { word?: string; reading?: string; wordRuby?: string; meaning?: string; example?: string; exampleRuby?: string }): VocabItem => {
-            const word = v.word || (v.wordRuby ? v.wordRuby.replace(/<[^>]*>/g, "") : "") || "";
-            return {
-              word,
-              reading: sanitizeReading(word, v.reading),
-              meaning: v.meaning ?? "",
-              example: normalizeRubyText(v.exampleRuby || v.example || ""),
-            };
-          },
-        ),
-        practice: { jp: normalizeRubyText(data.practiceSentenceRuby || data.practiceSentence || ""), en: "" },
+        vocabulary: objArr(data.usefulVocabulary).map((v): VocabItem => {
+          const word = str(v.word) || (v.wordRuby ? str(v.wordRuby).replace(/<[^>]*>/g, "") : "");
+          return {
+            word,
+            reading: sanitizeReading(word, str(v.reading)),
+            meaning: str(v.meaning),
+            example: normalizeRubyText(str(v.exampleRuby) || str(v.example)),
+          };
+        }),
+        practice: { jp: normalizeRubyText(str(data.practiceSentenceRuby) || str(data.practiceSentence)), en: "" },
         // The AI returns only { id, shortExplanation, exampleJapaneseRuby,
         // exampleEnglish, shortNote }; buildMiniLessonFromAI fills in title /
         // order / visualImage / points from MINI_LESSONS so CorrectionResult
@@ -453,53 +454,54 @@ export default function WritePage() {
         // normalized, so both drill sources apply READING_DICTIONARY alike.
         // question / answer / choices stay plain text — PracticeDrills.tsx
         // matches a choice with a strict `choice === answer` comparison.
-        practiceDrills: (data.practiceDrills ?? []).map(
-          (d: { type?: string; question?: string; questionRuby?: string; choices?: string[]; answer?: string; answerRuby?: string; englishExplanation?: string }) =>
-            ensureAnswerInChoices(
-              fixMasuIncompatibleBlank({
-                type: d.type ?? "fill-in",
-                question: d.question ?? "",
-                questionRuby: normalizeRubyText(d.questionRuby ?? ""),
-                choices: Array.isArray(d.choices) ? d.choices : [],
-                answer: d.answer ?? "",
-                answerRuby: normalizeRubyText(d.answerRuby ?? ""),
-                englishExplanation: d.englishExplanation ?? "",
-              }),
-            )
+        practiceDrills: objArr(data.practiceDrills).map((d) =>
+          ensureAnswerInChoices(
+            fixMasuIncompatibleBlank({
+              // The model can return any string here; it always could. The
+              // cast makes that explicit instead of hiding it behind `any`.
+              type: (typeof d.type === "string" ? d.type : "fill-in") as DrillType,
+              question: str(d.question),
+              questionRuby: normalizeRubyText(str(d.questionRuby)),
+              choices: Array.isArray(d.choices) ? d.choices : [],
+              answer: str(d.answer),
+              answerRuby: normalizeRubyText(str(d.answerRuby)),
+              englishExplanation: str(d.englishExplanation),
+            }),
+          )
         ),
-        nextVocab: (data.nextVocab ?? []).map(
-          (v: { word?: string; reading?: string; meaning?: string; level?: string }): NextVocabItem => ({
-            word: v.word ?? "",
-            reading: sanitizeReading(v.word ?? "", v.reading),
-            meaning: v.meaning ?? "",
-            level: v.level ?? "",
-          })
-        ),
-        nextGrammar: (data.nextGrammar ?? []).map(
-          (g: { pattern?: string; explanation?: string; exampleRuby?: string }) => ({
-            pattern: g.pattern ?? "",
-            explanation: g.explanation ?? "",
-            exampleRuby: g.exampleRuby ?? "",
-          })
-        ),
-        alternativeWords: (data.alternativeWords ?? []).map(
-          (a: { original?: string; alternative?: string; alternativeReading?: string }): AlternativeWord => ({
-            original: a.original ?? "",
-            alternative: a.alternative ?? "",
-            alternativeReading: sanitizeReading(a.alternative ?? "", a.alternativeReading),
-          })
-        ),
-        diaryTitle: data.diaryTitleRuby || "",
-        obieCheer: data.obieCheerRuby || "",
-        obiePhraseRuby: data.obiePhraseRuby || "",
-        obiePhraseExplanation: data.obiePhraseExplanation || "",
+        nextVocab: objArr(data.nextVocab).map((v): NextVocabItem => ({
+          word: str(v.word),
+          reading: sanitizeReading(str(v.word), str(v.reading)),
+          meaning: str(v.meaning),
+          level: str(v.level),
+        })),
+        // exampleRuby is a *Ruby field with no normalizeRubyText() on it — one
+        // of the four the `any` was hiding. Left as-is here on purpose: 3a
+        // changes no behaviour, 3b fixes the transforms.
+        nextGrammar: objArr(data.nextGrammar).map((g) => ({
+          pattern: str(g.pattern),
+          explanation: str(g.explanation),
+          exampleRuby: str(g.exampleRuby),
+        })),
+        alternativeWords: objArr(data.alternativeWords).map((a): AlternativeWord => ({
+          original: str(a.original),
+          alternative: str(a.alternative),
+          alternativeReading: sanitizeReading(str(a.alternative), str(a.alternativeReading)),
+        })),
+        // The other three: all *Ruby fields, all reaching the screen without
+        // normalizeRubyText(), so READING_DICTIONARY never runs on them. Also
+        // 3b — see the note on nextGrammar above.
+        diaryTitle: str(data.diaryTitleRuby),
+        obieCheer: str(data.obieCheerRuby),
+        obiePhraseRuby: str(data.obiePhraseRuby),
+        obiePhraseExplanation: str(data.obiePhraseExplanation),
         grammarFocus: (() => {
-          const km = (data.keyMistakes ?? [])[0];
+          const km = objArr(data.keyMistakes)[0];
           if (!km || !km.mistake) return null;
           return {
-            before: normalizeRubyText(km.mistakeRuby || km.mistake || ""),
-            after: normalizeRubyText(km.correctionRuby || ""),
-            note: km.explanation || "",
+            before: normalizeRubyText(str(km.mistakeRuby) || str(km.mistake)),
+            after: normalizeRubyText(str(km.correctionRuby)),
+            note: str(km.explanation),
           } satisfies MistakeItem;
         })(),
       };
@@ -1439,4 +1441,27 @@ function safeJson(content: string): Record<string, unknown> | null {
     }
     return null;
   }
+}
+
+/* ── Reading the AI response ───────────────────────────────────────────────
+   safeJson() returns Record<string, unknown>, which is honest: the model can
+   emit anything, including a field of the wrong type or none at all. The
+   mapping below used to cast that to Record<string, any> on one line and read
+   it as though every field were a guaranteed string — which is why four
+   fields ended up assigned straight through with no sanitizing at all, and
+   nothing said so.
+
+   These two are deliberately the same helpers, with the same names and the
+   same behaviour, as /api/correct-existing: both routes read the same JSON
+   from the same prompt, and the eventual shared converter (Step 3c) has to
+   start from one spelling, not two. */
+
+/** A field that should be a string. Anything else reads as absent. */
+function str(v: unknown): string {
+  return typeof v === "string" ? v : "";
+}
+
+/** A field that should be an array of objects. Anything else reads as empty. */
+function objArr(v: unknown): Record<string, unknown>[] {
+  return Array.isArray(v) ? (v as Record<string, unknown>[]) : [];
 }
