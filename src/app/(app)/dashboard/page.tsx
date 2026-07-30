@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, LinkButton } from "@/components/ui";
 import { Icon, renderIcon } from "@/components/icons";
 import { MiniCalendar } from "@/components/MiniCalendar";
-import { Furigana } from "@/components/Furigana";
+import { Furigana, NoRuby } from "@/components/Furigana";
 import { templates } from "@/lib/mock-data";
 import { computeStats, type DiaryRow } from "@/lib/diary";
 import { monthLabel, formatShort } from "@/lib/dates";
@@ -165,7 +165,11 @@ export default async function DashboardPage() {
                   {stats.today.english_explanation && (
                     <div className="mt-3">
                       <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-moss-600">{t("dashboard.explanationLabel")}</p>
-                      <p className="line-clamp-3 text-sm leading-relaxed text-ink/75">{stats.today.english_explanation}</p>
+                      {/* Read straight off the diary row, so it never becomes a
+                          Correction and the PlainText brand never sees it. Same
+                          column as correction.explanation, and stored rows can
+                          carry <ruby> the prompts no longer allow. */}
+                      <p className="line-clamp-3 text-sm leading-relaxed text-ink/75"><NoRuby text={stats.today.english_explanation} /></p>
                     </div>
                   )}
                   <Link href={`/diary/${stats.today.id}`} className="mt-auto pt-3 text-right text-sm font-semibold text-moss-600 hover:text-pine">
