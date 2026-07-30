@@ -30,8 +30,13 @@ export type DiscoverySort = "new" | "random";
 /**
  * The order used when the URL does not say. Whichever one this is, it is the
  * one left out of the URL — the same way an unset level means every level.
+ *
+ * Newest-first, because a shuffled feed cannot be read as a record of when
+ * anything happened: "when was this written" is not answerable by looking at
+ * it. Random is still one chip away, for when the point is to find someone
+ * new rather than to catch up.
  */
-export const DEFAULT_SORT: DiscoverySort = "random";
+export const DEFAULT_SORT: DiscoverySort = "new";
 
 /** Anything but the one other known value reads as the default. */
 export function parseSort(raw: string | undefined): DiscoverySort {

@@ -117,9 +117,9 @@ export default async function FeedPage({
   const params = await searchParams;
   const tab = params.tab === "discovery" ? "discovery" : "following";
 
-  // Discovery keeps its seed in the URL so the order survives paging and the
-  // back button; arriving from Following mints a new one, which is what makes
-  // the tab feel random rather than fixed.
+  // Under "random", Discovery keeps its seed in the URL so the order survives
+  // paging and the back button. Arriving at the tab mints a fresh one, so
+  // choosing random twice is two different shuffles rather than the same one.
   //
   // A seed is minted even under "new", where it orders nothing. It is what the
   // link that switches to "random" needs, and minting it here rather than in
@@ -131,7 +131,7 @@ export default async function FeedPage({
   const filters = parseFilters(params);
   const followingHref = "/feed";
   // Staying on Discovery keeps the order, the seed and the filters; arriving
-  // from Following starts clean, on a new seed and with nothing narrowed.
+  // from Following starts clean — newest-first, with nothing narrowed.
   const discoveryHref =
     tab === "discovery"
       ? buildDiscoveryHref(sort, seed, filters)

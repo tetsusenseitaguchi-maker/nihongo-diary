@@ -11,6 +11,10 @@
  * with a seed, and keep the seed in the URL. The order is stable for as long
  * as the seed is, which is what makes paging and the browser's back button
  * behave, and arriving at the tab afresh mints a new seed.
+ *
+ * None of this runs unless the order is set to random. Discovery defaults to
+ * the pool as it arrives — newest first — and reaches this file only when
+ * asked to shuffle.
  */
 
 /**
