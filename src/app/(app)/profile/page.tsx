@@ -179,7 +179,10 @@ export default async function ProfilePage() {
             switch is read directly under "private by default". The reassurance
             and the control that could be mistaken for weakening it belong on
             the same card. */}
-        <div className="mt-5 border-t border-line pt-5">
+        {/* id is the target of the shortcut in DiscoveryIntroModal — the
+            announcement points here rather than carrying its own copy of the
+            switch. scroll-mt clears the sticky top bar. */}
+        <div id="discovery" className="mt-5 scroll-mt-24 border-t border-line pt-5">
           <h3 className="font-serif font-bold text-pine">{t("profile.discovery.heading")}</h3>
           <p className="mt-1 text-sm leading-relaxed text-ink/75">
             {t("profile.discovery.desc")}

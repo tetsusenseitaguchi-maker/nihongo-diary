@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ObiePhoto";
 import { FollowButton } from "@/components/FollowButton";
 import { FeedTimeline, type FeedItem } from "@/components/FeedTimeline";
 import { DiscoveryTimeline } from "@/components/DiscoveryTimeline";
+import { DiscoveryIntroModal } from "@/components/DiscoveryIntroModal";
 import { FeedTabs } from "@/components/FeedTabs";
 import { UserSearch } from "@/components/UserSearch";
 import { getServerT } from "@/lib/i18n-server";
@@ -237,6 +238,7 @@ export default async function FeedPage({
 
     return (
       <div className="space-y-5">
+        <DiscoveryIntroModal />
         <div>
           <p className="text-sm font-medium text-muted">{t("discovery.subtitle")}</p>
           <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-pine">
@@ -405,6 +407,9 @@ export default async function FeedPage({
 
   return (
     <div className="space-y-5">
+      {/* On both tabs, because whichever one the user lands on is the one that
+          has to carry the notice. It shows once per browser either way. */}
+      <DiscoveryIntroModal />
       <div>
         <p className="text-sm font-medium text-muted">{t("feed.subtitle")}</p>
         {/* Fallback anchor for the tour: the timeline element does not exist
