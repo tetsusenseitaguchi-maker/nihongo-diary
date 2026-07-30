@@ -5,6 +5,7 @@ import { limitsFor, type Plan } from "@/lib/plans";
 import { MINI_LESSONS } from "@/lib/lessons";
 import { DrillList } from "@/components/PracticeDrills";
 import { Icon } from "@/components/icons";
+import { NoRuby } from "@/components/Furigana";
 import { NativeGate } from "@/components/NativeGate";
 import { useT } from "@/contexts/locale";
 import type { PracticeDrill } from "@/lib/types";
@@ -126,7 +127,7 @@ export function MiniLessonReview({ plan }: { plan: Plan | null }) {
         >
           {MINI_LESSONS.map((l) => (
             <option key={l.id} value={l.id}>
-              {l.order}. {l.title}
+              {l.order}. <NoRuby text={l.title} />
             </option>
           ))}
         </select>

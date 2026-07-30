@@ -11,6 +11,7 @@ import type { UsedExpression } from "@/lib/learned-display";
 import { useT, useLocale } from "@/contexts/locale";
 import { getLessonInLocale } from "@/lib/lesson-i18n";
 import { readingValue, safeVocabWordText } from "@/lib/reading-validation";
+import { plainValue } from "@/lib/text-kinds";
 
 function tint(v: string): CSSProperties {
   return { ["--tint" as string]: `var(${v})` } as CSSProperties;
@@ -508,13 +509,17 @@ export function CorrectionResult({
               <p className="text-xs font-bold uppercase tracking-wide text-moss-600">
                 {t("correction.lesson", { n: miniLesson.order })}
               </p>
-              <h3 className="font-serif text-lg font-bold text-pine">{miniLesson.title}</h3>
+              <h3 className="font-serif text-lg font-bold text-pine"><NoRuby text={miniLesson.title} /></h3>
               <p className="mt-1 text-sm leading-relaxed text-ink/80"><NoRuby text={miniLesson.shortExplanation} /></p>
             </div>
 
             <div className="rounded-xl bg-mint/50 p-3">
               <p className="text-[11px] font-bold uppercase tracking-wide text-moss-600">🧠 {t("correction.visualImage")}</p>
-              <p className="mt-0.5 text-sm leading-relaxed text-ink/85">{miniLesson.visualImage}</p>
+              {/* Unwrapped, not stripped: visualImage is never one of the four
+                  fields buildMiniLessonFromAI overrides, so it is always the
+                  authored lesson text — and NoRuby would delete the 漢字(かな)
+                  readings written into it. */}
+              <p className="mt-0.5 text-sm leading-relaxed text-ink/85">{plainValue(miniLesson.visualImage)}</p>
             </div>
 
             {miniLesson.points && miniLesson.points.length > 0 && (
