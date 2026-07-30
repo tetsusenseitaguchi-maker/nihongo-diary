@@ -5,6 +5,7 @@ import { normalizePlan } from "@/lib/plans";
 import { languageDisplayName } from "@/lib/languages";
 import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
 import { normalizeRubyText } from "@/lib/furigana";
+import { sanitizeReading } from "@/lib/reading-validation";
 import { createChatCompletion, missingApiKeyError } from "@/lib/ai-provider";
 
 export const runtime = "nodejs";
@@ -55,6 +56,24 @@ export async function POST(req: Request) {
   }
   if (type === "word" && (!reading || typeof reading !== "string")) {
     return NextResponse.json({ error: "Missing reading" }, { status: 400 });
+  }
+
+  // The reading arrives from the correction result, where the AI produced it —
+  // and it produces 歩く/ある often enough (rule 2's kanji-only <rt> habit
+  // bleeding into the standalone field) that it cannot be trusted. A reading
+  // that cannot belong to its word is dropped rather than stored, so it never
+  // becomes furigana on the vocabulary page.
+  //
+  // Dropped rather than rejected with a 400: the learner tapped "+" on a word,
+  // and the word is worth saving whether or not the AI got its reading right.
+  // An empty reading is already a supported state — safeRubyNotation renders
+  // the bare word for it.
+  //
+  // Computed before the AI call below, not just before the insert, so a wrong
+  // reading cannot steer the generated meaning/example either.
+  const safeReading = sanitizeReading(word, reading);
+  if (type === "word" && reading && !safeReading) {
+    console.warn(`[vocabulary] dropped inconsistent reading for "${word}": "${reading}"`);
   }
 
   // ---- Plan check: Free users capped at FREE_VOCAB_LIMIT total entries (words + grammar) ----
@@ -140,7 +159,7 @@ Return ONLY the raw JSON object. Do NOT wrap it in a markdown code block (no \`\
               content: `You are a Japanese language teacher. Generate study content for this Japanese word.
 
 Word: ${word}
-Reading (hiragana): ${reading}
+Reading (hiragana): ${safeReading}
 ${jlptLevel ? `JLPT Level: ${jlptLevel}` : ""}
 
 Furigana rule: when a kanji is immediately followed by okurigana (the hiragana that completes a verb/adjective stem, e.g. 歩きました, 珍しい), it MUST use its kun'yomi (訓読み) reading — never the on'yomi (音読み) — and <rt> must contain the FULL kun'yomi reading, not a truncated single-mora guess. Correct: <ruby>歩<rt>ある</rt></ruby>きました, <ruby>珍<rt>めずら</rt></ruby>しい. Wrong: <ruby>歩<rt>あ</rt></ruby>きました (truncated reading), <ruby>珍<rt>ちん</rt></ruby>しい (on'yomi used instead of kun'yomi).
@@ -187,7 +206,7 @@ Return ONLY the raw JSON object. Do NOT wrap it in a markdown code block (no \`\
     .insert({
       user_id: user.id,
       word,
-      reading: reading || "",
+      reading: safeReading,
       jlpt_level: jlptLevel ?? null,
       meaning: meaning || word,
       example_jp_ruby: normalizeRubyText(example_jp_ruby) || null,

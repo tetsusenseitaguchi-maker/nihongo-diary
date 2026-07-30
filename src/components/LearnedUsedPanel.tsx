@@ -4,7 +4,7 @@ import { Furigana } from "@/components/Furigana";
 import { GoalRing } from "@/components/GoalRing";
 import { ObiePhoto } from "@/components/ObiePhoto";
 import { useT } from "@/contexts/locale";
-import { vocabWordText } from "@/lib/furigana";
+import { safeVocabWordText } from "@/lib/reading-validation";
 import { GRADUATION_AT, type UsedExpression } from "@/lib/learned-display";
 
 /**
@@ -39,7 +39,7 @@ function UsedRow({ item, tone }: { item: UsedExpression; tone: "quiet" | "loud" 
             持っていないし、推測で振ると間違える）。 */}
         <p className="flex flex-wrap items-baseline gap-x-1.5">
           <Furigana
-            text={vocabWordText(item.word, item.reading ?? undefined)}
+            text={safeVocabWordText(item.word, item.reading ?? undefined)}
             className={`font-jp text-[15px] font-semibold ${isLoud ? "text-cream" : "text-pine"}`}
           />
           <span className={isLoud ? "text-cream/60" : "text-moss"}>→</span>

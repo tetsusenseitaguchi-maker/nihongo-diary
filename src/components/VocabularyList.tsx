@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import type { CSSProperties } from "react";
 import { Furigana, NoRuby } from "@/components/Furigana";
 import { useT } from "@/contexts/locale";
-import { buildRubyNotation } from "@/lib/furigana";
+import { safeRubyNotation } from "@/lib/reading-validation";
 
 export type VocabEntry = {
   id: string;
@@ -146,7 +146,7 @@ export function VocabularyList() {
                     </p>
                   ) : (
                     <p className="font-jp text-2xl font-bold leading-loose text-pine">
-                      <Furigana text={buildRubyNotation(entry.word, entry.reading)} />
+                      <Furigana text={safeRubyNotation(entry.word, entry.reading)} />
                     </p>
                   )}
                   <div className="mt-1 flex gap-1.5">

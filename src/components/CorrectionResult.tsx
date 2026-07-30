@@ -10,13 +10,16 @@ import { LearnedUsedPanel } from "@/components/LearnedUsedPanel";
 import type { UsedExpression } from "@/lib/learned-display";
 import { useT, useLocale } from "@/contexts/locale";
 import { getLessonInLocale } from "@/lib/lesson-i18n";
-import { vocabWordText } from "@/lib/furigana";
+import { safeVocabWordText } from "@/lib/reading-validation";
 
 function tint(v: string): CSSProperties {
   return { ["--tint" as string]: `var(${v})` } as CSSProperties;
 }
 
-// vocabWordText is imported from @/lib/furigana (shared with vocabulary page)
+// safeVocabWordText wraps vocabWordText (@/lib/furigana, shared with the
+// vocabulary page) and drops a reading that cannot belong to its word — the AI
+// returns 歩く/ある often enough that rendering it unchecked shows ある as the
+// furigana for the whole word. See @/lib/reading-validation.
 
 type SaveState = "idle" | "saving" | "saved" | "already_saved" | "error";
 
@@ -306,7 +309,7 @@ export function CorrectionResult({
           <ul className="space-y-3 text-sm">
             {correction.vocabulary.map((v, i) => (
               <li key={i} className="rounded-xl bg-paper/60 p-3">
-                <Furigana text={vocabWordText(v.word, v.reading)} className="font-jp text-[15px] font-semibold text-ink" />
+                <Furigana text={safeVocabWordText(v.word, v.reading)} className="font-jp text-[15px] font-semibold text-ink" />
                 <span className="block text-ink/70"><NoRuby text={v.meaning} /></span>
                 {v.example && (
                   <span className="mt-0.5 block font-jp text-xs text-ink/55">例: <Furigana text={v.example} /></span>
@@ -343,7 +346,7 @@ export function CorrectionResult({
                 {correction.nextVocab.map((v, i) => (
                   <li key={i} className="flex items-center gap-2 rounded-xl bg-paper/60 px-3 py-2">
                     <Furigana
-                      text={vocabWordText(v.word, v.reading)}
+                      text={safeVocabWordText(v.word, v.reading)}
                       className="font-jp text-[15px] font-semibold text-pine"
                     />
                     <span className="text-ink/65 text-xs"><NoRuby text={v.meaning} /></span>
@@ -406,7 +409,7 @@ export function CorrectionResult({
                     <span className="font-jp text-ink/65"><NoRuby text={a.original} /></span>
                     <span className="mx-1 font-bold text-moss">→</span>
                     <Furigana
-                      text={vocabWordText(a.alternative, a.alternativeReading)}
+                      text={safeVocabWordText(a.alternative, a.alternativeReading)}
                       className="font-jp font-semibold text-pine"
                     />
                     <span className="ml-auto">

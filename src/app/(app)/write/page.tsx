@@ -29,6 +29,7 @@ import { PRESET_TAGS, PRESET_TAG_KEYS } from "@/lib/tags";
 import { useT } from "@/contexts/locale";
 import { todayInTZ } from "@/lib/date-tz";
 import { normalizeRubyText, stripRubyText } from "@/lib/furigana";
+import { sanitizeReading } from "@/lib/reading-validation";
 import { fixMasuIncompatibleBlank, ensureAnswerInChoices } from "@/lib/drills";
 
 const DiaryMapPicker = dynamicLoad(
@@ -426,13 +427,21 @@ export default function WritePage() {
             note: m.explanation ?? "",
           }),
         ),
+        // sanitizeReading() drops a reading that cannot belong to its word
+        // (歩く/ある — rule 2's kanji-only <rt> habit bleeding into the
+        // standalone reading field). This runs before saveEntry() writes
+        // useful_vocabulary, so the broken value never reaches the DB, where
+        // the weekly report would read it back too.
         vocabulary: (data.usefulVocabulary ?? []).map(
-          (v: { word?: string; reading?: string; wordRuby?: string; meaning?: string; example?: string; exampleRuby?: string }) => ({
-            word: v.word || (v.wordRuby ? v.wordRuby.replace(/<[^>]*>/g, "") : "") || "",
-            reading: v.reading || "",
-            meaning: v.meaning ?? "",
-            example: normalizeRubyText(v.exampleRuby || v.example || ""),
-          }),
+          (v: { word?: string; reading?: string; wordRuby?: string; meaning?: string; example?: string; exampleRuby?: string }) => {
+            const word = v.word || (v.wordRuby ? v.wordRuby.replace(/<[^>]*>/g, "") : "") || "";
+            return {
+              word,
+              reading: sanitizeReading(word, v.reading),
+              meaning: v.meaning ?? "",
+              example: normalizeRubyText(v.exampleRuby || v.example || ""),
+            };
+          },
         ),
         practice: { jp: normalizeRubyText(data.practiceSentenceRuby || data.practiceSentence || ""), en: "" },
         // The AI returns only { id, shortExplanation, exampleJapaneseRuby,

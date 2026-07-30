@@ -3,7 +3,7 @@
 import { useState, useEffect, type CSSProperties } from "react";
 import { Furigana, NoRuby } from "@/components/Furigana";
 import { useT } from "@/contexts/locale";
-import { buildRubyNotation } from "@/lib/furigana";
+import { safeRubyNotation } from "@/lib/reading-validation";
 
 type ReportData = {
   plan: string;
@@ -136,7 +136,7 @@ export function WeeklyReport() {
                     key={i}
                     className="rounded-xl bg-paper/70 px-3 py-1.5 font-jp text-sm font-semibold text-pine"
                   >
-                    <Furigana text={buildRubyNotation(w.word, w.reading)} />
+                    <Furigana text={safeRubyNotation(w.word, w.reading)} />
                   </span>
                 ))}
               </div>

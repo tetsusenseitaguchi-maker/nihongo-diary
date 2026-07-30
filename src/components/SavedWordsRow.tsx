@@ -2,7 +2,7 @@
 
 import { Furigana } from "@/components/Furigana";
 import { useT } from "@/contexts/locale";
-import { vocabWordText } from "@/lib/furigana";
+import { safeVocabWordText } from "@/lib/reading-validation";
 import { GRADUATION_AT } from "@/lib/learned-display";
 
 /**
@@ -83,7 +83,7 @@ export function SavedWordsRow({ words }: { words: SavedWord[] }) {
                 className="shrink-0 rounded-full border border-line bg-paper px-2.5 py-1 text-[11px]"
               >
                 <Furigana
-                  text={vocabWordText(w.word, w.reading ?? undefined)}
+                  text={safeVocabWordText(w.word, w.reading ?? undefined)}
                   className="font-jp text-pine"
                 />
                 {oneMore && (
