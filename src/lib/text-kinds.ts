@@ -91,3 +91,34 @@ export type Unbranded<T> = T extends RubyText
 export function authored<T>(value: Unbranded<T>): T {
   return value as T;
 }
+
+/**
+ * Lifts a string the AI wrote into PlainText.
+ *
+ * The parse boundary is the one place a raw string legitimately becomes a
+ * branded one, and CORRECTION_SPEC already decides which fields those are —
+ * `kind: "text"`. This is that decision written as a value, for the handful of
+ * places the table cannot reach: buildMiniLessonFromAI(), where an AI override
+ * and a hand-written fallback meet in a single expression.
+ *
+ * Lift once, at the end, rather than per branch. `plain(a) || plain(b)` reads
+ * as a choice between two PlainTexts, but an opaque type has no falsy value for
+ * `||` to test, so the fallback would be dead. Join the strings first:
+ *
+ *   plain(str(r.shortExplanation) || plainValue(base.shortExplanation))
+ */
+export function plain(text: string): PlainText {
+  return text as unknown as PlainText;
+}
+
+/**
+ * The string a PlainText is at runtime, for the places that genuinely need it:
+ * DB columns, request bodies, Map keys, props typed `string`.
+ *
+ * Also accepts a plain string, so a call site fed from both a Correction field
+ * and a DB row does not have to branch. Mirrors readingValue(), including the
+ * empty string for null — a missing field renders as nothing, never "null".
+ */
+export function plainValue(text?: PlainText | string | null): string {
+  return (text as unknown as string | null | undefined) ?? "";
+}

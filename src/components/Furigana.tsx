@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import { parseRubySegments, stripRubyText } from "@/lib/furigana";
+import { plainValue, type PlainText } from "@/lib/text-kinds";
 
 // Supports BOTH:
 //   <ruby>漢字<rt>かんじ</rt></ruby>   (AI output)
@@ -62,8 +63,16 @@ export function Furigana({
  *
  * Returns a bare string, no wrapper element — every call site already sits
  * inside its own styled <p>/<span>, and this must not change their layout.
+ *
+ * Takes `string` as well as PlainText, and deliberately does not narrow to the
+ * brand. Ten of the twenty-five call sites read a DB row — a saved vocabulary
+ * entry, a recheck result — which is an ordinary string and always will be.
+ * The rule that a PlainText must not be rendered raw is not enforced here
+ * anyway: it is enforced by PlainText not being a ReactNode, which makes
+ * `{correction.explanation}` fail to compile. This is the sanctioned way out
+ * of the brand, not the checkpoint.
  */
-export function NoRuby({ text }: { text?: string | null }) {
+export function NoRuby({ text }: { text?: string | PlainText | null }) {
   if (!text) return null;
-  return <>{stripRubyText(text)}</>;
+  return <>{stripRubyText(plainValue(text))}</>;
 }
