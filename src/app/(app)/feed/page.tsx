@@ -10,7 +10,14 @@ import { DiscoveryIntroModal } from "@/components/DiscoveryIntroModal";
 import { FeedTabs } from "@/components/FeedTabs";
 import { UserSearch } from "@/components/UserSearch";
 import { getServerT } from "@/lib/i18n-server";
+import { DiscoveryFilters } from "@/components/DiscoveryFilters";
 import { seededShuffle, parseSeed, newSeed } from "@/lib/discovery/shuffle";
+import {
+  parseFilters,
+  hasAnyFilter,
+  discoveryHref as buildDiscoveryHref,
+  NO_FILTERS,
+} from "@/lib/discovery/filters";
 
 export const dynamic = "force-dynamic";
 
@@ -75,7 +82,14 @@ const DISCOVERY_MAX = 60;
 export default async function FeedPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; seed?: string }>;
+  searchParams: Promise<{
+    tab?: string;
+    seed?: string;
+    level?: string;
+    country?: string;
+    tag?: string;
+    seeking?: string;
+  }>;
 }) {
   const supabase = await createClient();
   const {
@@ -105,8 +119,14 @@ export default async function FeedPage({
   // back button; arriving from Following mints a new one, which is what makes
   // the tab feel random rather than fixed.
   const seed = parseSeed(params.seed) ?? newSeed();
+  const filters = parseFilters(params);
   const followingHref = "/feed";
-  const discoveryHref = `/feed?tab=discovery&seed=${tab === "discovery" ? seed : newSeed()}`;
+  // Staying on Discovery keeps both the seed and the filters; arriving from
+  // Following starts clean, on a new seed and with nothing narrowed.
+  const discoveryHref =
+    tab === "discovery"
+      ? buildDiscoveryHref(seed, filters)
+      : buildDiscoveryHref(newSeed(), NO_FILTERS);
   const tabs = (
     <FeedTabs
       active={tab}
@@ -125,12 +145,24 @@ export default async function FeedPage({
   // private diaries and anyone who opted out, and opt-out cannot be applied
   // here because discovery_settings is readable only by its owner.
   if (tab === "discovery") {
-    const { data: poolData } = await supabase
+    // Filters are applied to the query, not to what comes back. Narrowing
+    // afterwards would leave however many of 300 happened to match, which for
+    // anything selective is a nearly empty screen while plenty went unseen.
+    // author_level and author_country are the two columns appended to the view
+    // for exactly this.
+    let poolQuery = supabase
       .from("discovery_entries")
       .select(
         "id, user_id, diary_date, title, tags, original_text, corrected_japanese, seeking_peer_correction, created_at",
       )
-      .neq("user_id", user.id)
+      .neq("user_id", user.id);
+
+    if (filters.level) poolQuery = poolQuery.eq("author_level", filters.level);
+    if (filters.country) poolQuery = poolQuery.eq("author_country", filters.country);
+    if (filters.tag) poolQuery = poolQuery.contains("tags", [filters.tag]);
+    if (filters.seeking) poolQuery = poolQuery.eq("seeking_peer_correction", true);
+
+    const { data: poolData } = await poolQuery
       .order("created_at", { ascending: false })
       .limit(DISCOVERY_POOL);
 
@@ -248,8 +280,15 @@ export default async function FeedPage({
 
         {tabs}
 
+        <DiscoveryFilters seed={seed} filters={filters} />
+
         <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
-          <DiscoveryTimeline items={discoveryItems} />
+          <DiscoveryTimeline
+            items={discoveryItems}
+            clearFiltersHref={
+              hasAnyFilter(filters) ? buildDiscoveryHref(seed, NO_FILTERS) : null
+            }
+          />
 
           <div className="space-y-4">
             <UserSearch />
