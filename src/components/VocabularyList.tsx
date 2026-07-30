@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { CSSProperties } from "react";
-import { Furigana } from "@/components/Furigana";
+import { Furigana, NoRuby } from "@/components/Furigana";
 import { useT } from "@/contexts/locale";
 import { buildRubyNotation } from "@/lib/furigana";
 
@@ -142,7 +142,7 @@ export function VocabularyList() {
                 <div className="min-w-0 flex-1">
                   {isGrammar ? (
                     <p className="font-jp text-xl font-bold leading-snug text-pine">
-                      {entry.word}
+                      <NoRuby text={entry.word} />
                     </p>
                   ) : (
                     <p className="font-jp text-2xl font-bold leading-loose text-pine">
@@ -176,7 +176,7 @@ export function VocabularyList() {
                 <p className="text-[10px] font-bold uppercase tracking-widest text-moss-600">
                   {t("vocab.meaning")}
                 </p>
-                <p className="mt-1 text-sm leading-relaxed text-ink/80">{entry.meaning}</p>
+                <p className="mt-1 text-sm leading-relaxed text-ink/80"><NoRuby text={entry.meaning} /></p>
               </div>
 
               {/* Example */}
@@ -189,7 +189,7 @@ export function VocabularyList() {
                     <Furigana text={entry.example_jp_ruby} />
                   </p>
                   {entry.example_translation && (
-                    <p className="mt-0.5 text-sm text-ink/55">{entry.example_translation}</p>
+                    <p className="mt-0.5 text-sm text-ink/55"><NoRuby text={entry.example_translation} /></p>
                   )}
                 </div>
               )}
@@ -212,7 +212,7 @@ export function VocabularyList() {
                   </button>
                   {showAnswers.has(entry.id) && entry.practice_answer && (
                     <p className="mt-1 rounded-lg bg-paper/80 px-3 py-2 font-jp text-sm font-semibold text-pine">
-                      {entry.practice_answer}
+                      <NoRuby text={entry.practice_answer} />
                     </p>
                   )}
                 </div>

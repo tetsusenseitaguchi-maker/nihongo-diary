@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, type CSSProperties } from "react";
-import { Furigana } from "@/components/Furigana";
+import { Furigana, NoRuby } from "@/components/Furigana";
 import { useT } from "@/contexts/locale";
 import { buildRubyNotation } from "@/lib/furigana";
 
@@ -154,7 +154,7 @@ export function WeeklyReport() {
                 {data.mistakeNotes.map((note, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-ink/80">
                     <span className="mt-0.5 shrink-0 text-moss-600">•</span>
-                    <span>{note}</span>
+                    <span><NoRuby text={note} /></span>
                   </li>
                 ))}
               </ul>

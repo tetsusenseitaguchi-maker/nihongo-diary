@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import type { CSSProperties } from "react";
 import type { Correction } from "@/lib/types";
 import { ObiePhoto } from "@/components/ObiePhoto";
-import { Furigana } from "@/components/Furigana";
+import { Furigana, NoRuby } from "@/components/Furigana";
 import { PracticeDrills } from "@/components/PracticeDrills";
 import { LearnedUsedPanel } from "@/components/LearnedUsedPanel";
 import type { UsedExpression } from "@/lib/learned-display";
@@ -267,7 +267,7 @@ export function CorrectionResult({
       {/* English Explanation */}
       <div className="gloss-panel rounded-[var(--radius-card)] p-6" style={tint("--color-tint-blue")}>
         <Label en={t("correction.explanation")} jp="解説(かいせつ)" />
-        <p className="text-sm leading-relaxed text-ink/80">{correction.explanation}</p>
+        <p className="text-sm leading-relaxed text-ink/80"><NoRuby text={correction.explanation} /></p>
       </div>
 
       {/* Teacher's note — "not wrong, but more natural" */}
@@ -276,7 +276,7 @@ export function CorrectionResult({
           <span className="text-lg">💡</span>
           <div>
             <Label en={t("correction.teachersNote")} jp="ひとことメモ" />
-            <p className="text-sm leading-relaxed text-ink/80">{correction.correctionNote}</p>
+            <p className="text-sm leading-relaxed text-ink/80"><NoRuby text={correction.correctionNote} /></p>
           </div>
         </div>
       )}
@@ -294,7 +294,7 @@ export function CorrectionResult({
                   <Furigana text={m.before} className="font-jp text-ink/45 line-through" />
                   <span className="mx-1.5 text-moss">→</span>
                   <Furigana text={m.after} className="font-jp font-semibold text-pine" />
-                  <span className="mt-0.5 block text-ink/65">{m.note}</span>
+                  <span className="mt-0.5 block text-ink/65"><NoRuby text={m.note} /></span>
                 </li>
               ))}
             </ul>
@@ -307,7 +307,7 @@ export function CorrectionResult({
             {correction.vocabulary.map((v, i) => (
               <li key={i} className="rounded-xl bg-paper/60 p-3">
                 <Furigana text={vocabWordText(v.word, v.reading)} className="font-jp text-[15px] font-semibold text-ink" />
-                <span className="block text-ink/70">{v.meaning}</span>
+                <span className="block text-ink/70"><NoRuby text={v.meaning} /></span>
                 {v.example && (
                   <span className="mt-0.5 block font-jp text-xs text-ink/55">例: <Furigana text={v.example} /></span>
                 )}
@@ -346,7 +346,7 @@ export function CorrectionResult({
                       text={vocabWordText(v.word, v.reading)}
                       className="font-jp text-[15px] font-semibold text-pine"
                     />
-                    <span className="text-ink/65 text-xs">{v.meaning}</span>
+                    <span className="text-ink/65 text-xs"><NoRuby text={v.meaning} /></span>
                     <span className="ml-auto shrink-0 rounded-full bg-pine px-2.5 py-0.5 text-xs font-bold text-cream">
                       {v.level}
                     </span>
@@ -373,9 +373,9 @@ export function CorrectionResult({
                 {correction.nextGrammar.map((g, i) => (
                   <li key={i} className="rounded-xl bg-paper/60 px-3 py-3">
                     <div className="flex items-center gap-2">
-                      <span className="font-jp text-[13px] font-bold text-pine">{g.pattern}</span>
+                      <span className="font-jp text-[13px] font-bold text-pine"><NoRuby text={g.pattern} /></span>
                       <span className="text-muted">—</span>
-                      <span className="flex-1 text-xs text-ink/70">{g.explanation}</span>
+                      <span className="flex-1 text-xs text-ink/70"><NoRuby text={g.explanation} /></span>
                       <SaveWordButton
                         word={`grammar:${g.pattern}`}
                         reading=""
@@ -403,7 +403,7 @@ export function CorrectionResult({
               <ul className="space-y-2 text-sm">
                 {correction.alternativeWords.map((a, i) => (
                   <li key={i} className="flex items-center gap-2 rounded-xl bg-paper/60 px-3 py-2">
-                    <span className="font-jp text-ink/65">{a.original}</span>
+                    <span className="font-jp text-ink/65"><NoRuby text={a.original} /></span>
                     <span className="mx-1 font-bold text-moss">→</span>
                     <Furigana
                       text={vocabWordText(a.alternative, a.alternativeReading)}
@@ -470,7 +470,7 @@ export function CorrectionResult({
               </p>
             )}
             {correction.obiePhraseExplanation && (
-              <p className="mt-1 text-sm leading-relaxed text-ink/75">{correction.obiePhraseExplanation}</p>
+              <p className="mt-1 text-sm leading-relaxed text-ink/75"><NoRuby text={correction.obiePhraseExplanation} /></p>
             )}
           </div>
         </div>
@@ -506,7 +506,7 @@ export function CorrectionResult({
                 {t("correction.lesson", { n: miniLesson.order })}
               </p>
               <h3 className="font-serif text-lg font-bold text-pine">{miniLesson.title}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-ink/80">{miniLesson.shortExplanation}</p>
+              <p className="mt-1 text-sm leading-relaxed text-ink/80"><NoRuby text={miniLesson.shortExplanation} /></p>
             </div>
 
             <div className="rounded-xl bg-mint/50 p-3">
@@ -534,11 +534,11 @@ export function CorrectionResult({
 
             <div className="rounded-xl border border-line bg-paper p-3">
               <Furigana text={miniLesson.exampleJapaneseRuby} className="font-jp text-[15px] text-ink" />
-              <p className="mt-1 text-sm text-muted">{miniLesson.exampleEnglish}</p>
+              <p className="mt-1 text-sm text-muted"><NoRuby text={miniLesson.exampleEnglish} /></p>
             </div>
 
             {miniLesson.shortNote && (
-              <p className="text-sm leading-relaxed text-ink/75">💡 {miniLesson.shortNote}</p>
+              <p className="text-sm leading-relaxed text-ink/75">💡 <NoRuby text={miniLesson.shortNote} /></p>
             )}
           </div>
         </div>

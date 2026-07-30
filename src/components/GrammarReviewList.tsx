@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Furigana } from "@/components/Furigana";
+import { Furigana, NoRuby } from "@/components/Furigana";
 import { useT } from "@/contexts/locale";
 import { createClient } from "@/lib/supabase/client";
 import type { MistakeItem } from "@/lib/types";
@@ -76,7 +76,7 @@ export function GrammarReviewList() {
           </div>
           {entry.grammar_focus.note && (
             <p className="mt-1.5 text-xs leading-relaxed text-ink/70">
-              {entry.grammar_focus.note}
+              <NoRuby text={entry.grammar_focus.note} />
             </p>
           )}
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Furigana } from "@/components/Furigana";
+import { Furigana, NoRuby } from "@/components/Furigana";
 import { useT } from "@/contexts/locale";
 import type { PracticeDrill, DrillType } from "@/lib/types";
 
@@ -109,7 +109,7 @@ function DrillCard({ drill, index }: { drill: PracticeDrill; index: number }) {
             <Furigana text={drill.answerRuby || drill.answer} />
           </p>
           <p className="text-xs leading-relaxed text-ink/75">
-            💡 {drill.englishExplanation}
+            💡 <NoRuby text={drill.englishExplanation} />
           </p>
         </div>
       )}

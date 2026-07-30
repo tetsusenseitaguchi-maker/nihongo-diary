@@ -142,8 +142,9 @@ ${miniLessonSchema}${drillsSchema}  "nextVocab": [
 
 Rules:
 
-1. Write ALL explanatory text in ${lang}. This includes: englishExplanation, correctionNote, every keyMistakes[].explanation, every usefulVocabulary[].meaning${drillsInRule1}${miniLessonInRule1}. Never explain grammar in Japanese.
+1. Write ALL explanatory text in ${lang}. This includes: englishExplanation, correctionNote, every keyMistakes[].explanation, every usefulVocabulary[].meaning, every nextVocab[].meaning, every nextGrammar[].explanation, obiePhraseExplanation${drillsInRule1}${miniLessonInRule1}. Never explain grammar in Japanese.
    Keep ALL Japanese-language fields in Japanese: correctedJapaneseRuby, naturalJapaneseRuby, all *Ruby fields, word, reading, question, answer. Those are learning targets — never translate them.
+   NEVER put a <ruby> tag in ANY of the explanatory fields listed above. Furigana belongs ONLY in the *Ruby fields named in rule 2. When an explanation quotes Japanese, write it as plain kanji and kana: 「今日は」, NEVER 「<ruby>今日<rt>きょう</rt></ruby>は」. The same holds for nextGrammar[].pattern and alternativeWords[].original — those are plain Japanese labels, never furigana markup.
 
 2. Furigana: add furigana to ALL kanji in originalTextRuby, correctedJapaneseRuby, naturalJapaneseRuby, mistakeRuby, correctionRuby, exampleRuby, and practiceSentenceRuby. Use this exact format:
 <ruby>漢字<rt>かんじ</rt></ruby>
@@ -241,6 +242,7 @@ If the learner's original already matches one of the correct forms above, it is 
 9. keyMistakes: include only important mistakes. If there are none, return an empty array. Tiny style preferences are NOT mistakes — mention those in correctionNote instead.
 
 10. usefulVocabulary: pick words from or related to the diary, at the learner's level. "word": plain dictionary form of the word with kanji as written (e.g. "公園", "歩く", "天気"). "reading": complete hiragana reading including okurigana (e.g. "こうえん", "あるく", "てんき"). "meaning": English definition. "exampleRuby": example sentence with ruby tags on all kanji. practiceSentence: one short sentence based on the topic/mistake, at their level, with ruby.
+CRITICAL — "reading" is NOT written the way <rt> is. <rt> carries the reading of the KANJI only, because the okurigana is already visible next to it (<ruby>歩<rt>ある</rt></ruby>きます). "reading" is a standalone field with no kanji beside it, so it must spell out the WHOLE word, okurigana included: 歩く → "あるく" (NEVER "ある"), 待つ → "まつ" (NEVER "ま"), 新しい → "あたらしい" (NEVER "あたら"), 楽しい → "たのしい" (NEVER "たの"). Do not carry rule 2's kanji-only habit into this field. Check every reading by reading it aloud on its own: if it is not a pronounceable whole word, it is wrong. This applies identically to nextVocab[].reading and alternativeWords[].alternativeReading.
 
 ${drillsRule}${miniLessonRule}13. nextVocab: suggest exactly 3 vocabulary words the learner could use in a future diary about the SAME topic. These must be one JLPT level above the learner's current level (${level} → one step up: N5→N4, N4→N3, N3→N2, N2→N1, N1/Natural→advanced N1). Choose words that fit naturally into the diary's specific topic/context. Do NOT pick words the learner already used. For each:
 - "word": kanji form as in a dictionary (e.g. "散策" not "さんさく")

@@ -1,7 +1,7 @@
 "use client";
 
 import { type CSSProperties } from "react";
-import { Furigana } from "@/components/Furigana";
+import { Furigana, NoRuby } from "@/components/Furigana";
 import { useT } from "@/contexts/locale";
 import type { MistakeItem } from "@/lib/types";
 
@@ -31,7 +31,7 @@ export function GrammarReviewCard({ item }: { item: MistakeItem }) {
         </span>
       </div>
       {item.note && (
-        <p className="mt-2 text-xs leading-relaxed text-ink/70">{item.note}</p>
+        <p className="mt-2 text-xs leading-relaxed text-ink/70"><NoRuby text={item.note} /></p>
       )}
       <p className="mt-3 text-xs font-medium text-pine/80">{t("review.cta")}</p>
     </div>

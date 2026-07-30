@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 import type { RecheckResult as RecheckResultData } from "@/lib/types";
-import { Furigana } from "@/components/Furigana";
+import { Furigana, NoRuby } from "@/components/Furigana";
 import { ObiePhoto } from "@/components/ObiePhoto";
 import { useT } from "@/contexts/locale";
 
@@ -24,7 +24,7 @@ export function RecheckResult({ result }: { result: RecheckResultData }) {
       {/* Progress summary */}
       {result.summary && (
         <div className="gloss-panel rounded-[var(--radius-card)] p-5" style={tint("--color-tint-sage")}>
-          <p className="text-sm leading-relaxed text-ink/85">🌱 {result.summary}</p>
+          <p className="text-sm leading-relaxed text-ink/85">🌱 <NoRuby text={result.summary} /></p>
         </div>
       )}
 
@@ -40,8 +40,8 @@ export function RecheckResult({ result }: { result: RecheckResultData }) {
             <ul className="space-y-3 text-sm">
               {result.fixed.map((f, i) => (
                 <li key={i} className="rounded-xl bg-paper/60 p-3">
-                  <span className="font-semibold text-pine">{f.point}</span>
-                  {f.detail && <span className="mt-0.5 block text-ink/70">{f.detail}</span>}
+                  <span className="font-semibold text-pine"><NoRuby text={f.point} /></span>
+                  {f.detail && <span className="mt-0.5 block text-ink/70"><NoRuby text={f.detail} /></span>}
                 </li>
               ))}
             </ul>
@@ -61,7 +61,7 @@ export function RecheckResult({ result }: { result: RecheckResultData }) {
             <ul className="space-y-3 text-sm">
               {result.remaining.map((r, i) => (
                 <li key={i} className="rounded-xl bg-paper/60 p-3">
-                  <span className="font-semibold text-ink/85">{r.point}</span>
+                  <span className="font-semibold text-ink/85"><NoRuby text={r.point} /></span>
                   {(r.quoteRuby || r.suggestionRuby) && (
                     <span className="mt-1 block">
                       {r.quoteRuby && (
@@ -73,7 +73,7 @@ export function RecheckResult({ result }: { result: RecheckResultData }) {
                       )}
                     </span>
                   )}
-                  {r.detail && <span className="mt-0.5 block text-ink/65">{r.detail}</span>}
+                  {r.detail && <span className="mt-0.5 block text-ink/65"><NoRuby text={r.detail} /></span>}
                 </li>
               ))}
             </ul>

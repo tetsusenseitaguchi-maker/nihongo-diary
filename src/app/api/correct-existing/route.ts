@@ -56,8 +56,9 @@ Return this JSON structure:
 
 Rules:
 
-1. Write ALL explanatory text in ${lang}. This includes: englishExplanation, correctionNote, every keyMistakes[].explanation, every usefulVocabulary[].meaning. Never explain grammar in Japanese.
+1. Write ALL explanatory text in ${lang}. This includes: englishExplanation, correctionNote, every keyMistakes[].explanation, every usefulVocabulary[].meaning, and relatedMiniLesson shortExplanation / exampleEnglish / shortNote. Never explain grammar in Japanese.
    Keep ALL Japanese-language fields in Japanese. Those are learning targets — never translate them.
+   NEVER put a <ruby> tag in ANY of the explanatory fields listed above. Furigana belongs ONLY in the *Ruby fields named in rule 2. When an explanation quotes Japanese, write it as plain kanji and kana: 「今日は」, NEVER 「<ruby>今日<rt>きょう</rt></ruby>は」. The same holds for alternativeWords[].original — that is a plain Japanese label, never furigana markup.
 
 2. Furigana: add furigana to ALL kanji in originalTextRuby, correctedJapaneseRuby, naturalJapaneseRuby, mistakeRuby, correctionRuby, exampleRuby, and practiceSentenceRuby. Use this exact format:
 <ruby>漢字<rt>かんじ</rt></ruby>
@@ -97,7 +98,8 @@ CRITICAL furigana rules:
 
 9. keyMistakes: include only important mistakes. If none, return [].
 
-10. usefulVocabulary: pick words from or related to the diary, at the learner's level.
+10. usefulVocabulary: pick words from or related to the diary, at the learner's level. "word": plain dictionary form with kanji as written (e.g. "公園", "歩く"). "reading": complete hiragana reading including okurigana (e.g. "こうえん", "あるく").
+CRITICAL — "reading" is NOT written the way <rt> is. <rt> carries the reading of the KANJI only, because the okurigana is already visible next to it (<ruby>歩<rt>ある</rt></ruby>きます). "reading" is a standalone field with no kanji beside it, so it must spell out the WHOLE word, okurigana included: 歩く → "あるく" (NEVER "ある"), 待つ → "まつ" (NEVER "ま"), 新しい → "あたらしい" (NEVER "あたら"). Do not carry rule 2's kanji-only habit into this field. Check every reading by reading it aloud on its own: if it is not a pronounceable whole word, it is wrong. This applies identically to alternativeWords[].alternativeReading.
 
 11. relatedMiniLesson: choose the ONE most relevant lesson by id (1-20). If nothing clearly fits, use id 3.
 
