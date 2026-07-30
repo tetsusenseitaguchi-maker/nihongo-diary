@@ -1,4 +1,17 @@
 import type { Reading } from "@/lib/reading-validation";
+import type { PlainText } from "@/lib/text-kinds";
+
+/*
+ * A `PlainText` field is prose in the learner's UI language, or a plain label,
+ * and must never be drawn as furigana. It is a string at runtime and opaque to
+ * the type checker, so `{correction.explanation}` does not compile: render it
+ * with <NoRuby>, or say plainValue() when a DB column or a `string` prop
+ * genuinely needs the text. The fields left as `string` are either Japanese
+ * that <Furigana> renders, or values compared and stored verbatim.
+ *
+ * Which is which is decided once, per field, in CORRECTION_SPEC — see
+ * @/lib/correction-payload. Ruby-carrying fields are not branded yet.
+ */
 
 export type Level = "N5" | "N4" | "N3" | "Natural";
 export type CorrectionStyle = "Light" | "Natural" | "Native";
@@ -13,26 +26,26 @@ export interface PracticeDrill {
   choices: string[];
   answer: string;
   answerRuby: string;
-  englishExplanation: string;
+  englishExplanation: PlainText;
 }
 
 export interface VocabItem {
   word: string;
   /** Validated by sanitizeReading(). See @/lib/reading-validation. */
   reading?: Reading;
-  meaning: string;
+  meaning: PlainText;
   example?: string;
 }
 
 export interface MistakeItem {
   before: string;
   after: string;
-  note: string;
+  note: PlainText;
 }
 
 export interface PointExample {
   jp: string; // Japanese with 漢字(かな) notation — rendered by Furigana component
-  en: string; // English translation / explanation
+  en: PlainText; // English translation / explanation
 }
 
 export interface MiniLessonPoint {
@@ -42,22 +55,22 @@ export interface MiniLessonPoint {
 }
 
 export interface CommonMistake {
-  wrong: string; // ✗ incorrect form
-  right: string; // ✓ correct form
-  note: string;  // short English explanation of why it's wrong
+  wrong: string;   // ✗ incorrect form
+  right: string;   // ✓ correct form
+  note: PlainText; // short English explanation of why it's wrong
 }
 
 export interface MiniLesson {
   id: number;
   order: number;
-  title: string;
-  shortExplanation: string;
-  visualImage: string;
+  title: PlainText;
+  shortExplanation: PlainText;
+  visualImage: PlainText;
   points: MiniLessonPoint[];
   exampleJapanese: string;
   exampleJapaneseRuby: string;
-  exampleEnglish: string;
-  shortNote: string;
+  exampleEnglish: PlainText;
+  shortNote: PlainText;
   commonMistakes?: CommonMistake[]; // NEW
 }
 
@@ -70,22 +83,22 @@ export interface JlptWord {
 
 /** A suggested next-level vocabulary word based on diary context. */
 export interface NextVocabItem {
-  word: string;     // kanji form
-  reading: Reading; // hiragana reading — validated by sanitizeReading()
-  meaning: string;  // short definition in UI language
-  level: string;    // "N5" | "N4" | "N3" | "N2" | "N1"
+  word: string;       // kanji form
+  reading: Reading;   // hiragana reading — validated by sanitizeReading()
+  meaning: PlainText; // short definition in UI language
+  level: string;      // "N5" | "N4" | "N3" | "N2" | "N1"
 }
 
 /** A suggested next-level grammar pattern based on diary context. */
 export interface NextGrammarItem {
-  pattern: string;       // e.g. 〜てくる
-  explanation: string;   // in UI language
-  exampleRuby: string;   // Japanese example sentence with <ruby> furigana
+  pattern: PlainText;     // e.g. 〜てくる
+  explanation: PlainText; // in UI language
+  exampleRuby: string;    // Japanese example sentence with <ruby> furigana
 }
 
 /** A synonym / paraphrase suggestion for a word used in the diary. */
 export interface AlternativeWord {
-  original: string;            // word as written in the diary
+  original: PlainText;         // word as written in the diary
   alternative: string;         // suggested replacement (dictionary form)
   alternativeReading: Reading; // complete hiragana reading — validated by sanitizeReading()
 }
@@ -96,8 +109,8 @@ export interface Correction {
   originalRuby?: string;
   corrected: string;
   natural: string;
-  explanation: string;
-  correctionNote?: string;
+  explanation: PlainText;
+  correctionNote?: PlainText;
   mistakes: MistakeItem[];
   /** The single grammar mistake selected for next-day review. Same shape as MistakeItem. */
   grammarFocus?: MistakeItem | null;
@@ -120,7 +133,7 @@ export interface Correction {
   /** A natural Japanese phrase Obie teaches (with <ruby> furigana). */
   obiePhraseRuby?: string;
   /** Explanation of obiePhraseRuby in the user's UI language. */
-  obiePhraseExplanation?: string;
+  obiePhraseExplanation?: PlainText;
 }
 
 /** A single "previous point that was fixed" in the revise & recheck flow. */

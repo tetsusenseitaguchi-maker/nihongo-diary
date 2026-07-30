@@ -1,6 +1,6 @@
 import type { MiniLesson } from "@/lib/types";
 import { normalizeRubyText } from "@/lib/furigana";
-import { authored } from "@/lib/text-kinds";
+import { authored, plain, plainValue } from "@/lib/text-kinds";
 
 // FIXED curriculum order — never randomized, never reordered by the AI.
 export const MINI_LESSONS: MiniLesson[] = authored<MiniLesson[]>([
@@ -1516,14 +1516,17 @@ export function buildMiniLessonFromAI(raw: unknown): MiniLesson | null {
   const id = typeof r.id === "number" ? r.id : parseInt(String(r.id ?? ""), 10);
   const base = lessonById(id) ?? lessonById(1);
   if (!base) return null;
+  // The plain fields join as strings and are lifted once, at the end. An
+  // opaque type has no falsy value, so `plain(a) || plain(b)` would make the
+  // fallback dead code — see plain() in @/lib/text-kinds.
   return {
     ...base,
-    shortExplanation: str(r.shortExplanation) || base.shortExplanation,
+    shortExplanation: plain(str(r.shortExplanation) || plainValue(base.shortExplanation)),
     // Only the AI's override is normalized — the MINI_LESSONS fallback is
     // hand-written and already correct. normalizeRubyText("") returns "", so
     // an empty/missing AI field still falls through to the static text.
     exampleJapaneseRuby: normalizeRubyText(str(r.exampleJapaneseRuby)) || base.exampleJapaneseRuby,
-    exampleEnglish: str(r.exampleEnglish) || base.exampleEnglish,
-    shortNote: str(r.shortNote) || base.shortNote,
+    exampleEnglish: plain(str(r.exampleEnglish) || plainValue(base.exampleEnglish)),
+    shortNote: plain(str(r.shortNote) || plainValue(base.shortNote)),
   };
 }

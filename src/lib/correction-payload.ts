@@ -34,6 +34,7 @@
 
 import { normalizeRubyText, stripRubyText } from "@/lib/furigana";
 import { sanitizeReading } from "@/lib/reading-validation";
+import { plainValue } from "@/lib/text-kinds";
 import { buildMiniLessonFromAI } from "@/lib/lessons";
 import { fixMasuIncompatibleBlank, ensureAnswerInChoices } from "@/lib/drills";
 import type {
@@ -336,8 +337,10 @@ export function correctionToDbColumns(correction: Correction): CorrectionDbColum
     corrected_japanese: correction.corrected,
     natural_japanese: correction.natural,
     original_text_ruby: correction.originalRuby || null,
-    english_explanation: correction.explanation,
-    correction_note: correction.correctionNote ?? "",
+    english_explanation: plainValue(correction.explanation),
+    // plainValue() already answers a missing field with "", which is what the
+    // `?? ""` here did.
+    correction_note: plainValue(correction.correctionNote),
     key_mistakes: correction.mistakes,
     grammar_focus: correction.grammarFocus ?? null,
     useful_vocabulary: correction.vocabulary,

@@ -381,10 +381,16 @@ export function CorrectionResult({
                       <span className="text-muted">—</span>
                       <span className="flex-1 text-xs text-ink/70"><NoRuby text={g.explanation} /></span>
                       <SaveWordButton
-                        word={`grammar:${g.pattern}`}
+                        word={`grammar:${plainValue(g.pattern)}`}
                         reading=""
-                        state={wordStates.get(`grammar:${g.pattern}`) ?? "idle"}
-                        onSave={() => handleSaveGrammar(g.pattern, g.explanation, g.exampleRuby)}
+                        state={wordStates.get(`grammar:${plainValue(g.pattern)}`) ?? "idle"}
+                        onSave={() =>
+                          handleSaveGrammar(
+                            plainValue(g.pattern),
+                            plainValue(g.explanation),
+                            g.exampleRuby,
+                          )
+                        }
                       />
                     </div>
                     {g.exampleRuby && (
