@@ -5,8 +5,11 @@ import { Card } from "@/components/ui";
 import { Avatar } from "@/components/ObiePhoto";
 import { FollowButton } from "@/components/FollowButton";
 import { FeedTimeline, type FeedItem } from "@/components/FeedTimeline";
+import { DiscoveryTimeline } from "@/components/DiscoveryTimeline";
+import { FeedTabs } from "@/components/FeedTabs";
 import { UserSearch } from "@/components/UserSearch";
 import { getServerT } from "@/lib/i18n-server";
+import { seededShuffle, parseSeed, newSeed } from "@/lib/discovery/shuffle";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +58,24 @@ function countThisMonth(dates: string[]): number {
 
 const PAGE_SIZE = 20;
 
-export default async function FeedPage() {
+/**
+ * Rows pulled for Discovery before anything is excluded.
+ *
+ * Self, people already followed and blocks in both directions are subtracted
+ * in JS, so the query has to over-fetch: filtering a 20-row page would leave
+ * 20 minus whatever was dropped, and someone following widely could page into
+ * an empty screen while plenty was left unseen. 300 in, DISCOVERY_MAX out.
+ */
+const DISCOVERY_POOL = 300;
+
+/** How much of the shuffled pool is sent to the client — three pages' worth. */
+const DISCOVERY_MAX = 60;
+
+export default async function FeedPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string; seed?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -76,6 +96,172 @@ export default async function FeedPage() {
     ...(blockedMe ?? []).map((r) => r.blocker_id as string),
   ]);
   const feedUserIds = [user.id, ...followingIds.filter((id) => !blockedUserIds.has(id))];
+
+  const params = await searchParams;
+  const tab = params.tab === "discovery" ? "discovery" : "following";
+
+  // Discovery keeps its seed in the URL so the order survives paging and the
+  // back button; arriving from Following mints a new one, which is what makes
+  // the tab feel random rather than fixed.
+  const seed = parseSeed(params.seed) ?? newSeed();
+  const followingHref = "/feed";
+  const discoveryHref = `/feed?tab=discovery&seed=${tab === "discovery" ? seed : newSeed()}`;
+  const tabs = (
+    <FeedTabs
+      active={tab}
+      followingHref={followingHref}
+      discoveryHref={discoveryHref}
+      followingLabel={t("feed.tabFollowing")}
+      discoveryLabel={t("feed.tabDiscovery")}
+    />
+  );
+
+  // ── Discovery ──────────────────────────────────────────────────────────────
+  // Returns before any of the Following queries below, so nothing about that
+  // tab changes and none of its work runs on this one.
+  //
+  // Reads discovery_entries rather than diary_entries: the view already drops
+  // private diaries and anyone who opted out, and opt-out cannot be applied
+  // here because discovery_settings is readable only by its owner.
+  if (tab === "discovery") {
+    const { data: poolData } = await supabase
+      .from("discovery_entries")
+      .select(
+        "id, user_id, diary_date, title, tags, original_text, corrected_japanese, seeking_peer_correction, created_at",
+      )
+      .neq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(DISCOVERY_POOL);
+
+    type DiscoveryRow = {
+      id: string;
+      user_id: string;
+      title: string | null;
+      tags: string[];
+      original_text: string;
+      corrected_japanese: string | null;
+      seeking_peer_correction: boolean;
+      created_at: string;
+    };
+
+    // Blocks are subtracted by the caller here, as they are in /feed above,
+    // /api/peer-corrections and CommentsSection — the view does not apply them
+    // and could not, since it runs as its owner and has no viewer to compare
+    // against. Already-followed authors come out too: they are what the
+    // Following tab is for.
+    const followingSet = new Set(followingIds);
+    const eligible = ((poolData ?? []) as DiscoveryRow[]).filter(
+      (d) => !followingSet.has(d.user_id) && !blockedUserIds.has(d.user_id),
+    );
+
+    const picked = seededShuffle(eligible, seed).slice(0, DISCOVERY_MAX);
+    const discoveryDiaryIds = picked.map((d) => d.id);
+    const discoveryAuthorIds = Array.from(new Set(picked.map((d) => d.user_id)));
+
+    // Reactions belong to activity_feed rows, not to diaries, so they are
+    // reached the way diary/[id] reaches them: look the activity row up by
+    // diary_entry_id after the fact.
+    const [{ data: discoveryAuthors }, { data: activityRows }] = await Promise.all([
+      discoveryAuthorIds.length
+        ? supabase
+            .from("profiles")
+            .select("id, username, display_name, avatar_url, level, country")
+            .in("id", discoveryAuthorIds)
+        : Promise.resolve({ data: [] as Profile[] }),
+      discoveryDiaryIds.length
+        ? supabase
+            .from("activity_feed")
+            .select("id, diary_entry_id")
+            .eq("activity_type", "wrote_diary")
+            .in("diary_entry_id", discoveryDiaryIds)
+        : Promise.resolve({ data: [] as { id: string; diary_entry_id: string }[] }),
+    ]);
+
+    const activityByDiary = new Map(
+      (activityRows ?? []).map((a) => [a.diary_entry_id as string, a.id as string]),
+    );
+    const discoveryActivityIds = Array.from(activityByDiary.values());
+
+    const { data: discoveryReactions } = discoveryActivityIds.length
+      ? await supabase
+          .from("reactions")
+          .select("activity_id, reaction_type, user_id")
+          .in("activity_id", discoveryActivityIds)
+      : { data: [] as { activity_id: string; reaction_type: string; user_id: string }[] };
+
+    const dRxCounts = new Map<string, Record<string, number>>();
+    const dRxMine = new Map<string, string[]>();
+    for (const r of discoveryReactions ?? []) {
+      const c = dRxCounts.get(r.activity_id) ?? {};
+      c[r.reaction_type] = (c[r.reaction_type] ?? 0) + 1;
+      dRxCounts.set(r.activity_id, c);
+      if (r.user_id === user.id)
+        dRxMine.set(r.activity_id, [...(dRxMine.get(r.activity_id) ?? []), r.reaction_type]);
+    }
+
+    const discoveryProfiles = new Map(
+      (discoveryAuthors ?? []).map((p) => [p.id, p as Profile]),
+    );
+
+    const discoveryItems: FeedItem[] = picked.map((d) => {
+      const p = discoveryProfiles.get(d.user_id);
+      const body = d.original_text ?? "";
+      const activityId = activityByDiary.get(d.id) ?? "";
+      return {
+        activityId,
+        userId: d.user_id,
+        activityType: "wrote_diary",
+        diaryEntryId: d.id,
+        createdAt: d.created_at,
+        authorName: nameOf(p),
+        authorUsername: p?.username ?? null,
+        authorAvatar: p?.avatar_url ?? null,
+        authorCountry: p?.country ?? null,
+        // Everything the view returns is public by definition.
+        diaryIsPublic: true,
+        diaryTitle: d.title ?? null,
+        diaryTags: d.tags ?? [],
+        diarySnippet: body ? body.slice(0, 100) + (body.length > 100 ? "…" : "") : "",
+        hasCorrectionResult: d.corrected_japanese != null,
+        seekingPeerCorrection: d.seeking_peer_correction ?? false,
+        // Streak and monthly count are left at zero rather than computed. The
+        // Following tab can afford them because it already knows its handful
+        // of authors; here it would mean a 60-day diary-date scan across up to
+        // sixty strangers to decide whether to draw a badge.
+        streak: 0,
+        monthlyCount: 0,
+        reactionCounts: dRxCounts.get(activityId) ?? {},
+        myReactions: dRxMine.get(activityId) ?? [],
+      };
+    });
+
+    return (
+      <div className="space-y-5">
+        <div>
+          <p className="text-sm font-medium text-muted">{t("discovery.subtitle")}</p>
+          <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-pine">
+            {t("feed.title")}
+          </h1>
+        </div>
+
+        {tabs}
+
+        <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
+          <DiscoveryTimeline items={discoveryItems} />
+
+          <div className="space-y-4">
+            <UserSearch />
+            <Card accent="none" className="gloss-green p-5">
+              <p className="font-jp text-sm font-medium text-cream">
+                毎日(まいにち)ちょっとずつ、いっしょに。
+              </p>
+              <p className="mt-0.5 text-xs text-cream/75">👍 💪 🔥 🎉</p>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Compute 60-day window for streak calculation
   const since = new Date();
@@ -225,6 +411,8 @@ export default async function FeedPage() {
             when the feed is empty. */}
         <h1 data-tour="feed-heading" className="mt-1 font-serif text-3xl font-bold tracking-tight text-pine">{t("feed.title")}</h1>
       </div>
+
+      {tabs}
 
       <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
         {/* Timeline */}

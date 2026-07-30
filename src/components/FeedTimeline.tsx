@@ -12,6 +12,15 @@ import { countryFlag } from "@/lib/countryFlag";
 import { useT } from "@/contexts/locale";
 
 export type FeedItem = {
+  /**
+   * The activity_feed row this card reacts against.
+   *
+   * Always present on Following, which is built out of activity rows in the
+   * first place. Discovery starts from diaries and looks the activity row up
+   * afterwards, so it may be empty — reactions hang off activity_feed, and a
+   * diary without one has nothing to hang them on. Empty means the reaction
+   * bar is left off that card rather than pointed at a row that is not there.
+   */
   activityId: string;
   userId: string;
   activityType: string;
@@ -33,7 +42,8 @@ export type FeedItem = {
   myReactions: string[];
 };
 
-function FeedCard({ item }: { item: FeedItem }) {
+/** Exported so the Discovery timeline renders the identical card. */
+export function FeedCard({ item }: { item: FeedItem }) {
   const t = useT();
   const isDiary =
     item.activityType === "wrote_diary" || item.activityType === "shared_diary";
@@ -144,11 +154,15 @@ function FeedCard({ item }: { item: FeedItem }) {
 
       {/* Reaction + comment row */}
       <div className="border-t border-line bg-paper/60 px-4 py-3">
-        <ReactionBar
-          activityId={item.activityId}
-          initialCounts={item.reactionCounts}
-          initialMine={item.myReactions}
-        />
+        {/* Never falsy on Following — every item there came from an activity
+            row. The guard is for Discovery, where a diary may have none. */}
+        {item.activityId && (
+          <ReactionBar
+            activityId={item.activityId}
+            initialCounts={item.reactionCounts}
+            initialMine={item.myReactions}
+          />
+        )}
         {isPublicDiary && item.diaryEntryId && (
           <Link
             href={`/diary/${item.diaryEntryId}#comments`}
