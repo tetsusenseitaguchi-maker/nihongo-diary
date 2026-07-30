@@ -53,16 +53,37 @@ export default async function DiaryDetailPage({
   // Defense-in-depth: even if RLS lets it through, block non-owner on private diary
   if (!isOwner && !entry.is_public) notFound();
 
-  // Fetch author profile for non-owner view
+  // Fetch author profile + mutual block state for non-owner view.
+  // Blocks are enforced by the caller, never by RLS — /feed, /api/peer-corrections
+  // and CommentsSection each subtract the same both-directions union. This page
+  // was the one public-diary entry point that never did, so a blocked author's
+  // diary stayed reachable by URL either way. notFound() rather than a 403, so a
+  // block is indistinguishable from a missing diary: a separate error code would
+  // tell the other side that a block exists.
   type AuthorProfile = { username: string | null; display_name: string | null; avatar_url: string | null; country: string | null };
   let authorProfile: AuthorProfile | null = null;
   if (!isOwner) {
-    const { data } = await supabase
-      .from("profiles")
-      .select("username, display_name, avatar_url, country")
-      .eq("id", entry.user_id)
-      .single();
-    authorProfile = data;
+    const [{ data: profileData }, { data: blockedByMe }, { data: blockedMe }] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("username, display_name, avatar_url, country")
+        .eq("id", entry.user_id)
+        .single(),
+      supabase
+        .from("blocks")
+        .select("id")
+        .eq("blocker_id", user.id)
+        .eq("blocked_id", entry.user_id)
+        .maybeSingle(),
+      supabase
+        .from("blocks")
+        .select("id")
+        .eq("blocked_id", user.id)
+        .eq("blocker_id", entry.user_id)
+        .maybeSingle(),
+    ]);
+    if (blockedByMe || blockedMe) notFound();
+    authorProfile = profileData;
   }
 
   // Fetch location pins for this diary
