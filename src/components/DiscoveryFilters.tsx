@@ -80,6 +80,22 @@ export function DiscoveryFilters({
 
   return (
     <div className="space-y-2.5 rounded-xl border border-line bg-paper p-3">
+      {/* First, because this one is about the whole list rather than about
+          which part of it to keep.
+
+          Unlike the rows below, the active chip here does not toggle off: a
+          filter can be absent, an order cannot. Clicking the one already on
+          leads back to the same URL, which is the honest answer to "what
+          would this do" — there is no third state to fall into. */}
+      <Row label={t("discovery.sortLabel")}>
+        <Chip href={discoveryHref("new", seed, filters)} active={sort === "new"}>
+          {t("discovery.sortNew")}
+        </Chip>
+        <Chip href={discoveryHref("random", seed, filters)} active={sort === "random"}>
+          {t("discovery.sortRandom")}
+        </Chip>
+      </Row>
+
       <Row label={t("discovery.filterLevel")}>
         {JLPT_LEVELS.map((lv) => (
           <Chip
