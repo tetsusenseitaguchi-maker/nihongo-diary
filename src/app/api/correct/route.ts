@@ -152,7 +152,7 @@ CRITICAL furigana rules:
 - NEVER wrap hiragana or katakana in <ruby>. Only kanji get furigana.
 - The reading in <rt> must be the reading of the kanji only — never repeat the kana that is already visible.
 - When a kanji is immediately followed by okurigana (the hiragana that completes a verb/adjective stem, e.g. 歩きました, 珍しい), it MUST use its kun'yomi (訓読み) reading — never the on'yomi (音読み) — and <rt> must contain the FULL kun'yomi reading, not a truncated single-mora guess. Correct: <ruby>歩<rt>ある</rt></ruby>きました, <ruby>珍<rt>めずら</rt></ruby>しい. Wrong: <ruby>歩<rt>あ</rt></ruby>きました (truncated reading), <ruby>珍<rt>ちん</rt></ruby>しい (on'yomi used instead of kun'yomi).
-- Beware of kanji whose on'yomi is far more frequent in compounds (熟語) than their kun'yomi: when such a kanji appears with okurigana it is a VERB, so the kun'yomi always wins — never let a familiar compound (診察=しんさつ, 観光=かんこう, 空気=くうき, 生活=せいかつ, 会話=かいわ) pull the reading toward on'yomi. Frequently misread verbs, always read this way:
+- Beware of kanji whose on'yomi is far more frequent in compounds (熟語) than their kun'yomi: when such a kanji appears with okurigana it is a VERB or an ADJECTIVE, so the kun'yomi always wins — never let a familiar compound (診察=しんさつ, 観光=かんこう, 空気=くうき, 生活=せいかつ, 会話=かいわ, 激励=げきれい, 詳細=しょうさい, 悲劇=ひげき) pull the reading toward on'yomi. Frequently misread verbs, always read this way:
   診て → <ruby>診<rt>み</rt></ruby>て / 診る → <ruby>診<rt>み</rt></ruby>る (みて・みる, NEVER しん — 目を診てもらいました = <ruby>目<rt>め</rt></ruby>を<ruby>診<rt>み</rt></ruby>てもらいました)
   観る → <ruby>観<rt>み</rt></ruby>る (みる, NEVER かん)
   空いて → <ruby>空<rt>す</rt></ruby>いて (すいて, NEVER くう; 席が空く/手が空く is <ruby>空<rt>あ</rt></ruby>く — pick from context)
@@ -162,6 +162,18 @@ CRITICAL furigana rules:
   分かる → <ruby>分<rt>わ</rt></ruby>かる (わかる, NEVER ぶん/ふん)
   話す → <ruby>話<rt>はな</rt></ruby>す (はなす, NEVER わ)
   Other verbs of the same type: open — 開ける <ruby>開<rt>あ</rt></ruby>ける (NEVER かい), 通う <ruby>通<rt>かよ</rt></ruby>う (NEVER つう), 直す <ruby>直<rt>なお</rt></ruby>す (NEVER ちょく), 決める <ruby>決<rt>き</rt></ruby>める (NEVER けつ), 続ける <ruby>続<rt>つづ</rt></ruby>ける (NEVER ぞく), 覚える <ruby>覚<rt>おぼ</rt></ruby>える (NEVER かく), 感じる is the exception — a する-type verb, so <ruby>感<rt>かん</rt></ruby>じる is CORRECT.
+  い-adjectives follow exactly the same rule as the verbs above: the stem before い/しい is kun'yomi, no matter how common the compound is. Frequently misread adjectives, always read this way:
+  激しい → <ruby>激<rt>はげ</rt></ruby>しい (はげしい, NEVER げき — 激励・過激 are compounds; 激しい is not one)
+  細かい → <ruby>細<rt>こま</rt></ruby>かい (こまかい, NEVER さい; 細い is <ruby>細<rt>ほそ</rt></ruby>い — the okurigana tells them apart)
+  温かい → <ruby>温<rt>あたた</rt></ruby>かい (あたたかい, NEVER おん; 温い is <ruby>温<rt>ぬる</rt></ruby>い)
+  清い → <ruby>清<rt>きよ</rt></ruby>い (きよい, NEVER せい/しょう)
+  若い → <ruby>若<rt>わか</rt></ruby>い (わかい, NEVER じゃく)
+  幼い → <ruby>幼<rt>おさな</rt></ruby>い (おさない, NEVER よう)
+  著しい → <ruby>著<rt>いちじる</rt></ruby>しい (いちじるしい, NEVER ちょ)
+  乏しい → <ruby>乏<rt>とぼ</rt></ruby>しい (とぼしい, NEVER ぼう)
+  恋しい → <ruby>恋<rt>こい</rt></ruby>しい (こいしい, NEVER れん)
+  悲しい → <ruby>悲<rt>かな</rt></ruby>しい (かなしい, NEVER ひ)
+  Other adjectives of the same type: 難しい <ruby>難<rt>むずか</rt></ruby>しい (NEVER なん), 新しい <ruby>新<rt>あたら</rt></ruby>しい (NEVER しん), 楽しい <ruby>楽<rt>たの</rt></ruby>しい (NEVER らく/がく), 苦しい <ruby>苦<rt>くる</rt></ruby>しい (NEVER く), 美しい <ruby>美<rt>うつく</rt></ruby>しい (NEVER び), 厳しい <ruby>厳<rt>きび</rt></ruby>しい (NEVER げん), 優しい <ruby>優<rt>やさ</rt></ruby>しい (NEVER ゆう), 正しい <ruby>正<rt>ただ</rt></ruby>しい (NEVER せい).
 - Grammaticalized auxiliary verbs after the て-form (補助動詞) — てくる,
   ていく, てある, ておく, てみる, てしまう — should be written in
   hiragana, not kanji (write てくる, NOT て来る; ていく, NOT て行く),
@@ -175,7 +187,7 @@ Correct examples:
 Wrong (do NOT do this): <ruby>見ました<rt>みました</rt></ruby>, <ruby>は<rt>は</rt></ruby>, <ruby>可愛かった<rt>かわいかった</rt></ruby>
 Every Japanese field above ends in "Ruby" and must contain furigana in this format.
 
-3. Furigana must be accurate and chosen from context (今日=きょう, 日本語=にほんご, 行った=いった, 良かった=よかった, 大人=おとな, 診て=みて, 観て=みて, 空いて=すいて, 生きて=いきて, 下さい=ください, 分かった=わかった, 話して=はなして).
+3. Furigana must be accurate and chosen from context (今日=きょう, 日本語=にほんご, 行った=いった, 良かった=よかった, 大人=おとな, 診て=みて, 観て=みて, 空いて=すいて, 生きて=いきて, 下さい=ください, 分かった=わかった, 話して=はなして, 激しい=はげしい, 細かい=こまかい, 細い=ほそい).
 
 4. Match the learner's level in grammar AND kanji:
 - N5: mostly hiragana; only very common kanji (私, 人, 日, 本, 日本, 日本語, 学校, 先生, 友達, 食べる, 飲む, 行く, 見る, 来る); very simple, short grammar; avoid 〜ため/〜によって/〜ということ etc.
