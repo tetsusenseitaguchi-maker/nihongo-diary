@@ -14,9 +14,9 @@ import { DiscoveryFilters } from "@/components/DiscoveryFilters";
 import { seededShuffle, parseSeed, newSeed } from "@/lib/discovery/shuffle";
 import {
   parseFilters,
+  parseSort,
   hasAnyFilter,
   discoveryHref as buildDiscoveryHref,
-  type DiscoverySort,
   NO_FILTERS,
 } from "@/lib/discovery/filters";
 
@@ -85,6 +85,7 @@ export default async function FeedPage({
 }: {
   searchParams: Promise<{
     tab?: string;
+    sort?: string;
     seed?: string;
     level?: string;
     country?: string;
@@ -119,15 +120,18 @@ export default async function FeedPage({
   // Discovery keeps its seed in the URL so the order survives paging and the
   // back button; arriving from Following mints a new one, which is what makes
   // the tab feel random rather than fixed.
+  //
+  // A seed is minted even under "new", where it orders nothing. It is what the
+  // link that switches to "random" needs, and minting it here rather than in
+  // the filter bar is deliberate: that component renders on both sides, and a
+  // Math.random() in it would put a different number in the href on each,
+  // which is a hydration mismatch.
   const seed = parseSeed(params.seed) ?? newSeed();
+  const sort = parseSort(params.sort);
   const filters = parseFilters(params);
   const followingHref = "/feed";
-  // Staying on Discovery keeps both the seed and the filters; arriving from
-  // Following starts clean, on a new seed and with nothing narrowed.
-  // The order is still always "random" here — reading it off the URL is the
-  // next commit. Passing it explicitly is what lets that be a change to this
-  // file alone.
-  const sort: DiscoverySort = "random";
+  // Staying on Discovery keeps the order, the seed and the filters; arriving
+  // from Following starts clean, on a new seed and with nothing narrowed.
   const discoveryHref =
     tab === "discovery"
       ? buildDiscoveryHref(sort, seed, filters)
@@ -192,7 +196,11 @@ export default async function FeedPage({
       (d) => !followingSet.has(d.user_id) && !blockedUserIds.has(d.user_id),
     );
 
-    const picked = seededShuffle(eligible, seed).slice(0, DISCOVERY_MAX);
+    // The pool was fetched newest-first and .filter() keeps that order, so
+    // "new" is not a second ordering — it is this one, left alone. Shuffling
+    // is the step that has to be asked for.
+    const ordered = sort === "random" ? seededShuffle(eligible, seed) : eligible;
+    const picked = ordered.slice(0, DISCOVERY_MAX);
     const discoveryDiaryIds = picked.map((d) => d.id);
     const discoveryAuthorIds = Array.from(new Set(picked.map((d) => d.user_id)));
 
