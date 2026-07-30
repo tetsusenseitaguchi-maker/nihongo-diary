@@ -81,26 +81,25 @@ export default function ProfileSetupPage() {
     if (!file) return;
     setUploading(true);
     setError(null);
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-    const ext = (file.name.split(".").pop() || "png").toLowerCase();
-    const path = `${user.id}/avatar.${ext}`;
-    const { error: upErr } = await supabase.storage
-      .from("avatars")
-      .upload(path, file, { upsert: true, contentType: file.type });
-    if (upErr) {
-      setError(friendly(upErr.message));
+    // Goes through the API rather than straight to Storage so the file is
+    // re-encoded and its EXIF dropped first: the avatars bucket is public, and
+    // a phone photo carries the GPS coordinates of wherever it was taken.
+    // The route resolves the object path itself, from the authenticated user.
+    const fd = new FormData();
+    fd.append("avatar", file);
+    const res = await fetch("/api/profile/upload-avatar", { method: "POST", body: fd });
+    if (!res.ok) {
+      if (res.status === 401) {
+        router.push("/login");
+        return;
+      }
+      const body = await res.json().catch(() => ({}));
+      setError(friendly((body as { error?: string }).error ?? "Avatar upload failed"));
       setUploading(false);
       return;
     }
-    const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
-    setAvatarUrl(`${pub.publicUrl}?t=${Date.now()}`);
+    const { publicUrl } = (await res.json()) as { publicUrl: string };
+    setAvatarUrl(`${publicUrl}?t=${Date.now()}`);
     setUploading(false);
   }
 

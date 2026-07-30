@@ -654,17 +654,24 @@ export default function WritePage() {
 
     if (error) throw new Error(error.message);
 
+    // Same upload route as the correction path above, for the same reason: it
+    // re-encodes through sharp, which strips EXIF — GPS included — and this is
+    // the only save that can publish a diary outright (opts.isPublic), so it is
+    // the last one that should have been sending raw camera files to a public
+    // bucket. It was written three days before that route existed and never
+    // caught up.
     if (photoFile) {
-      const ext = photoFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
-      const storagePath = `${user.id}/${data.id}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("diary-images")
-        .upload(storagePath, photoFile, { contentType: photoFile.type });
-      if (upErr) {
+      const uploadFd = new FormData();
+      uploadFd.append("photo", photoFile);
+      uploadFd.append("entryId", data.id);
+      const upRes = await fetch("/api/diary/upload-image", { method: "POST", body: uploadFd });
+      if (!upRes.ok) {
         await supabase.from("diary_entries").delete().eq("id", data.id);
-        throw new Error(`Photo upload failed: ${upErr.message}`);
+        const upData = await upRes.json().catch(() => ({}));
+        throw new Error((upData as { error?: string }).error ?? "Photo upload failed");
       }
-      await supabase.from("diary_entries").update({ image_path: storagePath }).eq("id", data.id);
+      const { path } = await upRes.json() as { path: string };
+      await supabase.from("diary_entries").update({ image_path: path }).eq("id", data.id);
     }
 
     if (audioFile) {
