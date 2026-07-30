@@ -475,25 +475,32 @@ export default function WritePage() {
           meaning: str(v.meaning),
           level: str(v.level),
         })),
-        // exampleRuby is a *Ruby field with no normalizeRubyText() on it — one
-        // of the four the `any` was hiding. Left as-is here on purpose: 3a
-        // changes no behaviour, 3b fixes the transforms.
+        // exampleRuby carries <ruby> markup and is rendered by <Furigana>, so
+        // it needs the same normalizeRubyText() every other *Ruby field gets.
+        // The type does NOT catch this one — the map callback types the
+        // element, so a bare string is a legal assignment. Found by reading
+        // the list, and it stays findable that way until 3c's field table
+        // makes the transform per field something you have to declare.
         nextGrammar: objArr(data.nextGrammar).map((g) => ({
           pattern: str(g.pattern),
           explanation: str(g.explanation),
-          exampleRuby: str(g.exampleRuby),
+          exampleRuby: normalizeRubyText(str(g.exampleRuby)),
         })),
         alternativeWords: objArr(data.alternativeWords).map((a): AlternativeWord => ({
           original: str(a.original),
           alternative: str(a.alternative),
           alternativeReading: sanitizeReading(str(a.alternative), str(a.alternativeReading)),
         })),
-        // The other three: all *Ruby fields, all reaching the screen without
-        // normalizeRubyText(), so READING_DICTIONARY never runs on them. Also
-        // 3b — see the note on nextGrammar above.
-        diaryTitle: str(data.diaryTitleRuby),
-        obieCheer: str(data.obieCheerRuby),
-        obiePhraseRuby: str(data.obiePhraseRuby),
+        // These three were reaching the screen raw, so READING_DICTIONARY
+        // never ran on them and 今日 could render as にち in a diary title.
+        // diaryTitle is also what saveEntry() stores in the `title` column,
+        // via stripRubyText() — which discards the readings either way, so
+        // normalizing first changes what is displayed, not what is stored.
+        // obiePhraseExplanation stays plain: it is the UI-language gloss, not
+        // Japanese, and rule 1 now forbids ruby in it.
+        diaryTitle: normalizeRubyText(str(data.diaryTitleRuby)),
+        obieCheer: normalizeRubyText(str(data.obieCheerRuby)),
+        obiePhraseRuby: normalizeRubyText(str(data.obiePhraseRuby)),
         obiePhraseExplanation: str(data.obiePhraseExplanation),
         grammarFocus: (() => {
           const km = objArr(data.keyMistakes)[0];
