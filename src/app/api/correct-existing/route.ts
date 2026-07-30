@@ -10,6 +10,7 @@ import { languageDisplayName } from "@/lib/languages";
 import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
 import { normalizeRubyText, stripRubyText } from "@/lib/furigana";
 import { sanitizeReading } from "@/lib/reading-validation";
+import type { VocabItem, AlternativeWord } from "@/lib/types";
 import { createChatCompletion, missingApiKeyError } from "@/lib/ai-provider";
 import { refundCorrection } from "@/lib/correction-refund";
 
@@ -342,7 +343,7 @@ export async function POST(request: Request) {
   // field). Both stored shapes get it, because both are read back and rendered
   // as furigana: useful_vocabulary by the correction result and the weekly
   // report, alternative_words by the correction result.
-  const usefulVocabulary = Array.isArray(parsed.usefulVocabulary)
+  const usefulVocabulary: VocabItem[] = Array.isArray(parsed.usefulVocabulary)
     ? (parsed.usefulVocabulary as Record<string, unknown>[]).map((v) => {
         const word = str(v?.word);
         return {
@@ -354,7 +355,7 @@ export async function POST(request: Request) {
       })
     : [];
 
-  const alternativeWords = Array.isArray(parsed.alternativeWords)
+  const alternativeWords: AlternativeWord[] = Array.isArray(parsed.alternativeWords)
     ? (parsed.alternativeWords as Record<string, unknown>[])
         .map((a) => {
           const alternative = str(a?.alternative);

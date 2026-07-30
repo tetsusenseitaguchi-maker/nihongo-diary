@@ -1,4 +1,5 @@
 import type { Correction, DiaryEntry, NavItem, Template } from "./types";
+import { sanitizeReading } from "@/lib/reading-validation";
 
 /* ------------------------------------------------------------------ */
 /*  Navigation                                                         */
@@ -77,9 +78,9 @@ export const mockCorrection: Correction = {
     },
   ],
   vocabulary: [
-    { word: "天気", reading: "てんき", meaning: "weather" },
-    { word: "散歩", reading: "さんぽ", meaning: "a walk, a stroll" },
-    { word: "見かける", reading: "みかける", meaning: "to happen to see, to spot" },
+    { word: "天気", reading: sanitizeReading("天気", "てんき"), meaning: "weather" },
+    { word: "散歩", reading: sanitizeReading("散歩", "さんぽ"), meaning: "a walk, a stroll" },
+    { word: "見かける", reading: sanitizeReading("見かける", "みかける"), meaning: "to happen to see, to spot" },
   ],
   practice: {
     jp: "公園で大きい犬を見かけて、とてもかわいかったです。",
@@ -124,8 +125,8 @@ export const diaryEntries: DiaryEntry[] = [
         { before: "つかれました", after: "疲れました", note: "疲れる is a useful kanji to recognize." },
       ],
       vocabulary: [
-        { word: "集中", reading: "しゅうちゅう", meaning: "concentration" },
-        { word: "〜ながら", reading: "", meaning: "while doing ~ (two actions at once)" },
+        { word: "集中", reading: sanitizeReading("集中", "しゅうちゅう"), meaning: "concentration" },
+        { word: "〜ながら", reading: sanitizeReading("〜ながら", ""), meaning: "while doing ~ (two actions at once)" },
       ],
       practice: {
         jp: "音楽を聞きながら、宿題をしました。",
@@ -154,8 +155,8 @@ export const diaryEntries: DiaryEntry[] = [
         { before: "えいが", after: "映画", note: "映画 (えいが) — a common word worth writing in kanji." },
       ],
       vocabulary: [
-        { word: "一日中", reading: "いちにちじゅう", meaning: "all day long" },
-        { word: "ほとんど", reading: "", meaning: "almost, mostly" },
+        { word: "一日中", reading: sanitizeReading("一日中", "いちにちじゅう"), meaning: "all day long" },
+        { word: "ほとんど", reading: sanitizeReading("ほとんど", ""), meaning: "almost, mostly" },
       ],
       practice: {
         jp: "週末は一日中、本を読んでいました。",
@@ -182,8 +183,8 @@ export const diaryEntries: DiaryEntry[] = [
         "Excellent — this entry is already natural and well-structured. The 〜たり〜たり pattern is used perfectly. Only a tiny polish on connection.",
       mistakes: [],
       vocabulary: [
-        { word: "緊張", reading: "きんちょう", meaning: "nervousness, tension" },
-        { word: "計画を立てる", reading: "けいかくをたてる", meaning: "to make a plan" },
+        { word: "緊張", reading: sanitizeReading("緊張", "きんちょう"), meaning: "nervousness, tension" },
+        { word: "計画を立てる", reading: sanitizeReading("計画を立てる", "けいかくをたてる"), meaning: "to make a plan" },
       ],
       practice: {
         jp: "旅行の前に、計画を立てたり、荷物を準備したりしました。",
@@ -212,7 +213,7 @@ export const diaryEntries: DiaryEntry[] = [
         { before: "たまご", after: "卵", note: "卵 (たまご) is good kanji practice." },
       ],
       vocabulary: [
-        { word: "気持ちいい", reading: "きもちいい", meaning: "pleasant, feels good" },
+        { word: "気持ちいい", reading: sanitizeReading("気持ちいい", "きもちいい"), meaning: "pleasant, feels good" },
       ],
       practice: {
         jp: "今日は天気がよくて、気持ちのいい一日でした。",

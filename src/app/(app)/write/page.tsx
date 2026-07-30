@@ -14,7 +14,7 @@ import { PublicToggle } from "@/components/PublicToggle";
 import { Furigana } from "@/components/Furigana";
 import { Bilingual } from "@/components/Bilingual";
 import { templates, sampleDraft } from "@/lib/mock-data";
-import type { Level, CorrectionStyle, Correction, DiaryPlace, MistakeItem, RecheckResult as RecheckResultData } from "@/lib/types";
+import type { Level, CorrectionStyle, Correction, DiaryPlace, MistakeItem, VocabItem, NextVocabItem, AlternativeWord, RecheckResult as RecheckResultData } from "@/lib/types";
 import { GrammarReviewCard } from "@/components/GrammarReviewCard";
 import { WritingPromptCard } from "@/components/WritingPromptCard";
 import { TrainDiagram } from "@/components/TrainDiagram";
@@ -433,7 +433,7 @@ export default function WritePage() {
         // useful_vocabulary, so the broken value never reaches the DB, where
         // the weekly report would read it back too.
         vocabulary: (data.usefulVocabulary ?? []).map(
-          (v: { word?: string; reading?: string; wordRuby?: string; meaning?: string; example?: string; exampleRuby?: string }) => {
+          (v: { word?: string; reading?: string; wordRuby?: string; meaning?: string; example?: string; exampleRuby?: string }): VocabItem => {
             const word = v.word || (v.wordRuby ? v.wordRuby.replace(/<[^>]*>/g, "") : "") || "";
             return {
               word,
@@ -468,9 +468,9 @@ export default function WritePage() {
             )
         ),
         nextVocab: (data.nextVocab ?? []).map(
-          (v: { word?: string; reading?: string; meaning?: string; level?: string }) => ({
+          (v: { word?: string; reading?: string; meaning?: string; level?: string }): NextVocabItem => ({
             word: v.word ?? "",
-            reading: v.reading ?? "",
+            reading: sanitizeReading(v.word ?? "", v.reading),
             meaning: v.meaning ?? "",
             level: v.level ?? "",
           })
@@ -483,10 +483,10 @@ export default function WritePage() {
           })
         ),
         alternativeWords: (data.alternativeWords ?? []).map(
-          (a: { original?: string; alternative?: string; alternativeReading?: string }) => ({
+          (a: { original?: string; alternative?: string; alternativeReading?: string }): AlternativeWord => ({
             original: a.original ?? "",
             alternative: a.alternative ?? "",
-            alternativeReading: a.alternativeReading ?? "",
+            alternativeReading: sanitizeReading(a.alternative ?? "", a.alternativeReading),
           })
         ),
         diaryTitle: data.diaryTitleRuby || "",

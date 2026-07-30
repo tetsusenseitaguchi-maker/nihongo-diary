@@ -1,4 +1,5 @@
 import type { Correction } from "@/lib/types";
+import { sanitizeReading } from "@/lib/reading-validation";
 
 /**
  * The canned correction the tour shows on the /write step.
@@ -56,9 +57,9 @@ export const TOUR_SAMPLE_CORRECTION: SampleCorrection = {
     },
   ],
   vocabulary: [
-    { word: "天気", reading: "てんき", meaning: "weather" },
-    { word: "散歩", reading: "さんぽ", meaning: "a walk, a stroll" },
-    { word: "見かける", reading: "みかける", meaning: "to happen to see, to spot" },
+    { word: "天気", reading: sanitizeReading("天気", "てんき"), meaning: "weather" },
+    { word: "散歩", reading: sanitizeReading("散歩", "さんぽ"), meaning: "a walk, a stroll" },
+    { word: "見かける", reading: sanitizeReading("見かける", "みかける"), meaning: "to happen to see, to spot" },
   ],
   practice: {
     jp: "公園で大きい犬を見かけて、とてもかわいかったです。",

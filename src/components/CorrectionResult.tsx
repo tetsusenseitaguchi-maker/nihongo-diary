@@ -10,7 +10,7 @@ import { LearnedUsedPanel } from "@/components/LearnedUsedPanel";
 import type { UsedExpression } from "@/lib/learned-display";
 import { useT, useLocale } from "@/contexts/locale";
 import { getLessonInLocale } from "@/lib/lesson-i18n";
-import { safeVocabWordText } from "@/lib/reading-validation";
+import { readingValue, safeVocabWordText } from "@/lib/reading-validation";
 
 function tint(v: string): CSSProperties {
   return { ["--tint" as string]: `var(${v})` } as CSSProperties;
@@ -355,7 +355,7 @@ export function CorrectionResult({
                     </span>
                     <SaveWordButton
                       word={v.word}
-                      reading={v.reading}
+                      reading={readingValue(v.reading)}
                       jlptLevel={v.level}
                       state={wordStates.get(v.word) ?? "idle"}
                       onSave={handleSaveWord}
@@ -415,7 +415,7 @@ export function CorrectionResult({
                     <span className="ml-auto">
                       <SaveWordButton
                         word={a.alternative}
-                        reading={a.alternativeReading}
+                        reading={readingValue(a.alternativeReading)}
                         state={wordStates.get(a.alternative) ?? "idle"}
                         onSave={handleSaveWord}
                       />

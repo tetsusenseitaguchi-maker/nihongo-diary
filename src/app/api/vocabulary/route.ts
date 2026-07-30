@@ -5,7 +5,7 @@ import { normalizePlan } from "@/lib/plans";
 import { languageDisplayName } from "@/lib/languages";
 import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
 import { normalizeRubyText } from "@/lib/furigana";
-import { sanitizeReading } from "@/lib/reading-validation";
+import { readingValue, sanitizeReading } from "@/lib/reading-validation";
 import { createChatCompletion, missingApiKeyError } from "@/lib/ai-provider";
 
 export const runtime = "nodejs";
@@ -71,7 +71,11 @@ export async function POST(req: Request) {
   //
   // Computed before the AI call below, not just before the insert, so a wrong
   // reading cannot steer the generated meaning/example either.
-  const safeReading = sanitizeReading(word, reading);
+  // readingValue() unwraps immediately: this route is the boundary where the
+  // reading stops being a value we reason about and becomes prompt text and a
+  // DB column. Keeping it typed past here would only mean unwrapping it three
+  // times below.
+  const safeReading = readingValue(sanitizeReading(word, reading));
   if (type === "word" && reading && !safeReading) {
     console.warn(`[vocabulary] dropped inconsistent reading for "${word}": "${reading}"`);
   }

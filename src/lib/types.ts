@@ -1,3 +1,5 @@
+import type { Reading } from "@/lib/reading-validation";
+
 export type Level = "N5" | "N4" | "N3" | "Natural";
 export type CorrectionStyle = "Light" | "Natural" | "Native";
 export type Weather = "sunny" | "cloudy" | "rainy";
@@ -16,7 +18,8 @@ export interface PracticeDrill {
 
 export interface VocabItem {
   word: string;
-  reading?: string;
+  /** Validated by sanitizeReading(). See @/lib/reading-validation. */
+  reading?: Reading;
   meaning: string;
   example?: string;
 }
@@ -61,14 +64,14 @@ export interface MiniLesson {
 /** A word from the user's diary annotated with its approximate JLPT level. */
 export interface JlptWord {
   word: string;      // kanji form (or hiragana if no kanji)
-  reading: string;   // complete hiragana reading
+  reading: Reading;  // complete hiragana reading — validated by sanitizeReading()
   level: string;     // "N5" | "N4" | "N3" | "N2" | "N1"
 }
 
 /** A suggested next-level vocabulary word based on diary context. */
 export interface NextVocabItem {
   word: string;     // kanji form
-  reading: string;  // hiragana reading
+  reading: Reading; // hiragana reading — validated by sanitizeReading()
   meaning: string;  // short definition in UI language
   level: string;    // "N5" | "N4" | "N3" | "N2" | "N1"
 }
@@ -84,7 +87,7 @@ export interface NextGrammarItem {
 export interface AlternativeWord {
   original: string;            // word as written in the diary
   alternative: string;         // suggested replacement (dictionary form)
-  alternativeReading: string;  // complete hiragana reading of the alternative
+  alternativeReading: Reading; // complete hiragana reading — validated by sanitizeReading()
 }
 
 export interface Correction {
