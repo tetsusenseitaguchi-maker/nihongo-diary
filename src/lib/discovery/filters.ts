@@ -17,6 +17,29 @@ import { COUNTRIES } from "@/lib/countryFlag";
 
 export const JLPT_LEVELS = ["N5", "N4", "N3", "N2", "N1"] as const;
 
+/**
+ * How the pool is ordered. Not part of DiscoveryFilters: a filter narrows what
+ * is shown, and "clear filters" means give me everything back — it should not
+ * also decide what order everything comes back in.
+ *
+ * "new" is the order the query already returns, newest first; "random" is that
+ * same list put through seededShuffle. See @/lib/discovery/shuffle.
+ */
+export type DiscoverySort = "new" | "random";
+
+/**
+ * The order used when the URL does not say. Whichever one this is, it is the
+ * one left out of the URL — the same way an unset level means every level.
+ */
+export const DEFAULT_SORT: DiscoverySort = "random";
+
+/** Anything but the one other known value reads as the default. */
+export function parseSort(raw: string | undefined): DiscoverySort {
+  if (raw === "new") return "new";
+  if (raw === "random") return "random";
+  return DEFAULT_SORT;
+}
+
 export type DiscoveryFilters = {
   level: string | null;
   country: string | null;
@@ -62,9 +85,19 @@ export function hasAnyFilter(f: DiscoveryFilters): boolean {
  * Builds a Discovery URL. The seed rides along with every filter change, so
  * narrowing the results does not also reshuffle them — the only thing that
  * moved is what was asked for.
+ *
+ * The seed is written only when the order actually uses one. Under "new" it
+ * would be a number in the URL that changes nothing, and the first person to
+ * try editing it would reasonably expect it to.
  */
-export function discoveryHref(seed: number, f: DiscoveryFilters): string {
-  const sp = new URLSearchParams({ tab: "discovery", seed: String(seed) });
+export function discoveryHref(
+  sort: DiscoverySort,
+  seed: number,
+  f: DiscoveryFilters,
+): string {
+  const sp = new URLSearchParams({ tab: "discovery" });
+  if (sort !== DEFAULT_SORT) sp.set("sort", sort);
+  if (sort === "random") sp.set("seed", String(seed));
   if (f.level) sp.set("level", f.level);
   if (f.country) sp.set("country", f.country);
   if (f.tag) sp.set("tag", f.tag);

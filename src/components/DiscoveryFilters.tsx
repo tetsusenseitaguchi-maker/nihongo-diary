@@ -10,6 +10,7 @@ import {
   hasAnyFilter,
   NO_FILTERS,
   type DiscoveryFilters as Filters,
+  type DiscoverySort,
 } from "@/lib/discovery/filters";
 import { useT } from "@/contexts/locale";
 
@@ -61,11 +62,21 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-export function DiscoveryFilters({ seed, filters }: { seed: number; filters: Filters }) {
+export function DiscoveryFilters({
+  sort,
+  seed,
+  filters,
+}: {
+  /** Carried through every chip so narrowing does not also reorder. */
+  sort: DiscoverySort;
+  seed: number;
+  filters: Filters;
+}) {
   const t = useT();
   const router = useRouter();
 
-  const hrefFor = (patch: Partial<Filters>) => discoveryHref(seed, { ...filters, ...patch });
+  const hrefFor = (patch: Partial<Filters>) =>
+    discoveryHref(sort, seed, { ...filters, ...patch });
 
   return (
     <div className="space-y-2.5 rounded-xl border border-line bg-paper p-3">
@@ -121,7 +132,7 @@ export function DiscoveryFilters({ seed, filters }: { seed: number; filters: Fil
 
         {hasAnyFilter(filters) && (
           <Link
-            href={discoveryHref(seed, NO_FILTERS)}
+            href={discoveryHref(sort, seed, NO_FILTERS)}
             className="ml-auto text-[11px] font-semibold text-moss-600 hover:text-pine"
           >
             {t("discovery.filterClear")}

@@ -16,6 +16,7 @@ import {
   parseFilters,
   hasAnyFilter,
   discoveryHref as buildDiscoveryHref,
+  type DiscoverySort,
   NO_FILTERS,
 } from "@/lib/discovery/filters";
 
@@ -123,10 +124,14 @@ export default async function FeedPage({
   const followingHref = "/feed";
   // Staying on Discovery keeps both the seed and the filters; arriving from
   // Following starts clean, on a new seed and with nothing narrowed.
+  // The order is still always "random" here — reading it off the URL is the
+  // next commit. Passing it explicitly is what lets that be a change to this
+  // file alone.
+  const sort: DiscoverySort = "random";
   const discoveryHref =
     tab === "discovery"
-      ? buildDiscoveryHref(seed, filters)
-      : buildDiscoveryHref(newSeed(), NO_FILTERS);
+      ? buildDiscoveryHref(sort, seed, filters)
+      : buildDiscoveryHref(sort, newSeed(), NO_FILTERS);
   const tabs = (
     <FeedTabs
       active={tab}
@@ -280,13 +285,15 @@ export default async function FeedPage({
 
         {tabs}
 
-        <DiscoveryFilters seed={seed} filters={filters} />
+        <DiscoveryFilters sort={sort} seed={seed} filters={filters} />
 
         <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
           <DiscoveryTimeline
             items={discoveryItems}
             clearFiltersHref={
-              hasAnyFilter(filters) ? buildDiscoveryHref(seed, NO_FILTERS) : null
+              // Clearing the filters keeps the order and the seed: only the
+              // narrowing is being undone.
+              hasAnyFilter(filters) ? buildDiscoveryHref(sort, seed, NO_FILTERS) : null
             }
           />
 
