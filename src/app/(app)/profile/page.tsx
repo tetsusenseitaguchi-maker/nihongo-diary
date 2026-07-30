@@ -9,6 +9,7 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { InviteLinkButton } from "@/components/InviteLinkButton";
 import { ManageSubscriptionButton } from "@/components/ManageSubscriptionButton";
 import { DeleteAccountButton } from "@/components/DeleteAccountButton";
+import { DiscoveryOptOutToggle } from "@/components/DiscoveryOptOutToggle";
 import { RestorePurchasesButton } from "@/components/RestorePurchasesButton";
 import { computeStats, type DiaryRow } from "@/lib/diary";
 import { getServerT } from "@/lib/i18n-server";
@@ -40,6 +41,17 @@ export default async function ProfilePage() {
     supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", user.id),
     supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", user.id),
   ]);
+
+  // A query of its own, deliberately not a column bolted onto the profiles
+  // select above — that one also reads plan, and widening a select that reads
+  // plan is exactly the shape of the change that once made everyone Free.
+  // maybeSingle() because having no row is the normal case: it means the user
+  // has never touched the switch, which is the same as not being opted out.
+  const { data: discovery } = await supabase
+    .from("discovery_settings")
+    .select("opted_out")
+    .eq("user_id", user.id)
+    .maybeSingle();
 
   const [t, isNative] = await Promise.all([getServerT(), isNativeRequest()]);
   const name = profile?.display_name || profile?.username || "Learner";
@@ -162,6 +174,26 @@ export default async function ProfilePage() {
           {t("profile.privacy.private3")}
           {" "}{t("profile.privacy.detail")}
         </p>
+
+        {/* Sits inside the privacy card rather than in one of its own, so the
+            switch is read directly under "private by default". The reassurance
+            and the control that could be mistaken for weakening it belong on
+            the same card. */}
+        <div className="mt-5 border-t border-line pt-5">
+          <h3 className="font-serif font-bold text-pine">{t("profile.discovery.heading")}</h3>
+          <p className="mt-1 text-sm leading-relaxed text-ink/75">
+            {t("profile.discovery.desc")}
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-muted">
+            {t("profile.discovery.privateNote")}
+          </p>
+          <div className="mt-4">
+            <DiscoveryOptOutToggle
+              userId={user.id}
+              initialOptedOut={Boolean(discovery?.opted_out)}
+            />
+          </div>
+        </div>
       </Card>
 
       {/* Danger Zone */}

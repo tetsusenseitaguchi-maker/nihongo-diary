@@ -307,5 +307,13 @@
   "learned.usedSubtitle": "Use it three times and it graduates from your list.",
   "learned.graduatedTitle": "Mastered it!",
   "learned.graduatedBody": "Three diaries, three uses. This one is part of your Japanese now. 🐶",
-  "learned.stampLabel": "使えました"
+  "learned.stampLabel": "使えました",
+
+  "profile.discovery.heading": "Discovery",
+  "profile.discovery.desc": "Your public diaries can be found by other learners in Discovery. Turn this off to only show them to your followers.",
+  "profile.discovery.privateNote": "This only affects diaries you have made public. Private diaries are never shown to anyone.",
+  "profile.discovery.toggle": "Don't show my entries in Discovery",
+  "profile.discovery.saving": "Saving…",
+  "profile.discovery.saved": "Saved",
+  "profile.discovery.error": "Could not save. Please try again."
 }
