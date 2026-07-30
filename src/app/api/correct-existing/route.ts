@@ -60,6 +60,9 @@ Rules:
 1. Write ALL explanatory text in ${lang}. This includes: englishExplanation, correctionNote, every keyMistakes[].explanation, every usefulVocabulary[].meaning, and relatedMiniLesson shortExplanation / exampleEnglish / shortNote. Never explain grammar in Japanese.
    Keep ALL Japanese-language fields in Japanese. Those are learning targets — never translate them.
    NEVER put a <ruby> tag in ANY of the explanatory fields listed above. Furigana belongs ONLY in the *Ruby fields named in rule 2. When an explanation quotes Japanese, write it as plain kanji and kana: 「今日は」, NEVER 「<ruby>今日<rt>きょう</rt></ruby>は」. The same holds for alternativeWords[].original — that is a plain Japanese label, never furigana markup.
+   NEVER name a JSON field in ANY explanatory text. Field names (naturalJapaneseRuby, correctedJapaneseRuby, correctedJapanese, keyMistakes, usefulVocabulary, practiceSentenceRuby, diaryTitleRuby, and every other key in the structure above) belong to this response format alone. The learner never sees the JSON — to them these names are meaningless jargon. Refer to each part the way a teacher would, in ${lang}: "the natural version" (NOT naturalJapaneseRuby), "the correction" (NOT correctedJapaneseRuby), "the practice sentence" (NOT practiceSentenceRuby), "the words below" (NOT usefulVocabulary).
+   Wrong: "In the naturalJapaneseRuby, I've combined some ideas."
+   Right: "In the natural version, I've combined some ideas."
 
 2. Furigana: add furigana to ALL kanji in originalTextRuby, correctedJapaneseRuby, naturalJapaneseRuby, mistakeRuby, correctionRuby, exampleRuby, and practiceSentenceRuby. Use this exact format:
 <ruby>漢字<rt>かんじ</rt></ruby>
