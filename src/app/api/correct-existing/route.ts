@@ -5,12 +5,9 @@ import { cookies } from "next/headers";
 import { POST as scanLearned } from "@/app/api/learned/scan/route";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePlan, limitsFor } from "@/lib/plans";
-import { lessonById } from "@/lib/lessons";
 import { languageDisplayName } from "@/lib/languages";
 import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
-import { normalizeRubyText, stripRubyText } from "@/lib/furigana";
-import { sanitizeReading } from "@/lib/reading-validation";
-import type { VocabItem, AlternativeWord } from "@/lib/types";
+import { parseCorrectionPayload, correctionToDbColumns } from "@/lib/correction-payload";
 import { createChatCompletion, missingApiKeyError } from "@/lib/ai-provider";
 import { refundCorrection } from "@/lib/correction-refund";
 
@@ -120,9 +117,6 @@ CRITICAL — "reading" is NOT written the way <rt> is. <rt> carries the reading 
 Output must be valid JSON. No markdown, no comments, no trailing commas.`;
 }
 
-function str(v: unknown): string {
-  return typeof v === "string" ? v : "";
-}
 
 function safeJson(content: string): Record<string, unknown> | null {
   try {
@@ -140,20 +134,6 @@ function safeJson(content: string): Record<string, unknown> | null {
   }
 }
 
-function buildLesson(raw: unknown) {
-  if (!raw || typeof raw !== "object") return null;
-  const r = raw as Record<string, unknown>;
-  const id = typeof r.id === "number" ? r.id : parseInt(String(r.id ?? ""), 10);
-  const base = lessonById(id) ?? lessonById(1);
-  if (!base) return null;
-  return {
-    ...base,
-    shortExplanation: str(r.shortExplanation) || base.shortExplanation,
-    exampleJapaneseRuby: str(r.exampleJapaneseRuby) || base.exampleJapaneseRuby,
-    exampleEnglish: str(r.exampleEnglish) || base.exampleEnglish,
-    shortNote: str(r.shortNote) || base.shortNote,
-  };
-}
 
 export async function POST(request: Request) {
   let body: { entryId?: string };
@@ -313,89 +293,35 @@ export async function POST(request: Request) {
     );
   }
 
-  // ---- Map AI response (same shape as saveEntry in write/page.tsx) ----
-  // normalizeRubyText() sanitizes AI-generated <ruby> markup before it's
-  // saved, so malformed tags never reach the DB in the first place.
-  const corrected = normalizeRubyText(str(parsed.correctedJapaneseRuby) || str(parsed.correctedJapanese));
-  const natural = normalizeRubyText(str(parsed.naturalJapaneseRuby) || str(parsed.naturalJapanese));
-  const originalRuby = normalizeRubyText(str(parsed.originalTextRuby));
-
-  const keyMistakes = Array.isArray(parsed.keyMistakes)
-    ? (parsed.keyMistakes as Record<string, unknown>[]).map((m) => ({
-        before: normalizeRubyText(str(m?.mistakeRuby) || str(m?.mistake)),
-        after: normalizeRubyText(str(m?.correctionRuby) || str(m?.correction)),
-        note: str(m?.explanation),
-      }))
-    : [];
-
-  const grammarFocus = (() => {
-    const km = (Array.isArray(parsed.keyMistakes) ? parsed.keyMistakes as Record<string, unknown>[] : [])[0];
-    if (!km || !km.mistake) return null;
-    return {
-      before: normalizeRubyText(str(km.mistakeRuby) || str(km.mistake)),
-      after: normalizeRubyText(str(km.correctionRuby)),
-      note: str(km.explanation),
-    };
-  })();
-
-  // sanitizeReading() drops a reading that cannot belong to its word (歩く/ある
-  // — rule 2's kanji-only <rt> habit bleeding into the standalone reading
-  // field). Both stored shapes get it, because both are read back and rendered
-  // as furigana: useful_vocabulary by the correction result and the weekly
-  // report, alternative_words by the correction result.
-  const usefulVocabulary: VocabItem[] = Array.isArray(parsed.usefulVocabulary)
-    ? (parsed.usefulVocabulary as Record<string, unknown>[]).map((v) => {
-        const word = str(v?.word);
-        return {
-          word,
-          reading: sanitizeReading(word, str(v?.reading)),
-          meaning: str(v?.meaning),
-          example: normalizeRubyText(str(v?.exampleRuby) || str(v?.example)),
-        };
-      })
-    : [];
-
-  const alternativeWords: AlternativeWord[] = Array.isArray(parsed.alternativeWords)
-    ? (parsed.alternativeWords as Record<string, unknown>[])
-        .map((a) => {
-          const alternative = str(a?.alternative);
-          return {
-            original: str(a?.original),
-            alternative,
-            alternativeReading: sanitizeReading(alternative, str(a?.alternativeReading)),
-          };
-        })
-        .filter((a) => a.original && a.alternative)
-    : [];
-
-  const diaryTitleRaw = str(parsed.diaryTitleRuby);
-  const diaryTitle = diaryTitleRaw ? stripRubyText(diaryTitleRaw) || null : null;
+  // ---- Map AI response ----
+  // Same converter as the write page: it owns which transform every field
+  // gets (normalizeRubyText on the *Ruby fields, sanitizeReading on the
+  // readings) and its table has to name every field of Correction, so a new
+  // one cannot arrive here untransformed. This route used to keep a second
+  // copy of that mapping, which is how the two drifted over the diary title.
+  const correction = parseCorrectionPayload(parsed, text);
+  const columns = correctionToDbColumns(correction);
 
   // ---- UPDATE diary entry ----
-  const updatePayload: Record<string, unknown> = {
-    corrected_japanese: corrected,
-    natural_japanese: natural,
-    original_text_ruby: originalRuby || null,
-    english_explanation: str(parsed.englishExplanation),
-    correction_note: str(parsed.correctionNote),
-    key_mistakes: keyMistakes,
-    grammar_focus: grammarFocus,
-    useful_vocabulary: usefulVocabulary,
-    practice_sentence: normalizeRubyText(str(parsed.practiceSentenceRuby) || str(parsed.practiceSentence)),
-  };
+  // A re-correction updates a subset. Deliberately NOT sent:
+  //  - original_text, which the learner wrote and this must never overwrite;
+  //  - title and alternative_words when empty, so a title or a set of
+  //    alternatives the entry already has is not cleared by a re-run.
+  // The write page inserts a fresh row and sends all of them.
+  const { title, alternative_words, ...common } = columns;
+  const updatePayload: Record<string, unknown> = { ...common };
 
-  if (diaryTitle) {
-    updatePayload.title = diaryTitle;
+  if (title) {
+    updatePayload.title = title;
   }
 
-  if (alternativeWords.length > 0) {
-    updatePayload.alternative_words = alternativeWords;
-  }
-
-  const relatedMiniLesson = buildLesson(parsed.relatedMiniLesson);
-  if (relatedMiniLesson) {
-    // Store in grammar_focus as a supplemental field (matches how write page treats it)
-    // Note: relatedMiniLesson is not a DB column; we store only grammar_focus from it
+  // Entries with an empty original or alternative are dropped — a suggestion
+  // missing either half has nothing to show. Only this route has ever done
+  // this; the write page keeps them, so the filter stays here rather than
+  // moving into the shared converter and changing that.
+  const usableAlternatives = alternative_words.filter((a) => a.original && a.alternative);
+  if (usableAlternatives.length > 0) {
+    updatePayload.alternative_words = usableAlternatives;
   }
 
   const { error: updateError } = await supabase

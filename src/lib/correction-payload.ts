@@ -32,7 +32,7 @@
  * "Hello". Worth doing, separately, with its own before/after.
  */
 
-import { normalizeRubyText } from "@/lib/furigana";
+import { normalizeRubyText, stripRubyText } from "@/lib/furigana";
 import { sanitizeReading } from "@/lib/reading-validation";
 import { buildMiniLessonFromAI } from "@/lib/lessons";
 import { fixMasuIncompatibleBlank, ensureAnswerInChoices } from "@/lib/drills";
@@ -294,4 +294,55 @@ export function parseCorrectionPayload(raw: unknown, fallbackOriginal: string): 
   // having a line here. Both are checked: the spec by the compiler, this
   // block by the round-trip test.
   return out as unknown as Correction;
+}
+
+/* ── Correction → diary_entries columns ───────────────────────────────────── */
+
+/**
+ * The columns of diary_entries that are derived from a Correction, with the
+ * transforms each one needs on the way out.
+ *
+ * Shared by both writers, which had drifted: /api/correct-existing stripped
+ * the ruby off the diary title during conversion while the write page kept it
+ * on Correction.diaryTitle and stripped at save time. Same column, same value,
+ * two places deciding it. Stripping belongs here, at the DB edge — the title
+ * is displayed with furigana and stored without.
+ *
+ * Returns every derived column; it does NOT decide which ones a given writer
+ * sends. The write page inserts a new row and sets all of them. Re-correcting
+ * an existing diary updates a subset: `title` is omitted when empty so a title
+ * the learner already has is not cleared, and `alternative_words` is omitted
+ * when empty for the same reason. Columns that are not derived from the
+ * correction at all (user_id, diary_date, tags, level, correction_style, and
+ * original_text — which a re-correction must never overwrite) stay with their
+ * callers.
+ */
+export interface CorrectionDbColumns {
+  corrected_japanese: string;
+  natural_japanese: string;
+  original_text_ruby: string | null;
+  english_explanation: string;
+  correction_note: string;
+  key_mistakes: MistakeItem[];
+  grammar_focus: MistakeItem | null;
+  useful_vocabulary: VocabItem[];
+  practice_sentence: string;
+  title: string | null;
+  alternative_words: AlternativeWord[];
+}
+
+export function correctionToDbColumns(correction: Correction): CorrectionDbColumns {
+  return {
+    corrected_japanese: correction.corrected,
+    natural_japanese: correction.natural,
+    original_text_ruby: correction.originalRuby || null,
+    english_explanation: correction.explanation,
+    correction_note: correction.correctionNote ?? "",
+    key_mistakes: correction.mistakes,
+    grammar_focus: correction.grammarFocus ?? null,
+    useful_vocabulary: correction.vocabulary,
+    practice_sentence: correction.practice.jp,
+    title: correction.diaryTitle ? stripRubyText(correction.diaryTitle) || null : null,
+    alternative_words: correction.alternativeWords ?? [],
+  };
 }

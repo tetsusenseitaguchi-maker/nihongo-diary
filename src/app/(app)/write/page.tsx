@@ -27,8 +27,8 @@ import { limitsFor, normalizePlan, PLAN_LABELS, PLAN_LIMITS, type Plan } from "@
 import { PRESET_TAGS, PRESET_TAG_KEYS } from "@/lib/tags";
 import { useT } from "@/contexts/locale";
 import { todayInTZ } from "@/lib/date-tz";
-import { normalizeRubyText, stripRubyText } from "@/lib/furigana";
-import { parseCorrectionPayload } from "@/lib/correction-payload";
+import { normalizeRubyText } from "@/lib/furigana";
+import { parseCorrectionPayload, correctionToDbColumns } from "@/lib/correction-payload";
 
 const DiaryMapPicker = dynamicLoad(
   () => import("@/components/DiaryMapPicker").then((m) => m.DiaryMapPicker),
@@ -450,23 +450,22 @@ export default function WritePage() {
     // the page.
     const diaryDate = todayInTZ(getClientTZ());
 
+    // alternative_words is not in this insert: it is written by the separate
+    // update further down, which is how this flow has always done it.
+    const { alternative_words, ...correctionColumns } = correctionToDbColumns(correction);
+
     const { data, error } = await supabase
       .from("diary_entries")
       .insert({
+        // Everything derived from the correction, with the transform each
+        // column needs — shared with /api/correct-existing so the two writers
+        // cannot drift again (they already had, over the diary title).
+        ...correctionColumns,
+        // Everything that is not:
         user_id: user.id,
         diary_date: diaryDate,
-        title: correction.diaryTitle ? stripRubyText(correction.diaryTitle) || null : null,
         tags,
         original_text: correction.original,
-        original_text_ruby: correction.originalRuby || null,
-        corrected_japanese: correction.corrected,
-        natural_japanese: correction.natural,
-        english_explanation: correction.explanation,
-        correction_note: correction.correctionNote ?? "",
-        key_mistakes: correction.mistakes,
-        grammar_focus: correction.grammarFocus ?? null,
-        useful_vocabulary: correction.vocabulary,
-        practice_sentence: correction.practice.jp,
         level: levels[level],
         correction_style: styles[style],
       })
@@ -525,11 +524,11 @@ export default function WritePage() {
       );
     }
 
-    if (correction.alternativeWords?.length) {
+    if (alternative_words.length > 0) {
       supabase
         .from("diary_entries")
         .update({
-          alternative_words: correction.alternativeWords ?? [],
+          alternative_words,
         })
         .eq("id", data.id)
         .then(() => {});
