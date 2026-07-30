@@ -1,18 +1,23 @@
-import type { MiniLesson } from "./types";
+import type { CommonMistake, MiniLesson, MiniLessonPoint } from "./types";
+import { authored } from "./text-kinds";
 import type { Locale } from "./i18n";
 
+// Each field mirrors the MiniLesson field it overrides, so when those gain a
+// text kind these follow automatically and getLessonInLocale keeps compiling.
 type LessonI18n = {
-  shortExplanation: string;
-  visualImage: string;
-  points: string[];
-  exampleEnglish: string;
-  shortNote: string;
-  commonMistakes?: { right: string; note: string }[];
+  shortExplanation: MiniLesson["shortExplanation"];
+  visualImage: MiniLesson["visualImage"];
+  points: MiniLessonPoint["text"][];
+  exampleEnglish: MiniLesson["exampleEnglish"];
+  shortNote: MiniLesson["shortNote"];
+  commonMistakes?: { right: CommonMistake["right"]; note: CommonMistake["note"] }[];
 };
+
+type LessonI18nTable = Partial<Record<Locale, Record<number, LessonI18n>>>;
 
 // Translations keyed by locale → lesson id.
 // English falls back to the original lessons.ts content.
-const LESSON_I18N: Partial<Record<Locale, Record<number, LessonI18n>>> = {
+const LESSON_I18N: LessonI18nTable = authored<LessonI18nTable>({
   de: {
     1: {
       shortExplanation: "Hiragana ist das Fundament des Japanischen. Jeden Laut der Sprache kann man mit diesen 46 Zeichen schreiben.",
@@ -2967,7 +2972,7 @@ const LESSON_I18N: Partial<Record<Locale, Record<number, LessonI18n>>> = {
       ],
     },
   },
-};
+});
 
 export function getLessonInLocale(lesson: MiniLesson, locale: Locale): MiniLesson {
   if (locale === "en") return lesson;

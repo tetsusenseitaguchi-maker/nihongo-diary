@@ -1,8 +1,9 @@
 import type { MiniLesson } from "@/lib/types";
 import { normalizeRubyText } from "@/lib/furigana";
+import { authored } from "@/lib/text-kinds";
 
 // FIXED curriculum order — never randomized, never reordered by the AI.
-export const MINI_LESSONS: MiniLesson[] = [
+export const MINI_LESSONS: MiniLesson[] = authored<MiniLesson[]>([
   {
     id: 1,
     order: 1,
@@ -1483,7 +1484,7 @@ export const MINI_LESSONS: MiniLesson[] = [
       },
     ],
   },
-];
+]);
 
 export function lessonById(id: number | undefined | null): MiniLesson | null {
   if (!id) return null;

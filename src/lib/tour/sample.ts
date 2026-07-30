@@ -1,5 +1,6 @@
 import type { Correction } from "@/lib/types";
 import { sanitizeReading } from "@/lib/reading-validation";
+import { authored } from "@/lib/text-kinds";
 
 /**
  * The canned correction the tour shows on the /write step.
@@ -28,7 +29,7 @@ type SampleCorrection = Correction & {
   practiceDrills?: never;
 };
 
-export const TOUR_SAMPLE_CORRECTION: SampleCorrection = {
+export const TOUR_SAMPLE_CORRECTION: SampleCorrection = authored<SampleCorrection>({
   original:
     "きょうは私は友だちと公園に行きました。天気がいいですから、たくさん歩きました。小さい犬を見ました。とてもかわいいでした。",
   corrected:
@@ -65,4 +66,4 @@ export const TOUR_SAMPLE_CORRECTION: SampleCorrection = {
     jp: "公園で大きい犬を見かけて、とてもかわいかったです。",
     en: "I spotted a big dog in the park, and it was really cute.",
   },
-};
+});

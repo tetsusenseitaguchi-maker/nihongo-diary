@@ -1,5 +1,6 @@
 import type { Correction, DiaryEntry, NavItem, Template } from "./types";
 import { sanitizeReading } from "@/lib/reading-validation";
+import { authored } from "@/lib/text-kinds";
 
 /* ------------------------------------------------------------------ */
 /*  Navigation                                                         */
@@ -52,7 +53,9 @@ export const activeDays: number[] = [
 export const sampleDraft =
   "きょうは私は友だちと公園に行きました。天気がいいですから、たくさん歩きました。小さい犬を見ました。とてもかわいいでした。";
 
-export const mockCorrection: Correction = {
+// Kept unsealed so diaryEntries below can embed it inside its own authored()
+// call — a value that is already branded cannot go back through one.
+const mockCorrectionSource = {
   original: sampleDraft,
   corrected:
     "今日は友だちと公園に行きました。天気がよかったので、たくさん歩きました。小さい犬を見ました。とてもかわいかったです。",
@@ -88,11 +91,13 @@ export const mockCorrection: Correction = {
   },
 };
 
+export const mockCorrection: Correction = authored<Correction>(mockCorrectionSource);
+
 /* ------------------------------------------------------------------ */
 /*  Saved diary history                                                */
 /* ------------------------------------------------------------------ */
 
-export const diaryEntries: DiaryEntry[] = [
+export const diaryEntries: DiaryEntry[] = authored<DiaryEntry[]>([
   {
     id: "d-2026-06-21",
     weather: "sunny",
@@ -101,7 +106,7 @@ export const diaryEntries: DiaryEntry[] = [
     title: "公園で犬を見ました",
     preview: "今日は友だちと公園に行きました。天気がよかったので…",
     body: sampleDraft,
-    correction: mockCorrection,
+    correction: mockCorrectionSource,
   },
   {
     id: "d-2026-06-20",
@@ -221,7 +226,7 @@ export const diaryEntries: DiaryEntry[] = [
       },
     },
   },
-];
+]);
 
 /* ------------------------------------------------------------------ */
 /*  Templates                                                          */
