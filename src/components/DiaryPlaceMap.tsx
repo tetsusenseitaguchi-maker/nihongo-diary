@@ -19,13 +19,21 @@ interface Place {
   place_name: string | null;
 }
 
+/**
+ * `isOwner` is required, not optional. MapPin.isOwner defaults to true when
+ * absent — sensible for /places, where own pins came first — and this
+ * component never set it, so a stranger's diary rendered with the "your exact
+ * location" pin and popup. A required prop makes the caller state which it is.
+ */
 export function DiaryPlaceMap({
   places,
+  isOwner,
   diaryEntryId,
   diaryDate,
   diaryTitle,
 }: {
   places: Place[];
+  isOwner: boolean;
   diaryEntryId: string;
   diaryDate: string;
   diaryTitle: string | null;
@@ -35,6 +43,7 @@ export function DiaryPlaceMap({
     lat: p.lat,
     lng: p.lng,
     name: p.place_name,
+    isOwner,
     diaryEntryId,
     diaryDate,
     diaryTitle,

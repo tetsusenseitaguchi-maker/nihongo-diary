@@ -86,9 +86,13 @@ export default async function DiaryDetailPage({
     authorProfile = profileData;
   }
 
-  // Fetch location pins for this diary
+  // Fetch location pins for this diary. The owner reads the base table and
+  // sees exactly where they were; everyone else reads diary_places_public,
+  // which rounds to the same ~22km grid /places has always used for friends'
+  // pins. Until now this page handed exact coordinates to every viewer of a
+  // public diary, which for a diary written at home is a home address.
   const { data: placesData } = await supabase
-    .from("diary_places")
+    .from(isOwner ? "diary_places" : "diary_places_public")
     .select("id, lat, lng, place_name")
     .eq("diary_entry_id", id);
   const places = (placesData ?? []) as { id: string; lat: number; lng: number; place_name: string | null }[];
@@ -257,6 +261,7 @@ export default async function DiaryDetailPage({
           </div>
           <DiaryPlaceMap
             places={places}
+            isOwner={isOwner}
             diaryEntryId={id}
             diaryDate={entry.diary_date}
             diaryTitle={entry.title ?? null}

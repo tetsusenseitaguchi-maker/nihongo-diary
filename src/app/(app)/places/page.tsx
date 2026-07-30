@@ -72,21 +72,39 @@ export default async function PlacesPage() {
     };
   });
 
-  // Fetch friends' places (public diaries only, via RLS).
+  // Fetch friends' places from the blurred view (public diaries only — the
+  // view's own WHERE, where it used to be the read_public_diary_places policy
+  // on the base table, so the same rows come back).
+  //
+  // diary_date and title are flat columns here rather than an embed: a view
+  // carries no foreign keys, so PostgREST cannot join diary_entries through
+  // it. They are selected into the view instead, which keeps this to one
+  // request.
   const followingIds = (following ?? []).map((f) => f.following_id);
   let friendPins: MapPin[] = [];
 
   if (followingIds.length > 0) {
     const { data: friendData } = await supabase
-      .from("diary_places")
+      .from("diary_places_public")
       .select(
-        "id, lat, lng, place_name, diary_entry_id, user_id, diary_entries(diary_date, title)"
+        "id, lat, lng, place_name, diary_entry_id, user_id, diary_date, diary_title"
       )
       .in("user_id", followingIds)
       .order("created_at", { ascending: false })
       .limit(200);
 
-    const rows = (friendData ?? []) as (PlaceRow & { user_id: string })[];
+    type PublicPlaceRow = {
+      id: string;
+      lat: number;
+      lng: number;
+      place_name: string | null;
+      diary_entry_id: string;
+      user_id: string;
+      diary_date: string | null;
+      diary_title: string | null;
+    };
+
+    const rows = (friendData ?? []) as PublicPlaceRow[];
 
     if (rows.length > 0) {
       const authorIds = [...new Set(rows.map((p) => p.user_id))];
@@ -106,17 +124,19 @@ export default async function PlacesPage() {
       );
 
       friendPins = rows.map((p) => {
-        const de = Array.isArray(p.diary_entries) ? p.diary_entries[0] : p.diary_entries;
         const a = authorMap[p.user_id];
         return {
           id: p.id,
-          // Blur to 0.2-degree precision (≈ 22 km) before sending to client.
+          // The view already rounds to 0.2-degree precision (≈ 22 km). Kept
+          // anyway: rounding an already-rounded value changes nothing, and if
+          // this ever reads a source that has not blurred, the client still
+          // does not receive exact coordinates.
           lat: blurCoord(p.lat),
           lng: blurCoord(p.lng),
           name: p.place_name,
           diaryEntryId: p.diary_entry_id,
-          diaryDate: de?.diary_date ?? "",
-          diaryTitle: de?.title ?? null,
+          diaryDate: p.diary_date ?? "",
+          diaryTitle: p.diary_title,
           isOwner: false,
           authorName: a?.display_name || a?.username || null,
           authorAvatar: a?.avatar_url || null,
