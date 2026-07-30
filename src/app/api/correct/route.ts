@@ -200,7 +200,7 @@ Correct examples:
 Wrong (do NOT do this): <ruby>見ました<rt>みました</rt></ruby>, <ruby>は<rt>は</rt></ruby>, <ruby>可愛かった<rt>かわいかった</rt></ruby>
 Every Japanese field above ends in "Ruby" and must contain furigana in this format.
 
-3. Furigana must be accurate and chosen from context (今日=きょう, 日本語=にほんご, 行った=いった, 良かった=よかった, 大人=おとな, 診て=みて, 観て=みて, 空いて=すいて, 生きて=いきて, 下さい=ください, 分かった=わかった, 話して=はなして, 激しい=はげしい, 細かい=こまかい, 細い=ほそい, 止んだ=やんだ, 止まった=とまった, 入った=はいった, 気に入った=きにいった, 少し=すこし, 少ない=すくない, 苦い=にがい, 明るい=あかるい, 過ごした=すごした, 辛い=からい or つらい by context).
+3. Furigana must be accurate and chosen from context (今日=きょう, 日本語=にほんご, 行った=いった, 良かった=よかった, 大人=おとな, 診て=みて, 観て=みて, 空いて=すいて, 生きて=いきて, 下さい=ください, 分かった=わかった, 話して=はなして, 激しい=はげしい, 細かい=こまかい, 細い=ほそい, 止んだ=やんだ, 止まった=とまった, 入った=はいった, 気に入った=きにいった, 少し=すこし, 少ない=すくない, 苦い=にがい, 明るい=あかるい, 過ごした=すごした, 辛い=からい or つらい by context, 一日=ついたち when it is the 1st of a month but いちにち when it means a whole day — 一日中 is always いちにちじゅう).
 
 4. Match the learner's level in grammar AND kanji:
 - N5: mostly hiragana; only very common kanji (私, 人, 日, 本, 日本, 日本語, 学校, 先生, 友達, 食べる, 飲む, 行く, 見る, 来る); very simple, short grammar; avoid 〜ため/〜によって/〜ということ etc.
