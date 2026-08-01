@@ -346,5 +346,7 @@
   "audio.failed": "Could not play audio.",
   "audio.networkError": "Network error. Please try again.",
   "audio.playWord": "Play the word",
-  "audio.playExample": "Play the example sentence"
+  "audio.playExample": "Play the example sentence",
+  "audio.playSentence": "Play the sentence",
+  "audio.playBeforeAfter": "Play the mistake and the correction"
 }

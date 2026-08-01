@@ -93,7 +93,11 @@ export function TourSampleSheet() {
       >
         {/* Layers 2 (disabled fieldset) and, for links, pointer-events. */}
         <fieldset disabled className="m-0 min-w-0 border-0 p-0 [&_a]:pointer-events-none">
-          <CorrectionResult correction={TOUR_SAMPLE_CORRECTION} />
+          {/* disableAudio: the sample is fake, the audio allowance is real and
+              lasts a lifetime. Walking through the tour must not cost a third
+              of it. The disabled fieldset above would swallow the click too,
+              but this stops the button being drawn at all. */}
+          <CorrectionResult correction={TOUR_SAMPLE_CORRECTION} disableAudio />
         </fieldset>
       </div>
 

@@ -60,6 +60,33 @@ export function AudioLimitNotice({
   );
 }
 
+/**
+ * Sentence-final punctuation, in both widths. Used only to avoid doubling it
+ * when stitching parts together below.
+ */
+const SENTENCE_END = /[。．.！!？?…]$/;
+
+/**
+ * Stitch several pieces into the ONE string that gets synthesised.
+ *
+ * Why one string and not one request per piece: a request is a request, and
+ * every miss claims a lifetime credit. Playing 「まちがい」 then 「ただしい」 as
+ * two fetches costs two credits for what the learner experiences as a single
+ * before/after — the exact doubling a combined button is meant to avoid.
+ *
+ * The gap between them comes from a full stop, because it has to. A precise
+ * pause would be SSML <break time="500ms"/>, and the client cannot send that:
+ * /api/tts escapes everything it is given before wrapping it (rubyToSsml), so
+ * markup would be read out as literal characters. A sentence boundary is what
+ * is left, and ja-JP-Wavenet-A rests roughly half a second on one.
+ */
+function joinForOneRequest(parts: string[]): string {
+  const kept = parts.map((p) => p.trim()).filter(Boolean);
+  return kept
+    .map((p, i) => (i === kept.length - 1 || SENTENCE_END.test(p) ? p : `${p}。`))
+    .join("");
+}
+
 /** sm sits in a chip or a label row; md sits beside a heading. */
 const SIZES = {
   sm: { button: "h-5 w-5 text-[10px]", spinner: "h-2.5 w-2.5" },
@@ -67,8 +94,12 @@ const SIZES = {
 } as const;
 
 type Props = {
-  /** Ruby-annotated Japanese, exactly as handed to <Furigana>. */
-  text: string;
+  /**
+   * Ruby-annotated Japanese, exactly as handed to <Furigana>. An array is
+   * spoken as one clip with a pause between the parts — see
+   * joinForOneRequest for why it is not one request each.
+   */
+  text: string | string[];
   /** Routes the server cache: "diary" is personal and stored per user. */
   kind?: PlayButtonKind;
   /**
@@ -103,6 +134,12 @@ export function PlayButton({
   const [error, setError] = useState<string | null>(null);
   const [limit, setLimit] = useState<number | null>(null);
 
+  // The one string that is sent, cached and keyed on. Derived rather than held
+  // in state, and a string rather than the raw prop, so that passing an array
+  // literal — a fresh reference every render — does not retrigger the effect
+  // below and throw the cached clip away on each parent render.
+  const speech = Array.isArray(text) ? joinForOneRequest(text) : text;
+
   /**
    * ONE element for the life of the component. Reusing it is what makes the
    * unlock stick: iOS grants permission to the element that was played inside
@@ -113,9 +150,9 @@ export function PlayButton({
   /** Object URL of the fetched clip, kept so a replay costs no round trip. */
   const clipUrlRef = useRef<string | null>(null);
 
-  // Keyed on `text`: if the caller swaps the word out, the cached clip is for
-  // the wrong one. Cleanup also runs on unmount, which is what stops the
-  // object URL leaking.
+  // Keyed on the spoken string: if the caller swaps the word out, the cached
+  // clip is for the wrong one. Cleanup also runs on unmount, which is what
+  // stops the object URL leaking.
   useEffect(() => {
     return () => {
       audioRef.current?.pause();
@@ -124,7 +161,7 @@ export function PlayButton({
         clipUrlRef.current = null;
       }
     };
-  }, [text]);
+  }, [speech]);
 
   function handleClick() {
     if (status !== "idle" || limit !== null || disabled) return;
@@ -169,7 +206,7 @@ export function PlayButton({
       res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, kind }),
+        body: JSON.stringify({ text: speech, kind }),
       });
     } catch {
       audio.pause();

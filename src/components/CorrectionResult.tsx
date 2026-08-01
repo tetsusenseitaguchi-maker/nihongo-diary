@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { Correction } from "@/lib/types";
 import { ObiePhoto } from "@/components/ObiePhoto";
 import { Furigana, NoRuby } from "@/components/Furigana";
+import { AudioLimitNotice, PlayButton } from "@/components/PlayButton";
 import { PracticeDrills } from "@/components/PracticeDrills";
 import { LearnedUsedPanel } from "@/components/LearnedUsedPanel";
 import type { UsedExpression } from "@/lib/learned-display";
@@ -65,11 +66,15 @@ function SaveWordButton({
   );
 }
 
-function Label({ en, jp }: { en: string; jp: string }) {
+function Label({ en, jp, action }: { en: string; jp: string; action?: ReactNode }) {
   return (
     <p className="mb-2 flex flex-wrap items-baseline gap-x-2">
       <span className="text-sm font-bold text-pine">{en}</span>
       <Furigana text={jp} className="font-jp text-xs text-muted" />
+      {/* self-center rather than the row's baseline: a button has no text
+          baseline worth aligning to, and switching the row to items-center
+          would nudge every label on the page. */}
+      {action && <span className="self-center">{action}</span>}
     </p>
   );
 }
@@ -120,6 +125,7 @@ export function CorrectionResult({
   showOriginal = true,
   locked,
   usedExpressions,
+  disableAudio = false,
 }: {
   correction: Correction;
   showOriginal?: boolean;
@@ -144,6 +150,20 @@ export function CorrectionResult({
    * response lands.
    */
   usedExpressions?: UsedExpression[];
+  /**
+   * Renders no 🔊 buttons at all.
+   *
+   * Set by the tour, and it matters more than it looks: the audio allowance is
+   * three plays for a LIFETIME, and TourSampleSheet renders this component on
+   * fake data. A working button there would let the tutorial itself spend a
+   * third of what a learner gets, on a sample sentence, before they have
+   * written anything. TourSampleSheet already wraps the sheet in a disabled
+   * <fieldset>, which happens to neutralise the click too — but that is a
+   * layout detail that could be refactored away, and a dead button in a
+   * walkthrough is confusing even while it holds. Not rendering it is the
+   * honest version.
+   */
+  disableAudio?: boolean;
 }) {
   const t = useT();
   const { locale } = useLocale();
@@ -155,6 +175,44 @@ export function CorrectionResult({
   const [wordStates, setWordStates] = useState<Map<string, SaveState>>(new Map());
   const [showVocabUpgrade, setShowVocabUpgrade] = useState(false);
   const [isIosApp, setIsIosApp] = useState(false);
+
+  /**
+   * One lifetime allowance is shared by every 🔊 on this result, so the state
+   * lives here rather than in each button: running out anywhere switches all
+   * of them off, and `at` records which slot was tapped so the explanation can
+   * be rendered there instead of once per button.
+   */
+  const [audioLimit, setAudioLimit] = useState<{ limit: number; at: string } | null>(null);
+
+  /**
+   * Everything spoken on this page is kind="diary".
+   *
+   * All of it is the learner's own writing or derived from it — the natural
+   * version and the before/after of a mistake are literally their diary, and
+   * rule 10 of the /api/correct prompt picks the vocabulary "from or related
+   * to the diary" and writes its example in that context. So it goes to the
+   * per-user tts-diary bucket, which /api/account/delete clears, and not to
+   * the bucket shared between learners. (The vocabulary PAGE is the other
+   * case: /api/vocabulary generates from the word alone, never from a diary,
+   * so those examples are "expression" and shareable.)
+   */
+  function audioButton(at: string, text: string | string[], label: string) {
+    if (disableAudio) return null;
+    return (
+      <PlayButton
+        text={text}
+        kind="diary"
+        label={label}
+        disabled={audioLimit !== null}
+        onLimitReached={(limit) => setAudioLimit({ limit, at })}
+      />
+    );
+  }
+
+  function audioNotice(at: string, className = "") {
+    if (audioLimit?.at !== at) return null;
+    return <AudioLimitNotice limit={audioLimit.limit} className={className} />;
+  }
 
   useEffect(() => {
     type CapWindow = Window & { Capacitor?: { isNativePlatform?: () => boolean } };
@@ -255,10 +313,17 @@ export function CorrectionResult({
 
         {correction.natural && (
           <div className="gloss-panel relative rounded-[var(--radius-card)] p-6" style={tint("--color-tint-sage")}>
-            <Label en={t("correction.naturalJapanese")} jp="自然(しぜん)な日本語(にほんご)" />
+            <Label
+              en={t("correction.naturalJapanese")}
+              jp="自然(しぜん)な日本語(にほんご)"
+              action={audioButton("natural", correction.natural, t("audio.playSentence"))}
+            />
             <p className="font-jp text-[15px] leading-loose text-ink">
               <Furigana text={correction.natural} />
             </p>
+            {/* pr-16 keeps the notice clear of the よく書けました stamp, which
+                is absolutely positioned over this card's top-right corner. */}
+            {audioNotice("natural", "mt-2 pr-16")}
             <span className="stamp gloss absolute -right-2 -top-3 grid h-16 w-16 rotate-[-12deg] place-items-center rounded-full bg-paper text-center font-jp text-[10px] font-bold leading-tight text-apricot shadow-card">
               よく
               <br />
@@ -295,10 +360,19 @@ export function CorrectionResult({
             <ul className="space-y-3 text-sm">
               {correction.mistakes.map((m, i) => (
                 <li key={i} className="rounded-xl bg-paper/60 p-3">
-                  <Furigana text={m.before} className="font-jp text-ink/45 line-through" />
-                  <span className="mx-1.5 text-moss">→</span>
-                  <Furigana text={m.after} className="font-jp font-semibold text-pine" />
-                  <span className="mt-0.5 block text-ink/65"><NoRuby text={m.note} /></span>
+                  <div className="flex items-start gap-2">
+                    <span className="min-w-0 flex-1">
+                      <Furigana text={m.before} className="font-jp text-ink/45 line-through" />
+                      <span className="mx-1.5 text-moss">→</span>
+                      <Furigana text={m.after} className="font-jp font-semibold text-pine" />
+                      <span className="mt-0.5 block text-ink/65"><NoRuby text={m.note} /></span>
+                    </span>
+                    {/* One button for the pair, not one each. Passing both as an
+                        array makes it a single request — and so a single
+                        credit — with a pause between them. */}
+                    {audioButton(`mistake:${i}`, [m.before, m.after], t("audio.playBeforeAfter"))}
+                  </div>
+                  {audioNotice(`mistake:${i}`, "mt-2")}
                 </li>
               ))}
             </ul>
@@ -313,8 +387,12 @@ export function CorrectionResult({
                 <Furigana text={safeVocabWordText(v.word, v.reading)} className="font-jp text-[15px] font-semibold text-ink" />
                 <span className="block text-ink/70"><NoRuby text={v.meaning} /></span>
                 {v.example && (
-                  <span className="mt-0.5 block font-jp text-xs text-ink/55">例: <Furigana text={v.example} /></span>
+                  <span className="mt-0.5 flex items-start gap-1.5 font-jp text-xs text-ink/55">
+                    <span className="min-w-0 flex-1">例: <Furigana text={v.example} /></span>
+                    {audioButton(`vocab:${i}`, v.example, t("audio.playExample"))}
+                  </span>
                 )}
+                {audioNotice(`vocab:${i}`, "mt-2")}
               </li>
             ))}
           </ul>
