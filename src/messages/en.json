@@ -956,5 +956,7 @@
   "audio.limitReached": "You have used all {limit} audio plays.",
   "audio.upgradeForMore": "Upgrade for more",
   "audio.failed": "Could not play audio.",
-  "audio.networkError": "Network error. Please try again."
+  "audio.networkError": "Network error. Please try again.",
+  "audio.playWord": "Play the word",
+  "audio.playExample": "Play the example sentence"
 }

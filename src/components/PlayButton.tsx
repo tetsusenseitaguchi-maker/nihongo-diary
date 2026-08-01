@@ -60,6 +60,12 @@ export function AudioLimitNotice({
   );
 }
 
+/** sm sits in a chip or a label row; md sits beside a heading. */
+const SIZES = {
+  sm: { button: "h-5 w-5 text-[10px]", spinner: "h-2.5 w-2.5" },
+  md: { button: "h-7 w-7 text-sm", spinner: "h-3.5 w-3.5" },
+} as const;
+
 type Props = {
   /** Ruby-annotated Japanese, exactly as handed to <Furigana>. */
   text: string;
@@ -71,10 +77,27 @@ type Props = {
    * it off and the button reports the limit underneath itself.
    */
   onLimitReached?: (limit: number) => void;
+  /**
+   * Turns the button off from outside. A screen with several buttons uses this
+   * to close the rest once any one of them has hit the shared allowance —
+   * a button's own limit state only ever disables itself.
+   */
+  disabled?: boolean;
+  /** Accessible name. Defaults to a generic "Play audio". */
+  label?: string;
+  size?: keyof typeof SIZES;
   className?: string;
 };
 
-export function PlayButton({ text, kind = "word", onLimitReached, className = "" }: Props) {
+export function PlayButton({
+  text,
+  kind = "word",
+  onLimitReached,
+  disabled = false,
+  label,
+  size = "sm",
+  className = "",
+}: Props) {
   const t = useT();
   const [status, setStatus] = useState<"idle" | "loading" | "playing">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +127,7 @@ export function PlayButton({ text, kind = "word", onLimitReached, className = ""
   }, [text]);
 
   function handleClick() {
-    if (status !== "idle" || limit !== null) return;
+    if (status !== "idle" || limit !== null || disabled) return;
 
     // ── iOS Safari unlock — order matters, do not reorder ──────────────────
     // Everything from here to the first `await` runs synchronously inside the
@@ -185,21 +208,23 @@ export function PlayButton({ text, kind = "word", onLimitReached, className = ""
 
   const busy = status === "loading";
   const blocked = limit !== null;
+  const name = label ?? t("audio.play");
+  const sizing = SIZES[size];
 
   return (
     <>
       <button
         type="button"
         onClick={handleClick}
-        disabled={busy || blocked}
-        aria-label={t("audio.play")}
-        title={t("audio.play")}
-        className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] leading-none text-moss-600 transition-colors hover:bg-mint/60 hover:text-pine disabled:opacity-40 ${className}`}
+        disabled={busy || blocked || disabled}
+        aria-label={name}
+        title={name}
+        className={`inline-flex ${sizing.button} shrink-0 items-center justify-center rounded-full leading-none text-moss-600 transition-colors hover:bg-mint/60 hover:text-pine disabled:opacity-40 ${className}`}
       >
         {busy ? (
           <span
             aria-hidden
-            className="inline-block h-2.5 w-2.5 animate-spin rounded-full border-2 border-moss border-t-transparent"
+            className={`inline-block ${sizing.spinner} animate-spin rounded-full border-2 border-moss border-t-transparent`}
           />
         ) : (
           <span aria-hidden className={status === "playing" ? "animate-pulse" : undefined}>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { CSSProperties } from "react";
 import { Furigana, NoRuby } from "@/components/Furigana";
+import { AudioLimitNotice, PlayButton } from "@/components/PlayButton";
 import { useT } from "@/contexts/locale";
 import { safeRubyNotation } from "@/lib/reading-validation";
 
@@ -33,6 +34,15 @@ export function VocabularyList() {
   const [filter, setFilter] = useState<string | null>(null);
   const [showAnswers, setShowAnswers] = useState<Set<string>>(new Set());
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  /**
+   * The audio allowance is one lifetime pool shared by every button on the
+   * page, so it is held here rather than inside each PlayButton. Two things
+   * follow from that: every other button is switched off the moment one of
+   * them runs out, and the message is rendered once — in the card the learner
+   * was actually looking at, since a list of forty cards makes both a
+   * per-card notice and a single notice at the top the wrong answer.
+   */
+  const [audioLimit, setAudioLimit] = useState<{ limit: number; entryId: string } | null>(null);
 
   useEffect(() => {
     fetch("/api/vocabulary")
@@ -140,15 +150,28 @@ export function VocabularyList() {
               {/* Heading row */}
               <div className="flex items-start gap-3">
                 <div className="min-w-0 flex-1">
-                  {isGrammar ? (
-                    <p className="font-jp text-xl font-bold leading-snug text-pine">
-                      <NoRuby text={entry.word} />
-                    </p>
-                  ) : (
-                    <p className="font-jp text-2xl font-bold leading-loose text-pine">
-                      <Furigana text={safeRubyNotation(entry.word, entry.reading)} />
-                    </p>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {isGrammar ? (
+                      <p className="min-w-0 font-jp text-xl font-bold leading-snug text-pine">
+                        <NoRuby text={entry.word} />
+                      </p>
+                    ) : (
+                      <p className="min-w-0 font-jp text-2xl font-bold leading-loose text-pine">
+                        <Furigana text={safeRubyNotation(entry.word, entry.reading)} />
+                      </p>
+                    )}
+                    {/* The ruby-annotated form, not the plain one on screen for
+                        grammar: <rt> is what stops the engine guessing between
+                        readings, and /api/tts turns it into <sub alias>. */}
+                    <PlayButton
+                      text={isGrammar ? entry.word : safeRubyNotation(entry.word, entry.reading)}
+                      kind="word"
+                      size="md"
+                      label={t("audio.playWord")}
+                      disabled={audioLimit !== null}
+                      onLimitReached={(limit) => setAudioLimit({ limit, entryId: entry.id })}
+                    />
+                  </div>
                   <div className="mt-1 flex gap-1.5">
                     {isGrammar ? (
                       <span className="inline-block rounded-full bg-moss-600 px-2.5 py-0.5 text-xs font-bold text-cream">
@@ -182,8 +205,19 @@ export function VocabularyList() {
               {/* Example */}
               {entry.example_jp_ruby && (
                 <div className="mt-3 border-t border-line/40 pt-3">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-moss-600">
+                  {/* Its own button, not folded into the headword's. Sentences
+                      are unique per card and so always miss the shared cache,
+                      while a bare word is usually already there from another
+                      learner and costs nothing — see the note in PlayButton. */}
+                  <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-moss-600">
                     {t("vocab.example")}
+                    <PlayButton
+                      text={entry.example_jp_ruby}
+                      kind="expression"
+                      label={t("audio.playExample")}
+                      disabled={audioLimit !== null}
+                      onLimitReached={(limit) => setAudioLimit({ limit, entryId: entry.id })}
+                    />
                   </p>
                   <p className="mt-1 font-jp text-[15px] leading-loose text-pine">
                     <Furigana text={entry.example_jp_ruby} />
@@ -215,6 +249,15 @@ export function VocabularyList() {
                       <NoRuby text={entry.practice_answer} />
                     </p>
                   )}
+                </div>
+              )}
+
+              {/* Only in the card whose button ran the allowance out, so the
+                  explanation is where the learner just tapped. Every other
+                  button is already disabled by then. */}
+              {audioLimit?.entryId === entry.id && (
+                <div className="mt-3 border-t border-line/40 pt-3">
+                  <AudioLimitNotice limit={audioLimit.limit} />
                 </div>
               )}
             </article>
