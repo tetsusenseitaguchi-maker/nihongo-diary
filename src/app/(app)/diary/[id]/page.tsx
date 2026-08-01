@@ -15,6 +15,8 @@ import { TagChips } from "@/components/TagChips";
 import { DiaryPlaceMap } from "@/components/DiaryPlaceMap";
 import { TranslateButton } from "@/components/TranslateButton";
 import { GetCorrectionButton } from "@/components/GetCorrectionButton";
+import { DictationLink } from "@/components/DictationLink";
+import { hasDictation } from "@/lib/dictation";
 import { PeerCorrections } from "@/components/PeerCorrections";
 import { Avatar } from "@/components/ObiePhoto";
 import { formatLong } from "@/lib/dates";
@@ -299,7 +301,12 @@ export default async function DiaryDetailPage({
               <span className="text-sm font-medium text-muted">{t("write.resultTitle")}</span>
             </div>
             <CorrectionResult correction={correction} />
+            {/* Under the result, where a learner who has just re-read the diary
+                can go and test whether they can hear it. Hidden when the
+                natural version carries no readings — see hasDictation. */}
+            {hasDictation(entry.natural_japanese) && <DictationLink diaryId={entry.id} />}
           </>
+
         ) : (
           <>
             <div className="rounded-2xl bg-mint/30 px-5 py-4">

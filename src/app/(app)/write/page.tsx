@@ -20,6 +20,8 @@ import { WritingPromptCard } from "@/components/WritingPromptCard";
 import { TrainDiagram } from "@/components/TrainDiagram";
 import { HintsSection } from "@/components/HintsSection";
 import { SavedWordsRow, type SavedWord } from "@/components/SavedWordsRow";
+import { DictationLink } from "@/components/DictationLink";
+import { hasDictation } from "@/lib/dictation";
 import type { UsedExpression } from "@/lib/learned-display";
 import { promptForDate, randomPromptExcept, type WritingPrompt } from "@/lib/writing-prompts";
 import { RECHECK_LIMITS } from "@/lib/recheck-limits";
@@ -1228,6 +1230,17 @@ export default function WritePage() {
           <p className="pt-1 text-center text-xs text-muted">
             {t("write.aiDisclaimer")}
           </p>
+
+          {/* Listening practice on the sentence that was just corrected.
+              Placed here rather than inside CorrectionResult because that
+              component renders in the tour as well, on a sample diary — a link
+              to /dictation/<sample id> would go nowhere. Needs savedEntryId:
+              the exercise page loads the row by id, so there has to be a row.
+              hasDictation() keeps it hidden when the natural version has no
+              readings to mark against. */}
+          {savedEntryId && hasDictation(result.natural) && (
+            <DictationLink diaryId={savedEntryId} />
+          )}
 
           {/* Revise & recheck — rewrite the diary and get lightweight diff feedback */}
           <div className="rounded-[var(--radius-card)] border border-line bg-paper p-6 shadow-card">

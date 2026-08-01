@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Card, Badge } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { DeleteDiaryButton } from "@/components/DeleteDiaryButton";
+import { DictationLink } from "@/components/DictationLink";
+import { hasDictation } from "@/lib/dictation";
 import { TagChips } from "@/components/TagChips";
 import { formatLong } from "@/lib/dates";
 import { useT } from "@/contexts/locale";
@@ -25,6 +27,7 @@ interface Entry {
   tags: string[];
   original_text: string;
   corrected_japanese: string | null;
+  natural_japanese: string | null;
   seeking_peer_correction: boolean;
   level: string | null;
   correction_style: string | null;
@@ -126,6 +129,15 @@ export function DiaryHistoryList({ initialEntries }: { initialEntries: Entry[] }
             </div>
             <Icon.arrow className="h-5 w-5 shrink-0 text-moss-600 transition-transform group-hover:translate-x-1" />
           </Link>
+
+          {/* Outside the Link, and for the same reason it is: an <a> cannot
+              contain another <a>. This is the "come back to it later" way in —
+              a diary is worth dictating once it is no longer fresh. */}
+          {hasDictation(entry.natural_japanese) && (
+            <div className="shrink-0">
+              <DictationLink diaryId={entry.id} variant="row" />
+            </div>
+          )}
 
           {/* Delete button — outside the Link so clicks don't navigate */}
           <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
