@@ -980,5 +980,9 @@
   "dictation.unavailable": "No sentence to practise here",
   "dictation.unavailableHint": "This entry has no correction yet, or its correction was saved without readings.",
   "dictation.cta": "Listening practice",
-  "dictation.ctaHint": "Hear a sentence from this diary and write it down"
+  "dictation.ctaHint": "Hear a sentence from this diary and write it down",
+  "dictation.speed": "Playback speed",
+  "dictation.speedSlow": "Slow",
+  "dictation.speedNormal": "Normal",
+  "dictation.speedFast": "Fast"
 }

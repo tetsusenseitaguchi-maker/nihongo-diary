@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Furigana } from "@/components/Furigana";
 import { PlayButton } from "@/components/PlayButton";
 import { Icon } from "@/components/icons";
 import { useT } from "@/contexts/locale";
 import { markAnswer, type Mark, type MarkOp } from "@/lib/dictation";
+import { TTS_SPEAKING_RATE } from "@/lib/audio-limits";
 
 /**
  * Listen to one sentence from your own diary, write down what you heard, see
@@ -23,6 +24,30 @@ import { markAnswer, type Mark, type MarkOp } from "@/lib/dictation";
  * Marking is local and instant (lib/dictation.ts). Nothing is sent anywhere,
  * nothing is stored, and the same answer always scores the same.
  */
+
+/* ── Speed ───────────────────────────────────────────────────────────────
+   Three steps, and the browser does the stretching: the clip is synthesised
+   once and replayed faster or slower, so switching speed costs no request, no
+   credit and no second object in the bucket. Asking Google for another
+   speakingRate would change the /api/tts cache key and bill a fresh synthesis
+   every time a learner touched this control — on a lifetime allowance of three
+   that is a control nobody could afford to use.
+
+   The numbers are speeds relative to natural Japanese. playbackRate is that
+   over TTS_SPEAKING_RATE, because the file is already generated a little slow.
+
+   ⚠️ Nothing below 0.75. Time-stretching an MP3 is not the same as asking the
+   model to speak slowly — Google's own 0.6 sounds fine and the stretched
+   version of it audibly does not, which is where this range comes from. The
+   middle step is exactly 1.0 playbackRate: the default does no processing at
+   all, and matches every other audio button in the app. */
+const SPEEDS = [
+  { speed: 0.75, key: "dictation.speedSlow" },
+  { speed: TTS_SPEAKING_RATE, key: "dictation.speedNormal" },
+  { speed: 1.15, key: "dictation.speedFast" },
+] as const;
+
+const STORAGE_KEY = "dictation.speed";
 
 /** One character of the answer, coloured by what happened to it. */
 function MarkedChar({ op }: { op: MarkOp }) {
@@ -105,6 +130,25 @@ export function DictationExercise({
   const [typed, setTyped] = useState("");
   const [composing, setComposing] = useState(false);
   const [mark, setMark] = useState<Mark | null>(null);
+  const [speed, setSpeed] = useState<number>(TTS_SPEAKING_RATE);
+
+  // Read after mount, not during render: localStorage does not exist on the
+  // server, and seeding state from it would make the first client render
+  // disagree with the HTML that came down.
+  useEffect(() => {
+    const saved = Number(window.localStorage.getItem(STORAGE_KEY));
+    if (SPEEDS.some((s) => s.speed === saved)) setSpeed(saved);
+  }, []);
+
+  function pickSpeed(next: number) {
+    setSpeed(next);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, String(next));
+    } catch {
+      // Private browsing can refuse to write. The speed still applies to this
+      // session; only remembering it is lost.
+    }
+  }
 
   const canSubmit = typed.trim().length > 0 && !composing;
 
@@ -125,13 +169,37 @@ export function DictationExercise({
         <p className="mb-1 text-sm font-bold text-pine">{t("dictation.listenTitle")}</p>
         <p className="mb-4 text-sm text-ink/70">{t("dictation.listenBody")}</p>
 
-        <PlayButton
-          text={sentence}
-          kind="diary"
-          size="md"
-          showLabel
-          label={t("audio.playSentence")}
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          <PlayButton
+            text={sentence}
+            kind="diary"
+            size="md"
+            showLabel
+            label={t("audio.playSentence")}
+            rate={speed / TTS_SPEAKING_RATE}
+          />
+
+          {/* Same clip at every setting, so switching is instant and free. */}
+          <div
+            role="group"
+            aria-label={t("dictation.speed")}
+            className="inline-flex overflow-hidden rounded-full border border-line bg-paper"
+          >
+            {SPEEDS.map(({ speed: s, key }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => pickSpeed(s)}
+                aria-pressed={speed === s}
+                className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  speed === s ? "bg-pine text-cream" : "text-ink/60 hover:bg-mint/50 hover:text-pine"
+                }`}
+              >
+                {t(key)}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {remaining !== null && (
           <p className="mt-3 text-xs text-muted">

@@ -143,6 +143,14 @@ type Props = {
    * alone is what fits, and the accessible name carries the meaning.
    */
   showLabel?: boolean;
+  /**
+   * Playback speed multiplier, 1 being the clip as synthesised.
+   *
+   * Relative to TTS_SPEAKING_RATE, not to natural Japanese: the audio is
+   * already generated slightly slow, so 1 here is the speed every other button
+   * in the app plays at.
+   */
+  rate?: number;
   size?: keyof typeof SIZES;
   className?: string;
 };
@@ -154,6 +162,7 @@ export function PlayButton({
   disabled = false,
   label,
   showLabel = false,
+  rate = 1,
   size = "sm",
   className = "",
 }: Props) {
@@ -191,6 +200,37 @@ export function PlayButton({
     };
   }, [speech]);
 
+  /**
+   * Speed, without spending anything.
+   *
+   * The clip is synthesised once at TTS_SPEAKING_RATE and the browser stretches
+   * it, so changing speed replays the SAME file: no request, no credit, no
+   * second object in the bucket. Asking Google for another rate would change
+   * the /api/tts cache key and bill a fresh synthesis for every step.
+   *
+   * defaultPlaybackRate as well as playbackRate, and re-applied after EVERY
+   * src assignment, because assigning src runs the media load algorithm and
+   * that resets playbackRate back to defaultPlaybackRate. Set one only and the
+   * speed silently reverts the moment the fetched clip replaces the silence.
+   *
+   * preservesPitch is the default in every current browser; it is written out
+   * because the failure it prevents — a chipmunk voice — is one nobody would
+   * ship on purpose, and relying on a default for that is not worth the risk.
+   */
+  function applyRate(audio: HTMLAudioElement) {
+    audio.preservesPitch = true;
+    audio.defaultPlaybackRate = rate;
+    audio.playbackRate = rate;
+  }
+
+  // A speed picked mid-clip takes effect at once rather than on the next tap.
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) applyRate(audio);
+    // applyRate closes over `rate`, which is the only thing it reads.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rate]);
+
   function handleClick() {
     if (status !== "idle" || limit !== null || disabled) return;
 
@@ -213,6 +253,7 @@ export function PlayButton({
 
     const cached = clipUrlRef.current;
     audio.src = cached ?? SILENT_WAV;
+    applyRate(audio);
     // Deliberately not awaited — awaiting would push the real play() below
     // out of the gesture. The rejection when the silent clip is cut short by
     // the src swap is expected and carries no information.
@@ -260,6 +301,7 @@ export function PlayButton({
     const url = URL.createObjectURL(await res.blob());
     clipUrlRef.current = url;
     audio.src = url;
+    applyRate(audio);
     setStatus("playing");
     try {
       await audio.play();
