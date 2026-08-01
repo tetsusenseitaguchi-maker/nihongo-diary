@@ -55,6 +55,9 @@ export function vocabWordText(word: string, reading?: string): string {
        (今日<ruby>日<rt>きょう</rt></ruby>, 昨日<ruby>昨<rt>きの</rt></ruby>).
     3. Leftover fragment trailing right after </ruby> from a 3-way split
        (昨日<ruby>昨<rt>きの</rt></ruby>日).
+    4. The tail of the reading repeated as okurigana
+       (<ruby>心地<rt>ここち</rt></ruby>ちよい,
+        <ruby>観察<rt>かんさつ</rt></ruby>さつ) — see dropEchoedOkurigana.
    Both consumers must stay in sync with this parser — fix bugs here once,
    not separately in each caller. */
 
@@ -92,7 +95,24 @@ export function parseRubySegments(text: string): RubySegment[] {
         return `<ruby>${preKanji}<rt>${reading}</rt></ruby>${newTrailing}`;
       }
       if (preKanji !== rubyBase && preKanji.endsWith(rubyBase)) {
-        return `<ruby>${preKanji}<rt>${reading}</rt></ruby>${trailing}`;
+        // The AI repeated the leading kanji and left the WHOLE compound's
+        // reading on the last one (今日<ruby>日<rt>きょう</rt></ruby>), so the
+        // base is widened to swallow the duplicate.
+        //
+        // The same shape also occurs with a reading that belongs to the
+        // fragment alone (観察<ruby>察<rt>さつ</rt></ruby>), where widening
+        // states that 観察 reads さつ and loses かん. The two are not
+        // distinguishable from here — 図書館<ruby>館<rt>としょかん</rt></ruby>
+        // and 観察<ruby>察<rt>さつ</rt></ruby> are the same pattern — because
+        // it would take knowing how the leading kanji is read.
+        //
+        // What IS knowable is the compound itself: when the dictionary has it,
+        // its reading is correct under either interpretation, and it also
+        // repairs an rt the AI simply got wrong (今日<ruby>日<rt>にち</rt>).
+        // Without an entry the old behaviour stands — widening is right for
+        // the 図書館 shape, and guessing is not better than leaving it.
+        const known = READING_BY_WORD.get(preKanji);
+        return `<ruby>${preKanji}<rt>${known ?? reading}</rt></ruby>${trailing}`;
       }
       return match;
     },
@@ -138,7 +158,66 @@ export function parseRubySegments(text: string): RubySegment[] {
     segments.push({ type: "text", value: stripHtmlTags(processed.slice(last)) });
   }
 
-  return segments;
+  return dropEchoedOkurigana(segments);
+}
+
+/** Leading run of hiragana (plus ー) in a text segment. */
+const LEADING_KANA = /^[ぁ-ゖー]+/;
+
+/**
+ * Glitch 4: okurigana that only repeats the tail of the reading in front of it.
+ *
+ * <ruby>心地<rt>ここち</rt></ruby>ちよい draws as 心地ちよい and speaks as
+ * ここちちよい; <ruby>観察<rt>かんさつ</rt></ruby>さつ gives 観察さつ /
+ * かんさつさつ. The duplicate is in the STORED string — the AI writes it, and
+ * nothing downstream was removing it, because the three repairs above only
+ * merge duplicated KANJI around the tag and this run is kana. Stripping it
+ * here rather than in the callers means the rows already saved come out right
+ * on the next render, with no migration.
+ *
+ * Two guards keep real okurigana intact, because a reading whose last kana
+ * equals the first kana of the okurigana is not a duplicate:
+ *
+ *   1. rt of length 1 is skipped outright. <ruby>言<rt>い</rt></ruby>いました
+ *      is correct Japanese — 言 reads い and the okurigana genuinely starts
+ *      with い — and it is the common shape for one-mora kun'yomi.
+ *   2. only a PROPER suffix of rt counts. Matching the whole of rt is what
+ *      case 1 would be, one character up; requiring something to be left over
+ *      is what separates 「ここ|ち」+ち from 「い」+い.
+ *
+ * Longest match wins, so かんさつ + さつする drops both kana rather than
+ * stopping at つ.
+ */
+function dropEchoedOkurigana(segments: RubySegment[]): RubySegment[] {
+  let changed = false;
+  const out = segments.slice();
+
+  for (let i = 0; i < out.length - 1; i++) {
+    const ruby = out[i];
+    const next = out[i + 1];
+    if (ruby.type !== "ruby" || next.type !== "text") continue;
+
+    const rt = ruby.rt;
+    if (rt.length < 2) continue; // guard 1
+
+    const run = next.value.match(LEADING_KANA)?.[0] ?? "";
+    if (!run) continue;
+
+    for (let len = Math.min(run.length, rt.length - 1); len >= 1; len--) {
+      // guard 2 — len never reaches rt.length
+      if (run.startsWith(rt.slice(rt.length - len))) {
+        out[i + 1] = { type: "text", value: next.value.slice(len) };
+        changed = true;
+        break;
+      }
+    }
+  }
+
+  if (!changed) return segments;
+  // A segment emptied by the strip is dropped: applyReadingDictionary keys its
+  // offset maps by segment start, and two segments starting at the same offset
+  // would collide there.
+  return out.filter((s) => s.type === "ruby" || s.value !== "");
 }
 
 /* ── Fixed-reading dictionary (熟字訓 / irregular compound readings) ──────
@@ -304,6 +383,16 @@ const READING_DICTIONARY_RAW: [string, string][] = [
 const READING_DICTIONARY = READING_DICTIONARY_RAW.filter(([word]) => word.length >= 2).sort(
   (a, b) => b[0].length - a[0].length,
 );
+
+/**
+ * Same entries, keyed for a direct lookup. Used by parseRubySegments when it
+ * widens a ruby base over a duplicated kanji and needs the reading of the
+ * whole compound rather than of the fragment the AI annotated.
+ *
+ * Read-only view of READING_DICTIONARY — applyReadingDictionary below still
+ * owns the segment-alignment logic and is untouched by this.
+ */
+const READING_BY_WORD = new Map(READING_DICTIONARY);
 
 /**
  * Forces known compound-kanji words to their correct reading, regardless of
