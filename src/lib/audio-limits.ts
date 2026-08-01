@@ -1,3 +1,5 @@
+import { normalizePlan, type Plan } from "@/lib/plans";
+
 /**
  * Text-to-speech (audio playback) settings and allowance.
  *
@@ -16,6 +18,37 @@
  * app-side change with no migration.
  */
 export const AUDIO_LIFETIME_LIMIT = 3;
+
+/**
+ * How many lifetime plays each plan gets. null = unlimited.
+ *
+ * Lives here rather than as another field on PLAN_LIMITS because plans.ts
+ * drives billing-adjacent behaviour and is hands-off; this file was split out
+ * for exactly that reason. normalizePlan is imported and CALLED but never
+ * modified — plan determination stays the one function it has always been.
+ *
+ * Only the Free row is a number, so only Free ever reaches try_use_audio.
+ * A paid learner's plays are not counted at all: the RPC is skipped, no row
+ * accumulates in audio_usage, and nothing has to be reset when they upgrade.
+ * Same shape as translationsPerDay in plans.ts, and /api/tts branches on it
+ * the same way /api/translate does.
+ */
+export const AUDIO_LIFETIME_LIMITS: Record<Plan, number | null> = {
+  free: AUDIO_LIFETIME_LIMIT,
+  plus: null,
+  pro: null,
+  teacher_feedback: null,
+};
+
+/**
+ * Lifetime audio allowance for a raw profiles.plan value, or null for
+ * unlimited. An unreadable / unknown plan resolves to Free through
+ * normalizePlan, which is the safe direction: the worst case is a paid
+ * learner being metered, never an unmetered free one.
+ */
+export function audioLimitFor(plan: string | null | undefined): number | null {
+  return AUDIO_LIFETIME_LIMITS[normalizePlan(plan)];
+}
 
 /**
  * Voice and speed, fixed for every request.

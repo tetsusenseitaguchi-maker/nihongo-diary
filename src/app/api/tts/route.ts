@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { rubyToSsml } from "@/lib/ruby-ssml";
 import { refundAudio } from "@/lib/audio-refund";
 import {
-  AUDIO_LIFETIME_LIMIT,
+  audioLimitFor,
   TTS_VOICE,
   TTS_SPEAKING_RATE,
   TTS_LANGUAGE_CODE,
@@ -16,10 +16,14 @@ export const runtime = "nodejs";
 // POST { text: string, kind: "word" | "expression" | "diary" }
 // → 200 audio/mpeg (the MP3 bytes), or JSON { error } on failure.
 //
-// Nothing calls this yet — the UI lands in steps 3–5.
+// Called by <PlayButton/> from the saved-word row, the vocabulary list and the
+// correction result.
 //
-// Consumes the LIFETIME audio allowance via try_use_audio()
-// (supabase/add-audio-limit.sql). It never reads or writes correction_count /
+// ── Allowance ───────────────────────────────────────────────────────────────
+// Free only. audioLimitFor() resolves profiles.plan to a number of LIFETIME
+// plays or to null for the paid plans, and try_use_audio()
+// (supabase/add-audio-limit.sql) is called only in the first case. Paid
+// learners are not counted at all. It never reads or writes correction_count /
 // translation_count and never calls try_use_correction / try_use_translation /
 // try_use_recheck.
 //
@@ -165,24 +169,51 @@ export async function POST(req: Request) {
     console.warn(`[tts] cache miss on ${bucket}: ${downloadErr.message}`);
   }
 
-  // ── Claim one lifetime credit ────────────────────────────────────────────
-  const { data: allowed, error: rpcError } = await supabase.rpc("try_use_audio", {
-    p_user_id: user.id,
-    p_limit: AUDIO_LIFETIME_LIMIT,
-  });
+  // ── Claim one lifetime credit, but only on a metered plan ────────────────
+  // Read AFTER the cache lookup so a hit still costs no round trip.
+  //
+  // Only `plan` is selected. Widening this select is how the timezone
+  // incident happened: one absent column makes the whole query error, prof
+  // comes back null, and normalizePlan(undefined) silently reads every paid
+  // learner as Free.
+  const { data: prof, error: planError } = await supabase
+    .from("profiles")
+    .select("plan")
+    .eq("id", user.id)
+    .single();
 
-  if (rpcError) {
-    // Fail CLOSED, unlike /api/recheck. Every miss here spends real money at
-    // Google, and the allowance is a lifetime one, so a broken RPC must not
-    // hand out uncounted synthesis.
-    console.error("[tts] try_use_audio error:", rpcError.message, "code:", rpcError.code);
-    return NextResponse.json({ error: "Audio service unavailable." }, { status: 500 });
+  if (planError) {
+    // Metered below (normalizePlan turns undefined into "free"), which is the
+    // safe direction, but it is worth knowing about: a broken profiles read
+    // shows up as paid learners suddenly capped at the Free allowance.
+    console.error("[tts] plan lookup failed:", planError.message);
   }
-  if (!allowed) {
-    return NextResponse.json(
-      { error: "audio_limit_reached", upgrade: true, limit: AUDIO_LIFETIME_LIMIT },
-      { status: 429 },
-    );
+
+  const limit = audioLimitFor(prof?.plan);
+  // null = unlimited. The RPC is skipped entirely rather than called with a
+  // large number, so a paid learner accumulates no audio_usage row at all —
+  // the same shape as translationsPerDay === null in /api/translate.
+  const metered = limit !== null;
+
+  if (metered) {
+    const { data: allowed, error: rpcError } = await supabase.rpc("try_use_audio", {
+      p_user_id: user.id,
+      p_limit: limit,
+    });
+
+    if (rpcError) {
+      // Fail CLOSED, unlike /api/recheck. Every miss here spends real money at
+      // Google, and the allowance is a lifetime one, so a broken RPC must not
+      // hand out uncounted synthesis.
+      console.error("[tts] try_use_audio error:", rpcError.message, "code:", rpcError.code);
+      return NextResponse.json({ error: "Audio service unavailable." }, { status: 500 });
+    }
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "audio_limit_reached", upgrade: true, limit },
+        { status: 429 },
+      );
+    }
   }
 
   // ── Synthesise ───────────────────────────────────────────────────────────
@@ -191,7 +222,11 @@ export async function POST(req: Request) {
     audio = await synthesize(ssml, apiKey);
   } catch (err) {
     console.error("[tts] synthesis failed:", err instanceof Error ? err.message : err);
-    await refundAudio(supabase, user.id);
+    // Only when something was actually claimed. refund_audio floors at 0, but
+    // an unmetered request never took a credit, and an upgraded learner still
+    // carries the row from their Free days — refunding here would hand that
+    // row a discount for a failure that cost them nothing.
+    if (metered) await refundAudio(supabase, user.id);
     return NextResponse.json({ error: "Could not generate audio." }, { status: 502 });
   }
 
