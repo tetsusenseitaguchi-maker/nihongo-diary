@@ -5,7 +5,14 @@ import { normalizePlan } from "@/lib/plans";
 
 export const runtime = "nodejs";
 
-const STORAGE_BUCKETS = ["avatars", "diary-images", "diary-audio"] as const;
+// Buckets holding data belonging to one user, all laid out as ${user.id}/…
+//
+// ⚠️ Do NOT add "tts-shared" here. That bucket caches synthesised audio for
+// vocabulary and expressions, content-addressed with no user id in the path,
+// so a single learner's deletion would strip audio still referenced by
+// everyone else. Only "tts-diary" — the learner's own diary text, which is
+// personal data — belongs in this list.
+const STORAGE_BUCKETS = ["avatars", "diary-images", "diary-audio", "tts-diary"] as const;
 
 export async function DELETE() {
   const supabase = await createClient();
