@@ -949,5 +949,12 @@
   "learned.usedSubtitle": "Use it three times and it graduates from your list.",
   "learned.graduatedTitle": "Mastered it!",
   "learned.graduatedBody": "Three diaries, three uses. This one is part of your Japanese now. 🐶",
-  "learned.stampLabel": "使えました"
+  "learned.stampLabel": "使えました",
+  "audio.play": "Play audio",
+  "audio.loading": "Loading audio…",
+  "audio.playing": "Playing",
+  "audio.limitReached": "You have used all {limit} audio plays.",
+  "audio.upgradeForMore": "Upgrade for more",
+  "audio.failed": "Could not play audio.",
+  "audio.networkError": "Network error. Please try again."
 }

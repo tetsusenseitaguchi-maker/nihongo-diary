@@ -337,5 +337,12 @@
   "profile.discovery.toggle": "Don't show my entries in Discovery",
   "profile.discovery.saving": "Saving…",
   "profile.discovery.saved": "Saved",
-  "profile.discovery.error": "Could not save. Please try again."
+  "profile.discovery.error": "Could not save. Please try again.",
+  "audio.play": "Play audio",
+  "audio.loading": "Loading audio…",
+  "audio.playing": "Playing",
+  "audio.limitReached": "You have used all {limit} audio plays.",
+  "audio.upgradeForMore": "Upgrade for more",
+  "audio.failed": "Could not play audio.",
+  "audio.networkError": "Network error. Please try again."
 }
