@@ -167,6 +167,24 @@ export const Icon = {
       <path d="M8 5.5v13l11-6.5Z" fill="currentColor" stroke="none" />
     </svg>
   ),
+  /**
+   * Text-to-speech, on <PlayButton/>. Distinct from `play`, which is the
+   * transport control for a recorded attachment.
+   *
+   * ONE sound wave, not the usual two. The smallest instance renders at 14px
+   * (the chip in SavedWordsRow), where a 1.7 stroke scales to ~1px and the gap
+   * between two arcs falls under about 2px — rasterised at that size the pair
+   * merges into a smudge. Checked by rendering it: two arcs are illegible at
+   * 14px and still muddy at 16px, one arc is clean at 14 and reads fine up at
+   * 28. The cone is filled, matching `play` / `stop`, so the icon survives
+   * being small even where the stroked part does not.
+   */
+  speaker: (p: IconProps) => (
+    <svg {...base} {...p}>
+      <path d="M4 9.5h3L11 6v12L7 14.5H4z" fill="currentColor" stroke="none" />
+      <path d="M15 8.6a4.6 4.6 0 0 1 0 6.8" />
+    </svg>
+  ),
   trash: (p: IconProps) => (
     <svg {...base} {...p}>
       <path d="M5 7h14M10 7V5h4v2M6 7l1 13h10l1-13" />

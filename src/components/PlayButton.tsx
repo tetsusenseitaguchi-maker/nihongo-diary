@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Icon } from "@/components/icons";
 import { useT } from "@/contexts/locale";
 import { NativeGate } from "@/components/NativeGate";
 import { AUDIO_LIFETIME_LIMIT } from "@/lib/audio-limits";
@@ -87,10 +88,16 @@ function joinForOneRequest(parts: string[]): string {
     .join("");
 }
 
-/** sm sits in a chip or a label row; md sits beside a heading. */
+/**
+ * sm sits in a chip or a label row; md sits beside a heading.
+ *
+ * `icon` is a circle just big enough for the glyph; `labelled` drops the fixed
+ * width for a pill that grows with the text, which matters because "Listen"
+ * is the shortest of the nine translations (Anhören, Escuchar, Écouter).
+ */
 const SIZES = {
-  sm: { button: "h-5 w-5 text-[10px]", spinner: "h-2.5 w-2.5" },
-  md: { button: "h-7 w-7 text-sm", spinner: "h-3.5 w-3.5" },
+  sm: { icon: "h-5 w-5", labelled: "gap-1 px-2 py-0.5 text-[10px]", glyph: "h-3.5 w-3.5", spinner: "h-2.5 w-2.5" },
+  md: { icon: "h-7 w-7", labelled: "gap-1.5 px-2.5 py-1 text-[11px]", glyph: "h-4 w-4", spinner: "h-3.5 w-3.5" },
 } as const;
 
 type Props = {
@@ -116,6 +123,16 @@ type Props = {
   disabled?: boolean;
   /** Accessible name. Defaults to a generic "Play audio". */
   label?: string;
+  /**
+   * Show the word "Listen" next to the icon.
+   *
+   * Only where the layout has room for it — the vocabulary page. The saved-word
+   * chips scroll sideways in an 82px window on a 320px screen, and the
+   * correction result puts these in half-width columns under a card whose
+   * top-right corner is occupied by the よく書けました stamp. In both, the icon
+   * alone is what fits, and the accessible name carries the meaning.
+   */
+  showLabel?: boolean;
   size?: keyof typeof SIZES;
   className?: string;
 };
@@ -126,6 +143,7 @@ export function PlayButton({
   onLimitReached,
   disabled = false,
   label,
+  showLabel = false,
   size = "sm",
   className = "",
 }: Props) {
@@ -256,7 +274,9 @@ export function PlayButton({
         disabled={busy || blocked || disabled}
         aria-label={name}
         title={name}
-        className={`inline-flex ${sizing.button} shrink-0 items-center justify-center rounded-full leading-none text-moss-600 transition-colors hover:bg-mint/60 hover:text-pine disabled:opacity-40 ${className}`}
+        className={`inline-flex shrink-0 items-center justify-center rounded-full font-semibold leading-none text-moss-600 transition-colors hover:bg-mint/60 hover:text-pine disabled:opacity-40 ${
+          showLabel ? sizing.labelled : sizing.icon
+        } ${className}`}
       >
         {busy ? (
           <span
@@ -264,10 +284,12 @@ export function PlayButton({
             className={`inline-block ${sizing.spinner} animate-spin rounded-full border-2 border-moss border-t-transparent`}
           />
         ) : (
-          <span aria-hidden className={status === "playing" ? "animate-pulse" : undefined}>
-            🔊
-          </span>
+          <Icon.speaker
+            aria-hidden
+            className={`${sizing.glyph} ${status === "playing" ? "animate-pulse" : ""}`}
+          />
         )}
+        {showLabel && <span aria-hidden>{t("audio.listen")}</span>}
       </button>
 
       {/* The icon carries the state visually; this is the same state for

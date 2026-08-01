@@ -167,6 +167,7 @@ export function VocabularyList() {
                       text={isGrammar ? entry.word : safeRubyNotation(entry.word, entry.reading)}
                       kind="word"
                       size="md"
+                      showLabel
                       label={t("audio.playWord")}
                       disabled={audioLimit !== null}
                       onLimitReached={(limit) => setAudioLimit({ limit, entryId: entry.id })}
@@ -214,6 +215,7 @@ export function VocabularyList() {
                     <PlayButton
                       text={entry.example_jp_ruby}
                       kind="expression"
+                      showLabel
                       label={t("audio.playExample")}
                       disabled={audioLimit !== null}
                       onLimitReached={(limit) => setAudioLimit({ limit, entryId: entry.id })}
