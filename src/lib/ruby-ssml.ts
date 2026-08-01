@@ -1,4 +1,5 @@
 import { parseRubySegments } from "@/lib/furigana";
+import { accentFor } from "@/lib/accent-dictionary";
 
 /**
  * Turn the app's ruby markup into SSML that forces the intended reading.
@@ -18,12 +19,16 @@ import { parseRubySegments } from "@/lib/furigana";
  * including 漢字（かんじ） parenthesised readings.
  *
  * ⚠️ What <sub> does NOT carry is pitch accent. It fixes WHICH reading, not
- * how the reading is intoned; 公園 still gets whatever accent the voice
- * defaults to. Google's ja-JP alternative,
- * <phoneme alphabet="yomigana" ph="^こうえん">, does encode accent (^ starts a
- * pitch phrase, ! marks the downstep) and is verified to work on
- * ja-JP-Wavenet-A. Moving to it needs an accent source the app does not have
- * yet — <rt> holds readings only — so <sub> is the right call for now.
+ * how the reading is intoned; 公園 gets whatever accent the voice defaults to,
+ * which mid-sentence is a downstep the word does not have.
+ *
+ * A word listed in accent-dictionary.ts is emitted as
+ * <phoneme alphabet="yomigana" ph="^こうえん"> instead, which does carry it.
+ * Everything else stays on <sub> — deliberately, not for lack of ambition:
+ * <sub> and an unmarked <phoneme> were measured to produce identical audio,
+ * so a blanket migration would change every SSML document, and therefore every
+ * /api/tts cache key, in exchange for nothing. See that file for the numbers.
+ * The two tags coexist in one document (verified against the API).
  */
 
 const XML_ESCAPES: Record<string, string> = {
@@ -92,6 +97,21 @@ function toSpeech(text: string): string {
 }
 
 /**
+ * One annotated word: <phoneme> when the accent dictionary has something to
+ * say about it, <sub> otherwise.
+ *
+ * The <sub> branch is the whole of the previous behaviour, byte for byte, so
+ * text containing no listed word produces the SSML it always did and keeps its
+ * cached audio.
+ */
+function readingTag(base: string, rt: string): string {
+  const ph = accentFor(base, rt);
+  return ph === null
+    ? `<sub alias="${escapeXml(rt)}">${escapeXml(base)}</sub>`
+    : `<phoneme alphabet="yomigana" ph="${escapeXml(ph)}">${escapeXml(base)}</phoneme>`;
+}
+
+/**
  * Build the <speak> document for a piece of ruby-annotated Japanese.
  *
  * Every segment is escaped, including the ones that came out of parsing, so a
@@ -100,11 +120,7 @@ function toSpeech(text: string): string {
  */
 export function rubyToSsml(text: string): string {
   const body = parseRubySegments(text)
-    .map((seg) =>
-      seg.type === "ruby"
-        ? `<sub alias="${escapeXml(seg.rt)}">${escapeXml(seg.base)}</sub>`
-        : escapeXml(toSpeech(seg.value)),
-    )
+    .map((seg) => (seg.type === "ruby" ? readingTag(seg.base, seg.rt) : escapeXml(toSpeech(seg.value))))
     .join("");
 
   // A pause at either end of the utterance is silence with a comma's worth of
