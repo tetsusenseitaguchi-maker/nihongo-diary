@@ -12,6 +12,9 @@ import { monthLabel, formatShort } from "@/lib/dates";
 import { getServerT } from "@/lib/i18n-server";
 import { getTimezoneFromCookie } from "@/lib/tz-server";
 import { nowInTZ } from "@/lib/date-tz";
+import { isNativeRequest } from "@/lib/native";
+import { hasDictation } from "@/lib/dictation";
+import { AudioIntroModal } from "@/components/AudioIntroModal";
 
 export const dynamic = "force-dynamic";
 
@@ -30,13 +33,29 @@ export default async function DashboardPage() {
       .single(),
     supabase
       .from("diary_entries")
-      .select("id, diary_date, original_text, corrected_japanese, english_explanation, level, correction_style")
+      // natural_japanese is appended, never in place of anything: one absent
+      // column errors the whole query, and that is how every user once became
+      // Free. It feeds hasDictation() for the audio announcement's "try it".
+      .select(
+        "id, diary_date, original_text, corrected_japanese, english_explanation, level, correction_style, natural_japanese",
+      )
       .eq("user_id", user.id)
       .order("diary_date", { ascending: false })
       .order("created_at", { ascending: false }),
   ]);
 
   const t = await getServerT();
+
+  // Read off `data` rather than `entries`: DiaryRow does not carry
+  // natural_japanese, and widening that type would reach every other consumer
+  // of computeStats for the sake of one id. The most recent entry with a
+  // sentence worth dictating; null when the learner has none, in which case the
+  // announcement points at /write instead of at an exercise it cannot set.
+  const dictationDiaryId =
+    ((data ?? []) as { id: string; natural_japanese: string | null }[]).find((row) =>
+      hasDictation(row.natural_japanese),
+    )?.id ?? null;
+  const isNative = await isNativeRequest();
 
   const entries = (data ?? []) as DiaryRow[];
   const tz = await getTimezoneFromCookie();
@@ -49,6 +68,10 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-5">
+      {/* One-time, and it holds its own screen back until the tour has been
+          seen — see the comment in AudioIntroModal. */}
+      <AudioIntroModal dictationDiaryId={dictationDiaryId} isNative={isNative} />
+
       {/* Hero + stats */}
       <div className="grid gap-5 lg:grid-cols-12">
         <Card accent="none" className="relative overflow-hidden p-0 lg:col-span-7">
