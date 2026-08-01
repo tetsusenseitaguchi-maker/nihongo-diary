@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties } from "react";
 import type { Correction } from "@/lib/types";
 import { ObiePhoto } from "@/components/ObiePhoto";
 import { Furigana, NoRuby } from "@/components/Furigana";
-import { AudioLimitNotice, PlayButton } from "@/components/PlayButton";
+import { AudioLimitNotice, PlayButton, type PlayButtonKind } from "@/components/PlayButton";
 import { PracticeDrills } from "@/components/PracticeDrills";
 import { LearnedUsedPanel } from "@/components/LearnedUsedPanel";
 import type { UsedExpression } from "@/lib/learned-display";
@@ -66,15 +66,11 @@ function SaveWordButton({
   );
 }
 
-function Label({ en, jp, action }: { en: string; jp: string; action?: ReactNode }) {
+function Label({ en, jp }: { en: string; jp: string }) {
   return (
     <p className="mb-2 flex flex-wrap items-baseline gap-x-2">
       <span className="text-sm font-bold text-pine">{en}</span>
       <Furigana text={jp} className="font-jp text-xs text-muted" />
-      {/* self-center rather than the row's baseline: a button has no text
-          baseline worth aligning to, and switching the row to items-center
-          would nudge every label on the page. */}
-      {action && <span className="self-center">{action}</span>}
     </p>
   );
 }
@@ -185,24 +181,35 @@ export function CorrectionResult({
   const [audioLimit, setAudioLimit] = useState<{ limit: number; at: string } | null>(null);
 
   /**
-   * Everything spoken on this page is kind="diary".
+   * SENTENCES on this page are kind="diary" and single WORDS are kind="word".
    *
-   * All of it is the learner's own writing or derived from it — the natural
-   * version and the before/after of a mistake are literally their diary, and
-   * rule 10 of the /api/correct prompt picks the vocabulary "from or related
-   * to the diary" and writes its example in that context. So it goes to the
-   * per-user tts-diary bucket, which /api/account/delete clears, and not to
-   * the bucket shared between learners. (The vocabulary PAGE is the other
-   * case: /api/vocabulary generates from the word alone, never from a diary,
-   * so those examples are "expression" and shareable.)
+   * The natural version, both sides of a mistake and a vocabulary example are
+   * the learner's own writing or written in its context (rule 10 of the
+   * /api/correct prompt picks the vocabulary "from or related to the diary"),
+   * so they belong in the per-user tts-diary bucket that /api/account/delete
+   * clears.
+   *
+   * A bare headword does not. 散歩 is a dictionary word, it carries nothing
+   * personal, and tts-shared is content-addressed — retrieving the clip
+   * requires already knowing the exact word. Sharing it means the second
+   * learner to meet 散歩 gets a cache hit, and a cache hit costs no credit at
+   * all. With three plays for a lifetime on Free, that is the difference
+   * between these buttons being usable and being a trap.
    */
-  function audioButton(at: string, text: string | string[], label: string) {
+  function audioButton(
+    at: string,
+    text: string | string[],
+    label: string,
+    opts: { kind?: PlayButtonKind; showLabel?: boolean; size?: "sm" | "md" } = {},
+  ) {
     if (disableAudio) return null;
     return (
       <PlayButton
         text={text}
-        kind="diary"
+        kind={opts.kind ?? "diary"}
         label={label}
+        showLabel={opts.showLabel}
+        size={opts.size}
         disabled={audioLimit !== null}
         onLimitReached={(limit) => setAudioLimit({ limit, at })}
       />
@@ -313,17 +320,23 @@ export function CorrectionResult({
 
         {correction.natural && (
           <div className="gloss-panel relative rounded-[var(--radius-card)] p-6" style={tint("--color-tint-sage")}>
-            <Label
-              en={t("correction.naturalJapanese")}
-              jp="自然(しぜん)な日本語(にほんご)"
-              action={audioButton("natural", correction.natural, t("audio.playSentence"))}
-            />
+            <Label en={t("correction.naturalJapanese")} jp="自然(しぜん)な日本語(にほんご)" />
             <p className="font-jp text-[15px] leading-loose text-ink">
               <Furigana text={correction.natural} />
             </p>
-            {/* pr-16 keeps the notice clear of the よく書けました stamp, which
-                is absolutely positioned over this card's top-right corner. */}
-            {audioNotice("natural", "mt-2 pr-16")}
+            {/* Under the sentence rather than up in the label. The label row
+                already carries an English and a Japanese heading, and the
+                よく書けました stamp sits absolutely over the top-right corner,
+                so a third item there wrapped underneath it on a narrow screen.
+                Down here the full width of the card is free — which is what
+                lets this be the large labelled one. */}
+            <div className="mt-3">
+              {audioButton("natural", correction.natural, t("audio.playSentence"), {
+                showLabel: true,
+                size: "md",
+              })}
+            </div>
+            {audioNotice("natural", "mt-2")}
             <span className="stamp gloss absolute -right-2 -top-3 grid h-16 w-16 rotate-[-12deg] place-items-center rounded-full bg-paper text-center font-jp text-[10px] font-bold leading-tight text-apricot shadow-card">
               よく
               <br />
@@ -360,17 +373,20 @@ export function CorrectionResult({
             <ul className="space-y-3 text-sm">
               {correction.mistakes.map((m, i) => (
                 <li key={i} className="rounded-xl bg-paper/60 p-3">
-                  <div className="flex items-start gap-2">
-                    <span className="min-w-0 flex-1">
-                      <Furigana text={m.before} className="font-jp text-ink/45 line-through" />
-                      <span className="mx-1.5 text-moss">→</span>
-                      <Furigana text={m.after} className="font-jp font-semibold text-pine" />
-                      <span className="mt-0.5 block text-ink/65"><NoRuby text={m.note} /></span>
-                    </span>
-                    {/* One button for the pair, not one each. Passing both as an
-                        array makes it a single request — and so a single
-                        credit — with a pause between them. */}
-                    {audioButton(`mistake:${i}`, [m.before, m.after], t("audio.playBeforeAfter"))}
+                  <Furigana text={m.before} className="font-jp text-ink/45 line-through" />
+                  <span className="mx-1.5 text-moss">→</span>
+                  <Furigana text={m.after} className="font-jp font-semibold text-pine" />
+                  <span className="mt-0.5 block text-ink/65"><NoRuby text={m.note} /></span>
+                  {/* Own line, under the note. Sharing a flex row with the
+                      correction squeezed the text into half the column AND
+                      capped the button at an icon nobody read as a button.
+                      One button for the pair, not one each: passing both as an
+                      array makes it a single request, and so a single credit,
+                      with a pause between them. */}
+                  <div className="mt-2">
+                    {audioButton(`mistake:${i}`, [m.before, m.after], t("audio.playBeforeAfter"), {
+                      showLabel: true,
+                    })}
                   </div>
                   {audioNotice(`mistake:${i}`, "mt-2")}
                 </li>
@@ -384,14 +400,38 @@ export function CorrectionResult({
           <ul className="space-y-3 text-sm">
             {correction.vocabulary.map((v, i) => (
               <li key={i} className="rounded-xl bg-paper/60 p-3">
-                <Furigana text={safeVocabWordText(v.word, v.reading)} className="font-jp text-[15px] font-semibold text-ink" />
+                {/* The headword had no button at all until now, while the same
+                    word on the vocabulary page did. kind="word" — a headword
+                    is a dictionary word, so it goes in the shared bucket and
+                    is usually already there. */}
+                <span className="flex items-center gap-1.5">
+                  <Furigana
+                    text={safeVocabWordText(v.word, v.reading)}
+                    className="font-jp text-[15px] font-semibold text-ink"
+                  />
+                  {audioButton(
+                    `vocabWord:${i}`,
+                    safeVocabWordText(v.word, v.reading),
+                    t("audio.playWord"),
+                    { kind: "word" },
+                  )}
+                </span>
                 <span className="block text-ink/70"><NoRuby text={v.meaning} /></span>
                 {v.example && (
-                  <span className="mt-0.5 flex items-start gap-1.5 font-jp text-xs text-ink/55">
-                    <span className="min-w-0 flex-1">例: <Furigana text={v.example} /></span>
-                    {audioButton(`vocab:${i}`, v.example, t("audio.playExample"))}
-                  </span>
+                  <>
+                    <span className="mt-0.5 block font-jp text-xs text-ink/55">
+                      例: <Furigana text={v.example} />
+                    </span>
+                    {/* The example stays kind="diary": rule 10 of the
+                        /api/correct prompt writes it in the diary's context. */}
+                    <div className="mt-2">
+                      {audioButton(`vocab:${i}`, v.example, t("audio.playExample"), {
+                        showLabel: true,
+                      })}
+                    </div>
+                  </>
                 )}
+                {audioNotice(`vocabWord:${i}`, "mt-2")}
                 {audioNotice(`vocab:${i}`, "mt-2")}
               </li>
             ))}
@@ -423,22 +463,36 @@ export function CorrectionResult({
               </p>
               <ul className="space-y-2 text-sm">
                 {correction.nextVocab.map((v, i) => (
-                  <li key={i} className="flex items-center gap-2 rounded-xl bg-paper/60 px-3 py-2">
-                    <Furigana
-                      text={safeVocabWordText(v.word, v.reading)}
-                      className="font-jp text-[15px] font-semibold text-pine"
-                    />
-                    <span className="text-ink/65 text-xs"><NoRuby text={v.meaning} /></span>
-                    <span className="ml-auto shrink-0 rounded-full bg-pine px-2.5 py-0.5 text-xs font-bold text-cream">
-                      {v.level}
-                    </span>
-                    <SaveWordButton
-                      word={v.word}
-                      reading={readingValue(v.reading)}
-                      jlptLevel={v.level}
-                      state={wordStates.get(v.word) ?? "idle"}
-                      onSave={handleSaveWord}
-                    />
+                  <li key={i} className="rounded-xl bg-paper/60 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <Furigana
+                        text={safeVocabWordText(v.word, v.reading)}
+                        className="font-jp text-[15px] font-semibold text-pine"
+                      />
+                      <span className="text-ink/65 text-xs"><NoRuby text={v.meaning} /></span>
+                      <span className="ml-auto shrink-0 rounded-full bg-pine px-2.5 py-0.5 text-xs font-bold text-cream">
+                        {v.level}
+                      </span>
+                      {/* Icon only, and next to save rather than on a line of
+                          its own: three suggestions means three of these, and
+                          three "Listen" pills stacked down the card shout
+                          louder than the words they belong to. The labelled
+                          ones are spent where they earn it. */}
+                      {audioButton(
+                        `nextVocab:${i}`,
+                        safeVocabWordText(v.word, v.reading),
+                        t("audio.playWord"),
+                        { kind: "word" },
+                      )}
+                      <SaveWordButton
+                        word={v.word}
+                        reading={readingValue(v.reading)}
+                        jlptLevel={v.level}
+                        state={wordStates.get(v.word) ?? "idle"}
+                        onSave={handleSaveWord}
+                      />
+                    </div>
+                    {audioNotice(`nextVocab:${i}`, "mt-2")}
                   </li>
                 ))}
               </ul>

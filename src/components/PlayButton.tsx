@@ -89,15 +89,25 @@ function joinForOneRequest(parts: string[]): string {
 }
 
 /**
- * sm sits in a chip or a label row; md sits beside a heading.
+ * sm sits in a chip or a list row; md is the one on the main sentence.
  *
  * `icon` is a circle just big enough for the glyph; `labelled` drops the fixed
  * width for a pill that grows with the text, which matters because "Listen"
  * is the shortest of the nine translations (Anhören, Escuchar, Écouter).
+ *
+ * These were 20/14 and 28/16 and nobody noticed the button was a button. Both
+ * steps went up. Even 32px is under the 44px Apple asks for, which is the real
+ * argument for the labelled pill wherever there is room for one: a 70px-wide
+ * target is hit on the first try in a way a 24px circle is not.
  */
 const SIZES = {
-  sm: { icon: "h-5 w-5", labelled: "gap-1 px-2 py-0.5 text-[10px]", glyph: "h-3.5 w-3.5", spinner: "h-2.5 w-2.5" },
-  md: { icon: "h-7 w-7", labelled: "gap-1.5 px-2.5 py-1 text-[11px]", glyph: "h-4 w-4", spinner: "h-3.5 w-3.5" },
+  sm: { icon: "h-6 w-6", labelled: "gap-1 px-2 py-1 text-[11px]", glyph: "h-4 w-4", spinner: "h-3 w-3" },
+  md: {
+    icon: "h-8 w-8",
+    labelled: "gap-1.5 px-3 py-1.5 text-xs",
+    glyph: "h-[18px] w-[18px]",
+    spinner: "h-4 w-4",
+  },
 } as const;
 
 type Props = {
