@@ -10,6 +10,8 @@ import {
   TTS_VOICE,
   TTS_SPEAKING_RATE,
   TTS_LANGUAGE_CODE,
+  MAX_INPUT_CHARS,
+  MAX_SSML_BYTES,
 } from "@/lib/audio-limits";
 
 export const runtime = "nodejs";
@@ -61,11 +63,10 @@ const DIARY_BUCKET = "tts-diary";
 const KINDS = ["word", "expression", "diary"] as const;
 type Kind = (typeof KINDS)[number];
 
-// Google rejects SSML documents over 5000 bytes. The character cap is the
-// first guard; the byte check after building the SSML is the real one, since
-// <sub alias="…"> roughly doubles a heavily-ruby'd string.
-const MAX_INPUT_CHARS = 1000;
-const MAX_SSML_BYTES = 4800;
+// MAX_INPUT_CHARS / MAX_SSML_BYTES now live in audio-limits.ts, imported
+// above. The client predicts them (naturalAudioChoice) to decide whether the
+// whole natural version is offerable, so the two must not drift apart. Both
+// guards are applied below exactly where and in the order they always were.
 
 const GOOGLE_TTS_ENDPOINT = "https://texttospeech.googleapis.com/v1/text:synthesize";
 

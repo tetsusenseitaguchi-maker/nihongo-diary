@@ -17,6 +17,7 @@ import { TranslateButton } from "@/components/TranslateButton";
 import { GetCorrectionButton } from "@/components/GetCorrectionButton";
 import { DictationLink } from "@/components/DictationLink";
 import { hasDictation } from "@/lib/dictation";
+import { normalizePlan } from "@/lib/plans";
 import { PeerCorrections } from "@/components/PeerCorrections";
 import { Avatar } from "@/components/ObiePhoto";
 import { formatLong } from "@/lib/dates";
@@ -128,6 +129,24 @@ export default async function DiaryDetailPage({
     .eq("id", user.id)
     .single();
   const preferredLanguage = (viewerProfile?.preferred_language as string) || "en";
+
+  /**
+   * The viewer's plan, for the 🔊 on the natural version and nothing else.
+   *
+   * A SEPARATE query rather than another column on the select above, and
+   * deliberately so: one absent column makes the whole query error and every
+   * field in it come back undefined. Widening the language read is how the
+   * viewer would silently lose their translation language too. This way the
+   * worst a broken plan read can do is fall through normalizePlan to "free",
+   * which costs a paid learner one sentence instead of the paragraph.
+   */
+  const { data: planRow } = await supabase
+    .from("profiles")
+    .select("plan")
+    .eq("id", user.id)
+    .single();
+  const viewerPlan = normalizePlan(planRow?.plan as string | null | undefined);
+
   const entryTranslations = (entry.translations as Record<string, string> | null) ?? {};
   const t = await getServerT();
 
@@ -319,7 +338,7 @@ export default async function DiaryDetailPage({
               <h2 className="font-serif text-xl font-bold text-pine">添削結果</h2>
               <span className="text-sm font-medium text-muted">{t("write.resultTitle")}</span>
             </div>
-            <CorrectionResult correction={correction} />
+            <CorrectionResult correction={correction} plan={viewerPlan} />
             {/* Their own voice, from the day they wrote this. No controls
                 beyond play — there is nothing to score and nothing to compare
                 it against, which is the point. Absent for every diary written

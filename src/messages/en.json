@@ -991,6 +991,8 @@
   "audio.playWord": "Play the word",
   "audio.playExample": "Play the example sentence",
   "audio.playSentence": "Play the sentence",
+  "audio.playWhole": "Play the whole text",
+  "audio.wholeOnPaid": "Plus and Pro play the whole text.",
   "audio.playBeforeAfter": "Play the mistake and the correction",
   "audio.listen": "Listen",
   "dictation.title": "Listening practice",

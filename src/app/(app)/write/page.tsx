@@ -1303,6 +1303,7 @@ export default function WritePage() {
               correction={result}
               locked={{ drills: isFreePlan, miniLesson: isFreePlan }}
               usedExpressions={usedExpressions}
+              plan={plan}
             />
             <p className="pt-1 text-center text-xs text-muted">
               {t("write.aiDisclaimer")}

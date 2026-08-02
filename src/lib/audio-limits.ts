@@ -81,3 +81,19 @@ export function audioLimitFor(plan: string | null | undefined): number | null {
 export const TTS_VOICE = "ja-JP-Wavenet-A";
 export const TTS_SPEAKING_RATE = 0.9;
 export const TTS_LANGUAGE_CODE = "ja-JP";
+
+/**
+ * The two size guards /api/tts rejects a request with, in that order.
+ *
+ * Google rejects SSML documents over 5000 bytes. The character cap is the
+ * first guard; the byte check after building the SSML is the real one, since
+ * <sub alias="…"> roughly doubles a heavily-ruby'd string.
+ *
+ * Exported rather than kept private to the route because the client now has to
+ * predict the answer: naturalAudioChoice() offers the whole natural version to
+ * a paid learner only when it would actually synthesise, and falls back to the
+ * one sentence when it would not. A second copy of these numbers that drifted
+ * from the route's would turn that fallback into a button that does nothing.
+ */
+export const MAX_INPUT_CHARS = 1000;
+export const MAX_SSML_BYTES = 4800;

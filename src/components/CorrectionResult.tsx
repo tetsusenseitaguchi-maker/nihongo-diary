@@ -6,6 +6,9 @@ import type { Correction } from "@/lib/types";
 import { ObiePhoto } from "@/components/ObiePhoto";
 import { Furigana, NoRuby } from "@/components/Furigana";
 import { AudioLimitNotice, PlayButton, type PlayButtonKind } from "@/components/PlayButton";
+import { NativeGate } from "@/components/NativeGate";
+import { naturalAudioChoice } from "@/lib/natural-audio";
+import type { Plan } from "@/lib/plans";
 import { PracticeDrills } from "@/components/PracticeDrills";
 import { LearnedUsedPanel } from "@/components/LearnedUsedPanel";
 import type { UsedExpression } from "@/lib/learned-display";
@@ -122,6 +125,7 @@ export function CorrectionResult({
   locked,
   usedExpressions,
   disableAudio = false,
+  plan = "free",
 }: {
   correction: Correction;
   showOriginal?: boolean;
@@ -160,11 +164,36 @@ export function CorrectionResult({
    * honest version.
    */
   disableAudio?: boolean;
+  /**
+   * The viewer's plan, and the ONLY thing it changes is what the 🔊 on the
+   * natural version sends — see lib/natural-audio.ts. Nothing here reads or
+   * writes a counter, and normalizePlan is neither called nor duplicated: the
+   * callers pass a Plan that has already been through it.
+   *
+   * Defaults to "free", which is the safe direction and the same one
+   * audioLimitFor takes: the worst case is a paid learner hearing the day's
+   * sentence instead of the paragraph, never a Free learner losing the day's
+   * single synthesis to a clip nothing downstream reuses. That default is also
+   * what the tour and the mock history page rely on — neither knows a plan.
+   */
+  plan?: Plan;
 }) {
   const t = useT();
   const { locale } = useLocale();
   const miniLesson = correction.relatedMiniLesson
     ? getLessonInLocale(correction.relatedMiniLesson, locale)
+    : null;
+
+  /**
+   * What the natural version's 🔊 sends, and whether that is the whole text.
+   *
+   * The whole of the plan branch lives in naturalAudioChoice — this component
+   * only hands the result to <PlayButton/> and picks the label from `whole`.
+   * Never label this from `plan`: a one-sentence diary IS its whole text on
+   * every plan, and a paid learner's diary can be too long for /api/tts.
+   */
+  const naturalAudio = correction.natural
+    ? naturalAudioChoice(correction.natural, plan)
     : null;
 
   // Vocabulary saving state
@@ -318,9 +347,11 @@ export function CorrectionResult({
           </div>
         )}
 
-        {correction.natural && (
+        {correction.natural && naturalAudio && (
           <div className="gloss-panel relative rounded-[var(--radius-card)] p-6" style={tint("--color-tint-sage")}>
             <Label en={t("correction.naturalJapanese")} jp="自然(しぜん)な日本語(にほんご)" />
+            {/* The whole natural version, on every plan. Only the 🔊 below is
+                narrowed to one sentence — what is read on screen never is. */}
             <p className="font-jp text-[15px] leading-loose text-ink">
               <Furigana text={correction.natural} />
             </p>
@@ -331,11 +362,23 @@ export function CorrectionResult({
                 Down here the full width of the card is free — which is what
                 lets this be the large labelled one. */}
             <div className="mt-3">
-              {audioButton("natural", correction.natural, t("audio.playSentence"), {
-                showLabel: true,
-                size: "md",
-              })}
+              {audioButton(
+                "natural",
+                naturalAudio.text,
+                naturalAudio.whole ? t("audio.playWhole") : t("audio.playSentence"),
+                { showLabel: true, size: "md" },
+              )}
             </div>
+            {/* Only when the learner is actually getting less than the whole
+                text — a one-sentence diary is the whole text already, and
+                saying otherwise would be selling something they have. Inside
+                <NativeGate/> because it names the paid plans: App Store
+                guideline 3.1.1, the same reason the /upgrade links are gated. */}
+            {!disableAudio && plan === "free" && !naturalAudio.whole && (
+              <NativeGate>
+                <p className="mt-1.5 text-xs text-muted">{t("audio.wholeOnPaid")}</p>
+              </NativeGate>
+            )}
             {audioNotice("natural", "mt-2")}
             <span className="stamp gloss absolute -right-2 -top-3 grid h-16 w-16 rotate-[-12deg] place-items-center rounded-full bg-paper text-center font-jp text-[10px] font-bold leading-tight text-apricot shadow-card">
               よく
