@@ -953,5 +953,9 @@
   "audioIntro.limitIos": "Le plan gratuit couvre une nouvelle phrase par jour.",
   "audioIntro.tryDictation": "Try dictation",
   "audioIntro.writeFirst": "Write today’s diary",
-  "audioIntro.gotIt": "Got it"
+  "audioIntro.gotIt": "Got it",
+  "updatePassword.doneTitle": "Password updated",
+  "updatePassword.doneBody": "You can now log in with your new password.",
+  "updatePassword.doneReturnToApp": "Using the Nihongo Diary app? Go back to it and log in with your new password.",
+  "updatePassword.doneContinue": "Continue"
 }

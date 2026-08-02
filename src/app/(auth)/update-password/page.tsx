@@ -35,6 +35,19 @@ function UpdatePasswordForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+
+  /**
+   * Are we running inside the iOS shell rather than a browser?
+   *
+   * Decides one sentence on the success screen, and only ever removes it.
+   * Read after mount because window does not exist during the server render.
+   */
+  const [isNativeApp, setIsNativeApp] = useState(false);
+  useEffect(() => {
+    type CapWindow = Window & { Capacitor?: { isNativePlatform?: () => boolean } };
+    setIsNativeApp(!!(window as CapWindow).Capacitor?.isNativePlatform?.());
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -65,11 +78,56 @@ function UpdatePasswordForm() {
       setLoading(false);
       return;
     }
-    router.push("/dashboard");
+
+    /**
+     * A screen, not a silent router.push("/dashboard").
+     *
+     * The redirect was right when the only way here was a browser session that
+     * would carry on into the app. It is wrong for the case this whole repair
+     * is about: the reset link opens in Safari, so the new session is Safari's,
+     * while the Capacitor WebView is still signed out. That learner watched
+     * /dashboard load, went back to the app, found the login screen again, and
+     * reasonably concluded the reset had not worked.
+     *
+     * Saying "your password is changed" out loud, once, costs a browser user a
+     * single tap and saves the app user from that conclusion. The extra line
+     * about returning to the app is dropped when we are already in it, where it
+     * would be nonsense.
+     */
+    setDone(true);
+    setLoading(false);
   }
 
   if (checking) {
     return <Card className="p-7 text-center text-muted">{t("updatePassword.checking")}</Card>;
+  }
+
+  if (done) {
+    return (
+      <Card className="p-7 text-center">
+        <h1 className="font-serif text-2xl font-bold text-pine">
+          {t("updatePassword.doneTitle")}
+        </h1>
+        <p className="mt-2 text-sm text-ink/75">{t("updatePassword.doneBody")}</p>
+
+        {!isNativeApp && (
+          <p className="mt-4 rounded-lg bg-mint/40 px-3 py-2.5 text-sm text-pine">
+            {t("updatePassword.doneReturnToApp")}
+          </p>
+        )}
+
+        <Button
+          size="lg"
+          className="mt-6 w-full"
+          onClick={() => {
+            router.push("/dashboard");
+            router.refresh();
+          }}
+        >
+          {t("updatePassword.doneContinue")}
+        </Button>
+      </Card>
+    );
   }
 
   if (!hasSession) {
