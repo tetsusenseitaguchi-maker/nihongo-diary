@@ -7,47 +7,62 @@ import { normalizePlan, type Plan } from "@/lib/plans";
  * billing-adjacent behaviour and is hands-off. Nothing here reads or writes
  * correction_count / translation_count.
  *
- * ⚠️ Unit difference from every other counter in this app: this allowance is
- * a LIFETIME total, not a daily one. It is stored in public.audio_usage
- * (supabase/add-audio-limit.sql), a table keyed by user_id alone, with no
- * usage_date column and no daily reset. Do not route it through
- * usage_limits — that table is unique(user_id, usage_date).
+ * ⚠️ This was a LIFETIME total of three and is now a DAILY one. The old
+ * counter was fine while audio was a garnish; it stops working the moment the
+ * day has a shape — listen, read aloud, write down, and the same sentence
+ * again tomorrow. Three for a lifetime means that runs for three days and then
+ * says "no" every morning after. A learner should be able to go round once a
+ * day for free and pay only to go round again.
  *
- * The limit is passed to try_use_audio() by the caller, same as the
- * correction / translation / recheck functions, so changing this number is an
- * app-side change with no migration.
+ * Stored in public.audio_usage_daily (supabase/add-audio-daily.sql), keyed by
+ * (user_id, usage_date). The old public.audio_usage and its two functions are
+ * deliberately still there, untouched: pointing this file and /api/tts back at
+ * them is the whole rollback.
+ *
+ * Do not route it through usage_limits — that table has insert and update
+ * policies, so a client can write its own counts back.
+ *
+ * ⚠️ One a day is only enough because a cache hit costs nothing. The flow
+ * plays the same sentence four times across two days (listen, read aloud,
+ * dictate, dictate again), and all but the first resolve to the cached clip
+ * without reaching the counter — /api/tts looks the cache up ABOVE the claim,
+ * and that ordering is now load-bearing rather than merely thrifty.
+ *
+ * The limit is passed to try_use_audio_daily() by the caller, same as the
+ * correction / translation / recheck / shadowing functions, so changing this
+ * number is an app-side change with no migration.
  */
-export const AUDIO_LIFETIME_LIMIT = 3;
+export const AUDIO_DAILY_LIMIT = 1;
 
 /**
- * How many lifetime plays each plan gets. null = unlimited.
+ * How many new clips a day each plan gets. null = unlimited.
  *
  * Lives here rather than as another field on PLAN_LIMITS because plans.ts
  * drives billing-adjacent behaviour and is hands-off; this file was split out
  * for exactly that reason. normalizePlan is imported and CALLED but never
  * modified — plan determination stays the one function it has always been.
  *
- * Only the Free row is a number, so only Free ever reaches try_use_audio.
- * A paid learner's plays are not counted at all: the RPC is skipped, no row
- * accumulates in audio_usage, and nothing has to be reset when they upgrade.
- * Same shape as translationsPerDay in plans.ts, and /api/tts branches on it
- * the same way /api/translate does.
+ * Only the Free row is a number, so only Free ever reaches
+ * try_use_audio_daily. A paid learner's plays are not counted at all: the RPC
+ * is skipped, no row accumulates in audio_usage_daily, and nothing has to be
+ * reset when they upgrade. Same shape as translationsPerDay in plans.ts, and
+ * /api/tts branches on it the same way /api/translate does.
  */
-export const AUDIO_LIFETIME_LIMITS: Record<Plan, number | null> = {
-  free: AUDIO_LIFETIME_LIMIT,
+export const AUDIO_DAILY_LIMITS: Record<Plan, number | null> = {
+  free: AUDIO_DAILY_LIMIT,
   plus: null,
   pro: null,
   teacher_feedback: null,
 };
 
 /**
- * Lifetime audio allowance for a raw profiles.plan value, or null for
- * unlimited. An unreadable / unknown plan resolves to Free through
- * normalizePlan, which is the safe direction: the worst case is a paid
- * learner being metered, never an unmetered free one.
+ * Daily audio allowance for a raw profiles.plan value, or null for unlimited.
+ * An unreadable / unknown plan resolves to Free through normalizePlan, which
+ * is the safe direction: the worst case is a paid learner being metered, never
+ * an unmetered free one.
  */
 export function audioLimitFor(plan: string | null | undefined): number | null {
-  return AUDIO_LIFETIME_LIMITS[normalizePlan(plan)];
+  return AUDIO_DAILY_LIMITS[normalizePlan(plan)];
 }
 
 /**

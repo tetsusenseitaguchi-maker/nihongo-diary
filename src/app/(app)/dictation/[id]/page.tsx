@@ -5,6 +5,8 @@ import { Icon } from "@/components/icons";
 import { DictationExercise } from "@/components/DictationExercise";
 import { pickSentence } from "@/lib/dictation";
 import { audioLimitFor } from "@/lib/audio-limits";
+import { getTimezoneFromCookie, validateTZ } from "@/lib/tz-server";
+import { todayInTZ } from "@/lib/date-tz";
 import { formatLong } from "@/lib/dates";
 import { getServerT } from "@/lib/i18n-server";
 
@@ -50,25 +52,32 @@ export default async function DictationPage({
 
   const sentence = entry.natural_japanese ? pickSentence(entry.natural_japanese) : null;
 
-  // ── Remaining plays ──────────────────────────────────────────────────────
-  // Only `plan` is selected. Widening this select is how the timezone incident
-  // turned every user Free: one missing column errors the whole query.
+  // ── Remaining plays today ────────────────────────────────────────────────
+  // `timezone` joins `plan` because the allowance is daily and the day has to
+  // be the learner's. Same column /api/correct and /api/tts read, for the same
+  // reason. A failed read still resolves to free + the cookie's timezone,
+  // which is the safe direction.
   const { data: profile } = await supabase
     .from("profiles")
-    .select("plan")
+    .select("plan, timezone")
     .eq("id", user.id)
     .single();
 
   const limit = audioLimitFor(profile?.plan);
   let remaining: number | null = null;
   if (limit !== null) {
-    // audio_usage is read-only from here — writing is try_use_audio's job and
-    // the table has no insert/update policy for a client to use anyway. A user
-    // with no row has spent nothing.
+    let tz = await getTimezoneFromCookie();
+    const dbTz = profile?.timezone as string | null | undefined;
+    if (tz === "UTC" && dbTz) tz = validateTZ(dbTz);
+
+    // audio_usage_daily is read-only from here — writing is
+    // try_use_audio_daily's job and the table has no insert/update policy for a
+    // client to use anyway. No row for today means nothing spent today.
     const { data: usage } = await supabase
-      .from("audio_usage")
+      .from("audio_usage_daily")
       .select("audio_count")
       .eq("user_id", user.id)
+      .eq("usage_date", todayInTZ(tz))
       .maybeSingle();
     remaining = Math.max(0, limit - (usage?.audio_count ?? 0));
   }

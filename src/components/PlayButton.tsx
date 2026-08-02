@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icons";
 import { useT } from "@/contexts/locale";
 import { NativeGate } from "@/components/NativeGate";
-import { AUDIO_LIFETIME_LIMIT } from "@/lib/audio-limits";
+import { AUDIO_DAILY_LIMIT } from "@/lib/audio-limits";
 import { registerPlayback } from "@/lib/audio-bus";
 
 /**
@@ -15,8 +15,10 @@ import { registerPlayback } from "@/lib/audio-bus";
  * into SSML <sub alias="…"> on the server (see lib/ruby-ssml.ts). Nothing here
  * parses or rebuilds ruby markup itself.
  *
- * The allowance is a LIFETIME one and is claimed server-side by try_use_audio.
- * This component never counts anything; it only reacts to the 429.
+ * The allowance is a DAILY one and is claimed server-side by
+ * try_use_audio_daily. This component never counts anything; it only reacts to
+ * the 429. Replays come from clipUrlRef and never reach the server at all,
+ * which is what makes one play a day enough to work with.
  */
 
 export type PlayButtonKind = "word" | "expression" | "diary";
@@ -325,7 +327,7 @@ export function PlayButton({
       setStatus("idle");
       const data: { error?: string; limit?: number } = await res.json().catch(() => ({}));
       if (res.status === 429) {
-        const reached = data.limit ?? AUDIO_LIFETIME_LIMIT;
+        const reached = data.limit ?? AUDIO_DAILY_LIMIT;
         setLimit(reached);
         onLimitReached?.(reached);
       } else {

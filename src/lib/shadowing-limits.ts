@@ -7,13 +7,15 @@ import { normalizePlan, type Plan } from "@/lib/plans";
  * billing-adjacent behaviour and is hands-off. Nothing here reads or writes
  * correction_count / translation_count / recheck_count.
  *
- * ⚠️ Unit difference from audio-limits.ts, which is the file this one is
- * modelled on: that allowance is a LIFETIME total, this one is DAILY. The
- * counters are separate tables and must stay that way — see the note at the
- * bottom of supabase/add-shadowing-limit.sql. Playing a sentence costs real
- * money at Google, so capping it for a lifetime makes sense; reading one aloud
- * costs nothing, and the point of the feature is the habit, which a lifetime
- * cap actively works against.
+ * Both this and audio-limits.ts are daily now — audio was a lifetime total of
+ * three when this file was written, and moved for the same reason this one
+ * never was one: a cap measured in a lifetime cannot support a habit measured
+ * in days.
+ *
+ * ⚠️ They remain separate tables and must stay that way — see the note at the
+ * bottom of supabase/add-shadowing-limit.sql. Sharing one counter would spend
+ * two credits on the single act of listening to a sentence and then reading it
+ * back, which is precisely the loop the day is built around.
  *
  * Stored in public.shadowing_usage (supabase/add-shadowing-limit.sql), keyed by
  * (user_id, usage_date). Do not route it through usage_limits: that table has
@@ -35,7 +37,7 @@ export const SHADOWING_DAILY_LIMIT = 1;
  * Only the Free row is a number, so only Free ever reaches try_use_shadowing.
  * A paid learner's recordings are not counted at all: the RPC is skipped, no
  * row accumulates in shadowing_usage, and nothing has to be reset when they
- * upgrade. Same shape as AUDIO_LIFETIME_LIMITS and translationsPerDay.
+ * upgrade. Same shape as AUDIO_DAILY_LIMITS and translationsPerDay.
  */
 export const SHADOWING_DAILY_LIMITS: Record<Plan, number | null> = {
   free: SHADOWING_DAILY_LIMIT,

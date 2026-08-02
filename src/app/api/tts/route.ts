@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { rubyToSsml } from "@/lib/ruby-ssml";
 import { refundAudio } from "@/lib/audio-refund";
+import { getTimezoneFromCookie, validateTZ } from "@/lib/tz-server";
 import {
   audioLimitFor,
   TTS_VOICE,
@@ -20,12 +21,16 @@ export const runtime = "nodejs";
 // correction result.
 //
 // ── Allowance ───────────────────────────────────────────────────────────────
-// Free only. audioLimitFor() resolves profiles.plan to a number of LIFETIME
-// plays or to null for the paid plans, and try_use_audio()
-// (supabase/add-audio-limit.sql) is called only in the first case. Paid
+// Free only. audioLimitFor() resolves profiles.plan to a number of plays per
+// DAY or to null for the paid plans, and try_use_audio_daily()
+// (supabase/add-audio-daily.sql) is called only in the first case. Paid
 // learners are not counted at all. It never reads or writes correction_count /
 // translation_count and never calls try_use_correction / try_use_translation /
-// try_use_recheck.
+// try_use_recheck / try_use_shadowing.
+//
+// This used to be three plays for a lifetime, against public.audio_usage. That
+// table and its two functions are still there and still untouched — switching
+// the three call sites below back to them is the entire rollback.
 //
 // ── Cache ───────────────────────────────────────────────────────────────────
 // Keyed by a hash of the exact SSML plus voice and rate, so identical text
@@ -33,6 +38,12 @@ export const runtime = "nodejs";
 // audio. A cache hit costs NO credit — the counter is only claimed on the miss
 // path, below the lookup. (The translation API once billed users on cache hits;
 // the ordering here is what prevents a repeat.)
+//
+// ⚠️ That ordering is now load-bearing, not just thrifty. One play a day only
+// works because the day's flow plays ONE sentence four times across two days —
+// listen, read aloud, dictate, dictate again tomorrow — and only the first of
+// those reaches the counter. Move the claim above the lookup and a Free
+// learner is locked out before they have read anything aloud.
 //
 // Two buckets, split by whether the text is personal:
 //   tts-shared … words and expressions. Content-addressed only, no user id in
@@ -176,9 +187,15 @@ export async function POST(req: Request) {
   // incident happened: one absent column makes the whole query error, prof
   // comes back null, and normalizePlan(undefined) silently reads every paid
   // learner as Free.
+  // `timezone` joins `plan` here because the allowance is daily now and the
+  // day has to be the learner's, not the database's. It is the same column
+  // /api/correct reads for the same reason (route.ts:312), so this is not new
+  // exposure to the missing-column failure that once turned every user Free —
+  // and if the read does fail, plan resolves to free and the timezone falls
+  // back to the cookie, which is the safe direction on both counts.
   const { data: prof, error: planError } = await supabase
     .from("profiles")
-    .select("plan")
+    .select("plan, timezone")
     .eq("id", user.id)
     .single();
 
@@ -191,21 +208,34 @@ export async function POST(req: Request) {
 
   const limit = audioLimitFor(prof?.plan);
   // null = unlimited. The RPC is skipped entirely rather than called with a
-  // large number, so a paid learner accumulates no audio_usage row at all —
-  // the same shape as translationsPerDay === null in /api/translate.
+  // large number, so a paid learner accumulates no audio_usage_daily row at
+  // all — the same shape as translationsPerDay === null in /api/translate.
   const metered = limit !== null;
 
+  // Read the clock ONCE, and only on the metered path. Both the claim and the
+  // refund below use this exact string: the counter is one row per day, so a
+  // request that claims a slot at 23:59:59 and fails at 00:00:01 must put the
+  // credit back into yesterday's row, not open tomorrow's. Cookie first
+  // (TimezoneSyncer sets it), then the profile column, both validated.
+  let today = "";
   if (metered) {
-    const { data: allowed, error: rpcError } = await supabase.rpc("try_use_audio", {
+    let tz = await getTimezoneFromCookie();
+    const dbTz = prof?.timezone as string | null | undefined;
+    if (tz === "UTC" && dbTz) tz = validateTZ(dbTz);
+    today = new Date().toLocaleDateString("en-CA", { timeZone: tz });
+
+    const { data: allowed, error: rpcError } = await supabase.rpc("try_use_audio_daily", {
       p_user_id: user.id,
+      p_date: today,
       p_limit: limit,
     });
 
     if (rpcError) {
       // Fail CLOSED, unlike /api/recheck. Every miss here spends real money at
-      // Google, and the allowance is a lifetime one, so a broken RPC must not
-      // hand out uncounted synthesis.
-      console.error("[tts] try_use_audio error:", rpcError.message, "code:", rpcError.code);
+      // Google, so a broken RPC must not hand out uncounted synthesis. Less
+      // brutal than it was — the learner is now locked out for the rest of the
+      // day rather than for good — but still the right direction.
+      console.error("[tts] try_use_audio_daily error:", rpcError.message, "code:", rpcError.code);
       return NextResponse.json({ error: "Audio service unavailable." }, { status: 500 });
     }
     if (!allowed) {
@@ -222,11 +252,13 @@ export async function POST(req: Request) {
     audio = await synthesize(ssml, apiKey);
   } catch (err) {
     console.error("[tts] synthesis failed:", err instanceof Error ? err.message : err);
-    // Only when something was actually claimed. refund_audio floors at 0, but
-    // an unmetered request never took a credit, and an upgraded learner still
-    // carries the row from their Free days — refunding here would hand that
-    // row a discount for a failure that cost them nothing.
-    if (metered) await refundAudio(supabase, user.id);
+    // Only when something was actually claimed. refund_audio_daily floors at
+    // 0, but an unmetered request never took a credit, and an upgraded learner
+    // may still carry rows from their Free days — refunding here would hand one
+    // of those a discount for a failure that cost them nothing.
+    //
+    // `today` is the string the claim used, not a fresh reading of the clock.
+    if (metered) await refundAudio(supabase, user.id, today);
     return NextResponse.json({ error: "Could not generate audio." }, { status: 502 });
   }
 
