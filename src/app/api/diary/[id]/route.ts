@@ -138,7 +138,7 @@ export async function DELETE(
   // Fetch entry — verify ownership and get attachment paths
   const { data: entry, error: fetchErr } = await supabase
     .from("diary_entries")
-    .select("user_id, image_path, audio_path")
+    .select("user_id, image_path, audio_path, shadowing_audio_path")
     .eq("id", id)
     .single();
 
@@ -162,6 +162,12 @@ export async function DELETE(
   }
   if (entry.audio_path) {
     await supabase.storage.from("diary-audio").remove([entry.audio_path]);
+  }
+  // The learner's own reading of this diary. Nothing else points at it, so if
+  // it is not removed here it stays in the bucket forever — invisible, because
+  // the row that named it has just gone.
+  if (entry.shadowing_audio_path) {
+    await supabase.storage.from("shadowing-audio").remove([entry.shadowing_audio_path]);
   }
 
   // 3. Delete the diary entry (RLS also enforces user_id = auth.uid())

@@ -12,7 +12,17 @@ export const runtime = "nodejs";
 // so a single learner's deletion would strip audio still referenced by
 // everyone else. Only "tts-diary" — the learner's own diary text, which is
 // personal data — belongs in this list.
-const STORAGE_BUCKETS = ["avatars", "diary-images", "diary-audio", "tts-diary"] as const;
+const STORAGE_BUCKETS = [
+  "avatars",
+  "diary-images",
+  "diary-audio",
+  "tts-diary",
+  // The learner reading their own diary aloud. As personal as audio gets, and
+  // laid out as ${user.id}/${entryId}.${ext}, so it belongs here. Leaving it
+  // out is the kind of omission nobody notices: deletion appears to work and
+  // the recordings simply stay.
+  "shadowing-audio",
+] as const;
 
 export async function DELETE() {
   const supabase = await createClient();

@@ -152,6 +152,25 @@ export default async function DiaryDetailPage({
     ? supabase.storage.from("diary-audio").getPublicUrl(entry.audio_path).data.publicUrl
     : null;
 
+  // The learner reading this diary aloud, owner only.
+  //
+  // A signed URL, not getPublicUrl: shadowing-audio is a private bucket, which
+  // is the one thing that separates a recording of your own voice from the
+  // diary attachments sitting in a world-readable one. An hour is far more than
+  // anyone needs to press play, and short enough that a link copied out of the
+  // page stops working.
+  //
+  // Generated with the learner's own session rather than the service role, so
+  // the storage policy checks the path against auth.uid() as well —
+  // `isOwner &&` here is the first of two locks, not the only one.
+  let shadowingUrl: string | null = null;
+  if (isOwner && entry.shadowing_audio_path) {
+    const { data: signed } = await supabase.storage
+      .from("shadowing-audio")
+      .createSignedUrl(entry.shadowing_audio_path as string, 60 * 60);
+    shadowingUrl = signed?.signedUrl ?? null;
+  }
+
   const authorName =
     authorProfile?.display_name || authorProfile?.username || "Learner";
   const authorInitials = authorName.slice(0, 2).toUpperCase();
@@ -301,6 +320,18 @@ export default async function DiaryDetailPage({
               <span className="text-sm font-medium text-muted">{t("write.resultTitle")}</span>
             </div>
             <CorrectionResult correction={correction} />
+            {/* Their own voice, from the day they wrote this. No controls
+                beyond play — there is nothing to score and nothing to compare
+                it against, which is the point. Absent for every diary written
+                before the feature, and for every one that was skipped. */}
+            {shadowingUrl && (
+              <div className="rounded-[var(--radius-card)] border border-line bg-paper p-5">
+                <p className="mb-2 text-sm font-bold text-pine">
+                  🎙 {t("shadowing.previewLabel")}
+                </p>
+                <audio controls src={shadowingUrl} className="h-9 w-full max-w-xs" />
+              </div>
+            )}
             {/* Under the result, where a learner who has just re-read the diary
                 can go and test whether they can hear it. Hidden when the
                 natural version carries no readings — see hasDictation. */}
