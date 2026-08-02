@@ -5,6 +5,7 @@ import { Icon } from "@/components/icons";
 import { useT } from "@/contexts/locale";
 import { NativeGate } from "@/components/NativeGate";
 import { AUDIO_LIFETIME_LIMIT } from "@/lib/audio-limits";
+import { registerPlayback } from "@/lib/audio-bus";
 
 /**
  * 🔊 button that reads a piece of Japanese aloud through /api/tts.
@@ -187,6 +188,35 @@ export function PlayButton({
   /** Object URL of the fetched clip, kept so a replay costs no round trip. */
   const clipUrlRef = useRef<string | null>(null);
 
+  /**
+   * Bumped every time an outside stop lands, so a request that is already in
+   * flight can tell that nobody wants its clip any more. Read in fetchAndPlay.
+   */
+  const genRef = useRef(0);
+
+  /**
+   * Let the page silence this button — used by the shadowing step, which has to
+   * be sure nothing is playing before it opens the microphone. See
+   * lib/audio-bus.ts for why this is a callback rather than the element.
+   *
+   * pause() and setStatus("idle") are one action, not two. The click handler
+   * returns early unless status is "idle", so pausing without resetting leaves
+   * a button that pulses forever and can never be pressed again.
+   *
+   * registerPlayback returns its own unregister function, which is exactly what
+   * an effect wants as a cleanup. Mount-only: the callback reads refs and a
+   * setter, all of which are stable for the life of the component.
+   */
+  useEffect(
+    () =>
+      registerPlayback(() => {
+        genRef.current++;
+        audioRef.current?.pause();
+        setStatus("idle");
+      }),
+    [],
+  );
+
   // Keyed on the spoken string: if the caller swaps the word out, the cached
   // clip is for the wrong one. Cleanup also runs on unmount, which is what
   // stops the object URL leaking.
@@ -270,6 +300,12 @@ export function PlayButton({
   }
 
   async function fetchAndPlay(audio: HTMLAudioElement) {
+    // Sampled before the first await. If a stop lands while the request is in
+    // flight, this stops matching and the clip must not be started when it
+    // arrives — otherwise the model voice begins halfway into the learner's
+    // recording, which is the one moment this whole mechanism exists to avoid.
+    const gen = genRef.current;
+
     let res: Response;
     try {
       res = await fetch("/api/tts", {
@@ -299,7 +335,21 @@ export function PlayButton({
     }
 
     const url = URL.createObjectURL(await res.blob());
+    // Stored BEFORE the abandon check below. A credit has already been spent on
+    // this clip and the clip is good — dropping it because the learner started
+    // recording would mean fetching it again afterwards. (That refetch would
+    // hit the /api/tts storage cache and take no second credit, but it is still
+    // a round trip bought and thrown away.)
     clipUrlRef.current = url;
+
+    if (gen !== genRef.current) {
+      // Stopped while this was in the air. The stopper has already put status
+      // back to idle; the next tap plays this clip straight from clipUrlRef
+      // with no request at all.
+      setStatus("idle");
+      return;
+    }
+
     audio.src = url;
     applyRate(audio);
     setStatus("playing");
