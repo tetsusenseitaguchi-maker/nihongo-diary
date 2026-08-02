@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, Button } from "@/components/ui";
 import { useT, useLocale } from "@/contexts/locale";
+import { authErrorMessage } from "@/lib/auth-errors";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -37,7 +38,10 @@ export default function SignupPage() {
     });
 
     if (error) {
-      setError(error.message);
+      // This is the line the German review was looking at. A 5xx from Supabase
+      // Auth — "Error sending confirmation email" being the common one here —
+      // arrives with error.message set to the string "{}". See lib/auth-errors.ts.
+      setError(authErrorMessage(error, t));
       setLoading(false);
       return;
     }

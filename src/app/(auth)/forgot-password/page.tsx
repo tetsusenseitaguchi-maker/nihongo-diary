@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Card, Button } from "@/components/ui";
 import { useT } from "@/contexts/locale";
+import { authErrorMessage } from "@/lib/auth-errors";
 
 export default function ForgotPasswordPage() {
   const t = useT();
@@ -26,7 +27,7 @@ export default function ForgotPasswordPage() {
     });
 
     if (error) {
-      setError(error.message);
+      setError(authErrorMessage(error, t));
       setLoading(false);
       return;
     }

@@ -1,15 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, Button } from "@/components/ui";
 import { useT } from "@/contexts/locale";
+import { authErrorMessage } from "@/lib/auth-errors";
 
-export default function UpdatePasswordPage() {
+function UpdatePasswordForm() {
   const router = useRouter();
+  const params = useSearchParams();
   const t = useT();
+
+  /**
+   * Set when /auth/callback could not exchange the emailed code and sent them
+   * here rather than to /login.
+   *
+   * It replaces the generic "invalid or expired" line below with one that says
+   * what actually tends to be wrong — the link was opened in a different
+   * browser from the one that asked for it, which on iOS is the normal case
+   * (request in the Capacitor WebView, tap in Safari).
+   */
+  const linkError = params.get("authError") === "recovery_link";
 
   // Not gated via middleware's PROTECTED list (deliberate — see project notes):
   // the recovery session only exists after auth/callback exchanges the emailed
@@ -48,7 +61,7 @@ export default function UpdatePasswordPage() {
     const supabase = createClient();
     const { error } = await supabase.auth.updateUser({ password });
     if (error) {
-      setError(error.message);
+      setError(authErrorMessage(error, t));
       setLoading(false);
       return;
     }
@@ -62,7 +75,9 @@ export default function UpdatePasswordPage() {
   if (!hasSession) {
     return (
       <Card className="p-7 text-center">
-        <p className="text-sm text-apricot">{t("updatePassword.invalidLink")}</p>
+        <p className="text-sm text-apricot">
+          {linkError ? t("authError.recovery_link") : t("updatePassword.invalidLink")}
+        </p>
         <Link
           href="/forgot-password"
           className="mt-4 inline-block font-semibold text-moss-600 hover:text-pine"
@@ -99,6 +114,18 @@ export default function UpdatePasswordPage() {
         </Button>
       </form>
     </Card>
+  );
+}
+
+/**
+ * useSearchParams needs a Suspense boundary to prerender, the same shape
+ * /login already uses. Without it the build fails rather than degrading.
+ */
+export default function UpdatePasswordPage() {
+  return (
+    <Suspense fallback={<Card className="p-7 text-center text-muted">Loading…</Card>}>
+      <UpdatePasswordForm />
+    </Suspense>
   );
 }
 
