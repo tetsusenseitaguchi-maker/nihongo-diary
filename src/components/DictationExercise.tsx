@@ -21,8 +21,14 @@ import { TTS_SPEAKING_RATE } from "@/lib/audio-limits";
  * "listen again" is free however many times it takes. Only the first play of a
  * given sentence spends a credit, and only if it missed the server cache.
  *
- * Marking is local and instant (lib/dictation.ts). Nothing is sent anywhere,
- * nothing is stored, and the same answer always scores the same.
+ * Marking is local and instant (lib/dictation.ts): the same answer always
+ * scores the same, and the screen never waits for a network round trip.
+ *
+ * The score is ALSO sent to /api/dictation/attempt afterwards, in the
+ * background — not to be shown, but so that doing this sentence again tomorrow
+ * has something to be better than. That route ignores the number and marks the
+ * typed characters again itself; see the note there for why. Nothing about the
+ * marking below changed to accommodate it.
  */
 
 /* ── Speed ───────────────────────────────────────────────────────────────
@@ -49,6 +55,33 @@ const SPEEDS = [
 
 const STORAGE_KEY = "dictation.speed";
 
+/**
+ * Post the answer for the record, and get out of the way.
+ *
+ * Never awaited, never throws, never rejects — the same three rules as
+ * scanLearnedInBackground on the write page, for the same reason: this is a
+ * side errand and the exercise it follows has already finished. The score is on
+ * screen before this is sent, and it stays there whatever happens to it.
+ *
+ * The typed string goes up; the percentage does not. The server marks it again
+ * (see /api/dictation/attempt).
+ *
+ * keepalive because a learner who checks their answer and immediately taps back
+ * to the diary should still have the attempt recorded.
+ */
+function recordAttempt(diaryId: string, typed: string): void {
+  try {
+    void fetch("/api/dictation/attempt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ entryId: diaryId, typed }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    /* nothing to do — the exercise is already done and marked */
+  }
+}
+
 /** One character of the answer, coloured by what happened to it. */
 function MarkedChar({ op }: { op: MarkOp }) {
   switch (op.op) {
@@ -70,6 +103,70 @@ function MarkedChar({ op }: { op: MarkOp }) {
       // Not part of the answer, so it is shown struck through where it was typed.
       return <span className="text-ink/30 line-through">{op.typed}</span>;
   }
+}
+
+/** The last attempt at this sentence, from an earlier day. */
+export interface PriorAttempt {
+  percent: number;
+  /** Answer key of THAT attempt, for the same-sentence check below. */
+  sentenceKana: string;
+  date: string;
+}
+
+/**
+ * What the second time round is worth saying.
+ *
+ * Three outcomes, and the asymmetry between them is the point.
+ *
+ * Up   → say by how much. This is the whole reason the score is stored.
+ * Same, and perfect → say so; "have another go" after full marks reads as a
+ *        machine that was not listening.
+ * Down → say nothing about the number. A learner who did worse today does not
+ *        need it quantified — they need the reason they came back, which is
+ *        that the second pass is the one that sticks. Showing "-12" here would
+ *        turn a spaced-repetition feature into a thing to be avoided, and the
+ *        drop is usually noise anyway: a different keyboard, a noisier room, a
+ *        first listen at the fast setting.
+ *
+ * Renders nothing at all when the two attempts were not the same sentence.
+ * Re-correcting a diary rewrites natural_japanese, and pickSentence would then
+ * be setting a different sentence — the two percentages would be measuring
+ * different things, and a comparison between them would be a lie told with
+ * real numbers.
+ */
+function Comparison({ mark, previous }: { mark: Mark; previous: PriorAttempt | null }) {
+  const t = useT();
+  if (!previous) return null;
+  if (previous.sentenceKana !== mark.answerKana) return null;
+
+  const delta = mark.percent - previous.percent;
+
+  if (delta > 0) {
+    return (
+      <p className="mb-4 rounded-xl bg-mint/50 px-4 py-3 text-sm font-semibold text-pine">
+        ↑{" "}
+        {t("dictation.better", {
+          delta,
+          prev: previous.percent,
+          now: mark.percent,
+        })}
+      </p>
+    );
+  }
+
+  if (mark.isPerfect) {
+    return (
+      <p className="mb-4 rounded-xl bg-mint/50 px-4 py-3 text-sm font-semibold text-pine">
+        {t("dictation.stillPerfect")}
+      </p>
+    );
+  }
+
+  return (
+    <p className="mb-4 rounded-xl bg-sand/60 px-4 py-3 text-sm text-ink/75">
+      {t("dictation.secondTry")}
+    </p>
+  );
 }
 
 function Result({ mark, sentence }: { mark: Mark; sentence: string }) {
@@ -114,9 +211,15 @@ function Result({ mark, sentence }: { mark: Mark; sentence: string }) {
 export function DictationExercise({
   sentence,
   remaining,
+  diaryId,
+  previous,
 }: {
   /** One sentence of natural_japanese, ruby markup and all. */
   sentence: string;
+  /** The diary this sentence came from — the server reads it back to re-mark. */
+  diaryId: string;
+  /** The last attempt on an earlier day, or null the first time round. */
+  previous: PriorAttempt | null;
   /**
    * Plays left on a metered plan, or null when the plan is unlimited.
    *
@@ -155,6 +258,7 @@ export function DictationExercise({
   function handleSubmit() {
     if (!canSubmit) return;
     setMark(markAnswer(typed, sentence));
+    recordAttempt(diaryId, typed);
   }
 
   function handleRetry() {
@@ -256,6 +360,9 @@ export function DictationExercise({
       {/* ── Result ─────────────────────────────────────────────────────── */}
       {mark && (
         <div className="gloss-panel rounded-[var(--radius-card)] p-6">
+          {/* Above the score, not below it: on the second day this line is the
+              thing they came back for. */}
+          <Comparison mark={mark} previous={previous} />
           <Result mark={mark} sentence={sentence} />
         </div>
       )}

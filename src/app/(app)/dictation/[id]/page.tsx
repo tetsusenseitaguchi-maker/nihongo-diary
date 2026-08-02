@@ -63,13 +63,16 @@ export default async function DictationPage({
     .eq("id", user.id)
     .single();
 
+  // Resolved once: both the allowance below and the "which day is this" of the
+  // attempt history hang on it.
+  let tz = await getTimezoneFromCookie();
+  const dbTz = profile?.timezone as string | null | undefined;
+  if (tz === "UTC" && dbTz) tz = validateTZ(dbTz);
+  const today = todayInTZ(tz);
+
   const limit = audioLimitFor(profile?.plan);
   let remaining: number | null = null;
   if (limit !== null) {
-    let tz = await getTimezoneFromCookie();
-    const dbTz = profile?.timezone as string | null | undefined;
-    if (tz === "UTC" && dbTz) tz = validateTZ(dbTz);
-
     // audio_usage_daily is read-only from here — writing is
     // try_use_audio_daily's job and the table has no insert/update policy for a
     // client to use anyway. No row for today means nothing spent today.
@@ -77,10 +80,38 @@ export default async function DictationPage({
       .from("audio_usage_daily")
       .select("audio_count")
       .eq("user_id", user.id)
-      .eq("usage_date", todayInTZ(tz))
+      .eq("usage_date", today)
       .maybeSingle();
     remaining = Math.max(0, limit - (usage?.audio_count ?? 0));
   }
+
+  // ── The last time this sentence was set, on an earlier day ───────────────
+  // lt(today) rather than "the newest row": today's own row is written the
+  // moment the learner checks their answer, and a score has nothing to prove
+  // against itself. One row per diary per day, so this is yesterday's attempt —
+  // or whenever they last did it.
+  //
+  // sentence_kana comes along because the comparison is only honest if both
+  // attempts were the same sentence; re-correcting a diary rewrites
+  // natural_japanese and pickSentence would then be setting something else.
+  // The check itself is in DictationExercise, next to the number it guards.
+  const { data: prior } = await supabase
+    .from("dictation_attempts")
+    .select("percent, sentence_kana, usage_date")
+    .eq("user_id", user.id)
+    .eq("diary_entry_id", id)
+    .lt("usage_date", today)
+    .order("usage_date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const previous = prior
+    ? {
+        percent: prior.percent as number,
+        sentenceKana: prior.sentence_kana as string,
+        date: prior.usage_date as string,
+      }
+    : null;
 
   return (
     <div className="space-y-6">
@@ -102,7 +133,12 @@ export default async function DictationPage({
       </div>
 
       {sentence ? (
-        <DictationExercise sentence={sentence} remaining={remaining} />
+        <DictationExercise
+          sentence={sentence}
+          remaining={remaining}
+          diaryId={entry.id}
+          previous={previous}
+        />
       ) : (
         /* Either the entry has no correction yet, or its natural version has
            kanji with no reading attached — an entry saved before the ruby
