@@ -23,7 +23,7 @@ import { SavedWordsRow, type SavedWord } from "@/components/SavedWordsRow";
 import { DictationLink } from "@/components/DictationLink";
 import { ShadowingStep, type ShadowingOutcome } from "@/components/ShadowingStep";
 import { shadowingLimitFor } from "@/lib/shadowing-limits";
-import { hasDictation } from "@/lib/dictation";
+import { hasDictation, pickSentence } from "@/lib/dictation";
 import type { UsedExpression } from "@/lib/learned-display";
 import { promptForDate, randomPromptExcept, type WritingPrompt } from "@/lib/writing-prompts";
 import { RECHECK_LIMITS } from "@/lib/recheck-limits";
@@ -279,6 +279,26 @@ export default function WritePage() {
   // must never be able to hold the explanation back.
   const shadowReady = Boolean(result?.natural);
   const shadowOpen = !shadowReady || shadowOutcome !== "pending";
+
+  /**
+   * The one sentence the day turns on.
+   *
+   * pickSentence() rather than the whole natural version, and it is the same
+   * call the dictation page makes on the same string — natural_japanese is
+   * stored verbatim (correction-payload.ts:338), so today's sentence here and
+   * tomorrow's sentence there are character-for-character identical. That is
+   * what keeps the day inside one synthesis: /api/tts keys its cache on the
+   * SSML, so listening, reading aloud, and both dictations all resolve to a
+   * single clip, and only the first of them reaches the counter.
+   *
+   * Falls back to the whole natural version when nothing in it is gradable —
+   * unreadable kanji, or every sentence too long or too short (lib/dictation.ts
+   * isGradable). There is no dictation for those diaries either, so there is
+   * nothing for this to agree with, and one synthesis still covers the day.
+   */
+  const shadowSentence = result?.natural
+    ? pickSentence(result.natural) ?? result.natural
+    : "";
 
   useEffect(() => {
     // Pick today's prompt here rather than during render: getClientTZ() reads
@@ -1261,7 +1281,7 @@ export default function WritePage() {
               skip. */}
           {shadowReady && (
             <ShadowingStep
-              natural={result.natural}
+              sentence={shadowSentence}
               entryId={savedEntryId}
               remaining={shadowRemaining}
               outcome={shadowOutcome}

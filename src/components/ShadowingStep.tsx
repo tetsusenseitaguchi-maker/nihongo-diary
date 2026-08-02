@@ -54,15 +54,30 @@ function fmtTime(secs: number) {
 export type ShadowingOutcome = "pending" | "recorded" | "skipped";
 
 export function ShadowingStep({
-  natural,
+  sentence,
   entryId,
   remaining,
   outcome,
   onOutcome,
   onCounted,
 }: {
-  /** Ruby-annotated natural version, exactly as CorrectionResult renders it. */
-  natural: string;
+  /**
+   * The one sentence of the day, ruby markup and all — pickSentence() of the
+   * natural version, which is the exact string the dictation exercise will set
+   * today and again tomorrow.
+   *
+   * ⚠️ It has to be that string and not the whole natural version. /api/tts
+   * keys its cache on the SSML, so a different string is a different clip and a
+   * second synthesis. On a Free allowance of one a day, reading the paragraph
+   * aloud here would spend the day's play and leave nothing for the exercise
+   * that follows. Same string, same hash, same cached clip, and everything
+   * after the first play is free.
+   *
+   * The caller falls back to the full natural version when there is no
+   * gradable sentence — there is no dictation in that case either, so there is
+   * nothing left to agree with.
+   */
+  sentence: string;
   /**
    * The saved diary's id, which the storage path is built from.
    *
@@ -198,18 +213,19 @@ export function ShadowingStep({
 
       <p className="mb-4 text-sm leading-relaxed text-ink/70">{t("shadowing.intro")}</p>
 
-      {/* The same sentence, in the same tint as the natural-Japanese card it
+      {/* The sentence, in the same tint as the natural-Japanese card it
           will reappear in once the result opens up. */}
       <p className="font-jp text-[17px] leading-loose text-ink">
-        <Furigana text={natural} />
+        <Furigana text={sentence} />
       </p>
 
-      {/* Listen first. Same text and same kind as the button inside
-          CorrectionResult, so both resolve to one cached clip at /api/tts and
-          hearing it here costs nothing extra later. */}
+      {/* Listen first. Same text and same kind as the button on the dictation
+          page, so both resolve to one cached clip at /api/tts: the play here is
+          the only one of the day that reaches the counter, and the exercise
+          today and again tomorrow ride on it for free. */}
       <div className="mt-3">
         <PlayButton
-          text={natural}
+          text={sentence}
           kind="diary"
           label={t("audio.playSentence")}
           showLabel
