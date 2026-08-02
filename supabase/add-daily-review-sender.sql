@@ -94,6 +94,13 @@ create index if not exists daily_review_sends_date_idx
 --   ・その日記を今日まだ書き取っていない
 --   ・今日まだ送っていない
 --
+-- ⚠️ p_user_id に既定値は付けない。Supabase Dashboard の SQL Editor は
+--    引数リストの DEFAULT を受け付けず、"syntax error at or near )" で
+--    落ちる（2026-08 に確認）。付け直さないこと。
+--    その代わり呼び出し側は必ず2つとも渡す:
+--      daily_review_candidates(8, null)          -- 通常の毎時実行
+--      daily_review_candidates(8, '<user_id>')   -- 1人だけのテスト
+--
 -- ⚠️ p_user_id を渡すと、時刻の条件だけを外して1人に絞る。テスト用。
 --    朝8時を待たずに自分の分だけ確認できるようにするためで、対象が
 --    1人に限定されるので誤爆にはならない。
@@ -111,7 +118,7 @@ create index if not exists daily_review_sends_date_idx
 -- 有効なタイムゾーン名を実テーブルに落として結合すること。
 create or replace function public.daily_review_candidates(
   p_hour    integer,
-  p_user_id uuid default null
+  p_user_id uuid
 )
 returns table (
   user_id            uuid,
@@ -197,7 +204,7 @@ notify pgrst, 'reload schema';
 --      push_token を取得できる。ここが false でなければ先に進まないこと。
 --
 -- (4) 関数が動くこと（0行でも成功なら正しい）
---   SELECT count(*) FROM public.daily_review_candidates(8);
+--   SELECT count(*) FROM public.daily_review_candidates(8, null);
 --   期待: エラーが出ないこと。件数は0でよい
 --         （今この瞬間ローカル8時台で、昨日書いていて、まだ書き取って
 --           いない人がいなければ0）。
