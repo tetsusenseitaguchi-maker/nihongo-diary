@@ -10,6 +10,7 @@ import { InviteLinkButton } from "@/components/InviteLinkButton";
 import { ManageSubscriptionButton } from "@/components/ManageSubscriptionButton";
 import { DeleteAccountButton } from "@/components/DeleteAccountButton";
 import { DiscoveryOptOutToggle } from "@/components/DiscoveryOptOutToggle";
+import { DailyReviewPushToggle } from "@/components/DailyReviewPushToggle";
 import { RestorePurchasesButton } from "@/components/RestorePurchasesButton";
 import { computeStats, type DiaryRow } from "@/lib/diary";
 import { getServerT } from "@/lib/i18n-server";
@@ -51,6 +52,26 @@ export default async function ProfilePage() {
     .from("discovery_settings")
     .select("opted_out")
     .eq("user_id", user.id)
+    .maybeSingle();
+
+  // Also a query of its own, and for the same reason — even though this one is
+  // a column on profiles and the select above it would hand it over for free
+  // (that select is `*`, so it already carries daily_review_push today).
+  //
+  // Two things make the separate read worth its round trip. That `*` is one
+  // edit away from an explicit column list, and on the day someone makes that
+  // edit a toggle reading `profile.daily_review_push` would quietly start
+  // reporting the default instead of the truth. And if this column is ever
+  // missing in an environment, the failure has to land HERE — where it costs a
+  // switch that shows the wrong position — rather than in a query that also
+  // reads plan, where it costs everybody their subscription.
+  //
+  // maybeSingle() and ?? true: absent row, absent column and never-touched all
+  // mean the same thing, which is the column's own default.
+  const { data: pushPref } = await supabase
+    .from("profiles")
+    .select("daily_review_push")
+    .eq("id", user.id)
     .maybeSingle();
 
   const [t, isNative] = await Promise.all([getServerT(), isNativeRequest()]);
@@ -194,6 +215,32 @@ export default async function ProfilePage() {
             <DiscoveryOptOutToggle
               userId={user.id}
               initialOptedOut={Boolean(discovery?.opted_out)}
+            />
+          </div>
+        </div>
+
+        {/* The reminder sits on the same card as Discovery: both are "what this
+            app is allowed to do with you", and a settings page that scatters
+            those makes people hunt. */}
+        <div id="daily-review" className="mt-5 scroll-mt-24 border-t border-line pt-5">
+          <h3 className="font-serif font-bold text-pine">
+            {t("profile.dailyReview.heading")}
+          </h3>
+          <p className="mt-1 text-sm leading-relaxed text-ink/75">
+            {t("profile.dailyReview.desc")}
+          </p>
+          {/* Shown to everyone, including on the web where no push can arrive.
+              The setting belongs to the account, not to the device in front of
+              them, and someone who reads their email on a laptop should not
+              have to find an iPhone to turn a notification off. The line says
+              where they actually turn up. */}
+          <p className="mt-1 text-sm leading-relaxed text-muted">
+            {t("profile.dailyReview.iosNote")}
+          </p>
+          <div className="mt-4">
+            <DailyReviewPushToggle
+              userId={user.id}
+              initialEnabled={(pushPref?.daily_review_push as boolean | null) ?? true}
             />
           </div>
         </div>
