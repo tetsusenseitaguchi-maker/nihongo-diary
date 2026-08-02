@@ -21,6 +21,8 @@ import { TrainDiagram } from "@/components/TrainDiagram";
 import { HintsSection } from "@/components/HintsSection";
 import { SavedWordsRow, type SavedWord } from "@/components/SavedWordsRow";
 import { DictationLink } from "@/components/DictationLink";
+import { ShadowingStep, type ShadowingOutcome } from "@/components/ShadowingStep";
+import { shadowingLimitFor } from "@/lib/shadowing-limits";
 import { hasDictation } from "@/lib/dictation";
 import type { UsedExpression } from "@/lib/learned-display";
 import { promptForDate, randomPromptExcept, type WritingPrompt } from "@/lib/writing-prompts";
@@ -234,6 +236,15 @@ export default function WritePage() {
   // Only ever shown next to a correction result on this page.
   const [usedExpressions, setUsedExpressions] = useState<UsedExpression[]>([]);
 
+  // Reading the corrected sentence aloud. "pending" holds the explanation and
+  // everything under it back until the learner has either recorded or skipped;
+  // it resets to "pending" with every new correction.
+  const [shadowOutcome, setShadowOutcome] = useState<ShadowingOutcome>("pending");
+  // Free only: recordings already made today, read from shadowing_usage on
+  // mount. Its own table, nothing to do with usage_limits — see
+  // supabase/add-shadowing-limit.sql.
+  const [shadowUsedToday, setShadowUsedToday] = useState(0);
+
   // Plan + usage
   const [plan, setPlan] = useState<Plan>("free");
   const [usedToday, setUsedToday] = useState(0);
@@ -256,6 +267,19 @@ export default function WritePage() {
   const recheckLeft = Math.max(0, recheckLimit - recheckUsed);
   const recheckExhausted = recheckLeft <= 0;
 
+  // Recordings left today. null = unlimited, which is every paid plan — those
+  // never reach try_use_shadowing at all, so shadowUsedToday stays 0 for them
+  // and is not consulted.
+  const shadowLimit = shadowingLimitFor(plan);
+  const shadowRemaining = shadowLimit === null ? null : Math.max(0, shadowLimit - shadowUsedToday);
+
+  // No natural version means there is nothing to read aloud — a correction that
+  // came back without one, which CorrectionResult also renders around. The step
+  // is not shown and, crucially, the gate is open from the start: a blank card
+  // must never be able to hold the explanation back.
+  const shadowReady = Boolean(result?.natural);
+  const shadowOpen = !shadowReady || shadowOutcome !== "pending";
+
   useEffect(() => {
     // Pick today's prompt here rather than during render: getClientTZ() reads
     // document.cookie, and a render-time choice would differ between the SSR
@@ -269,9 +293,14 @@ export default function WritePage() {
       } = await supabase.auth.getUser();
       if (!user) return;
       const today = todayInTZ(getClientTZ());
-      const [{ data: prof }, { data: usage }, { data: reviewRow }, { data: savedWordRows }] = await Promise.all([
+      const [{ data: prof }, { data: usage }, { data: shadowUsage }, { data: reviewRow }, { data: savedWordRows }] = await Promise.all([
         supabase.from("profiles").select("plan").eq("id", user.id).single(),
         supabase.from("usage_limits").select("correction_count, recheck_count").eq("user_id", user.id).eq("usage_date", today).maybeSingle(),
+        // Its own table, deliberately not a column on usage_limits: that one
+        // has insert and update policies, so a client can write its counts
+        // back. shadowing_usage only grants select, which is exactly what this
+        // read needs and nothing more. No row yet means nothing used today.
+        supabase.from("shadowing_usage").select("shadowing_count").eq("user_id", user.id).eq("usage_date", today).maybeSingle(),
         supabase.from("diary_entries").select("grammar_focus").eq("user_id", user.id).not("grammar_focus", "is", null).lt("diary_date", today).order("diary_date", { ascending: false }).limit(1).maybeSingle(),
         // Saved words for the reminder row above the editor. Added to this
         // existing Promise.all rather than as its own request or a call to
@@ -296,6 +325,7 @@ export default function WritePage() {
       setPlan(normalizePlan(prof?.plan));
       setUsedToday(usage?.correction_count ?? 0);
       setRecheckUsedToday(usage?.recheck_count ?? 0);
+      setShadowUsedToday(shadowUsage?.shadowing_count ?? 0);
       if (reviewRow?.grammar_focus) setGrammarReview(reviewRow.grammar_focus as MistakeItem);
       if (savedWordRows) setSavedWords(savedWordRows as SavedWord[]);
     })();
@@ -350,6 +380,10 @@ export default function WritePage() {
     // panel so it cannot linger next to a result it has nothing to do with.
     setUsedExpressions([]);
     setRecheckCount(0); // fresh correction → recheck allowance resets to RECHECK_LIMIT
+    // A new sentence to read aloud, so the step closes again. Note this does
+    // NOT reset shadowUsedToday: the daily allowance is per learner, not per
+    // correction, and a second diary on the same day cannot reopen it.
+    setShadowOutcome("pending");
     try {
       const res = await fetch("/api/correct", {
         method: "POST",
@@ -1219,123 +1253,148 @@ export default function WritePage() {
               {saveError}
             </p>
           )}
-          {/* Free corrections generate neither drills nor the mini lesson (see
-              includeDrills / includeMiniLesson in /api/correct), so show the
-              locked placeholders rather than two gaps. */}
-          <CorrectionResult
-            correction={result}
-            locked={{ drills: isFreePlan, miniLesson: isFreePlan }}
-            usedExpressions={usedExpressions}
-          />
-          <p className="pt-1 text-center text-xs text-muted">
-            {t("write.aiDisclaimer")}
-          </p>
-
-          {/* Listening practice on the sentence that was just corrected.
-              Placed here rather than inside CorrectionResult because that
-              component renders in the tour as well, on a sample diary — a link
-              to /dictation/<sample id> would go nowhere. Needs savedEntryId:
-              the exercise page loads the row by id, so there has to be a row.
-              hasDictation() keeps it hidden when the natural version has no
-              readings to mark against. */}
-          {savedEntryId && hasDictation(result.natural) && (
-            <DictationLink diaryId={savedEntryId} />
+          {/* Read it aloud, before the explanation is on screen. Outside
+              CorrectionResult on purpose: that component renders in the
+              tutorial too, on a sample diary. Rendered whether or not the gate
+              is open — once the learner moves on it collapses to a one-line
+              record of what they chose, which is also the way back in after a
+              skip. */}
+          {shadowReady && (
+            <ShadowingStep
+              natural={result.natural}
+              entryId={savedEntryId}
+              remaining={shadowRemaining}
+              outcome={shadowOutcome}
+              onOutcome={setShadowOutcome}
+              onCounted={() => setShadowUsedToday((n) => n + 1)}
+            />
           )}
 
-          {/* Revise & recheck — rewrite the diary and get lightweight diff feedback */}
-          <div className="rounded-[var(--radius-card)] border border-line bg-paper p-6 shadow-card">
-            {!reviseMode ? (
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-serif text-lg font-bold text-pine">
-                    <Furigana text="書(か)き直(なお)してみる" />
-                  </p>
-                  <p className="mt-0.5 text-sm text-ink/70">
-                    {!recheckExhausted
-                      ? t("recheck.introDesc")
-                      : isFreePlan
-                        ? t("recheck.limitReachedDaily")
-                        : t("recheck.limitReached", { n: recheckLimit })}
-                  </p>
-                </div>
-                <Button
-                  onClick={startRevise}
-                  variant="secondary"
-                  className="shrink-0"
-                  disabled={recheckExhausted}
-                >
-                  <Icon.sparkle className="h-4 w-4" /> {t("recheck.reviseBtn")}
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <span>✏️</span>
-                  <p className="font-serif text-lg font-bold text-pine">
-                    <Furigana text="書(か)き直(なお)し" />
-                  </p>
-                  <span className="text-sm font-medium text-muted">{t("recheck.editorTitle")}</span>
-                </div>
-                <p className="text-sm text-ink/70">{t("recheck.editorHint")}</p>
-                <textarea
-                  value={revisedText}
-                  onChange={(e) => setRevisedText(e.target.value)}
-                  rows={7}
-                  className="notebook block w-full resize-none rounded-lg border border-line bg-transparent px-3 pt-[7px] font-jp text-lg leading-[34px] text-ink placeholder:text-muted/60 focus:border-moss focus:outline-none"
-                />
+          {/* Everything below waits for that one sentence. The header, the save
+              state and the link to the diary all stay above this line — a
+              learner who would rather not record must still be able to keep
+              what they wrote. */}
+          {shadowOpen && (
+            <>
+            {/* Free corrections generate neither drills nor the mini lesson (see
+                includeDrills / includeMiniLesson in /api/correct), so show the
+                locked placeholders rather than two gaps. */}
+            <CorrectionResult
+              correction={result}
+              locked={{ drills: isFreePlan, miniLesson: isFreePlan }}
+              usedExpressions={usedExpressions}
+            />
+            <p className="pt-1 text-center text-xs text-muted">
+              {t("write.aiDisclaimer")}
+            </p>
+
+            {/* Listening practice on the sentence that was just corrected.
+                Placed here rather than inside CorrectionResult because that
+                component renders in the tour as well, on a sample diary — a link
+                to /dictation/<sample id> would go nowhere. Needs savedEntryId:
+                the exercise page loads the row by id, so there has to be a row.
+                hasDictation() keeps it hidden when the natural version has no
+                readings to mark against. */}
+            {savedEntryId && hasDictation(result.natural) && (
+              <DictationLink diaryId={savedEntryId} />
+            )}
+
+            {/* Revise & recheck — rewrite the diary and get lightweight diff feedback */}
+            <div className="rounded-[var(--radius-card)] border border-line bg-paper p-6 shadow-card">
+              {!reviseMode ? (
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-sm text-muted">
-                    {!recheckExhausted
-                      ? t("recheck.remaining", { n: recheckLeft })
-                      : isFreePlan
-                        ? t("recheck.limitReachedDaily")
-                        : t("recheck.limitReached", { n: recheckLimit })}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <Button variant="ghost" onClick={cancelRevise} disabled={rechecking}>
-                      {t("recheck.cancel")}
-                    </Button>
-                    <Button
-                      onClick={handleRecheck}
-                      disabled={!revisedText.trim() || rechecking || recheckExhausted}
-                    >
-                      {rechecking ? (
-                        t("recheck.rechecking")
-                      ) : (
-                        <><Icon.sparkle className="h-4 w-4" /> {t("recheck.recheckBtn")}</>
-                      )}
-                    </Button>
+                  <div className="min-w-0">
+                    <p className="font-serif text-lg font-bold text-pine">
+                      <Furigana text="書(か)き直(なお)してみる" />
+                    </p>
+                    <p className="mt-0.5 text-sm text-ink/70">
+                      {!recheckExhausted
+                        ? t("recheck.introDesc")
+                        : isFreePlan
+                          ? t("recheck.limitReachedDaily")
+                          : t("recheck.limitReached", { n: recheckLimit })}
+                    </p>
                   </div>
+                  <Button
+                    onClick={startRevise}
+                    variant="secondary"
+                    className="shrink-0"
+                    disabled={recheckExhausted}
+                  >
+                    <Icon.sparkle className="h-4 w-4" /> {t("recheck.reviseBtn")}
+                  </Button>
                 </div>
-                {recheckError && (
-                  <p className="rounded-lg bg-apricot/10 px-3 py-2 text-sm text-apricot">
-                    {recheckError}
-                  </p>
-                )}
-                {recheckResult && (
-                  <div className="border-t border-line pt-4">
-                    <RecheckResult result={recheckResult} />
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span>✏️</span>
+                    <p className="font-serif text-lg font-bold text-pine">
+                      <Furigana text="書(か)き直(なお)し" />
+                    </p>
+                    <span className="text-sm font-medium text-muted">{t("recheck.editorTitle")}</span>
                   </div>
-                )}
-              </div>
-            )}
-            {showRecheckUpgrade && isFreePlan && (
-              <div className="gloss-panel mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] p-4" style={{ ["--tint" as string]: "var(--color-tint-sand)" } as CSSProperties}>
-                <p className="text-sm text-ink/80">
-                  {t("recheck.limitReachedFree", {
-                    limit: RECHECK_LIMITS.free,
-                    plusLimit: RECHECK_LIMITS.plus,
-                  })}
-                </p>
-                {/* iOS native app: hide all paid upgrade CTAs (App Store policy) */}
-                {!isIosApp && (
-                  <a href="/upgrade" className="gloss-btn shrink-0 rounded-full px-4 py-2 text-sm font-semibold text-cream hover:brightness-105">
-                    {t("write.upgradeToPlus")}
-                  </a>
-                )}
-              </div>
-            )}
-          </div>
+                  <p className="text-sm text-ink/70">{t("recheck.editorHint")}</p>
+                  <textarea
+                    value={revisedText}
+                    onChange={(e) => setRevisedText(e.target.value)}
+                    rows={7}
+                    className="notebook block w-full resize-none rounded-lg border border-line bg-transparent px-3 pt-[7px] font-jp text-lg leading-[34px] text-ink placeholder:text-muted/60 focus:border-moss focus:outline-none"
+                  />
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <span className="text-sm text-muted">
+                      {!recheckExhausted
+                        ? t("recheck.remaining", { n: recheckLeft })
+                        : isFreePlan
+                          ? t("recheck.limitReachedDaily")
+                          : t("recheck.limitReached", { n: recheckLimit })}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <Button variant="ghost" onClick={cancelRevise} disabled={rechecking}>
+                        {t("recheck.cancel")}
+                      </Button>
+                      <Button
+                        onClick={handleRecheck}
+                        disabled={!revisedText.trim() || rechecking || recheckExhausted}
+                      >
+                        {rechecking ? (
+                          t("recheck.rechecking")
+                        ) : (
+                          <><Icon.sparkle className="h-4 w-4" /> {t("recheck.recheckBtn")}</>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  {recheckError && (
+                    <p className="rounded-lg bg-apricot/10 px-3 py-2 text-sm text-apricot">
+                      {recheckError}
+                    </p>
+                  )}
+                  {recheckResult && (
+                    <div className="border-t border-line pt-4">
+                      <RecheckResult result={recheckResult} />
+                    </div>
+                  )}
+                </div>
+              )}
+              {showRecheckUpgrade && isFreePlan && (
+                <div className="gloss-panel mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] p-4" style={{ ["--tint" as string]: "var(--color-tint-sand)" } as CSSProperties}>
+                  <p className="text-sm text-ink/80">
+                    {t("recheck.limitReachedFree", {
+                      limit: RECHECK_LIMITS.free,
+                      plusLimit: RECHECK_LIMITS.plus,
+                    })}
+                  </p>
+                  {/* iOS native app: hide all paid upgrade CTAs (App Store policy) */}
+                  {!isIosApp && (
+                    <a href="/upgrade" className="gloss-btn shrink-0 rounded-full px-4 py-2 text-sm font-semibold text-cream hover:brightness-105">
+                      {t("write.upgradeToPlus")}
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+            </>
+          )}
         </section>
       )}
     </div>
