@@ -573,6 +573,8 @@
   "notification.minutesAgo": "{n} min fa",
   "notification.hoursAgo": "{n} ore fa",
   "notification.daysAgo": "{n} g fa",
+  "notification.dailyReview.title": "La frase di ieri",
+  "notification.dailyReview.body": "Un minuto. La seconda volta si sente meglio.",
   "nav.vocabulary": "Il mio Vocabolario",
   "vocab.title": "Il mio Vocabolario",
   "vocab.empty": "Nessuna parola salvata ancora.",

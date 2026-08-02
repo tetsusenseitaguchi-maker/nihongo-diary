@@ -573,6 +573,8 @@
   "notification.minutesAgo": "{n}분 전",
   "notification.hoursAgo": "{n}시간 전",
   "notification.daysAgo": "{n}일 전",
+  "notification.dailyReview.title": "어제의 문장, 기억나세요?",
+  "notification.dailyReview.body": "1분이면 됩니다. 두 번째가 더 잘 들려요.",
   "nav.vocabulary": "내 단어장",
   "vocab.title": "내 단어장",
   "vocab.empty": "저장된 단어가 없습니다.",

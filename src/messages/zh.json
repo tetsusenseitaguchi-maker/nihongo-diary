@@ -573,6 +573,8 @@
   "notification.minutesAgo": "{n}分钟前",
   "notification.hoursAgo": "{n}小时前",
   "notification.daysAgo": "{n}天前",
+  "notification.dailyReview.title": "昨天那句，还记得吗？",
+  "notification.dailyReview.body": "只要一分钟。第二次会听得更清楚。",
   "nav.vocabulary": "我的词汇",
   "vocab.title": "我的词汇",
   "vocab.empty": "还没有保存的单词。",

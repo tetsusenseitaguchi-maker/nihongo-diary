@@ -573,6 +573,8 @@
   "notification.minutesAgo": "{n}分前",
   "notification.hoursAgo": "{n}時間前",
   "notification.daysAgo": "{n}日前",
+  "notification.dailyReview.title": "昨日の文、おぼえてる？",
+  "notification.dailyReview.body": "1分だけ。2回目のほうが、きっと聞こえます。",
   "nav.vocabulary": "単語帳",
   "vocab.title": "単語帳",
   "vocab.empty": "まだ単語が保存されていません。",

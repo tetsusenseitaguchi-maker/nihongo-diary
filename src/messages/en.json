@@ -649,6 +649,8 @@
   "notification.minutesAgo": "{n}m ago",
   "notification.hoursAgo": "{n}h ago",
   "notification.daysAgo": "{n}d ago",
+  "notification.dailyReview.title": "Yesterday's sentence",
+  "notification.dailyReview.body": "One minute. It lands better the second time.",
   "nav.vocabulary": "My Vocabulary",
   "vocab.title": "My Vocabulary",
   "vocab.empty": "No words saved yet.",

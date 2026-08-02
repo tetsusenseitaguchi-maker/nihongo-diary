@@ -573,6 +573,8 @@
   "notification.minutesAgo": "vor {n} Min",
   "notification.hoursAgo": "vor {n} Std",
   "notification.daysAgo": "vor {n} T",
+  "notification.dailyReview.title": "Der Satz von gestern",
+  "notification.dailyReview.body": "Eine Minute. Beim zweiten Mal sitzt er besser.",
   "nav.vocabulary": "Mein Vokabular",
   "vocab.title": "Mein Vokabular",
   "vocab.empty": "Noch keine Wörter gespeichert.",

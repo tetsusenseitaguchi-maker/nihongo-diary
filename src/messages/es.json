@@ -573,6 +573,8 @@
   "notification.minutesAgo": "hace {n} min",
   "notification.hoursAgo": "hace {n} h",
   "notification.daysAgo": "hace {n} d",
+  "notification.dailyReview.title": "La frase de ayer",
+  "notification.dailyReview.body": "Un minuto. La segunda vez se entiende mejor.",
   "nav.vocabulary": "Mi Vocabulario",
   "vocab.title": "Mi Vocabulario",
   "vocab.empty": "Aún no hay palabras guardadas.",

@@ -573,6 +573,8 @@
   "notification.minutesAgo": "il y a {n} min",
   "notification.hoursAgo": "il y a {n} h",
   "notification.daysAgo": "il y a {n} j",
+  "notification.dailyReview.title": "La phrase d’hier",
+  "notification.dailyReview.body": "Une minute. C’est la deuxième fois qui marque.",
   "nav.vocabulary": "Mon Vocabulaire",
   "vocab.title": "Mon Vocabulaire",
   "vocab.empty": "Aucun mot sauvegardé pour l'instant.",
