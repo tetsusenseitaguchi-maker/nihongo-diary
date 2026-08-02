@@ -153,11 +153,17 @@ as $function$ with due as (select p.id as uid, p.push_token as tok, p.preferred_
 -- ============================================================
 --  ⑤ 実行権限を PUBLIC から剥がす
 -- ============================================================
--- ⚠️ Postgres は関数の EXECUTE を既定で PUBLIC に与える。剥がさないと
---    authenticated から呼べてしまい、他人の push_token が読める。
---    SECURITY DEFINER なので RLS も通らない = 全員分が返る。
---    record_dictation_attempt と同じ理由・同じ手当て。
-revoke all on function public.daily_review_candidates(integer, uuid) from public;
+-- ⚠️ Postgres は関数の EXECUTE を既定で PUBLIC に与える。さらに Supabase は
+--    public スキーマに ALTER DEFAULT PRIVILEGES を仕込んでいて、anon /
+--    authenticated / service_role へ直接 EXECUTE を配る。
+--
+-- ⚠️⚠️ `revoke ... from public` だけでは剥がれない。PUBLIC 経由ではなく
+--      直接の grant が残るため。anon と authenticated を名指しすること。
+--
+-- 剥がさないと authenticated から呼べてしまい、他人の push_token が読める。
+-- SECURITY DEFINER なので RLS も通らない = 全員分が返る。
+-- record_dictation_attempt と同じ理由・同じ手当て。
+revoke all on function public.daily_review_candidates(integer, uuid) from public, anon, authenticated;
 
 
 -- ============================================================
@@ -195,11 +201,14 @@ notify pgrst, 'reload schema';
 --
 -- (3) ★重要★ 関数を authenticated が呼べないこと
 --   SELECT p.proname, p.prosecdef,
+--          has_function_privilege('anon',          p.oid, 'EXECUTE') AS anon_can,
 --          has_function_privilege('authenticated', p.oid, 'EXECUTE') AS authenticated_can,
 --          has_function_privilege('service_role',  p.oid, 'EXECUTE') AS service_can
 --   FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
 --   WHERE n.nspname='public' AND p.proname='daily_review_candidates';
---   期待: prosecdef=true / authenticated_can=FALSE / service_can=true
+--   期待: prosecdef=true / anon_can=FALSE / authenticated_can=FALSE
+--         / service_can=true
+--   ⚠️ `from public` だけでは剥がれない（⑤のコメント参照）。
 --   ⚠️ authenticated_can が true のまま出すと、誰でも全員分の
 --      push_token を取得できる。ここが false でなければ先に進まないこと。
 --

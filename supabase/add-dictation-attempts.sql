@@ -159,9 +159,17 @@ $$;
 -- ============================================================
 -- ⚠️ ここがこの機能のセキュリティ上の境界。
 --
--- Postgres は関数の EXECUTE を既定で PUBLIC に与えるため、明示的に
--- 剥がさないと authenticated から呼べてしまう。呼べると、点数を
--- サーバー側で採点し直す意味が無くなる（好きな percent を渡せる）。
+-- Postgres は関数の EXECUTE を既定で PUBLIC に与える。さらに Supabase は
+-- public スキーマに ALTER DEFAULT PRIVILEGES を仕込んでいて、anon /
+-- authenticated / service_role へ直接 EXECUTE を配る。
+--
+-- ⚠️⚠️ したがって `revoke ... from public` だけでは剥がれない。PUBLIC 経由
+--      ではなく直接の grant が残るため。anon と authenticated を名指しで
+--      剥がすこと。実際にこれを取りこぼし、authenticated から呼べる状態で
+--      本番に入っていた（2026-08 に発見・修正）。
+--
+-- 剥がさないと、点数をサーバー側で採点し直す意味が無くなる
+-- （好きな percent を渡せる）。
 --
 -- 既存の try_use_* が authenticated に grant しているのは、あちらが
 -- auth.uid() = p_user_id の所有者チェックを持ち、渡せる値が「自分の分を
@@ -172,7 +180,7 @@ $$;
 -- クライアント（サービスロール）を使う。ルートは打たれた文字列を受け取り、
 -- natural_japanese を読んで pickSentence + markAnswer を実行し、
 -- その結果だけをここに渡す。
-revoke all on function public.record_dictation_attempt(uuid, uuid, date, integer, integer, integer, integer, text) from public;
+revoke all on function public.record_dictation_attempt(uuid, uuid, date, integer, integer, integer, integer, text) from public, anon, authenticated;
 grant execute on function public.record_dictation_attempt(uuid, uuid, date, integer, integer, integer, integer, text) to service_role;
 
 
@@ -220,13 +228,16 @@ notify pgrst, 'reload schema';
 --
 -- (6) ★重要★ 関数を authenticated が呼べないこと
 --   SELECT p.proname, p.prosecdef,
---          has_function_privilege('authenticated',  p.oid, 'EXECUTE') AS authenticated_can,
---          has_function_privilege('service_role',   p.oid, 'EXECUTE') AS service_can
+--          has_function_privilege('anon',          p.oid, 'EXECUTE') AS anon_can,
+--          has_function_privilege('authenticated', p.oid, 'EXECUTE') AS authenticated_can,
+--          has_function_privilege('service_role',  p.oid, 'EXECUTE') AS service_can
 --   FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
 --   WHERE n.nspname='public' AND p.proname='record_dictation_attempt';
---   期待: prosecdef = true, authenticated_can = FALSE, service_can = true
---   ⚠️ authenticated_can が true なら⑦が効いていない。この状態で出すと
---      点数を自由に書き込めるので、先に⑦を流し直すこと。
+--   期待: prosecdef = true, anon_can = FALSE, authenticated_can = FALSE,
+--         service_can = true
+--   ⚠️ anon_can / authenticated_can のどちらかが true なら⑦が効いていない。
+--      この状態で出すと点数を自由に書き込めるので、先に⑦を流し直すこと。
+--      `from public` だけでは剥がれない（⑦のコメント参照）。
 --
 -- (7) 既存が無傷であること（触っていないので変化ゼロが期待値）
 --   SELECT column_name FROM information_schema.columns
