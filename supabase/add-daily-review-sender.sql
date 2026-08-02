@@ -125,51 +125,22 @@ language sql
 stable
 security definer
 set search_path = public
-as $$
-  select
-    p.id,
-    p.push_token,
-    p.preferred_language,
-    d.id,
-    d.natural_japanese,
-    l.local_now::date
-  from public.profiles p
-  -- 不正なタイムゾーンと NULL をまとめて UTC に落とす。
-  left join pg_timezone_names tzn on tzn.name = p.timezone
-  cross join lateral (
-    select now() at time zone coalesce(tzn.name, 'UTC') as local_now
-  ) l
-  -- 昨日の最後の1本。ダッシュボードのカードと同じ選び方にしてあり、
-  -- 通知から着地したときに同じ日記が出る。
-  join lateral (
-    select e.id, e.natural_japanese
-    from public.diary_entries e
-    where e.user_id = p.id
-      and e.diary_date = l.local_now::date - 1
-      and e.natural_japanese is not null
-      and e.natural_japanese <> ''
-    order by e.created_at desc
-    limit 1
-  ) d on true
-  where p.daily_review_push = true
-    and p.push_token is not null
-    -- p_user_id を渡したときは時刻を見ない（テスト用）。
-    and (p_user_id is not null or extract(hour from l.local_now) = p_hour)
-    and (p_user_id is null or p.id = p_user_id)
-    -- 今日もう書き取っている人には送らない。
-    and not exists (
-      select 1 from public.dictation_attempts a
-      where a.user_id = p.id
-        and a.diary_entry_id = d.id
-        and a.usage_date = l.local_now::date
-    )
-    -- 今日もう送っている人には送らない（①の主キーと二重の守り）。
-    and not exists (
-      select 1 from public.daily_review_sends s
-      where s.user_id = p.id
-        and s.sent_date = l.local_now::date
-    );
-$$;
+-- ⚠️ 本体を1行にしてある。読みにくいのは承知のうえで、意図的。
+--    Supabase Dashboard の SQL Editor に複数行の CREATE FUNCTION を貼ると、
+--    整形と行数制限の付与で文が壊れ "syntax error at or near )" になる
+--    現象に当たった。1行なら行に依存する壊れ方をしない。
+--    整形して読みたいときは、このファイルを psql に流すこと:
+--      psql "$DATABASE_URL" -f supabase/add-daily-review-sender.sql
+--
+-- 本体がやっていること（上から順に）:
+--   due  … 通知オン・端末登録済みの学習者に、そのローカル時刻を付ける。
+--          不正なタイムゾーンと NULL はどちらも UTC に落ちる。
+--   join … ローカルの昨日に書かれ、自然な日本語が入っている日記。
+--   distinct on (due.uid) + order by created_at desc
+--        … 1人1件。昨日の最後の1本を採る（ダッシュボードのカードと
+--          同じ選び方なので、通知から着地したとき同じ日記が出る）。
+--   not exists ×2 … 今日もう書き取った人／今日もう送った人を落とす。
+as $function$ with due as (select p.id as uid, p.push_token as tok, p.preferred_language as lang, (now() at time zone coalesce(tzn.name,'UTC')) as local_now from public.profiles p left join pg_timezone_names tzn on tzn.name = p.timezone where p.daily_review_push = true and p.push_token is not null and (p_user_id is null or p.id = p_user_id)) select distinct on (due.uid) due.uid, due.tok, due.lang, e.id, e.natural_japanese, due.local_now::date from due join public.diary_entries e on e.user_id = due.uid and e.diary_date = (due.local_now::date - 1) and e.natural_japanese is not null and e.natural_japanese <> '' where (p_user_id is not null or extract(hour from due.local_now) = p_hour) and not exists (select 1 from public.dictation_attempts a where a.user_id = due.uid and a.diary_entry_id = e.id and a.usage_date = due.local_now::date) and not exists (select 1 from public.daily_review_sends s where s.user_id = due.uid and s.sent_date = due.local_now::date) order by due.uid, e.created_at desc $function$;
 
 
 -- ============================================================
