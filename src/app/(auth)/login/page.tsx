@@ -27,7 +27,15 @@ function LoginForm() {
    * described. Read from the URL rather than held in state: it is a property
    * of how they arrived, and it should survive a re-render but not a retry.
    */
-  const callbackError = params.get("authError");
+  const callbackError =
+    params.get("authError") ??
+    // Legacy spelling. /auth/callback stopped emitting ?error= when it started
+    // naming the reason, and nothing in the app produces it any more — but a
+    // link can outlive the code that wrote it, and a hand-built URL or a
+    // future caller landing here should not fall back into the silence this
+    // whole change is about.
+    (params.get("error") === "email_confirmation_failed" ? "confirm_link" : null);
+
   const callbackMessage = CALLBACK_ERRORS.has(callbackError ?? "")
     ? t(`authError.${callbackError}`)
     : null;
