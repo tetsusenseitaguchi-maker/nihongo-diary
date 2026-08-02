@@ -11,7 +11,7 @@ import { computeStats, type DiaryRow } from "@/lib/diary";
 import { monthLabel, formatShort } from "@/lib/dates";
 import { getServerT } from "@/lib/i18n-server";
 import { getTimezoneFromCookie } from "@/lib/tz-server";
-import { nowInTZ } from "@/lib/date-tz";
+import { nowInTZ, previousDay } from "@/lib/date-tz";
 import { isNativeRequest } from "@/lib/native";
 import { hasDictation } from "@/lib/dictation";
 import { AudioIntroModal } from "@/components/AudioIntroModal";
@@ -65,6 +65,50 @@ export default async function DashboardPage() {
   const displayName = profile?.display_name || profile?.username || "Learner";
   const avatarUrl = profile?.avatar_url || "";
   const recent = entries.slice(0, 4);
+
+  // ── Yesterday's sentence, offered again today ────────────────────────────
+  // The other half of the two-day loop. The push notification does the same job
+  // on iOS, but push only exists inside the Capacitor shell (PushRegistrar
+  // returns early in a browser), so for everyone on the web THIS is the way
+  // back in — which is why it is built first and placed where it cannot be
+  // missed.
+  //
+  // `data` rather than `entries`, for the same reason the announcement above
+  // reads it: DiaryRow does not carry natural_japanese.
+  //
+  // Newest first is already the order of the query (diary_date desc,
+  // created_at desc), so find() takes the last thing they wrote yesterday.
+  // Deliberately ONE, even when a paid learner wrote several: a column of
+  // review cards turns the dashboard into a homework list, and the day this is
+  // shaping is one sentence long.
+  const yesterdayStr = previousDay(todayStr);
+  const yesterdayDiary =
+    ((data ?? []) as { id: string; diary_date: string; natural_japanese: string | null }[]).find(
+      (row) => row.diary_date === yesterdayStr && hasDictation(row.natural_japanese),
+    ) ?? null;
+
+  // Only asked when there is something to ask about. Every attempt at this one
+  // diary is a handful of rows at most — one per day it was practised — so this
+  // reads them all rather than asking twice.
+  let reviewDiaryId: string | null = null;
+  let reviewIsSecondTime = false;
+  if (yesterdayDiary) {
+    const { data: attempts } = await supabase
+      .from("dictation_attempts")
+      .select("usage_date")
+      .eq("user_id", user.id)
+      .eq("diary_entry_id", yesterdayDiary.id);
+
+    const dates = (attempts ?? []).map((a) => a.usage_date as string);
+    // Done today already — the loop is closed and the card has nothing to add.
+    if (!dates.includes(todayStr)) {
+      reviewDiaryId = yesterdayDiary.id;
+      // Whether they actually did it yesterday decides the wording, not whether
+      // the card appears. Someone who wrote but never dictated is exactly who
+      // this should reach; telling them to do it "again" would just be wrong.
+      reviewIsSecondTime = dates.length > 0;
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -132,6 +176,46 @@ export default async function DashboardPage() {
           />
         </div>
       </div>
+
+      {/* ── Yesterday's sentence ──────────────────────────────────────────
+          Directly under the hero and across the full width, because it is the
+          one thing on this page that expires: tomorrow the sentence is a day
+          older and the spacing this is built on has gone. Absent on most
+          visits, so it costs the usual layout nothing. */}
+      {reviewDiaryId && (
+        <Card accent="none" className="border-moss/20 bg-mint/30 p-5">
+          <div className="flex flex-wrap items-center gap-4">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-paper text-pine">
+              <Icon.speaker className="h-6 w-6" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 className="font-serif text-lg font-bold text-pine">
+                {t("dashboard.review.title")}
+              </h2>
+              <p className="mt-0.5 text-sm text-ink/70">
+                {reviewIsSecondTime
+                  ? t("dashboard.review.bodyAgain")
+                  : t("dashboard.review.bodyFirst")}
+              </p>
+              {/* Only when today is still blank. The loop is dictation first,
+                  then today's diary, and naming the next step is most of what
+                  makes it a loop rather than two features. A quiet link, not a
+                  second button — the hero already has the loud one. */}
+              {!stats.today && (
+                <Link
+                  href="/write"
+                  className="mt-1 inline-block text-xs font-semibold text-moss-600 hover:text-pine"
+                >
+                  {t("dashboard.review.thenWrite")}
+                </Link>
+              )}
+            </div>
+            <LinkButton href={`/dictation/${reviewDiaryId}`} size="sm" className="shrink-0">
+              <Icon.arrow className="h-4 w-4" /> {t("dashboard.review.cta")}
+            </LinkButton>
+          </div>
+        </Card>
+      )}
 
       {/* Main + rail */}
       <div className="grid gap-5 lg:grid-cols-12">

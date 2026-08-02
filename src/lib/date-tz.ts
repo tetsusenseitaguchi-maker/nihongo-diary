@@ -5,6 +5,24 @@ export function todayInTZ(tz = "UTC"): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: tz });
 }
 
+/**
+ * The calendar day before a "YYYY-MM-DD" string, as another "YYYY-MM-DD".
+ *
+ * Pure calendar arithmetic: the string is read as UTC midnight and stepped back
+ * a day in UTC, so no timezone and no daylight-saving transition can move the
+ * result. The input is already a local date produced by todayInTZ — it carries
+ * no time and needs none.
+ *
+ * ⚠️ Does NOT replace the private prevDay() inside lib/diary.ts. That one
+ * belongs to the streak calculation, which is hands-off; a shared helper is
+ * worth having but not at the price of editing streak logic to get it.
+ */
+export function previousDay(dateStr: string): string {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
 // Returns { year, month (0-indexed like Date.getMonth()), day, dateStr }
 // for the current moment in the given IANA timezone.
 export function nowInTZ(tz = "UTC"): {
