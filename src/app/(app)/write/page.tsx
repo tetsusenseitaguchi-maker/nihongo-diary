@@ -9,6 +9,7 @@ import { Icon } from "@/components/icons";
 import { GoalRing } from "@/components/GoalRing";
 import { Attachments } from "@/components/Attachments";
 import { CorrectionResult } from "@/components/CorrectionResult";
+import { CorrectionTopBlock } from "@/components/CorrectionTopBlock";
 import { RecheckResult } from "@/components/RecheckResult";
 import { PublicToggle } from "@/components/PublicToggle";
 import { Furigana } from "@/components/Furigana";
@@ -1273,6 +1274,13 @@ export default function WritePage() {
               {saveError}
             </p>
           )}
+          {/* The top of the correction, in front of the gate: the title,
+              Obie's cheer, and the learner's sentence beside the natural one.
+              Without it the page opened straight onto a microphone and read as
+              though nothing had been corrected. CorrectionResult below is
+              given showTopBlock={false}, so this appears once. */}
+          <CorrectionTopBlock correction={result} usedExpressions={usedExpressions} />
+
           {/* Read it aloud, before the explanation is on screen. Outside
               CorrectionResult on purpose: that component renders in the
               tutorial too, on a sample diary. Rendered whether or not the gate
@@ -1299,10 +1307,15 @@ export default function WritePage() {
             {/* Free corrections generate neither drills nor the mini lesson (see
                 includeDrills / includeMiniLesson in /api/correct), so show the
                 locked placeholders rather than two gaps. */}
+            {/* showTopBlock={false}: the title, the cheer, the used-expressions
+                panel and the 元の文 / 自然な日本語 pair are already on screen
+                above the shadowing card, so this renders from the explanation
+                down. usedExpressions moved up there with them and is no longer
+                passed here — passing it would print the panel twice. */}
             <CorrectionResult
               correction={result}
+              showTopBlock={false}
               locked={{ drills: isFreePlan, miniLesson: isFreePlan }}
-              usedExpressions={usedExpressions}
               plan={plan}
             />
             <p className="pt-1 text-center text-xs text-muted">

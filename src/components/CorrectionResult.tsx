@@ -122,6 +122,7 @@ function LockedSection({
 export function CorrectionResult({
   correction,
   showOriginal = true,
+  showTopBlock = true,
   locked,
   usedExpressions,
   disableAudio = false,
@@ -129,6 +130,20 @@ export function CorrectionResult({
 }: {
   correction: Correction;
   showOriginal?: boolean;
+  /**
+   * Renders the title, Obie's cheer, the used-expressions panel and the
+   * "元の文 / 自然な日本語" pair — everything above the explanation.
+   *
+   * Display only: nothing below the flag changes, and the audio, plan and
+   * counting logic is untouched. Defaults to true, so feed, diary detail,
+   * history and the tour are exactly as before.
+   *
+   * Only the write page passes false. It renders <CorrectionTopBlock/> itself,
+   * ABOVE the shadowing step, so a learner sees they have been corrected
+   * before being asked to read anything aloud — see that component's header
+   * for why the markup is copied rather than shared.
+   */
+  showTopBlock?: boolean;
   /**
    * Sections to render as a locked placeholder instead of content, so a Free
    * learner can see the feature exists without it being generated for them.
@@ -296,6 +311,10 @@ export function CorrectionResult({
 
   return (
     <div className="space-y-4">
+      {/* A Fragment, not a wrapper <div>: space-y-4 above spaces its DOM
+          children, and a wrapper would collapse these four blocks into one. */}
+      {showTopBlock && (
+        <>
       {/* Diary Title */}
       {correction.diaryTitle && (
         <div className="gloss-panel rounded-[var(--radius-card)] px-6 py-5 text-center" style={tint("--color-tint-sage")}>
@@ -388,6 +407,8 @@ export function CorrectionResult({
           </div>
         )}
       </div>
+        </>
+      )}
 
       {/* English Explanation */}
       <div className="gloss-panel rounded-[var(--radius-card)] p-6" style={tint("--color-tint-blue")}>

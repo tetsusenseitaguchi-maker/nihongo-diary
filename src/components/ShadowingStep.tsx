@@ -211,6 +211,13 @@ export function ShadowingStep({
         <Furigana text="音読(おんどく)" className="font-jp text-xs text-muted" />
       </p>
 
+      {/* Why the card is here at all, in one line and before anything else in
+          it. The correction is now visible above this card, so this says what
+          the step is FOR rather than where the rest of the page is. */}
+      <p className="mb-1.5 text-[15px] font-semibold leading-relaxed text-ink">
+        {t("shadowing.leadIn")}
+      </p>
+
       <p className="mb-4 text-sm leading-relaxed text-ink/70">{t("shadowing.intro")}</p>
 
       {/* The sentence, in the same tint as the natural-Japanese card it
@@ -371,7 +378,12 @@ export function ShadowingStep({
                 disabled={saving}
                 className="text-xs text-muted underline-offset-2 hover:text-ink hover:underline disabled:opacity-50"
               >
-                {t("shadowing.skip")}
+                {/* Names what is on the other side of the skip rather than
+                    what is being given up — shadowing.skip ("continue without
+                    reading today") left it unclear that the explanation was
+                    waiting below. The old key stays in the message files;
+                    nothing renders it now. */}
+                {t("shadowing.skipToCorrection")}
               </button>
             </div>
           )}
