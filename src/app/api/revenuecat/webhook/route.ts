@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { recordBillingEvent, type BillingOutcome } from "@/lib/billing-events";
 
 /** Map RevenueCat product ID → plan name. Falls back to "free" if unknown. */
 const PRODUCT_ID_TO_PLAN: Record<string, "plus" | "pro"> = {
@@ -26,6 +27,9 @@ type RevenueCatEvent = {
   type: string;
   app_user_id?: string;
   product_id?: string;
+  /** Read only by 段階0's audit record — never by a branch below. */
+  id?: string;
+  event_timestamp_ms?: number;
 };
 
 export async function POST(request: NextRequest) {
@@ -41,6 +45,53 @@ export async function POST(request: NextRequest) {
 
   const supabase = createAdminClient();
   const appUserId = event.app_user_id;
+  // Narrowed once into its own const: the guard above proves `event` is
+  // defined, but that narrowing does not follow it into the closure below.
+  const ev: RevenueCatEvent = event;
+
+  /**
+   * 段階0：観測のみ — the mirror of the block in stripe/webhook/route.ts, and
+   * deliberately the same shape so the two read alike in billing_events.
+   *
+   * The stakes are lower on this side: every branch matches on profiles.id,
+   * which is the primary key, so a zero-row update means the account is gone
+   * rather than "the row has not been written yet". The guard cases
+   * (.neq on billing_source) are the other way to land on no_match here.
+   */
+  async function record(
+    outcome: BillingOutcome,
+    fields: {
+      userId?: string | null;
+      rowsAffected?: number | null;
+      planAfter?: string | null;
+      detail?: string | null;
+    } = {},
+  ) {
+    await recordBillingEvent(supabase, {
+      provider: "revenuecat",
+      eventId: ev.id ?? null,
+      eventType: ev.type,
+      // app_user_id IS the Supabase user id (RevenueCatInit configures
+      // Purchases with it), but it is kept in customer_id as well so a row
+      // that matched nobody still carries the handle it was given.
+      customerId: appUserId ?? null,
+      eventCreatedAt:
+        typeof ev.event_timestamp_ms === "number"
+          ? new Date(ev.event_timestamp_ms).toISOString()
+          : null,
+      outcome,
+      ...fields,
+    });
+  }
+
+  function readResult(
+    data: { id: string; plan: string | null }[] | null,
+    error: { message: string } | null,
+  ): { outcome: BillingOutcome; userId: string | null; rows: number; detail: string | null } {
+    if (error) return { outcome: "db_error", userId: null, rows: 0, detail: error.message };
+    const rows = data?.length ?? 0;
+    return { outcome: rows > 0 ? "applied" : "no_match", userId: data?.[0]?.id ?? null, rows, detail: null };
+  }
 
   console.log("[revenuecat/webhook] received:", event.type, appUserId ?? "(no app_user_id)");
 
@@ -77,10 +128,19 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        await supabase
+        const { data, error } = await supabase
           .from("profiles")
           .update({ plan, billing_source: "apple_iap", revenuecat_app_user_id: appUserId })
-          .eq("id", appUserId);
+          .eq("id", appUserId)
+          .select("id, plan");
+
+        const r = readResult(data, error);
+        await record(r.outcome, {
+          userId: r.userId ?? appUserId,
+          rowsAffected: r.rows,
+          planAfter: plan,
+          detail: r.detail ?? (r.rows === 0 ? "no profile for app_user_id" : null),
+        });
         break;
       }
 
@@ -89,11 +149,20 @@ export async function POST(request: NextRequest) {
         if (!appUserId) break;
         const plan = planFromProductId(event.product_id);
 
-        await supabase
+        const { data, error } = await supabase
           .from("profiles")
           .update({ plan, billing_source: "apple_iap", revenuecat_app_user_id: appUserId })
           .eq("id", appUserId)
-          .neq("billing_source", "stripe");
+          .neq("billing_source", "stripe")
+          .select("id, plan");
+
+        const r = readResult(data, error);
+        await record(r.outcome, {
+          userId: r.userId ?? appUserId,
+          rowsAffected: r.rows,
+          planAfter: plan,
+          detail: r.detail ?? (r.rows === 0 ? "no profile for app_user_id, or stripe guard" : null),
+        });
         break;
       }
 
@@ -101,11 +170,20 @@ export async function POST(request: NextRequest) {
       case "EXPIRATION": {
         if (!appUserId) break;
 
-        await supabase
+        const { data, error } = await supabase
           .from("profiles")
           .update({ plan: "free", billing_source: null, revenuecat_app_user_id: appUserId })
           .eq("id", appUserId)
-          .neq("billing_source", "stripe");
+          .neq("billing_source", "stripe")
+          .select("id, plan");
+
+        const r = readResult(data, error);
+        await record(r.outcome, {
+          userId: r.userId ?? appUserId,
+          rowsAffected: r.rows,
+          planAfter: "free",
+          detail: r.detail ?? (r.rows === 0 ? "no profile for app_user_id, or stripe guard" : null),
+        });
         break;
       }
 
@@ -131,6 +209,8 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error(`[revenuecat/webhook] Error handling ${event.type}:`, err);
     // Return 200 so RevenueCat doesn't retry — log the error instead
+    // 段階0 also writes it down. Still 200.
+    await record("exception", { detail: err instanceof Error ? err.message : String(err) });
   }
 
   return NextResponse.json({ received: true });
