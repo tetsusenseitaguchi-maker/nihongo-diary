@@ -241,9 +241,14 @@ export default function WritePage() {
   // everything under it back until the learner has either recorded or skipped;
   // it resets to "pending" with every new correction.
   const [shadowOutcome, setShadowOutcome] = useState<ShadowingOutcome>("pending");
-  // Free only: recordings already made today, read from shadowing_usage on
-  // mount. Its own table, nothing to do with usage_limits — see
+  // Recordings already made today, read from shadowing_usage on mount. Its own
+  // table, nothing to do with usage_limits — see
   // supabase/add-shadowing-limit.sql.
+  //
+  // Nothing gates on this any more: every plan is unlimited (shadowing-limits.ts),
+  // so shadowRemaining is always null and this count is not consulted. The read
+  // and the state stay because putting a cap back is one line in that file, and
+  // this is the half of it that would have to be rebuilt otherwise.
   const [shadowUsedToday, setShadowUsedToday] = useState(0);
 
   // Plan + usage
@@ -268,9 +273,9 @@ export default function WritePage() {
   const recheckLeft = Math.max(0, recheckLimit - recheckUsed);
   const recheckExhausted = recheckLeft <= 0;
 
-  // Recordings left today. null = unlimited, which is every paid plan — those
-  // never reach try_use_shadowing at all, so shadowUsedToday stays 0 for them
-  // and is not consulted.
+  // Recordings left today. null = unlimited, which is now every plan including
+  // Free — nothing reaches try_use_shadowing, so shadowUsedToday stays 0 and is
+  // not consulted.
   const shadowLimit = shadowingLimitFor(plan);
   const shadowRemaining = shadowLimit === null ? null : Math.max(0, shadowLimit - shadowUsedToday);
 

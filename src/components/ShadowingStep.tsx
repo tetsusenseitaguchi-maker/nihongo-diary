@@ -87,7 +87,12 @@ export function ShadowingStep({
    * someone reading a sentence aloud.
    */
   entryId: string | null;
-  /** Recordings left today. null = unlimited (paid plans). */
+  /**
+   * Recordings left today. null = unlimited, which is every plan since Free
+   * stopped being metered — so the "used up" branch below is currently
+   * unreachable. It is kept, along with its strings, because the cap is one
+   * line in shadowing-limits.ts and could come back.
+   */
   remaining: number | null;
   outcome: ShadowingOutcome;
   onOutcome: (outcome: ShadowingOutcome) => void;

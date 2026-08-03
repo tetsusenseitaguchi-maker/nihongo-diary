@@ -25,6 +25,11 @@ import { normalizePlan, type Plan } from "@/lib/plans";
  * correction / translation / recheck / audio functions, so changing this number
  * is an app-side change with no migration.
  */
+/**
+ * The number Free used to get, kept for one reason: putting the cap back is
+ * `free: SHADOWING_DAILY_LIMIT` below and nothing else. Nothing references it
+ * while every plan is unlimited.
+ */
 export const SHADOWING_DAILY_LIMIT = 1;
 
 /**
@@ -34,13 +39,25 @@ export const SHADOWING_DAILY_LIMIT = 1;
  * drives billing-adjacent behaviour and is hands-off. normalizePlan is imported
  * and CALLED but never modified.
  *
- * Only the Free row is a number, so only Free ever reaches try_use_shadowing.
- * A paid learner's recordings are not counted at all: the RPC is skipped, no
- * row accumulates in shadowing_usage, and nothing has to be reset when they
- * upgrade. Same shape as AUDIO_DAILY_LIMITS and translationsPerDay.
+ * ── Free is unlimited too, as of this change ─────────────────────────────
+ * Reading a sentence aloud costs nothing: the recording is made by the
+ * browser's own microphone and goes straight to Storage, and no model, no
+ * synthesis and no API call happens on the way. The expensive half of the
+ * exercise is HEARING the model sentence, and that is already metered by the
+ * audio allowance in audio-limits.ts — a Free learner cannot listen more than
+ * that allows however many times they record. Metering the free half as well
+ * only stopped people practising.
+ *
+ * So no row is a number now, and try_use_shadowing is unreachable from the
+ * app: /api/shadowing/use returns { counted: false } before the RPC on every
+ * plan. The function, the table and its policies stay exactly as they are —
+ * the limit is passed in from here, so there is no migration in either
+ * direction, and shadowing_usage keeps whatever rows it already has.
+ *
+ * Same shape as AUDIO_DAILY_LIMITS and translationsPerDay.
  */
 export const SHADOWING_DAILY_LIMITS: Record<Plan, number | null> = {
-  free: SHADOWING_DAILY_LIMIT,
+  free: null,
   plus: null,
   pro: null,
   teacher_feedback: null,
@@ -49,8 +66,8 @@ export const SHADOWING_DAILY_LIMITS: Record<Plan, number | null> = {
 /**
  * Daily recording allowance for a raw profiles.plan value, or null for
  * unlimited. An unreadable / unknown plan resolves to Free through
- * normalizePlan, which is the safe direction: the worst case is a paid learner
- * being metered, never an unmetered free one.
+ * normalizePlan — which now returns null like every other row, so a failed
+ * plan lookup can no longer meter anyone by accident either.
  */
 export function shadowingLimitFor(plan: string | null | undefined): number | null {
   return SHADOWING_DAILY_LIMITS[normalizePlan(plan)];
