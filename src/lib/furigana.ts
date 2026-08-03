@@ -58,6 +58,9 @@ export function vocabWordText(word: string, reading?: string): string {
     4. The tail of the reading repeated as okurigana
        (<ruby>心地<rt>ここち</rt></ruby>ちよい,
         <ruby>観察<rt>かんさつ</rt></ruby>さつ) — see dropEchoedOkurigana.
+    5. A stem reading cut short before its okurigana
+       (<ruby>歩<rt>あ</rt></ruby>きました for 歩(ある)きました)
+       — see restoreTruncatedStem.
    Both consumers must stay in sync with this parser — fix bugs here once,
    not separately in each caller. */
 
@@ -158,7 +161,7 @@ export function parseRubySegments(text: string): RubySegment[] {
     segments.push({ type: "text", value: stripHtmlTags(processed.slice(last)) });
   }
 
-  return dropEchoedOkurigana(segments);
+  return dropEchoedOkurigana(restoreTruncatedStem(segments));
 }
 
 /** Leading run of hiragana (plus ー) in a text segment. */
@@ -218,6 +221,137 @@ function dropEchoedOkurigana(segments: RubySegment[]): RubySegment[] {
   // offset maps by segment start, and two segments starting at the same offset
   // would collide there.
   return out.filter((s) => s.type === "ruby" || s.value !== "");
+}
+
+/* ── Glitch 5: a stem reading cut short ──────────────────────────────────
+   <ruby>歩<rt>あ</rt></ruby>きました draws 歩 with あ over it and reads as
+   "akimashita". The correct markup is <ruby>歩<rt>ある</rt></ruby>きました:
+   <rt> carries the reading of the KANJI, and for a kun'yomi verb that is the
+   whole stem (ある), not its first mora.
+
+   This is the model's error, not a parsing one — five prompts forbid this
+   exact example by name (api/correct/route.ts:158 spells out
+   "Wrong: <ruby>歩<rt>あ</rt></ruby>きました") and it is written anyway. It is
+   also the same habit reading-validation.ts guards on the standalone
+   `reading` field; this is that guard's missing half, for <rt> inside a
+   sentence. Repairing at parse time means the rows already saved come out
+   right on the next render, with no migration — same as glitch 4.
+
+   ── When it fires ───────────────────────────────────────────────────────
+   Only when the current rt is a PROPER PREFIX of a reading in the table
+   below AND the okurigana that follows selects that reading. Both halves
+   matter: あ→ある is a repair, ほ→ある would be a rewrite of a reading the
+   model chose deliberately, and this deliberately does not do the second.
+   A word absent from the table is left exactly as it was.
+
+   The okurigana column is what disambiguates a kanji whose stem reading
+   depends on what follows it — 歩き (ある) vs 歩み (あゆ), 少し (すこ) vs
+   少ない (すく). Without it the table would have to pick one and be wrong
+   about the other half of the time.
+
+   ── Two shapes, one rule ────────────────────────────────────────────────
+   The model drops the missing kana entirely (歩(あ)きました) or leaves it in
+   the body text (歩(あ)るきました). Both are accepted here: the second is
+   matched by looking past the missing tail, and once rt is put back the
+   leftover る is exactly what dropEchoedOkurigana already removes — which is
+   why this runs BEFORE it and not after. */
+
+/** 漢字, 送り仮名の先頭になりうるかな, 語幹の読み。
+ *
+ *  語幹が1モーラの語（書く=か、見る=み）は入れない。切り詰めようがないので
+ *  対象外で、入れても誤爆の面積が増えるだけ。
+ *  読みが文脈で割れて送り仮名でも決まらない語（上がる/上る、行く/行う）も
+ *  入れない — この表は「どちらか分かる」ものだけを持つ。 */
+const STEM_READINGS_RAW: [string, string, string][] = [
+  // 動詞
+  ["歩", "きくかけこい", "ある"],
+  ["歩", "みむまめ", "あゆ"],
+  ["走", "りるられろっ", "はし"],
+  ["帰", "りるられろっ", "かえ"],
+  ["働", "きくかけこい", "はたら"],
+  ["話", "しすさせそ", "はな"],
+  ["笑", "いうわえおっ", "わら"],
+  ["遊", "びぶばべぼん", "あそ"],
+  ["泳", "ぎぐがげごい", "およ"],
+  ["疲", "れ", "つか"],
+  ["忘", "れ", "わす"],
+  ["始", "めま", "はじ"],
+  ["集", "めま", "あつ"],
+  ["教", "え", "おし"],
+  ["習", "いうわえおっ", "なら"],
+  ["覚", "え", "おぼ"],
+  ["考", "え", "かんが"],
+  ["頑張", "りるられろっ", "がんば"],
+  ["続", "きくけかい", "つづ"],
+  ["届", "きくかけい", "とど"],
+  ["選", "びぶばべぼん", "えら"],
+  ["喜", "びぶばべん", "よろこ"],
+  ["驚", "きくかけこい", "おどろ"],
+  ["迎", "え", "むか"],
+  ["眠", "りるられろっい", "ねむ"],
+  // 形容詞
+  ["新", "し", "あたら"],
+  ["楽", "し", "たの"],
+  ["珍", "し", "めずら"],
+  ["難", "し", "むずか"],
+  ["忙", "し", "いそが"],
+  ["美", "し", "うつく"],
+  ["嬉", "し", "うれ"],
+  ["悲", "し", "かな"],
+  ["寂", "し", "さび"],
+  ["優", "し", "やさ"],
+  ["厳", "し", "きび"],
+  ["涼", "し", "すず"],
+  ["暖", "かまめ", "あたた"],
+  ["温", "かまめ", "あたた"],
+  ["少", "し", "すこ"],
+  ["少", "な", "すく"],
+  ["危", "な", "あぶ"],
+  ["大", "き", "おお"],
+  ["小", "さ", "ちい"],
+];
+
+const STEM_READINGS = new Map<string, { okurigana: string; reading: string }[]>();
+for (const [base, okurigana, reading] of STEM_READINGS_RAW) {
+  const list = STEM_READINGS.get(base);
+  if (list) list.push({ okurigana, reading });
+  else STEM_READINGS.set(base, [{ okurigana, reading }]);
+}
+
+function restoreTruncatedStem(segments: RubySegment[]): RubySegment[] {
+  let changed = false;
+  const out = segments.slice();
+
+  for (let i = 0; i < out.length - 1; i++) {
+    const ruby = out[i];
+    const next = out[i + 1];
+    if (ruby.type !== "ruby" || next.type !== "text") continue;
+
+    const candidates = STEM_READINGS.get(ruby.base);
+    if (!candidates) continue;
+
+    for (const { okurigana, reading } of candidates) {
+      // Proper prefix only — an rt that already matches, or that is a
+      // different reading rather than a shortened one, is left alone.
+      if (reading === ruby.rt || !reading.startsWith(ruby.rt)) continue;
+
+      const rest = next.value;
+      const tail = reading.slice(ruby.rt.length); // the kana the model dropped
+      const followsDirectly = okurigana.includes(rest[0]);
+      const followsTail = rest.startsWith(tail) && okurigana.includes(rest[tail.length]);
+      if (!followsDirectly && !followsTail) continue;
+
+      out[i] = { type: "ruby", base: ruby.base, rt: reading };
+      changed = true;
+      break;
+    }
+  }
+
+  // The followsTail shape still has the dropped kana sitting in the body text.
+  // It is not removed here: with rt put back it has become an exact echo of
+  // the reading's tail, which is dropEchoedOkurigana's own case, and that runs
+  // next. One rule for the echo, in one place.
+  return changed ? out : segments;
 }
 
 /* ── Fixed-reading dictionary (熟字訓 / irregular compound readings) ──────
