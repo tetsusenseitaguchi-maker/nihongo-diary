@@ -1047,5 +1047,9 @@
   "streak.dayOne": "Day 1!",
   "streak.days": "{n} days in a row!",
   "streak.toNext": "{n} more to {m} days",
-  "streak.dayCount": "{n} days"
+  "streak.dayCount": "{n} days",
+  "notification.streak.title": "🔥 {n}-day streak",
+  "notification.streak.body": "Today is still empty. One sentence keeps it going.",
+  "notification.streak.titleDayOne": "🔥 You wrote yesterday",
+  "notification.streak.bodyDayOne": "One sentence today makes it two."
 }
