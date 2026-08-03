@@ -127,7 +127,7 @@ export function DiscoveryFilters({
         <select
           value={filters.country ?? ""}
           onChange={(e) => router.push(hrefFor({ country: e.target.value || null }))}
-          className="rounded-xl border border-line bg-paper px-2.5 py-1 text-xs font-medium text-ink focus:border-moss focus:outline-none"
+          className="rounded-xl border border-line bg-paper px-2.5 py-1 text-base font-medium text-ink focus:border-moss focus:outline-none"
         >
           <option value="">{t("discovery.filterCountryAny")}</option>
           {COUNTRIES.map((c) => (

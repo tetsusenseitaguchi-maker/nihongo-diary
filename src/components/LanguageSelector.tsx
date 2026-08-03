@@ -35,7 +35,7 @@ export function LanguageSelector({ initialLanguage }: { initialLanguage: string 
         value={lang}
         onChange={(e) => handleChange(e.target.value)}
         disabled={status === "saving"}
-        className="rounded-xl border border-line bg-paper px-3 py-2 text-sm font-medium text-ink focus:border-moss focus:outline-none disabled:opacity-60"
+        className="rounded-xl border border-line bg-paper px-3 py-2 text-base font-medium text-ink focus:border-moss focus:outline-none disabled:opacity-60"
       >
         {SUPPORTED_LANGUAGES.map((l) => (
           <option key={l.code} value={l.code}>

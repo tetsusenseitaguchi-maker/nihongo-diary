@@ -146,7 +146,7 @@ export function DiaryMapPicker({ places, onPlacesChange }: Props) {
               placeholder={t("map.searchPlaceholder")}
               /* 16px prevents iOS auto-zoom on focus */
               style={{ fontSize: "16px" }}
-              className="w-full rounded-xl border border-line bg-cream pl-4 pr-3 py-2.5 text-ink placeholder:text-muted focus:border-moss focus:outline-none"
+              className="w-full rounded-xl border border-line bg-cream pl-4 pr-3 py-2.5 text-ink placeholder:text-muted focus:border-moss focus:outline-none text-base"
             />
             {(results.length > 0 || searching) && (
               <div

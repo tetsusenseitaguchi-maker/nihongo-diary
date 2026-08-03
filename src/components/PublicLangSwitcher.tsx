@@ -46,7 +46,7 @@ export function PublicLangSwitcher({ currentLocale }: { currentLocale: Locale })
         value={displayed}
         onChange={(e) => handleChange(e.target.value)}
         disabled={switching}
-        className="cursor-pointer bg-transparent text-xs font-medium text-ink outline-none disabled:opacity-60"
+        className="cursor-pointer bg-transparent text-base font-medium text-ink outline-none disabled:opacity-60"
         aria-label="Switch language"
       >
         {SUPPORTED_LANGUAGES.map((l) => (

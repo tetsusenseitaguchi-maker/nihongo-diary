@@ -262,7 +262,7 @@ export default function ProfileSetupPage() {
               onChange={(e) => setBio(e.target.value)}
               rows={3}
               placeholder={t("profileSetup.bioPlaceholder")}
-              className="w-full resize-none rounded-xl border border-line bg-paper px-4 py-2.5 text-ink outline-none focus:border-moss"
+              className="w-full resize-none rounded-xl border border-line bg-paper px-4 py-2.5 text-ink outline-none focus:border-moss text-base"
             />
           </label>
 
@@ -271,7 +271,7 @@ export default function ProfileSetupPage() {
             <select
               value={country}
               onChange={(e) => setCountry(e.target.value)}
-              className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-ink outline-none focus:border-moss"
+              className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-ink outline-none focus:border-moss text-base"
             >
               <option value="">{t("profileSetup.countryPlaceholder")}</option>
               {COUNTRIES.map((c) => (
@@ -310,7 +310,7 @@ function Field({
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-ink outline-none focus:border-moss"
+        className="w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-ink outline-none focus:border-moss text-base"
       />
     </label>
   );

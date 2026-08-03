@@ -123,7 +123,7 @@ export function MiniLessonReview({ plan }: { plan: Plan | null }) {
         <select
           value={lessonId}
           onChange={(e) => { setLessonId(Number(e.target.value)); setDrills([]); }}
-          className="min-w-0 flex-1 rounded-xl border border-line bg-paper px-3 py-2 text-sm font-medium text-pine focus:outline-none focus:ring-2 focus:ring-moss/40"
+          className="min-w-0 flex-1 rounded-xl border border-line bg-paper px-3 py-2 text-base font-medium text-pine focus:outline-none focus:ring-2 focus:ring-moss/40"
         >
           {MINI_LESSONS.map((l) => (
             <option key={l.id} value={l.id}>
@@ -136,7 +136,7 @@ export function MiniLessonReview({ plan }: { plan: Plan | null }) {
         <select
           value={level}
           onChange={(e) => { setLevel(e.target.value); setDrills([]); }}
-          className="rounded-xl border border-line bg-paper px-3 py-2 text-sm font-medium text-pine focus:outline-none focus:ring-2 focus:ring-moss/40"
+          className="rounded-xl border border-line bg-paper px-3 py-2 text-base font-medium text-pine focus:outline-none focus:ring-2 focus:ring-moss/40"
         >
           {LEVELS.map((l) => (
             <option key={l} value={l}>{l}</option>

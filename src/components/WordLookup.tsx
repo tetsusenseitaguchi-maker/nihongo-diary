@@ -95,7 +95,7 @@ export function WordLookup({ onInsert }: { onInsert: (text: string) => void }) {
           }}
           placeholder={t("wordLookup.placeholder")}
           aria-label={t("wordLookup.placeholder")}
-          className="min-w-0 flex-1 bg-transparent text-sm text-ink placeholder:text-muted/70 focus:outline-none"
+          className="min-w-0 flex-1 bg-transparent text-base text-ink placeholder:text-muted/70 focus:outline-none"
         />
         <button
           type="button"

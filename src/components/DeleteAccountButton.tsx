@@ -140,7 +140,7 @@ export function DeleteAccountButton() {
                   onChange={(e) => setConfirmText(e.target.value)}
                   disabled={loading}
                   placeholder={CONFIRM_WORD}
-                  className="mt-3 w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-ink outline-none focus:border-red-400 disabled:opacity-60"
+                  className="mt-3 w-full rounded-xl border border-line bg-paper px-4 py-2.5 text-ink outline-none focus:border-red-400 disabled:opacity-60 text-base"
                   autoFocus
                 />
 

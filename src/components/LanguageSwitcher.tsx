@@ -31,7 +31,7 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
             value={locale}
             onChange={(e) => handleChange(e.target.value)}
             disabled={switching}
-            className="cursor-pointer bg-transparent text-xs font-medium text-ink outline-none disabled:opacity-60"
+            className="cursor-pointer bg-transparent text-base font-medium text-ink outline-none disabled:opacity-60"
             aria-label="Switch language"
           >
             {SUPPORTED_LANGUAGES.map((l) => (
@@ -55,7 +55,7 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
         value={locale}
         onChange={(e) => handleChange(e.target.value)}
         disabled={switching}
-        className="w-full cursor-pointer rounded-lg border border-line bg-paper px-2.5 py-1.5 text-sm font-medium text-ink outline-none focus:border-moss disabled:opacity-60"
+        className="w-full cursor-pointer rounded-lg border border-line bg-paper px-2.5 py-1.5 text-base font-medium text-ink outline-none focus:border-moss disabled:opacity-60"
         aria-label="Switch language"
       >
         {SUPPORTED_LANGUAGES.map((l) => (
