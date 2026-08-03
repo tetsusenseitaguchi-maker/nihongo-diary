@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type CSSProperties } from "react";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import dynamicLoad from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
@@ -21,6 +21,7 @@ import { WritingPromptCard } from "@/components/WritingPromptCard";
 import { TrainDiagram } from "@/components/TrainDiagram";
 import { HintsSection } from "@/components/HintsSection";
 import { SavedWordsRow, type SavedWord } from "@/components/SavedWordsRow";
+import { WordLookup } from "@/components/WordLookup";
 import { DictationLink } from "@/components/DictationLink";
 import { ShadowingStep, type ShadowingOutcome } from "@/components/ShadowingStep";
 import { shadowingLimitFor } from "@/lib/shadowing-limits";
@@ -258,6 +259,42 @@ export default function WritePage() {
    * signal not to draw the streak yet.
    */
   const [todayLocal, setTodayLocal] = useState<string | null>(null);
+
+  /**
+   * The editor itself, so a looked-up word can land where the learner is
+   * typing rather than at the end of what they wrote.
+   */
+  const editorRef = useRef<HTMLTextAreaElement | null>(null);
+
+  /**
+   * Drop a word in at the cursor.
+   *
+   * Plain Japanese only — the reading stays on screen in the lookup row and
+   * never enters the text. original_text is what /api/correct reads, and ruby
+   * markup inside it would be the learner's own writing with something else
+   * mixed into it.
+   *
+   * Focus and caret are restored after the state update so typing continues
+   * from just after the inserted word, which is the only place it can sensibly
+   * continue from. Falls back to appending when the editor has never been
+   * focused and there is no selection to speak of.
+   */
+  function insertAtCursor(insert: string) {
+    const el = editorRef.current;
+    if (!el) {
+      setText((prev) => prev + insert);
+      return;
+    }
+    const start = el.selectionStart ?? el.value.length;
+    const end = el.selectionEnd ?? start;
+    const next = el.value.slice(0, start) + insert + el.value.slice(end);
+    setText(next);
+    const caret = start + insert.length;
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(caret, caret);
+    });
+  }
 
   // Reading the corrected sentence aloud. "pending" holds the explanation and
   // everything under it back until the learner has either recorded or skipped;
@@ -1036,6 +1073,11 @@ export default function WritePage() {
                   three closest to graduating, exactly as before. */}
               <SavedWordsRow words={savedWords.slice(0, 3)} />
 
+              {/* 「これ日本語でなんて言う？」 — 本文のすぐ上に置く。書いていて
+                  詰まったときに目を落とす先がここで、Hints の帯と違って畳まれ
+                  ていない。挿入はカーソル位置に、本文には漢字だけが入る。 */}
+              <WordLookup onInsert={insertAtCursor} />
+
               {/* selectors */}
               <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4" data-tour="write-options">
                 <Selector label={t("write.level")} value={levels[level]} onClick={() => cycle(setLevel, levels.length)} />
@@ -1046,6 +1088,7 @@ export default function WritePage() {
 
               {/* notebook paper textarea */}
               <textarea
+                ref={editorRef}
                 data-tour="write-editor"
                 value={text}
                 onChange={(e) => setText(e.target.value)}

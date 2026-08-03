@@ -1052,5 +1052,13 @@
   "notification.streak.body": "Today is still empty. One sentence keeps it going.",
   "notification.streak.titleDayOne": "🔥 You wrote yesterday",
   "notification.streak.bodyDayOne": "One sentence today makes it two.",
-  "audio.moreOnPaid": "Plus and Pro also read your mistakes and example sentences aloud."
+  "audio.moreOnPaid": "Plus and Pro also read your mistakes and example sentences aloud.",
+  "wordLookup.placeholder": "How do you say… (in English)",
+  "wordLookup.search": "Look up",
+  "wordLookup.searching": "Looking…",
+  "wordLookup.tapToInsert": "Tap to insert",
+  "wordLookup.failed": "Could not look that up.",
+  "wordLookup.networkError": "Network error. Please try again.",
+  "wordLookup.limitReached": "That is today’s lookups. Words you have already looked up are still free.",
+  "wordLookup.moreOnPaid": "Plus and Pro look up as many as you like."
 }
