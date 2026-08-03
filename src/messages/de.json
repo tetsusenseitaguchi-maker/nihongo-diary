@@ -1051,5 +1051,6 @@
   "notification.streak.title": "🔥 {n}-day streak",
   "notification.streak.body": "Today is still empty. One sentence keeps it going.",
   "notification.streak.titleDayOne": "🔥 You wrote yesterday",
-  "notification.streak.bodyDayOne": "One sentence today makes it two."
+  "notification.streak.bodyDayOne": "One sentence today makes it two.",
+  "audio.moreOnPaid": "Plus and Pro also read your mistakes and example sentences aloud."
 }

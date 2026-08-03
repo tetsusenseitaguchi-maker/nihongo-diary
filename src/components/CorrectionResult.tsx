@@ -180,10 +180,22 @@ export function CorrectionResult({
    */
   disableAudio?: boolean;
   /**
-   * The viewer's plan, and the ONLY thing it changes is what the 🔊 on the
-   * natural version sends — see lib/natural-audio.ts. Nothing here reads or
-   * writes a counter, and normalizePlan is neither called nor duplicated: the
-   * callers pass a Plan that has already been through it.
+   * The viewer's plan. It decides three things, all of them about audio:
+   *
+   *   1. what the 🔊 on the natural version SENDS — see lib/natural-audio.ts
+   *   2. whether the mistake pair's 🔊 is drawn at all
+   *   3. whether the vocabulary example's 🔊 is drawn at all
+   *
+   * 2 and 3 are display conditions, not new rules: Free is metered at one new
+   * clip a day, and those two buttons are the only ones on the page whose text
+   * nothing else sends, so a tap on either spent the day before the learner
+   * reached the shadowing step. Free keeps the natural sentence (the same
+   * string shadowing and both dictations send, so the whole day is one
+   * synthesis) and the headwords (dictionary words in the shared bucket).
+   *
+   * Nothing here reads or writes a counter, and normalizePlan is neither
+   * called nor duplicated: the callers pass a Plan that has already been
+   * through it.
    *
    * Defaults to "free", which is the safe direction and the same one
    * audioLimitFor takes: the worst case is a paid learner hearing the day's
@@ -446,16 +458,45 @@ export function CorrectionResult({
                       capped the button at an icon nobody read as a button.
                       One button for the pair, not one each: passing both as an
                       array makes it a single request, and so a single credit,
-                      with a pause between them. */}
-                  <div className="mt-2">
-                    {audioButton(`mistake:${i}`, [m.before, m.after], t("audio.playBeforeAfter"), {
-                      showLabel: true,
-                    })}
-                  </div>
-                  {audioNotice(`mistake:${i}`, "mt-2")}
+                      with a pause between them.
+
+                      Not drawn on Free, and this is the trap it closes. The
+                      pair is a string no other button sends, so it can only
+                      ever be a cache miss — one tap here spent the day's single
+                      synthesis on a clip nothing downstream reuses, and the
+                      shadowing step that follows then answered 429. Measured on
+                      production: 17 of Free's 94 stored clips came from this
+                      button, another 16 from the example below, so a third of
+                      the free allowance was going to audio the day never
+                      reused. It stays kind="diary" for the paid plans because
+                      m.before is the learner's own writing.
+
+                      Paid plans are untouched: they are not metered at all, and
+                      the before→after comparison is the most useful listen on
+                      the page. */}
+                  {plan !== "free" && (
+                    <>
+                      <div className="mt-2">
+                        {audioButton(`mistake:${i}`, [m.before, m.after], t("audio.playBeforeAfter"), {
+                          showLabel: true,
+                        })}
+                      </div>
+                      {audioNotice(`mistake:${i}`, "mt-2")}
+                    </>
+                  )}
                 </li>
               ))}
             </ul>
+          )}
+          {/* One line for the whole card rather than a padlock on each row —
+              a diary can carry three mistakes, and three locked buttons shout
+              louder than the corrections they belong to. Inside <NativeGate/>
+              because it names the paid plans (App Store guideline 3.1.1), the
+              same treatment audio.wholeOnPaid gets above. */}
+          {!disableAudio && plan === "free" && correction.mistakes.length > 0 && (
+            <NativeGate>
+              <p className="mt-3 text-xs text-muted">{t("audio.moreOnPaid")}</p>
+            </NativeGate>
           )}
         </div>
 
@@ -486,13 +527,39 @@ export function CorrectionResult({
                     <span className="mt-0.5 block font-jp text-xs text-ink/55">
                       例: <Furigana text={v.example} />
                     </span>
-                    {/* The example stays kind="diary": rule 10 of the
-                        /api/correct prompt writes it in the diary's context. */}
-                    <div className="mt-2">
-                      {audioButton(`vocab:${i}`, v.example, t("audio.playExample"), {
-                        showLabel: true,
-                      })}
-                    </div>
+                    {/* kind="word" — the shared, content-addressed bucket.
+                        The example used to be "diary" on the strength of rule
+                        10 of the /api/correct prompt ("from or related to the
+                        diary"), but measured against 300 production entries
+                        that reading is too cautious: 1.6% of examples appear
+                        verbatim in the learner's own diary, the longest is 31
+                        characters, and what actually comes back is
+                        「仕事で疲れました。」 and 「毎日勉強しています。」 —
+                        textbook sentences. Sharing them costs one clip instead
+                        of one per learner.
+
+                        m.after was NOT moved with it, and the same measurement
+                        is why: 57% of corrections appear verbatim in the
+                        learner's own diary, up to 255 characters. tts-shared
+                        carries no user id and is deliberately outside
+                        /api/account/delete, so anything written there cannot be
+                        deleted for one person — that is not a bucket for
+                        somebody's own sentences.
+
+                        Hidden on Free for the same reason as the mistake pair:
+                        one tap, one miss, and the day's synthesis is gone. The
+                        shared bucket does not change that — cross-learner hit
+                        rate is 2.9%, so 97 taps in 100 are still a fresh clip
+                        and a spent allowance. Sharing saves synthesis cost, not
+                        the learner's day. */}
+                    {plan !== "free" && (
+                      <div className="mt-2">
+                        {audioButton(`vocab:${i}`, v.example, t("audio.playExample"), {
+                          kind: "word",
+                          showLabel: true,
+                        })}
+                      </div>
+                    )}
                   </>
                 )}
                 {audioNotice(`vocabWord:${i}`, "mt-2")}
@@ -500,6 +567,14 @@ export function CorrectionResult({
               </li>
             ))}
           </ul>
+          {/* The headword 🔊 above stays on Free: it is a dictionary word in
+              the shared bucket, where a quarter of them already hit another
+              learner's clip. Only the example sentence is gone. */}
+          {!disableAudio && plan === "free" && correction.vocabulary.length > 0 && (
+            <NativeGate>
+              <p className="mt-3 text-xs text-muted">{t("audio.moreOnPaid")}</p>
+            </NativeGate>
+          )}
         </div>
       </div>
 
