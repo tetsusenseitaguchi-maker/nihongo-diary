@@ -25,6 +25,7 @@ import { DictationLink } from "@/components/DictationLink";
 import { ShadowingStep, type ShadowingOutcome } from "@/components/ShadowingStep";
 import { shadowingLimitFor } from "@/lib/shadowing-limits";
 import { hasDictation, pickSentence } from "@/lib/dictation";
+import { currentStreak } from "@/lib/streak";
 import type { UsedExpression } from "@/lib/learned-display";
 import { promptForDate, randomPromptExcept, type WritingPrompt } from "@/lib/writing-prompts";
 import { RECHECK_LIMITS } from "@/lib/recheck-limits";
@@ -237,6 +238,27 @@ export default function WritePage() {
   // Only ever shown next to a correction result on this page.
   const [usedExpressions, setUsedExpressions] = useState<UsedExpression[]>([]);
 
+  /**
+   * Every local date this learner has written on, for the streak badge on the
+   * result. Read once on mount and added to when today's diary saves, so the
+   * badge can appear the moment the correction does without another round trip.
+   *
+   * diary_date only — the heaviest learner in production has 40 of them, the
+   * median has one. Nothing is cached or counted in the database: see
+   * lib/streak.ts for why a stored counter would be a trigger on profiles for
+   * no gain.
+   */
+  const [writtenDates, setWrittenDates] = useState<Set<string>>(new Set());
+
+  /**
+   * Today, in the learner's own timezone. Kept in state rather than computed
+   * during render for the same reason the prompt is: getClientTZ() reads
+   * document.cookie, and a render-time value would differ between the server
+   * markup and the client. Null until the effect below runs, which is the
+   * signal not to draw the streak yet.
+   */
+  const [todayLocal, setTodayLocal] = useState<string | null>(null);
+
   // Reading the corrected sentence aloud. "pending" holds the explanation and
   // everything under it back until the learner has either recorded or skipped;
   // it resets to "pending" with every new correction.
@@ -279,6 +301,22 @@ export default function WritePage() {
   const shadowLimit = shadowingLimitFor(plan);
   const shadowRemaining = shadowLimit === null ? null : Math.max(0, shadowLimit - shadowUsedToday);
 
+  /**
+   * The streak to show on the result, today included.
+   *
+   * Today is added to the set rather than waited for: the learner has just
+   * written it, and the auto-save that follows a correction may still be in
+   * flight. Counting it only after savedEntryId lands would make the badge
+   * flicker in on a delay, and the one thing it must not do is arrive late to
+   * the moment it is celebrating.
+   *
+   * 0 until the timezone is known (todayLocal null on the first paint), which
+   * CorrectionTopBlock reads as "draw nothing".
+   */
+  const streakDays = todayLocal
+    ? currentStreak(new Set([...writtenDates, todayLocal]), todayLocal)
+    : 0;
+
   // No natural version means there is nothing to read aloud — a correction that
   // came back without one, which CorrectionResult also renders around. The step
   // is not shown and, crucially, the gate is open from the start: a blank card
@@ -312,6 +350,7 @@ export default function WritePage() {
     // markup and the client (hydration mismatch). Runs before the auth check
     // below so the prompt shows even while the session is still loading.
     setPrompt(promptForDate(todayInTZ(getClientTZ())));
+    setTodayLocal(todayInTZ(getClientTZ()));
     (async () => {
       const supabase = createClient();
       const {
@@ -319,7 +358,7 @@ export default function WritePage() {
       } = await supabase.auth.getUser();
       if (!user) return;
       const today = todayInTZ(getClientTZ());
-      const [{ data: prof }, { data: usage }, { data: shadowUsage }, { data: reviewRow }, { data: savedWordRows }] = await Promise.all([
+      const [{ data: prof }, { data: usage }, { data: shadowUsage }, { data: reviewRow }, { data: dateRows }, { data: savedWordRows }] = await Promise.all([
         supabase.from("profiles").select("plan").eq("id", user.id).single(),
         supabase.from("usage_limits").select("correction_count, recheck_count").eq("user_id", user.id).eq("usage_date", today).maybeSingle(),
         // Its own table, deliberately not a column on usage_limits: that one
@@ -335,6 +374,10 @@ export default function WritePage() {
         // because the deployed use_count column's nullability is unverified and
         // Postgres sorts NULLs first on DESC, which would put untouched words
         // ahead of the nearly-graduated ones.
+        // Local dates written on, for the streak badge. diary_date alone, and
+        // no date filter: a 400-day window would cap the number it can show,
+        // and the whole table is 1,071 rows across every user.
+        supabase.from("diary_entries").select("diary_date").eq("user_id", user.id),
         supabase
           .from("vocabulary_entries")
           .select("id, word, reading, use_count")
@@ -354,6 +397,9 @@ export default function WritePage() {
       setShadowUsedToday(shadowUsage?.shadowing_count ?? 0);
       if (reviewRow?.grammar_focus) setGrammarReview(reviewRow.grammar_focus as MistakeItem);
       if (savedWordRows) setSavedWords(savedWordRows as SavedWord[]);
+      if (dateRows) {
+        setWrittenDates(new Set((dateRows as { diary_date: string }[]).map((r) => r.diary_date)));
+      }
     })();
   }, []);
 
@@ -1284,7 +1330,11 @@ export default function WritePage() {
               Without it the page opened straight onto a microphone and read as
               though nothing had been corrected. CorrectionResult below is
               given showTopBlock={false}, so this appears once. */}
-          <CorrectionTopBlock correction={result} usedExpressions={usedExpressions} />
+          <CorrectionTopBlock
+            correction={result}
+            usedExpressions={usedExpressions}
+            streak={streakDays}
+          />
 
           {/* Read it aloud, before the explanation is on screen. Outside
               CorrectionResult on purpose: that component renders in the

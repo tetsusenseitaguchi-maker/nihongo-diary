@@ -1043,5 +1043,9 @@
   "audioIntro.limitIos": "Free covers one new sentence a day.",
   "audioIntro.tryDictation": "Try dictation",
   "audioIntro.writeFirst": "Write today’s diary",
-  "audioIntro.gotIt": "Got it"
+  "audioIntro.gotIt": "Got it",
+  "streak.dayOne": "Day 1!",
+  "streak.days": "{n} days in a row!",
+  "streak.toNext": "{n} more to {m} days",
+  "streak.dayCount": "{n} days"
 }

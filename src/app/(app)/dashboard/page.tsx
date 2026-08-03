@@ -8,6 +8,7 @@ import { MiniCalendar } from "@/components/MiniCalendar";
 import { Furigana, NoRuby } from "@/components/Furigana";
 import { templates } from "@/lib/mock-data";
 import { computeStats, type DiaryRow } from "@/lib/diary";
+import { daysToNextMilestone } from "@/lib/streak";
 import { monthLabel, formatShort } from "@/lib/dates";
 import { getServerT } from "@/lib/i18n-server";
 import { getTimezoneFromCookie } from "@/lib/tz-server";
@@ -61,6 +62,8 @@ export default async function DashboardPage() {
   const tz = await getTimezoneFromCookie();
   const { year, month, day: today, dateStr: todayStr } = nowInTZ(tz);
   const stats = computeStats(entries, todayStr);
+  // Same rungs as the badge on the correction result and as the sidebar.
+  const nextMilestone = daysToNextMilestone(stats.currentStreak);
 
   const displayName = profile?.display_name || profile?.username || "Learner";
   const avatarUrl = profile?.avatar_url || "";
@@ -128,6 +131,30 @@ export default async function DashboardPage() {
               <p className="mt-3 text-sm text-ink/70">
                 <Furigana text="小(ちい)さな一歩(いっぽ)を、毎日(まいにち)。" />
               </p>
+              {/* The streak, in the hero — the same number the stat card below
+                  has always carried, moved to where the eye lands first and to
+                  where it is still visible on a phone (the sidebar that used to
+                  be its home is hidden below lg, which is every iOS learner).
+                  stats is already computed, so this costs no query.
+
+                  Nothing is drawn at zero: a 0 next to a flame is a scolding,
+                  and the learner who most needs the CTA below is exactly the
+                  one it would be scolding. */}
+              {stats.currentStreak > 0 && (
+                <p className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <span className="text-[17px] font-bold text-pine">
+                    🔥{" "}
+                    {stats.currentStreak === 1
+                      ? t("streak.dayOne")
+                      : t("streak.days", { n: stats.currentStreak })}
+                  </span>
+                  {nextMilestone && (
+                    <span className="text-xs text-ink/65">
+                      {t("streak.toNext", { n: nextMilestone.remaining, m: nextMilestone.next })}
+                    </span>
+                  )}
+                </p>
+              )}
               {/* data-tour: the tour spotlights this CTA. Three separate
                   a[href="/write"] elements live on this page, so the anchor
                   says which one is meant. */}
@@ -169,7 +196,7 @@ export default async function DashboardPage() {
           <StatCard
             icon="flame"
             label={t("dashboard.stats.streak")}
-            value={`${stats.currentStreak} 日`}
+            value={t("streak.dayCount", { n: stats.currentStreak })}
             sub={t("dashboard.stats.longestLabel", { n: stats.longestStreak })}
             iconTint="apricot"
             className="col-span-2"

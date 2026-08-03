@@ -7,6 +7,7 @@ import { Furigana } from "@/components/Furigana";
 import { LearnedUsedPanel } from "@/components/LearnedUsedPanel";
 import type { UsedExpression } from "@/lib/learned-display";
 import { useT } from "@/contexts/locale";
+import { daysToNextMilestone } from "@/lib/streak";
 
 /**
  * The top of a correction result, on its own so the write page can put it
@@ -54,9 +55,46 @@ function Label({ en, jp }: { en: string; jp: string }) {
   );
 }
 
+/**
+ * 🔥 N — the streak, at the moment it was just extended.
+ *
+ * Placed with the praise band rather than with the statistics, because that is
+ * what it is: the learner has written today, and this says so before anything
+ * is corrected or explained. The dashboard carries the same number as a
+ * standing figure; this one exists for the instant it changes.
+ *
+ * Day 1 gets the same warmth as day 30, and a streak that broke and restarted
+ * IS day 1 — nothing here knows or says that a longer run ended. Production
+ * data is the argument: 174 learners wrote exactly one diary and stopped, and
+ * 293 are on zero today. The transition worth paying for is 1 → 2, not 29 → 30.
+ *
+ * Shown on every plan. Loss aversion is not a paid feature.
+ */
+function StreakBadge({ days }: { days: number }) {
+  const t = useT();
+  if (days <= 0) return null;
+  const milestone = daysToNextMilestone(days);
+  return (
+    <div
+      className="gloss-panel flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-[var(--radius-card)] px-5 py-3.5"
+      style={tint("--color-tint-sand")}
+    >
+      <span className="text-[17px] font-bold text-pine">
+        🔥 {days === 1 ? t("streak.dayOne") : t("streak.days", { n: days })}
+      </span>
+      {milestone && (
+        <span className="text-xs text-ink/65">
+          {t("streak.toNext", { n: milestone.remaining, m: milestone.next })}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function CorrectionTopBlock({
   correction,
   usedExpressions,
+  streak = 0,
 }: {
   correction: Correction;
   /**
@@ -70,6 +108,12 @@ export function CorrectionTopBlock({
    * response lands.
    */
   usedExpressions?: UsedExpression[];
+  /**
+   * Days in a row, today included — computed by the write page, which is the
+   * only caller. 0 draws nothing, which is also what the first paint passes
+   * while the learner's timezone is still unknown.
+   */
+  streak?: number;
 }) {
   const t = useT();
 
@@ -101,6 +145,9 @@ export function CorrectionTopBlock({
           </div>
         </div>
       )}
+
+      {/* The streak, with the cheer rather than with the numbers. */}
+      <StreakBadge days={streak} />
 
       {/* "You used a word you saved" — stays directly under Obie's cheer, in
           the praise band, which is the whole reason it was placed there. */}

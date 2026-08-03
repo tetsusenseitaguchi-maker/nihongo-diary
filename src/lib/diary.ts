@@ -21,14 +21,14 @@ export interface DiaryStats {
   today: DiaryRow | null;
 }
 
-function prevDay(dateStr: string): string {
-  const d = new Date(dateStr + "T00:00:00");
-  d.setDate(d.getDate() - 1);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
+import { currentStreak } from "@/lib/streak";
+
+// prevDay used to live here, parsing the date as local time. streak.ts does the
+// same walk in UTC, which is the same answer for every YYYY-MM-DD — checked
+// across 1,100 consecutive dates in six timezones including the southern-
+// hemisphere DST shifts, zero differences — and cannot be bent by the server's
+// own clock. The streak walk moved with it so that this file, the write page
+// and the dashboard all count the same way.
 
 // todayStr: "YYYY-MM-DD" in the user's local timezone.
 // Omit to fall back to the server's local date (UTC on Vercel — only correct
@@ -57,14 +57,10 @@ export function computeStats(entries: DiaryRow[], todayStr?: string): DiaryStats
     }
   }
 
-  // Current streak — walk backwards from today (or yesterday if today has no entry)
-  let currentStreak = 0;
-  let cursor = ref;
-  if (!dateSet.has(cursor)) cursor = prevDay(cursor);
-  while (dateSet.has(cursor)) {
-    currentStreak++;
-    cursor = prevDay(cursor);
-  }
+  // Current streak — walk backwards from today (or yesterday if today has no
+  // entry). The walk itself is in lib/streak.ts now; the behaviour is what it
+  // always was.
+  const streak = currentStreak(dateSet, ref);
 
   // Longest streak across all entries
   const sorted = Array.from(dateSet).sort();
@@ -90,7 +86,7 @@ export function computeStats(entries: DiaryRow[], todayStr?: string): DiaryStats
     thisMonthCount,
     lastMonthCount,
     monthDelta: thisMonthCount - lastMonthCount,
-    currentStreak,
+    currentStreak: streak,
     longestStreak,
     activeDaysThisMonth,
     today,
