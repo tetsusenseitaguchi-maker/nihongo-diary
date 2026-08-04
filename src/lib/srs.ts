@@ -103,19 +103,36 @@ export function nextSrsState(
 }
 
 /**
- * 出題対象になりうる単語帳の行か。
+ * 出題対象になりうる単語帳の行か。単語帳の絞り込みは、ここ1箇所だけで行う。
  *
- * entry_type = 'word' だけ。文法パターンは対象外 — api/learned/scan が同じ
- * 理由で除外しているのに加えて、こちらは「日本語 → 意味」の一問一答なので、
- * 〜てから のようなパターンは問いとして成立しない。
+ * ── ⚠️ entry_type を見ていないのは意図であって、漏れではない ──────────
+ * 単語も文法パターンも出題する。api/learned/scan は entry_type = 'word' に
+ * 絞っているので、同じ単語帳を読む2つの機能が逆のことをしているように見える
+ * が、両方とも正しい。やっていることが違う:
  *
- * meaning === word を弾くのは、意味の生成に失敗した行を出さないため。
- * api/vocabulary は AI が落ちていると meaning に word 自身を入れて保存する
- * （route.ts の `meaning: meaning || word`）ので、そのまま出すと「買い物 →
- * 買い物」という答えの無いカードになる。
+ *   scan は「照合」する。日記の原文をトークンに割って、保存した表現が実際に
+ *   出てきたかを判定する。〜てから のようなパターンは形態素境界に乗らないので、
+ *   その方法では原理的に判定できない（scan/route.ts:97-99）。
+ *
+ *   SRS は「出題」する。カードを出して、学習者が自分で正誤を申告する。照合を
+ *   一切しないので、境界の問題がそもそも起きない。
+ *
+ * つまり scan の制約は SRS には当てはまらない。将来この非対称を「片方のバグ」
+ * と見て揃えないこと。揃えるなら、文法を出題から外すのではなく、scan 側で
+ * 照合以外の判定手段を用意するのが筋になる。
+ *
+ * ⚠️ 引数の entry_type は使わないが、型からは外さない。呼び出し側3箇所が
+ * すべて entry_type を持つ行を渡していて、外すと「見ていない」ことが呼び出し
+ * 側から読めなくなる。使わない引数として残っていること自体が記録になる。
+ *
+ * ── meaning === word を弾く理由 ────────────────────────────────
+ * 意味の生成に失敗した行を出さないため。api/vocabulary は AI が落ちていると
+ * meaning に word 自身を入れて保存する（`meaning: meaning || word`、文法なら
+ * `explanation || word`）ので、そのまま出すと「買い物 → 買い物」「〜てから →
+ * 〜てから」という答えの無いカードになる。単語と文法で同じ形の壊れ方をする
+ * ので、条件も1つで足りる。
  */
 export function isReviewable(entry: { entry_type?: string | null; word: string; meaning: string }): boolean {
-  if ((entry.entry_type ?? "word") !== "word") return false;
   if (!entry.meaning || !entry.word) return false;
   return entry.meaning.trim() !== entry.word.trim();
 }

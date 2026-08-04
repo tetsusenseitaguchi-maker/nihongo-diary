@@ -104,11 +104,17 @@ export async function getDueSummary(
   // 「1往復ぶん」という前提が崩れる。
   const [profileRes, entryRes, srsRes, usageRes] = await Promise.all([
     supabase.from("profiles").select("plan").eq("id", userId).single(),
+    // 単語帳の全行を読む。単語も文法パターンも出題するので entry_type では
+    // 絞らない。
+    //
+    // ⚠️ ここに .eq("entry_type", "word") を復活させないこと。絞り込みは
+    // 下の isReviewable() が1箇所で行う決まりで、SQL 側にもう一枚フィルタを
+    // 置くと、srs.ts のコメントを読まずに片側だけ元へ戻せてしまう。文法を
+    // 出題する理由（照合ではなく出題だから）はあちらに書いてある。
     supabase
       .from("vocabulary_entries")
       .select("id, word, reading, meaning, example_jp_ruby, example_translation, jlpt_level, entry_type")
       .eq("user_id", userId)
-      .eq("entry_type", "word")
       .order("created_at", { ascending: true }),
     supabase
       .from("vocabulary_srs")
@@ -141,7 +147,8 @@ export async function getDueSummary(
   const usedToday = limit === null ? 0 : ((usageRes.data?.review_count as number | undefined) ?? 0);
   const remaining = limit === null ? Number.POSITIVE_INFINITY : Math.max(0, limit - usedToday);
 
-  // entry_type と meaning<>word の両方をここで落とす。判定は srs.ts の純関数。
+  // 出題できない行を落とす唯一の場所。判定は srs.ts の純関数で、
+  // api/vocabulary/srs/answer も同じ関数を呼ぶので、出題と採点で条件がずれない。
   const reviewable = (entryRes.data ?? []).filter((e) =>
     isReviewable(e as { entry_type?: string | null; word: string; meaning: string }),
   ) as unknown as Omit<SrsCard, "stage" | "isNew">[];

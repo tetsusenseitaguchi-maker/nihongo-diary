@@ -169,7 +169,25 @@ export function FlashcardSession({ initial }: { initial: DueSummary }) {
   }
 
   // ── 出題中 ────────────────────────────────────────────
+  const isGrammar = card.entry_type === "grammar";
+  // 文法は reading が空文字で保存されるが、safeRubyNotation は空を「読みなし」
+  // として素通しし、語をそのまま返す（isReadingConsistent の !reading で false）。
+  // 壊れないので分岐は要らない — ただし下では NoRuby を通すので使わない。
   const wordText = safeRubyNotation(card.word, card.reading ?? "");
+  /**
+   * 読み上げに送る文字列。
+   *
+   * 文法は例文を読ませる。パターンのラベル（〜てから）は先頭の 〜 を合成側が
+   * どう扱うか不定で、学習者にとって意味のある音にならない。聞いて確かめる
+   * 価値があるのはその文法が使われた文のほうで、example_jp_ruby はルビ付きの
+   * まま入っているので rubyToSsml が <sub alias> に変換して読みも正しく出る。
+   * 例文が無い行だけ VocabularyList と同じ挙動（語そのもの）に戻る。
+   *
+   * ⚠️ kind は "word" のまま。共有バケット（tts-shared）を使い続けるための
+   * 指定で、同じ例文は全学習者でキャッシュを共有し、2回目以降は音声枠を
+   * 消費しない。"diary" にすると個人バケットに落ちてこの利点が消える。
+   */
+  const speechText = isGrammar ? (card.example_jp_ruby ?? card.word) : wordText;
   // 採点が済んだ枚数。今めくっているカードはまだ数えない。
   const done = index;
 
@@ -202,12 +220,21 @@ export function FlashcardSession({ initial }: { initial: DueSummary }) {
       </div>
 
       <Card accent="none" className="p-6">
+        {/* 文法と JLPT は排他 — 文法エントリに jlpt_level は付かない。
+            VocabularyList と同じ組み合わせ。バッジが要るのは、文法カードだと
+            jlpt_level が null で「New」しか出ず、意味を答えるのか使い方を
+            思い出すのかが表から分からなくなるため。vocab.grammar は8言語とも
+            翻訳済みなので新規キーは要らない。 */}
         <div className="flex flex-wrap items-center gap-1.5">
-          {card.jlpt_level && (
+          {isGrammar ? (
+            <span className="rounded-full bg-moss-600 px-2.5 py-0.5 text-xs font-bold text-cream">
+              {t("vocab.grammar")}
+            </span>
+          ) : card.jlpt_level ? (
             <span className="rounded-full bg-pine px-2.5 py-0.5 text-xs font-bold text-cream">
               {card.jlpt_level}
             </span>
-          )}
+          ) : null}
           {card.isNew && (
             <span className="rounded-full bg-mint px-2.5 py-0.5 text-xs font-bold text-pine">
               {t("flashcards.newBadge")}
@@ -215,11 +242,23 @@ export function FlashcardSession({ initial }: { initial: DueSummary }) {
           )}
         </div>
 
-        {/* 表の語は裏でも消さない。答え合わせは対で見えているときにいちばん効く。 */}
+        {/* 表の語は裏でも消さない。答え合わせは対で見えているときにいちばん効く。
+
+            文法は NoRuby を通し、一段小さく組む。api/correct のプロンプトは
+            nextGrammar[].pattern にルビを入れることを禁じている（route.ts:147）
+            が、モデルが規則を破ることはあるので、VocabularyList と同じ防御を
+            置く。サイズを落とすのは 〜ことができる のような長いパターンが
+            text-3xl だと折り返すため。 */}
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <Furigana text={wordText} className="font-jp text-3xl font-bold text-pine" />
+          {isGrammar ? (
+            <p className="min-w-0 font-jp text-2xl font-bold leading-snug text-pine">
+              <NoRuby text={card.word} />
+            </p>
+          ) : (
+            <Furigana text={wordText} className="font-jp text-3xl font-bold text-pine" />
+          )}
           <PlayButton
-            text={wordText}
+            text={speechText}
             kind="word"
             size="md"
             label={t("audio.playWord")}
