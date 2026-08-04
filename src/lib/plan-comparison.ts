@@ -1,13 +1,22 @@
 import { PLAN_LIMITS } from "@/lib/plans";
 import { RECHECK_LIMITS } from "@/lib/recheck-limits";
+import { AUDIO_DAILY_LIMITS } from "@/lib/audio-limits";
+import { WORD_LOOKUP_DAILY_LIMITS } from "@/lib/word-lookup-limits";
 
 /**
  * Row data for the plan comparison table.
  *
- * A read-only consumer of PLAN_LIMITS and RECHECK_LIMITS — the same pattern
- * recheck-limits.ts already uses and documents, and for the same reason:
- * billing-adjacent numbers get imported, never copied. Nothing here writes
- * back, and plans.ts is untouched. normalizePlan is not imported at all.
+ * A read-only consumer of PLAN_LIMITS, RECHECK_LIMITS, AUDIO_DAILY_LIMITS and
+ * WORD_LOOKUP_DAILY_LIMITS — the same pattern recheck-limits.ts already uses
+ * and documents, and for the same reason: billing-adjacent numbers get
+ * imported, never copied. Nothing here writes back, and plans.ts is untouched.
+ * normalizePlan is not imported at all.
+ *
+ * The two audio/lookup maps cost nothing to pull in: both modules import only
+ * @/lib/plans, and audio-limits.ts already ships to the client through
+ * PlayButton and DictationExercise. That is what separates them from
+ * FREE_VOCAB_LIMIT below, which is stuck inside a route module and has to be
+ * duplicated.
  *
  * Every row carries the line that actually enforces it. The point of a
  * comparison table over feature cards is that it states specific numbers, and
@@ -69,11 +78,17 @@ function perDay(limit: number | null): Cell {
 export const COMPARISON_GROUPS: ComparisonGroup[] = [
   // ───────────────────────────────────────────── Everyday use
   //
-  // The four `emphasis` rows lead, and they lead together: 1→10→25,
-  // 300→500, 10→unlimited, 3→unlimited. Read top-down, the difference
-  // between the plans lands before any yes/no row dilutes it. This ordering
-  // is the whole reason for the table — the old cards listed Free's ten
-  // bullets against Plus's five and made Free look like the richer tier.
+  // The five `emphasis` rows lead, and they lead together: 1→10→25,
+  // 300→500, 10→unlimited, 1→unlimited, 3→unlimited. Read top-down, the
+  // difference between the plans lands before any yes/no row dilutes it. This
+  // ordering is the whole reason for the table — the old cards listed Free's
+  // ten bullets against Plus's five and made Free look like the richer tier.
+  //
+  // `audio` earns its place in that block and `wordLookup` deliberately does
+  // not. One clip a day is a limit a Free learner meets every single day; the
+  // twenty lookups are a ceiling on abuse that word-lookup-limits.ts measured
+  // as reached on 4% of days. Emphasising the second would sell a limit that
+  // barely binds.
   {
     id: "daily",
     headingKey: "plans.group.daily",
@@ -120,6 +135,51 @@ export const COMPARISON_GROUPS: ComparisonGroup[] = [
         },
       },
       {
+        // source: AUDIO_DAILY_LIMITS (audio-limits.ts). api/tts:210 resolves
+        // it through audioLimitFor() and only a metered plan — Free — ever
+        // reaches try_use_audio_daily.
+        //
+        // ⚠️ "New" is not decoration in the label. The cache lookup sits ABOVE
+        // the claim (api/tts:172), so a clip the learner has already heard
+        // replays without touching the counter, and one a day only works
+        // because of it — audio-limits.ts calls that ordering load-bearing.
+        // A label reading "Audio per day" would understate the free tier.
+        //
+        // The unit lives in the label for the same reason it does two rows
+        // up: the cell is a bare "1", and inline under it Free reads
+        // "Free: 1", which says nothing on its own.
+        id: "audio",
+        labelKey: "plans.row.audio",
+        noteKey: "plans.note.audio",
+        emphasis: true,
+        cells: {
+          free: perDay(AUDIO_DAILY_LIMITS.free), // 1
+          plus: perDay(AUDIO_DAILY_LIMITS.plus), // unlimited
+          pro: perDay(AUDIO_DAILY_LIMITS.pro), // unlimited
+        },
+      },
+      {
+        // The companion to the row above: that one is how much, this one is
+        // how far. Three separate yes/no rows would have said the same thing
+        // — natural-audio.ts:91 (Free hears one sentence, paid the whole
+        // text), CorrectionResult.tsx:477 (before→after, paid only) and :555
+        // (vocabulary examples, paid only) — in three near-identical "— ✓ ✓"
+        // lines, which is exactly the shape this table exists to avoid.
+        //
+        // ⚠️ Free is not "one sentence" flat, and writing that would understate
+        // it: the headword 🔊 stays on Free (CorrectionResult.tsx:568 explains
+        // why — dictionary words hit the shared bucket). Hence "One sentence +
+        // words" rather than a bare sentence count.
+        id: "audioScope",
+        labelKey: "plans.row.audioScope",
+        noteKey: "plans.note.audioScope",
+        cells: {
+          free: { kind: "i18n", key: "plans.value.audioScopeFree" },
+          plus: { kind: "i18n", key: "plans.value.audioScopeAll" },
+          pro: { kind: "i18n", key: "plans.value.audioScopeAll" },
+        },
+      },
+      {
         // source: FREE_VOCAB_LIMIT in api/vocabulary/route.ts:12, whose gate
         // (line 68) tests `plan === "free"` and nothing else — plus and pro
         // are both uncapped. The "up to 100 items" that the old Plus card
@@ -137,6 +197,29 @@ export const COMPARISON_GROUPS: ComparisonGroup[] = [
           free: { kind: "num", n: 3 },
           plus: { kind: "i18n", key: "plans.value.unlimited" },
           pro: { kind: "i18n", key: "plans.value.unlimited" },
+        },
+      },
+      {
+        // source: WORD_LOOKUP_DAILY_LIMITS (word-lookup-limits.ts), resolved
+        // by api/word-lookup:112. Only Free is a number, so only Free reaches
+        // try_use_word_lookup.
+        //
+        // Next to the vocabulary book on purpose: both are what a learner
+        // reaches for mid-sentence, and neither is metered by the translation
+        // counter above — word_lookup_usage is its own table precisely so that
+        // reading someone else's diary cannot cost you the word you needed to
+        // write your own.
+        //
+        // Not `emphasis` — see the note at the top of this group. Same "new
+        // only" caveat as the audio row: the shared cache is read above the
+        // claim, so twenty means twenty words nobody has looked up yet.
+        id: "wordLookup",
+        labelKey: "plans.row.wordLookup",
+        noteKey: "plans.note.wordLookup",
+        cells: {
+          free: perDay(WORD_LOOKUP_DAILY_LIMITS.free), // 20
+          plus: perDay(WORD_LOOKUP_DAILY_LIMITS.plus), // unlimited
+          pro: perDay(WORD_LOOKUP_DAILY_LIMITS.pro), // unlimited
         },
       },
       {
@@ -237,22 +320,25 @@ export const COMPARISON_GROUPS: ComparisonGroup[] = [
         // working feature, not a locked one, but "basic summary" oversold
         // a single number: paid is what adds frequentWords, mistakeNotes
         // and aiSuggestions.
+        //
+        // The note carries what "Full" contains, and it replaced a row. There
+        // used to be a `reportStreak` row here — label "Streak", free cell a
+        // bare "no" — and it was wrong twice over. It read as though a Free
+        // learner had no streak at all, when dashboard/page.tsx:134 and :198
+        // render one on every plan with no plan check anywhere near them; and
+        // of the four things the Free early-return above actually withholds
+        // (frequentWords, mistakeNotes, aiSuggestions, streak) it named only
+        // the one that was not really withheld. Folding all four into this
+        // note says more, in one row instead of two, and the last sentence is
+        // there to undo the impression the deleted row left.
         id: "weeklyReport",
         labelKey: "plans.row.weeklyReport",
+        noteKey: "plans.note.weeklyReport",
         cells: {
           free: { kind: "i18n", key: "plans.value.reportDaysOnly" },
           plus: { kind: "i18n", key: "plans.value.reportFull" },
           pro: { kind: "i18n", key: "plans.value.reportFull" },
         },
-      },
-      {
-        // source: WeeklyReport.tsx renders the streak line under
-        // `isPlus && !!data.streak`, and the route only computes streak
-        // after the Free early-return above.
-        id: "reportStreak",
-        labelKey: "plans.row.reportStreak",
-        noteKey: "plans.note.reportStreak",
-        cells: { free: { kind: "no" }, plus: { kind: "yes" }, pro: { kind: "yes" } },
       },
     ],
   },
@@ -262,8 +348,18 @@ export const COMPARISON_GROUPS: ComparisonGroup[] = [
  * i18n keys the table needs that are not attached to a row.
  *
  * Kept here so this file is the complete inventory of what the table asks
- * of the message catalogue: 11 row labels + 3 group headings + 6 value
- * phrases + 7 notes above, plus the 7 below — 34 keys in all.
+ * of the message catalogue: 13 row labels + 3 group headings + 8 value
+ * phrases + 10 notes above, plus the 8 below — 42 keys in all.
+ *
+ * ⚠️ Counting `plans.*` in en.json gives 44, and the two extra are not a
+ * drift: PlanComparisonTable owns plans.freeInline and plans.freeInlineNo,
+ * which exist only because of how that component lays Free out, and it says
+ * so where it declares them. 42 is this file's share.
+ *
+ * There is no English fallback anywhere in i18n-server.ts — getServerT does
+ * `messages[key] ?? key` — so a key missing from one locale renders its own
+ * name on the purchase screen. Every key counted here has to exist in all
+ * eight locale files, not just en.json.
  *
  * `teacher` is rendered under the table inside <NativeGate>: it names a USD
  * price and a tier that is not an IAP product, so it must not reach the
@@ -276,6 +372,17 @@ export const COMPARISON_CHROME_KEYS = {
   /** Accessible name for the "?" that opens a row's note. */
   noteToggle: "plans.a11y.noteToggle",
   commonFeatures: "plans.footer.commonFeatures",
+  /**
+   * Second half of the "every plan gets this" footer, split off because one
+   * sentence carrying twelve items is a grey block nobody reads.
+   *
+   * ⚠️ The shadowing clause must keep its subject — "recording yourself
+   * reading aloud". Shortened to "reading aloud", it collides head-on with
+   * the audio row above it, which says a Free learner gets one a day. The
+   * recording is free on every plan (SHADOWING_DAILY_LIMITS is null
+   * throughout); hearing the model sentence is the metered half.
+   */
+  commonSocial: "plans.footer.commonSocial",
   teacherTitle: "plans.teacher.title",
   teacherDesc: "plans.teacher.desc",
 } as const;

@@ -263,8 +263,22 @@ export function PlanComparisonTable({
 
       {/* The rows that would be a tick under every plan, moved out of the
           table: three identical columns say "these tiers are alike" at
-          exactly the moment the table is trying to show they differ. */}
-      <p className="text-center text-xs leading-relaxed text-muted">{t(K.commonFeatures)}</p>
+          exactly the moment the table is trying to show they differ.
+
+          Two paragraphs rather than one. The list grew from five items to
+          twelve when the ungated social features were added to it, and at
+          that length a single sentence is a grey block that gets skipped —
+          which would waste the only place the table admits how much comes
+          free. Split on the seam that was already there: what you do with
+          your own diary, then what you do with everyone else's.
+
+          Wrapped, not left as two siblings: the parent is space-y-5, which
+          would put as much air between the two halves as between the footer
+          and the purchase buttons and undo the point of splitting them. */}
+      <div className="space-y-1.5">
+        <p className="text-center text-xs leading-relaxed text-muted">{t(K.commonFeatures)}</p>
+        <p className="text-center text-xs leading-relaxed text-muted">{t(K.commonSocial)}</p>
+      </div>
 
       {/* Teacher is not a column: unbuyable, and PLAN_LIMITS gives it the same
           limits as Pro, so it would duplicate that column cell for cell. Web
