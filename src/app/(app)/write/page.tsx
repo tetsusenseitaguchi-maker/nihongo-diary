@@ -225,6 +225,9 @@ export default function WritePage() {
   const [justSaveError, setJustSaveError] = useState<string | null>(null);
   const [seekingPeer, setSeekingPeer] = useState(false);
   const [seekPeerError, setSeekPeerError] = useState<string | null>(null);
+  // Armed state for the "load a sample" link, which overwrites the editor.
+  // Only reachable when there is text to lose — see the control itself.
+  const [confirmSample, setConfirmSample] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [places, setPlaces] = useState<DiaryPlace[]>([]);
@@ -1082,12 +1085,6 @@ export default function WritePage() {
 
               {/* hints — one collapsed band; hint content never touches the text */}
               <HintsSection>
-                {prompt && (
-                  <WritingPromptCard
-                    prompt={prompt}
-                    onAnother={() => setPrompt((p) => randomPromptExcept(p?.id))}
-                  />
-                )}
                 <TrainDiagram />
               </HintsSection>
 
@@ -1098,6 +1095,30 @@ export default function WritePage() {
                   scan result can look up readings, but the row still shows the
                   three closest to graduating, exactly as before. */}
               <SavedWordsRow words={savedWords.slice(0, 3)} />
+
+              {/*
+                The prompt, out of the Hints band and directly above the editor.
+
+                The band exists so the editor is not pushed down behind blocks
+                of reading, and that reasoning survives intact — because the
+                block it was written about is the train diagram, still inside
+                it. Collapsed, this card is three lines: the label, the prompt,
+                its English. Its own two disclosures keep the vocabulary and
+                the model answer folded, so someone who already knows what to
+                write still reads nothing. Nothing auto-expands here either.
+
+                What the band could not do was be seen. The prompt is the one
+                hint that answers "I do not know what to write about", and it
+                was the hint nobody opened. It sits next to WordLookup now
+                because the two are the same kind of help — the last things
+                read before the cursor, both deliberately outside the fold.
+              */}
+              {prompt && (
+                <WritingPromptCard
+                  prompt={prompt}
+                  onAnother={() => setPrompt((p) => randomPromptExcept(p?.id))}
+                />
+              )}
 
               {/* 「これ日本語でなんて言う？」 — 本文のすぐ上に置く。書いていて
                   詰まったときに目を落とす先がここで、Hints の帯と違って畳まれ
@@ -1140,12 +1161,51 @@ export default function WritePage() {
                     ? t("write.charCount", { len, max: maxChars })
                     : t("write.charCountPlain", { len })}
                 </span>
-                <button
-                  onClick={() => setText(sampleDraft)}
-                  className="text-xs font-semibold text-moss-600 hover:text-pine"
-                >
-                  <Furigana text="サンプルを入(い)れる" /> · {t("write.loadSample")}
-                </button>
+                {/*
+                  Loading the sample replaces the whole editor — it is a
+                  finished four-sentence diary, so there is nowhere to insert
+                  it into a draft that would still read as Japanese. That makes
+                  it the one control here that can destroy work, and until now
+                  it did so on a single tap with nothing in the way.
+
+                  So: one tap when the editor is empty, where there is nothing
+                  to lose, and a confirm step once there is. Same showConfirm
+                  state pattern as DeleteDiaryButton, and window.confirm is
+                  avoided for the same reason it is avoided there — a native
+                  dialog in the iOS WebView is not this app.
+
+                  Inline rather than DeleteDiaryButton's full-screen modal: the
+                  trigger is a text link sharing a row with the character
+                  count, and a backdrop over the whole page for a local,
+                  undoable-by-retyping action would be out of scale with it.
+                */}
+                {confirmSample ? (
+                  <span className="flex items-center gap-2 text-xs">
+                    <span className="text-muted">{t("write.sampleConfirm.title")}</span>
+                    <button
+                      onClick={() => { setText(sampleDraft); setConfirmSample(false); }}
+                      className="font-semibold text-apricot hover:underline"
+                    >
+                      {t("write.sampleConfirm.replace")}
+                    </button>
+                    <button
+                      onClick={() => setConfirmSample(false)}
+                      className="font-semibold text-muted hover:text-ink"
+                    >
+                      {t("write.sampleConfirm.cancel")}
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => {
+                      if (text.trim()) setConfirmSample(true);
+                      else setText(sampleDraft);
+                    }}
+                    className="text-xs font-semibold text-moss-600 hover:text-pine"
+                  >
+                    <Furigana text="サンプルを入(い)れる" /> · {t("write.loadSample")}
+                  </button>
+                )}
               </div>
 
               {/* sentence starters */}
@@ -1154,10 +1214,20 @@ export default function WritePage() {
                   <Furigana text="使(つか)ってみよう！" /> <span className="text-muted">Try a sentence starter</span>
                 </p>
                 <div className="flex flex-wrap gap-2">
+                  {/* insertAtCursor, not setText. These used to be written as
+                      `p ? p : starter`, which meant that the moment there was
+                      anything in the editor the chip did nothing at all — no
+                      message, no movement, a button that looked broken to
+                      anyone who had already started a sentence. A starter is
+                      just as useful at the head of the second sentence as the
+                      first, so it goes where the cursor is, the way the word
+                      lookup below already works. The ruby is stripped before
+                      insertion for the reason WordLookup documents: what lands
+                      in the diary is what the learner would have typed. */}
                   {templates.slice(0, 5).map((t) => (
                     <button
                       key={t.id}
-                      onClick={() => setText((p) => (p ? p : t.starter.replace(/[（(][ぁ-んァ-ヶー]+[）)]/g, "")))}
+                      onClick={() => insertAtCursor(t.starter.replace(/[（(][ぁ-んァ-ヶー]+[）)]/g, ""))}
                       className="rounded-full border border-line bg-paper px-3 py-1 font-jp text-sm text-pine hover:border-moss hover:bg-mint/60"
                     >
                       <Furigana text={t.starter} />

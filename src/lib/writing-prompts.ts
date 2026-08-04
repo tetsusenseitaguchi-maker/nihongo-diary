@@ -24,6 +24,28 @@ export type WritingPrompt = {
   en: string;
   /** 5–7 words the learner can lean on. */
   words: { jp: string; en: string }[];
+  /**
+   * One way this prompt could be answered — a model to read, not a template.
+   *
+   * Optional, and the card simply omits the section when it is absent, so the
+   * thirty can be written one at a time instead of all at once. A prompt with
+   * no example looks exactly as it does today.
+   *
+   * Same 漢字(かな) notation as `jp` above — <Furigana> renders both, and the
+   * notation rule at the top of this file applies unchanged. `en` is a plain
+   * English gloss shown in every locale, matching `words` and the Write-page
+   * tips; it is not an i18n key.
+   *
+   * ⚠️ Deliberately has no `insert` counterpart, and that absence is the
+   * design. support/page.tsx's TEMPLATES carries one because it feeds
+   * /write?starter=; this must never reach the textarea. Everything the
+   * learner saves in original_text has to be text they typed — learned-match.ts
+   * treats that column as "what the learner wrote themselves" and counts
+   * saved vocabulary as used on the strength of it. A one-tap copy of a model
+   * answer would put an authored sentence there and quietly graduate words
+   * nobody practised. The card says as much in write.prompt.exampleNote.
+   */
+  example?: { jp: string; en: string };
 };
 
 // FIXED order — the daily prompt is chosen by index, so reordering this array
