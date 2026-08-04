@@ -6,7 +6,6 @@ import dynamicLoad from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui";
 import { Icon } from "@/components/icons";
-import { GoalRing } from "@/components/GoalRing";
 import { Attachments } from "@/components/Attachments";
 import { CorrectionResult } from "@/components/CorrectionResult";
 import { CorrectionTopBlock } from "@/components/CorrectionTopBlock";
@@ -48,6 +47,28 @@ const DiaryMapPicker = dynamicLoad(
 // Max rechecks allowed per corrected diary entry (ephemeral, client-only —
 // resets when a fresh correction is run). No plan/billing/usage-counter involved.
 const RECHECK_LIMIT = 3;
+
+/**
+ * How full the entry has to be before the counter starts showing the cap.
+ *
+ * A fraction, not a character count, so it follows PLAN_LIMITS wherever that
+ * goes and reads the same for Free (300 → 240) and paid (500 → 400). Nothing
+ * here changes what is allowed; the cap is enforced exactly as before, in
+ * api/correct and by `overLimit` below. This only decides when the number
+ * stops being private.
+ *
+ * ── Why 80% ──────────────────────────────────────────────────────────────
+ * Measured, not guessed. word-lookup-limits.ts records the production shape
+ * of a Free diary: the median is 67 characters and the 90th percentile is
+ * 169, against a 300 cap. 240 sits well past both, so the great majority of
+ * diaries — including nine in ten Free ones — never see a denominator at all,
+ * and the ones that do are genuinely heading for the wall.
+ *
+ * The runway matters as much as the rarity: 60 characters left on Free is
+ * about three sentences, enough to finish the thought rather than have the
+ * buttons go dead mid-word. 85% would leave two, which is tight.
+ */
+const CHAR_COUNTER_REVEAL_RATIO = 0.8;
 
 const levels: Level[] = ["N5", "N4", "N3", "Natural"];
 const styles: CorrectionStyle[] = ["Light", "Natural", "Native"];
@@ -474,7 +495,12 @@ export default function WritePage() {
   const len = text.trim().length;
   const maxChars = limits.maxChars;
   const overLimit = len > maxChars;
-  const goalPct = Math.min(100, Math.round((len / 50) * 100));
+  // Show the cap only once the entry is actually approaching it. Below this
+  // the counter reports a plain number: a running "{len} / {max}" from the
+  // first keystroke turns the plan's ceiling into a target to fill, which is
+  // the opposite of what a 300-character cap on a 67-character median diary
+  // means. The cap itself is untouched — see CHAR_COUNTER_REVEAL_RATIO.
+  const showCharCap = len >= maxChars * CHAR_COUNTER_REVEAL_RATIO;
 
   async function handleCorrect() {
     if (!text.trim() || overLimit) return;
@@ -1098,8 +1124,21 @@ export default function WritePage() {
               />
 
               <div className="mt-3 flex items-center justify-between">
+                {/* Three states, one element. Plain count while there is room,
+                    the cap once the entry nears it, and the apricot treatment
+                    on top of that once it is over — that last state is
+                    unchanged, deliberately: it is what tells someone their
+                    text will not save, and softening it would leave them
+                    writing past a wall they cannot see.
+
+                    Rendered in every state rather than hidden below the
+                    threshold, because the row is justify-between and the
+                    "load a sample" button on the right would slide across to
+                    fill the gap the moment the counter vanished. */}
                 <span className={`text-sm ${overLimit ? "font-semibold text-apricot" : "text-muted"}`}>
-                  {t("write.charCount", { len, max: maxChars })}
+                  {showCharCap
+                    ? t("write.charCount", { len, max: maxChars })
+                    : t("write.charCountPlain", { len })}
                 </span>
                 <button
                   onClick={() => setText(sampleDraft)}
@@ -1249,13 +1288,46 @@ export default function WritePage() {
 
         {/* Right rail */}
         <div className="space-y-4">
-          {/* Today's goal */}
+          {/*
+            Obie's note — the first thing in the rail, and the last thing read
+            before writing starts.
+
+            It used to be "Today's goal: 日記を書こう（50文字〜）" over a ring
+            that filled at fifty characters. Two problems, and the second is
+            the one that mattered. The ring showed "0%" the moment the page
+            loaded, which is the scolding dashboard/page.tsx already refuses to
+            draw next to a zero streak; and the fifty was contradicted by
+            every other surface the learner passes through — the tour says one
+            sentence is plenty, the dashboard empty state says even one
+            sentence counts, the evening push says one sentence keeps it going.
+            The sticky note two cards below this one said "短くてもいいよ" in
+            so many words. Only this card disagreed, and it is the one standing
+            closest to the cursor.
+
+            So the number is gone rather than lowered. Any ring needs a
+            denominator and any denominator reads as a target; fifteen would
+            have been a smaller target, not an absent one. What replaces it is
+            the half the old card never had: what the learner gets back. 🐾 is
+            a static glyph, keeping the flex/gap-4 shape the ring left behind
+            without reintroducing a percentage.
+
+            The Japanese line stays in the TSX rather than moving into the
+            catalogue. Every ruby line in the app is written this way — there
+            is not one 漢字(かな) value among the 1070 keys — because the
+            Japanese is the thing being learned and does not change with the
+            interface language.
+          */}
           <div className="flex items-center gap-4 rounded-[var(--radius-card)] border border-line bg-paper p-5 shadow-card">
-            <GoalRing value={goalPct} size={60} />
+            <span className="grid h-[60px] w-[60px] shrink-0 place-items-center rounded-full bg-mint text-2xl" aria-hidden>
+              🐾
+            </span>
             <div>
-              <p className="font-serif font-bold text-pine">{t("write.todaysGoal")}</p>
-              <p className="font-jp text-sm text-ink/70"><Furigana text="日記(にっき)を書(か)こう（50文字(もじ)〜）" /></p>
-              <p className="text-xs text-muted">Write a diary (50+ characters)</p>
+              <p className="font-serif font-bold text-pine">{t("write.obieNote.title")}</p>
+              <Bilingual
+                jp="一文(いちぶん)でいいよ。ちゃんと直(なお)すから。"
+                en={t("write.obieNote.en")}
+                jpClassName="text-sm text-ink/70"
+              />
             </div>
           </div>
 
@@ -1274,20 +1346,16 @@ export default function WritePage() {
             </ul>
           </div>
 
-          {/* Obie tip sticky note */}
-          <div className="sticky-note relative rotate-1 rounded-xl p-4">
-            <div className="absolute -top-2 left-1/2 h-4 w-16 -translate-x-1/2 rounded-sm bg-pine/15" aria-hidden />
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🐾</span>
-              <p className="text-sm font-bold text-pine">{t("dashboard.obieTip")}</p>
-            </div>
-            <div className="mt-1 text-sm leading-relaxed text-ink/80">
-              <Bilingual
-                jp="短(みじか)くてもいいよ。続(つづ)けることがいちばん！"
-                en="Short is fine — keeping it up is what matters most!"
-              />
-            </div>
-          </div>
+          {/* The Obie sticky note that used to sit here is gone. It said
+              「短くてもいいよ。続けることがいちばん！」— which is now the job
+              of the card at the top of this rail, said before the learner
+              starts rather than after two other cards. Keeping both would have
+              put the same reassurance in the rail twice while the thing it was
+              reassuring against had already been removed. The "keep it up"
+              half moved to where it lands better: the line under the
+              correction result, where something has just been finished.
+
+              dashboard.obieTip is still used by /dashboard — the key stays. */}
         </div>
       </div>
 
@@ -1363,6 +1431,30 @@ export default function WritePage() {
               </Button>
             )}
           </div>
+          {/*
+            The one place in the app that says what a sentence a day adds up
+            to, and it says it here because here is where something has just
+            been finished. Before writing it would be another number to live
+            up to; after the correction it is the receipt.
+
+            Deliberately arithmetic rather than a count. The page holds no
+            entry total — it never loads the learner's other diaries — so a
+            real tally would mean a new query, and this needs none: one a day
+            is thirty a month whoever is reading it, on their first diary as
+            much as their fortieth.
+
+            ⚠️ Outside CorrectionTopBlock on purpose. That component renders
+            correction.obieCheer, which the model writes fresh for this diary
+            (api/correct's prompt 17). A fixed line inside the same 🐾 card
+            would make the personal one look canned. This sits above it, in
+            the section, and is not attributed to Obie at all.
+          */}
+          <Bilingual
+            jp="一文(いちぶん)ずつでも、30日(にち)で30文(ぶん)。"
+            en={t("write.afterCorrection.en")}
+            className="text-sm text-ink/70"
+            enClassName="text-muted"
+          />
           {saveError && (
             <p className="rounded-lg bg-apricot/10 px-3 py-2 text-sm text-apricot">
               {saveError}
