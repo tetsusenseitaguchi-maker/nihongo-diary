@@ -11,6 +11,7 @@ import { ManageSubscriptionButton } from "@/components/ManageSubscriptionButton"
 import { DeleteAccountButton } from "@/components/DeleteAccountButton";
 import { DiscoveryOptOutToggle } from "@/components/DiscoveryOptOutToggle";
 import { DailyReviewPushToggle } from "@/components/DailyReviewPushToggle";
+import { ReviewTargetSelector } from "@/components/ReviewTargetSelector";
 import { RestorePurchasesButton } from "@/components/RestorePurchasesButton";
 import { computeStats, type DiaryRow } from "@/lib/diary";
 import { getServerT } from "@/lib/i18n-server";
@@ -72,6 +73,16 @@ export default async function ProfilePage() {
     .from("profiles")
     .select("daily_review_push")
     .eq("id", user.id)
+    .maybeSingle();
+
+  // 復習枚数の設定。テーブルが別なのは、この値が plan とセットで解決される
+  // ものだから — profiles の select に足すと、列が1つ無いだけで行ごと落ちて
+  // normalizePlan(undefined) が全員を Free にする。行が無ければ未設定で、
+  // プラン既定（Free 5 / Plus 30 / Pro 無制限）に解決される。
+  const { data: reviewPref } = await supabase
+    .from("vocab_review_settings")
+    .select("daily_target")
+    .eq("user_id", user.id)
     .maybeSingle();
 
   const [t, isNative] = await Promise.all([getServerT(), isNativeRequest()]);
@@ -184,6 +195,22 @@ export default async function ProfilePage() {
           {t("profile.language.desc")}
         </p>
         <LanguageSelector initialLanguage={profile?.preferred_language ?? "en"} />
+      </Card>
+
+      {/* Review settings — a card of its own, between language and privacy.
+          Not inside the privacy card: those two switches are both about what
+          the app does with or to the learner (who can see them, when to
+          message them). How many cards a day is a study preference. */}
+      <Card className="p-6">
+        <h2 className="mb-1 font-serif text-lg font-bold text-pine">
+          📖 {t("profile.review.title")}
+        </h2>
+        <p className="mb-3 text-sm text-muted">{t("profile.review.desc")}</p>
+        <ReviewTargetSelector
+          userId={user.id}
+          plan={profile?.plan}
+          initialTarget={(reviewPref?.daily_target as number | null | undefined) ?? null}
+        />
       </Card>
 
       {/* Privacy settings */}

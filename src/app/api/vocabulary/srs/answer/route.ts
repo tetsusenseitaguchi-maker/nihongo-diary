@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getTimezoneFromCookie, validateTZ } from "@/lib/tz-server";
 import { todayInTZ } from "@/lib/date-tz";
-import { normalizePlan } from "@/lib/plans";
-import { reviewLimitFor } from "@/lib/srs-limits";
+import { resolveLimit } from "@/lib/srs-server";
 import { isReviewable, nextSrsState, SRS_NEW_STAGE } from "@/lib/srs";
 
 export const runtime = "nodejs";
@@ -71,15 +70,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "not_reviewable" }, { status: 400 });
   }
 
-  // ── プランと「今日」 ───────────────────────────────────
-  const { data: prof } = await supabase
-    .from("profiles")
-    .select("plan, timezone")
-    .eq("id", user.id)
-    .single();
-
-  const plan = normalizePlan(prof?.plan);
-  const limit = reviewLimitFor(prof?.plan);
+  // ── 上限と「今日」 ────────────────────────────────────
+  // 上限は resolveLimit() から取る。getDueSummary が使うのと同じ関数なので、
+  // 画面が「今日 N 枚」と言う数と、ここで p_limit に渡る数が必ず一致する。
+  // プラン上限へのクランプ（Pro → Plus のダウングレード対策）もその中。
+  //
+  // ⚠️ profiles からは timezone だけを読む。plan は resolveLimit が自前で
+  // 読むので、ここで `select("plan, timezone")` に戻さないこと — plan を
+  // 読む select は狭いほどよく、列が1つ欠けただけで行ごと落ちて全員 Free に
+  // なる事故の形がそれだった。
+  const [{ plan, limit }, { data: prof }] = await Promise.all([
+    resolveLimit(supabase, user.id),
+    supabase.from("profiles").select("timezone").eq("id", user.id).single(),
+  ]);
 
   let tz = await getTimezoneFromCookie();
   const dbTz = prof?.timezone as string | null | undefined;

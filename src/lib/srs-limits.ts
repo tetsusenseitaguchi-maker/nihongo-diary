@@ -44,3 +44,57 @@ export const REVIEW_DAILY_LIMITS: Record<Plan, number | null> = {
 export function reviewLimitFor(plan: string | null | undefined): number | null {
   return REVIEW_DAILY_LIMITS[normalizePlan(plan)];
 }
+
+/**
+ * 設定できる最小値。
+ *
+ * 0 を通してはいけない。try_use_vocab_review は p_limit <= 0 で常に false を
+ * 返すので、0 が入ると復習が黙って死ぬ — エラーも出ず、カードが1枚も出ない
+ * 状態になる。DB 側の CHECK も 1 以上を要求しているが、そちらは保険で、
+ * 実際に効くのはここ。
+ */
+export const REVIEW_TARGET_MIN = 1;
+
+/**
+ * 有料プランの学習者が選べる枚数。UI のチップはこの2本から作る。
+ *
+ * 10 を最小にしてあるのは、Free の 5 より必ず多くするため。有料にして
+ * 選択肢が減るのは筋が通らない。Plus の 30 は REVIEW_DAILY_LIMITS.plus と
+ * 同じ値で、天井そのもの。
+ *
+ * Pro の「無制限」はここに数値として現れない。null で表すので、UI 側が
+ * 別の選択肢として足す。
+ */
+export const REVIEW_TARGET_PRESETS_PLUS = [10, 20, 30] as const;
+export const REVIEW_TARGET_PRESETS_PRO = [10, 20, 30, 50, 100] as const;
+
+/**
+ * プラン上限と学習者の希望から、その日の実効上限を出す。null = 無制限。
+ *
+ * ── ⚠️ クランプはここにしかない ────────────────────────────────
+ * vocab_review_settings は本人が insert / update できるテーブルなので、
+ * Plus の学習者が 100 を書き込むことは技術的にできる。UI が選択肢を絞るのは
+ * 親切のためであって、強制ではない。強制はこの関数が担う。
+ *
+ * 同じ仕組みが Pro → Plus のダウングレードも吸収する。DB に 100 が残った
+ * ままでも、plan が plus になった瞬間から実効値は 30 になる。ダウングレード
+ * 時に設定値を書き換えて回る処理は要らないし、書き換えてしまうと Pro に
+ * 戻したときに元の希望が失われる。
+ *
+ * ── 呼ぶ側が守ること ────────────────────────────────────────
+ * getDueSummary と api/vocabulary/srs/answer は、どちらも
+ * srs-server.ts の resolveLimit() 経由でこの関数に到達する。片方が
+ * reviewLimitFor() を直接呼ぶ形に戻すと、画面が「今日 50 枚」と言いながら
+ * RPC には 30 が渡る、という食い違いが起きる。
+ */
+export function resolveReviewLimit(
+  plan: string | null | undefined,
+  userTarget: number | null | undefined,
+): number | null {
+  const ceiling = reviewLimitFor(plan); // null = プランとして無制限
+  if (userTarget == null) return ceiling; // 未設定 → プラン既定（Pro なら無制限）
+
+  const wanted = Math.max(REVIEW_TARGET_MIN, Math.floor(userTarget));
+  if (ceiling === null) return wanted; // Pro: 天井が無いので希望をそのまま
+  return Math.min(wanted, ceiling); // それ以外: プラン上限で頭を打つ
+}

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { todayInTZ } from "@/lib/date-tz";
 import { normalizePlan, type Plan } from "@/lib/plans";
-import { reviewLimitFor } from "@/lib/srs-limits";
+import { resolveReviewLimit } from "@/lib/srs-limits";
 import { isReviewable, SRS_NEW_STAGE } from "@/lib/srs";
 
 /**
@@ -61,6 +61,49 @@ export interface DueSummary {
   today: string;
 }
 
+/**
+ * その学習者の今日の実効上限。null = 無制限。
+ *
+ * ⚠️ 上限を決める経路はこの関数1つだけ。getDueSummary も
+ * api/vocabulary/srs/answer もここを通る。片方が reviewLimitFor() を直接
+ * 呼ぶ形に戻すと、画面が言う枚数と RPC に渡る p_limit が食い違う。
+ *
+ * ⚠️ plan と設定値は別々のクエリで読む。畳み込んで
+ * `profiles.select("plan, ...")` にしないこと — 列が1つ無いだけで行ごと
+ * 落ち、normalizePlan(undefined) が全員を Free と判定する（timezone 列で
+ * 実際に起きた事故）。設定を別テーブルに置いたのはこのためで、
+ * vocab_review_settings が無い環境ではその1本だけが失敗し、プラン既定に
+ * 倒れる。
+ */
+export async function resolveLimit(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<{ plan: Plan; limit: number | null; target: number | null }> {
+  const [planRes, settingRes] = await Promise.all([
+    supabase.from("profiles").select("plan").eq("id", userId).single(),
+    supabase
+      .from("vocab_review_settings")
+      .select("daily_target")
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+
+  if (settingRes.error && !isSchemaMissing(settingRes.error)) {
+    console.error("[srs] review settings read failed:", settingRes.error.message);
+  }
+
+  const rawPlan = planRes.data?.plan as string | null | undefined;
+  // 読めなければ未設定扱い = プラン既定。安全な向きはこちらで、最悪でも
+  // 学習者が既定の枚数に戻るだけ。
+  const target = (settingRes.data?.daily_target as number | null | undefined) ?? null;
+
+  return {
+    plan: normalizePlan(rawPlan),
+    limit: resolveReviewLimit(rawPlan, target),
+    target,
+  };
+}
+
 /** 何も出せないときの答え。失敗時もこれに倒すので、呼ぶ側は例外を扱わなくてよい。 */
 function empty(plan: Plan, limit: number | null, today: string, usedToday = 0): DueSummary {
   return {
@@ -101,9 +144,10 @@ export async function getDueSummary(
   const today = todayInTZ(tz);
 
   // 4本を並列で投げる。直列にすると、これを Promise.all に並べた呼び出し側の
-  // 「1往復ぶん」という前提が崩れる。
-  const [profileRes, entryRes, srsRes, usageRes] = await Promise.all([
-    supabase.from("profiles").select("plan").eq("id", userId).single(),
+  // 「1往復ぶん」という前提が崩れる。resolveLimit も内部で2本を並列に投げる
+  // ので、全体では最も遅い1本ぶんで済む。
+  const [{ plan, limit }, entryRes, srsRes, usageRes] = await Promise.all([
+    resolveLimit(supabase, userId),
     // 単語帳の全行を読む。単語も文法パターンも出題するので entry_type では
     // 絞らない。
     //
@@ -127,9 +171,6 @@ export async function getDueSummary(
       .eq("usage_date", today)
       .maybeSingle(),
   ]);
-
-  const plan = normalizePlan(profileRes.data?.plan as string | null | undefined);
-  const limit = reviewLimitFor(profileRes.data?.plan as string | null | undefined);
 
   if (entryRes.error) {
     console.error("[srs] entry lookup failed:", entryRes.error.message);
