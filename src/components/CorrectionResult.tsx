@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { Correction } from "@/lib/types";
 import { ObiePhoto } from "@/components/ObiePhoto";
 import { Furigana, NoRuby } from "@/components/Furigana";
@@ -66,6 +66,54 @@ function SaveWordButton({
     >
       +
     </button>
+  );
+}
+
+/**
+ * A suggestion the learner can see is there but cannot read or use.
+ *
+ * ── Why a <fieldset>, not pointer-events-none ──────────────────────────────
+ * The row holds a save button and a 🔊, and pointer-events only stops the
+ * mouse. Tab still lands on both and Enter still fires them, so a learner
+ * could save a word they cannot see and spend their one daily clip hearing
+ * it. `disabled` on a fieldset disables every control inside it natively and
+ * takes them out of the tab order — the same reason TourSampleSheet wraps its
+ * canned sample in one. [&_a]:pointer-events-none covers links, which
+ * fieldset does not disable; there are none in here today and this is the
+ * cheap insurance for the day there are.
+ *
+ * ── Why the same shape in both states ─────────────────────────────────────
+ * Off returns the inner <div> on its own rather than the children bare, so the
+ * caller's layout classes land on an element either way. The alternative-words
+ * row is a flex line; dropping its wrapper when unlocked would collapse it.
+ * The flex classes stay on a plain div in both states — fieldset and flex have
+ * a history together and this keeps them apart.
+ *
+ * blur-[3px] is picked to be unreadable rather than decorative: at 1px kanji
+ * are still legible, past about 6px the row reads as a rendering fault instead
+ * of as something withheld. aria-hidden because announcing text nobody can
+ * read is worse than silence — the locked banner underneath is what tells a
+ * screen reader what is missing.
+ */
+function BlurGate({
+  on,
+  className = "",
+  children,
+}: {
+  on: boolean;
+  className?: string;
+  children: ReactNode;
+}) {
+  const inner = <div className={className}>{children}</div>;
+  if (!on) return inner;
+  return (
+    <fieldset
+      disabled
+      aria-hidden
+      className="m-0 min-w-0 select-none border-0 p-0 opacity-70 blur-[3px] [&_a]:pointer-events-none"
+    >
+      {inner}
+    </fieldset>
   );
 }
 
@@ -145,12 +193,33 @@ export function CorrectionResult({
    */
   showTopBlock?: boolean;
   /**
-   * Sections to render as a locked placeholder instead of content, so a Free
-   * learner can see the feature exists without it being generated for them.
-   * Only the write page passes this — every other caller omits it and renders
-   * exactly as before.
+   * Sections to hold back, so a Free learner can see the feature exists
+   * without having all of it. Only the write page passes this — every other
+   * caller omits it and renders exactly as before.
+   *
+   * `drills` and `miniLesson` are not generated for Free at all (api/correct
+   * leaves them out of the prompt), so those two render a placeholder standing
+   * in for content that does not exist. `nextSteps` is different: the
+   * suggestions ARE generated, saved and sent, and only the second and later
+   * ones in each block are blurred out.
+   *
+   * ── ⚠️ Where nextSteps may be passed ──────────────────────────────────────
+   * Only on the screen where the learner has just received this correction —
+   * the write page, and nowhere else. Never from:
+   *
+   *   TourSampleSheet   the tour's canned sample is how a learner finds out
+   *                     this section exists. Blur it and they finish the tour
+   *                     never having seen it.
+   *   history/[id]      mock data on a static demo route. Nobody's correction.
+   *   diary/[id]        reading back a diary they already wrote. Whatever they
+   *                     were shown that day stays shown.
+   *
+   * This is opt-in for that reason: absent means visible, so a new caller is
+   * safe by default. Do NOT re-derive it from `plan` — that prop defaults to
+   * "free", which would blur all three of the callers above the moment the
+   * condition was written that way.
    */
-  locked?: { drills?: boolean; miniLesson?: boolean };
+  locked?: { drills?: boolean; miniLesson?: boolean; nextSteps?: boolean };
   /**
    * Saved expressions this diary actually used, from /api/learned/scan.
    *
@@ -227,6 +296,32 @@ export function CorrectionResult({
   const [wordStates, setWordStates] = useState<Map<string, SaveState>>(new Map());
   const [showVocabUpgrade, setShowVocabUpgrade] = useState(false);
   const [isIosApp, setIsIosApp] = useState(false);
+
+  /**
+   * Blur every suggestion after the first in its block.
+   *
+   * The first one is always readable, in all three blocks. A section that is
+   * entirely behind glass teaches nothing about what is behind it; one worked
+   * example does, and it is also the one the learner would have read anyway.
+   *
+   * Reads `locked.nextSteps` and nothing else — never `plan`, whose default is
+   * "free" and would blur the tour sample, the demo route and every diary
+   * opened from history.
+   */
+  const hideAfterFirst = (i: number) => !!locked?.nextSteps && i > 0;
+
+  /**
+   * Is anything actually blurred? Decided once for the whole section rather
+   * than per block, because the banner below is one bar for all three.
+   *
+   * `> 1` on each: a block that came back with a single suggestion has nothing
+   * hidden, and if that is true of all three then nothing is.
+   */
+  const nextStepsBlurred =
+    !!locked?.nextSteps &&
+    ((correction.nextVocab?.length ?? 0) > 1 ||
+      (correction.nextGrammar?.length ?? 0) > 1 ||
+      (correction.alternativeWords?.length ?? 0) > 1);
 
   /**
    * One lifetime allowance is shared by every 🔊 on this result, so the state
@@ -603,7 +698,7 @@ export function CorrectionResult({
               <ul className="space-y-2 text-sm">
                 {correction.nextVocab.map((v, i) => (
                   <li key={i} className="rounded-xl bg-paper/60 px-3 py-2">
-                    <div className="flex items-center gap-2">
+                    <BlurGate on={hideAfterFirst(i)} className="flex items-center gap-2">
                       <Furigana
                         text={safeVocabWordText(v.word, v.reading)}
                         className="font-jp text-[15px] font-semibold text-pine"
@@ -630,7 +725,7 @@ export function CorrectionResult({
                         state={wordStates.get(v.word) ?? "idle"}
                         onSave={handleSaveWord}
                       />
-                    </div>
+                    </BlurGate>
                     {audioNotice(`nextVocab:${i}`, "mt-2")}
                   </li>
                 ))}
@@ -647,6 +742,10 @@ export function CorrectionResult({
               <ul className="space-y-3 text-sm">
                 {correction.nextGrammar.map((g, i) => (
                   <li key={i} className="rounded-xl bg-paper/60 px-3 py-3">
+                    {/* The example sentence goes inside the gate with the
+                        pattern — leaving it out would print the answer under
+                        a blurred label. */}
+                    <BlurGate on={hideAfterFirst(i)}>
                     <div className="flex items-center gap-2">
                       <span className="font-jp text-[13px] font-bold text-pine"><NoRuby text={g.pattern} /></span>
                       <span className="text-muted">—</span>
@@ -669,6 +768,7 @@ export function CorrectionResult({
                         <Furigana text={g.exampleRuby} />
                       </p>
                     )}
+                    </BlurGate>
                   </li>
                 ))}
               </ul>
@@ -683,7 +783,10 @@ export function CorrectionResult({
               </p>
               <ul className="space-y-2 text-sm">
                 {correction.alternativeWords.map((a, i) => (
-                  <li key={i} className="flex items-center gap-2 rounded-xl bg-paper/60 px-3 py-2">
+                  // The flex moved off the <li> and onto BlurGate's wrapper so
+                  // the row keeps its shape in both states.
+                  <li key={i} className="rounded-xl bg-paper/60 px-3 py-2">
+                    <BlurGate on={hideAfterFirst(i)} className="flex items-center gap-2">
                     <span className="font-jp text-ink/65"><NoRuby text={a.original} /></span>
                     <span className="mx-1 font-bold text-moss">→</span>
                     <Furigana
@@ -698,9 +801,48 @@ export function CorrectionResult({
                         onSave={handleSaveWord}
                       />
                     </span>
+                    </BlurGate>
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {/* Only when something is actually behind it. If the model returned
+              one suggestion per block there is nothing blurred, and a bar
+              offering to unlock "the rest" would be selling something that is
+              already on screen — the same false claim the comparison table
+              exists to keep off a purchase screen.
+
+              Lighter than LockedSection on purpose: that one is a dashed card
+              with a heading and a button, and it is still further down this
+              same result. Two walls of equal weight and neither is believed.
+
+              No count in the copy. nextVocab is prompted for "exactly 3" and
+              the model mostly obliges, but vocab.limitDesc spent months
+              telling learners they had saved 3 words after the cap moved to
+              10. A number in a string is a number that goes stale. */}
+          {nextStepsBlurred && (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-line bg-paper/40 px-4 py-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-ink/70">
+                  {isIosApp ? t("locked.nextSteps.titleIos") : t("locked.nextSteps.title")}
+                </p>
+                <p className="mt-0.5 text-xs text-ink/60">
+                  {isIosApp ? t("locked.nextSteps.descIos") : t("locked.nextSteps.desc")}
+                </p>
+              </div>
+              {/* Plan name and /upgrade never reach the iOS shell — App Store
+                  Guideline 3.1.1. isIosApp rather than <NativeGate>, matching
+                  LockedSection and the vocabulary banner in this same file. */}
+              {!isIosApp && (
+                <a
+                  href="/upgrade"
+                  className="gloss-btn shrink-0 rounded-full px-4 py-2 text-xs font-semibold text-cream hover:brightness-105"
+                >
+                  {t("locked.upgradeBtn")}
+                </a>
+              )}
             </div>
           )}
 

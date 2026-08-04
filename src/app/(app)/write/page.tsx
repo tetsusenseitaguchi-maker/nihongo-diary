@@ -1575,7 +1575,11 @@ export default function WritePage() {
             <CorrectionResult
               correction={result}
               showTopBlock={false}
-              locked={{ drills: isFreePlan, miniLesson: isFreePlan }}
+              // nextSteps belongs here and only here — this is the one screen
+              // where the learner has just been handed this correction. The
+              // tour sample, the demo route and diary detail all leave it out;
+              // see the prop's own docs for why each of them must.
+              locked={{ drills: isFreePlan, miniLesson: isFreePlan, nextSteps: isFreePlan }}
               plan={plan}
             />
             <p className="pt-1 text-center text-xs text-muted">
