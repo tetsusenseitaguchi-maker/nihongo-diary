@@ -1,0 +1,111 @@
+-- ============================================================
+--  Nihongo Diary — ドリルとミニレッスンを日記に保存する
+--  Run in: Supabase Dashboard -> SQL Editor -> New query
+--  Safe to run multiple times (idempotent). ①〜② を1文ずつ実行する。
+--
+--  ⚠️⚠️ 実行順序 ⚠️⚠️
+--     このファイルを先に流すこと。コードだけ先にデプロイすると、存在しない
+--     列への update が必ず失敗し、/api/correct-existing が 500 を返す。
+--     （返金は今回のコードで入るので枠は戻るが、添削は通らない。）
+--
+--  ── 何をする変更か ──────────────────────────────────────────
+--  practiceDrills と relatedMiniLesson は今まで DB に保存されていなかった。
+--  correctionToDbColumns() が書くのは11カラムだけで、この2つは含まれない。
+--  結果として:
+--    - /api/correct は有料プランに生成して画面に出すが、日記を開き直すと消える
+--    - /api/correct-existing は relatedMiniLesson を全プランに無条件生成して、
+--      保存も返却もせず捨てていた
+--  料金表の「Practice drills ✓ / Mini lesson ✓」が、実質「添削直後の画面で
+--  だけ見られる」状態だった。この2列でそれを解消する。
+--
+--  ── 触らないもの ────────────────────────────────────────
+--  既存11カラム（corrected_japanese / key_mistakes / useful_vocabulary /
+--  alternative_words など）は追加も変更もしない。correction_count /
+--  try_use_correction / normalizePlan / plan 関連の列 / 既存トリガーにも
+--  一切触れない。ADD COLUMN だけのファイル。
+-- ============================================================
+
+
+-- ============================================================
+--  ① 2カラムを追加
+-- ============================================================
+-- 既存の key_mistakes / useful_vocabulary（schema.sql）と
+-- alternative_words / jlpt_words（add-vocab-features.sql）に合わせて jsonb。
+-- 1対1で、単独で検索も集計もしないので別テーブルにする理由がない。
+--
+-- どちらも NULL 許容。NULL = 「この日記にはない」で、Free の添削と、今回より
+-- 前に書かれたすべての日記がそれに当たる。表示側は元から「無ければ描かない」
+-- （PracticeDrills は空配列で何も描かず、buildMiniLessonFromAI は NULL に
+-- NULL を返す）ので、バックフィルは要らないし、しても復元できるデータがない。
+--
+-- practice_drills:
+--   PracticeDrill[] をそのまま。静的な元データを持たない完全な生成物で、
+--   保存した内容がそのまま表示される。
+--
+-- ⚠️ related_mini_lesson は「展開済みの MiniLesson」ではなく、AI が返した
+--    5フィールドだけを入れる:
+--      { id, shortExplanation, exampleJapaneseRuby, exampleEnglish, shortNote }
+--    title / points / visualImage / commonMistakes の持ち主は静的な
+--    MINI_LESSONS と翻訳テーブル LESSON_I18N で、読み出し時に
+--    buildMiniLessonFromAI → getLessonInLocale が埋める。展開済みを保存すると
+--    レッスン本文を直しても過去の日記が古いままになり、行も無駄に大きくなる。
+--
+-- NULL 許容かつ DEFAULT なしの列追加は PostgreSQL 11 以降メタデータのみの
+-- 変更で、テーブルの書き換えも長いロックも起きない。
+alter table public.diary_entries
+  add column if not exists practice_drills     jsonb,
+  add column if not exists related_mini_lesson jsonb;
+
+
+-- ============================================================
+--  ② PostgREST にスキーマを読み直させる
+-- ============================================================
+-- これを流すまで、この2列は select も update もできない。
+notify pgrst, 'reload schema';
+
+
+-- ============================================================
+--  VERIFY（①② を流したあとに実行・読み取りのみ）
+-- ============================================================
+-- (1) 列が増えていること
+--   SELECT column_name, data_type, is_nullable
+--   FROM   information_schema.columns
+--   WHERE  table_schema = 'public' AND table_name = 'diary_entries'
+--     AND  column_name IN ('practice_drills','related_mini_lesson')
+--   ORDER  BY column_name;
+--   期待: 2行、いずれも jsonb / YES
+--
+-- (2) 既存行がすべて NULL であること（＝バックフィルされていない）
+--   SELECT count(*) AS total,
+--          count(practice_drills)     AS with_drills,
+--          count(related_mini_lesson) AS with_lesson
+--   FROM   public.diary_entries;
+--   期待: with_drills = 0, with_lesson = 0
+--
+-- (3) ★重要★ 既存11カラムが無傷であること
+--   SELECT count(*) FILTER (WHERE key_mistakes      IS NOT NULL) AS mistakes,
+--          count(*) FILTER (WHERE useful_vocabulary IS NOT NULL) AS vocab,
+--          count(*) FILTER (WHERE alternative_words IS NOT NULL) AS alts
+--   FROM   public.diary_entries;
+--   期待: 実行前と同じ件数
+--
+-- (4) ★重要★ plan 関連の列が無傷であること
+--   SELECT column_name FROM information_schema.columns
+--   WHERE  table_schema='public' AND table_name='profiles'
+--     AND  (column_name LIKE '%plan%' OR column_name LIKE '%stripe%'
+--           OR column_name LIKE '%revenuecat%')
+--   ORDER  BY column_name;
+--   期待: 実行前と同じ一覧。このファイルは profiles に触っていない。
+--
+--
+-- ============================================================
+--  ROLLBACK（実行しないこと。戻すときだけコメントを外す）
+-- ============================================================
+--   ALTER TABLE public.diary_entries
+--     DROP COLUMN IF EXISTS practice_drills,
+--     DROP COLUMN IF EXISTS related_mini_lesson;
+--   NOTIFY pgrst, 'reload schema';
+--
+--   落とすと、保存済みのドリルとミニレッスンは失われる（添削し直せば作り直せる）。
+--   既存11カラムと日記本文には影響しない。
+-- ============================================================

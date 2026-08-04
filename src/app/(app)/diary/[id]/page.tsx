@@ -25,7 +25,8 @@ import { getServerT } from "@/lib/i18n-server";
 import { countryFlag } from "@/lib/countryFlag";
 import { Furigana } from "@/components/Furigana";
 import { WordTranslateText } from "@/components/WordTranslateText";
-import type { Correction, MistakeItem, VocabItem, JlptWord, AlternativeWord } from "@/lib/types";
+import type { Correction, MistakeItem, VocabItem, JlptWord, AlternativeWord, PracticeDrill } from "@/lib/types";
+import { buildMiniLessonFromAI } from "@/lib/lessons";
 
 export const dynamic = "force-dynamic";
 
@@ -162,6 +163,21 @@ export default async function DiaryDetailPage({
     practice: { jp: entry.practice_sentence ?? "", en: "" },
     jlptWords: ((entry as Record<string, unknown>).jlpt_words as JlptWord[] | null) ?? [],
     alternativeWords: ((entry as Record<string, unknown>).alternative_words as AlternativeWord[] | null) ?? [],
+    // Paid-plan sections, saved since add-correction-drills-lesson.sql. Both
+    // are null for Free corrections and for every diary written before the
+    // columns existed, and both render nothing in that case — PracticeDrills
+    // draws nothing for an empty array, and buildMiniLessonFromAI answers null
+    // with null, which CorrectionResult already guards.
+    //
+    // The lesson is rehydrated rather than read straight through: the column
+    // holds only the five fields the model wrote, and title / points /
+    // visualImage come from MINI_LESSONS at read time so an edit to a lesson
+    // reaches the diaries that cite it.
+    relatedMiniLesson: buildMiniLessonFromAI(
+      (entry as Record<string, unknown>).related_mini_lesson,
+    ),
+    practiceDrills:
+      ((entry as Record<string, unknown>).practice_drills as PracticeDrill[] | null) ?? [],
   };
 
   const imageUrl = entry.image_path

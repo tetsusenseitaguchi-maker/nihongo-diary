@@ -10,10 +10,33 @@ import { normaliseLocale, LOCALE_COOKIE } from "@/lib/i18n";
 import { parseCorrectionPayload, correctionToDbColumns } from "@/lib/correction-payload";
 import { createChatCompletion, missingApiKeyError } from "@/lib/ai-provider";
 import { refundCorrection } from "@/lib/correction-refund";
+import * as PROMPT from "@/lib/correction-prompt";
 
 export const runtime = "nodejs";
 
-function systemPrompt(level: string, style: string, lang: string): string {
+function systemPrompt(
+  level: string,
+  style: string,
+  lang: string,
+  includeDrills: boolean,
+  includeMiniLesson: boolean,
+): string {
+  // ドリルとミニレッスンは有料プランの機能。Free ではスキーマからもルールからも
+  // 外すので、モデルは生成せず、出力トークンも払わない。
+  //
+  // ⚠️ 2つのフラグは連動させること。ドリルのルールが「relatedMiniLesson の
+  // トピックに基づけ」と書いているので、片方だけ有効にすると、もう要求して
+  // いないフィールドを指すプロンプトになる。
+  //
+  // ⚠️ 断片は /api/correct と共有している（lib/correction-prompt.ts）。ここに
+  // 文字列をコピーし直さないこと — 2つの systemPrompt は以前ドリフトした
+  // 実績がある（下の「Map AI response」のコメント参照）。
+  const drillsSchema = PROMPT.drillsSchema(includeDrills);
+  const drillsInRule1 = PROMPT.drillsInRule1(includeDrills);
+  const miniLessonInRule1 = PROMPT.miniLessonInRule1(includeMiniLesson);
+  const miniLessonSchema = PROMPT.miniLessonSchema(includeMiniLesson);
+  const drillsRule = PROMPT.drillsRule(includeDrills, lang);
+  const miniLessonRule = PROMPT.miniLessonRule(includeMiniLesson, lang);
   return `You are a friendly Japanese teacher for Japanese learners.
 
 Do not behave like a strict proofreader. Behave like a Japanese teacher who understands that learners need confidence.
@@ -45,8 +68,7 @@ Return this JSON structure:
     { "word": "", "reading": "", "meaning": "", "exampleRuby": "" }
   ],
   "practiceSentenceRuby": "",
-  "relatedMiniLesson": { "id": 1, "shortExplanation": "", "exampleJapaneseRuby": "", "exampleEnglish": "", "shortNote": "" },
-  "alternativeWords": [
+${miniLessonSchema}${drillsSchema}  "alternativeWords": [
     { "original": "", "alternative": "", "alternativeReading": "" }
   ],
   "diaryTitleRuby": "",
@@ -55,7 +77,7 @@ Return this JSON structure:
 
 Rules:
 
-1. Write ALL explanatory text in ${lang}. This includes: englishExplanation, correctionNote, every keyMistakes[].explanation, every usefulVocabulary[].meaning, and relatedMiniLesson shortExplanation / exampleEnglish / shortNote. Never explain grammar in Japanese.
+1. Write ALL explanatory text in ${lang}. This includes: englishExplanation, correctionNote, every keyMistakes[].explanation, every usefulVocabulary[].meaning${drillsInRule1}${miniLessonInRule1}. Never explain grammar in Japanese.
    Keep ALL Japanese-language fields in Japanese. Those are learning targets — never translate them.
    NEVER put a <ruby> tag in ANY of the explanatory fields listed above. Furigana belongs ONLY in the *Ruby fields named in rule 2. When an explanation quotes Japanese, write it as plain kanji and kana: 「今日は」, NEVER 「<ruby>今日<rt>きょう</rt></ruby>は」. The same holds for alternativeWords[].original — that is a plain Japanese label, never furigana markup.
    NEVER name a JSON field in ANY explanatory text. Field names (naturalJapaneseRuby, correctedJapaneseRuby, correctedJapanese, keyMistakes, usefulVocabulary, practiceSentenceRuby, diaryTitleRuby, and every other key in the structure above) belong to this response format alone. The learner never sees the JSON — to them these names are meaningless jargon. Refer to each part the way a teacher would, in ${lang}: "the natural version" (NOT naturalJapaneseRuby), "the correction" (NOT correctedJapaneseRuby), "the practice sentence" (NOT practiceSentenceRuby), "the words below" (NOT usefulVocabulary).
@@ -103,16 +125,14 @@ CRITICAL furigana rules:
 10. usefulVocabulary: pick words from or related to the diary, at the learner's level. "word": plain dictionary form with kanji as written (e.g. "公園", "歩く"). "reading": complete hiragana reading including okurigana (e.g. "こうえん", "あるく").
 CRITICAL — "reading" is NOT written the way <rt> is. <rt> carries the reading of the KANJI only, because the okurigana is already visible next to it (<ruby>歩<rt>ある</rt></ruby>きます). "reading" is a standalone field with no kanji beside it, so it must spell out the WHOLE word, okurigana included: 歩く → "あるく" (NEVER "ある"), 待つ → "まつ" (NEVER "ま"), 新しい → "あたらしい" (NEVER "あたら"). Do not carry rule 2's kanji-only habit into this field. Check every reading by reading it aloud on its own: if it is not a pronounceable whole word, it is wrong. This applies identically to alternativeWords[].alternativeReading.
 
-11. relatedMiniLesson: choose the ONE most relevant lesson by id (1-20). If nothing clearly fits, use id 3.
-
-12. alternativeWords: suggest exactly 3 natural synonym alternatives for words used in the diary. Focus on words a native Japanese speaker actually uses in casual conversation. For each:
+${drillsRule}${miniLessonRule}13. alternativeWords: suggest exactly 3 natural synonym alternatives for words used in the diary. Focus on words a native Japanese speaker actually uses in casual conversation. For each:
 - "original": the word exactly as it appears in the diary
 - "alternative": the suggested replacement in dictionary/plain form
 - "alternativeReading": complete hiragana reading
 
-13. diaryTitleRuby: create ONE catchy Japanese title for this diary entry (15 chars or fewer excluding markup). Follow furigana rule 2 EXACTLY.
+14. diaryTitleRuby: create ONE catchy Japanese title for this diary entry (15 chars or fewer excluding markup). Follow furigana rule 2 EXACTLY.
 
-14. obieCheerRuby: write a short, warm, personalised message from Obie (a friendly dog mascot) reacting to the specific events or feelings described in THIS diary. Japanese with furigana following rule 2. End with 🐶.
+15. obieCheerRuby: write a short, warm, personalised message from Obie (a friendly dog mascot) reacting to the specific events or feelings described in THIS diary. Japanese with furigana following rule 2. End with 🐶.
 
 Output must be valid JSON. No markdown, no comments, no trailing commas.`;
 }
@@ -195,6 +215,12 @@ export async function POST(request: Request) {
   const lang = languageDisplayName(langCode);
   const limits = limitsFor(plan);
 
+  // ①（/api/correct）と同じ判定。ここまで relatedMiniLesson を全プランに
+  // 無条件生成していて、しかも保存も返却もせず捨てていた。Free では生成自体を
+  // 止める。2つのフラグが連動する理由は systemPrompt のコメントに書いてある。
+  const includeDrills = plan !== "free";
+  const includeMiniLesson = plan !== "free";
+
   // Resolve timezone (same logic as /api/correct)
   const rawTz = cookieStore.get("user_tz")?.value;
   let tz = "UTC";
@@ -251,7 +277,7 @@ export async function POST(request: Request) {
       temperature: 0.3,
       maxTokens: 8000,
       messages: [
-        { role: "system", content: systemPrompt(level, style, lang) },
+        { role: "system", content: systemPrompt(level, style, lang, includeDrills, includeMiniLesson) },
         { role: "user", content: text },
       ],
     });
@@ -308,11 +334,23 @@ export async function POST(request: Request) {
   //  - title and alternative_words when empty, so a title or a set of
   //    alternatives the entry already has is not cleared by a re-run.
   // The write page inserts a fresh row and sends all of them.
-  const { title, alternative_words, ...common } = columns;
+  const { title, alternative_words, practice_drills, related_mini_lesson, ...common } = columns;
   const updatePayload: Record<string, unknown> = { ...common };
 
   if (title) {
     updatePayload.title = title;
+  }
+
+  // Same "omit when empty" rule as title and alternative_words. Free
+  // corrections return null for both — sending those would clear drills and a
+  // lesson the entry already had, which is the one thing a re-correction must
+  // never do. Destructured out of `common` above rather than filtered here, so
+  // adding a column to CorrectionDbColumns cannot silently join the update.
+  if (practice_drills) {
+    updatePayload.practice_drills = practice_drills;
+  }
+  if (related_mini_lesson) {
+    updatePayload.related_mini_lesson = related_mini_lesson;
   }
 
   // Entries with an empty original or alternative are dropped — a suggestion
@@ -332,6 +370,13 @@ export async function POST(request: Request) {
 
   if (updateError) {
     console.error("[correct-existing] update error:", updateError.message);
+    // The only failure path in this route that did not refund. A slot was
+    // claimed above and the learner has nothing to show for it — the same
+    // situation the five paths before this one all pay back. It matters more
+    // now than it did: this update writes two columns that may not exist yet,
+    // so until add-correction-drills-lesson.sql has been run, every attempt
+    // lands here.
+    await refundCorrection(supabase, user.id, today);
     return NextResponse.json(
       { error: `保存に失敗しました: ${updateError.message}` },
       { status: 500 },

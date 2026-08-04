@@ -38,6 +38,7 @@ import { plainValue } from "@/lib/text-kinds";
 import { buildMiniLessonFromAI } from "@/lib/lessons";
 import { fixMasuIncompatibleBlank, ensureAnswerInChoices } from "@/lib/drills";
 import type {
+  AiMiniLessonPayload,
   AlternativeWord,
   Correction,
   DrillType,
@@ -64,6 +65,35 @@ export function objArr(v: unknown): Record<string, unknown>[] {
 
 /** First non-empty of the listed source fields — how a *Ruby field falls back
  *  to its non-ruby twin (correctedJapaneseRuby, else correctedJapanese). */
+/**
+ * The AI's relatedMiniLesson, kept exactly as it arrived, for the DB column.
+ *
+ * Null when there is nothing usable — Free corrections, where the prompt never
+ * asks for it, and any response where the model omitted the field or gave an
+ * id that is not a number. A row with a bad id would come back through
+ * buildMiniLessonFromAI as lesson 1 rather than as nothing, which is a worse
+ * answer than showing no lesson at all.
+ *
+ * The four text fields are stored raw, without normalizeRubyText: hydration on
+ * read runs them through it, and normalising twice is how a repaired string
+ * gets repaired again. An absent field becomes "" and falls back to the static
+ * library at render time, which is buildMiniLessonFromAI's existing behaviour.
+ */
+function aiMiniLessonPayload(raw: unknown): AiMiniLessonPayload | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const id = typeof r.id === "number" ? r.id : Number.parseInt(String(r.id ?? ""), 10);
+  if (!Number.isFinite(id)) return null;
+  const s = (v: unknown) => (typeof v === "string" ? v : "");
+  return {
+    id,
+    shortExplanation: s(r.shortExplanation),
+    exampleJapaneseRuby: s(r.exampleJapaneseRuby),
+    exampleEnglish: s(r.exampleEnglish),
+    shortNote: s(r.shortNote),
+  };
+}
+
 function readFrom(raw: Record<string, unknown>, from: string | string[]): string {
   if (typeof from === "string") return str(raw[from]);
   for (const key of from) {
@@ -205,6 +235,7 @@ const CORRECTION_SPEC: { [K in keyof Correction]-?: FieldSpec } = {
   vocabulary: { kind: "custom", why: "array of VOCAB_SPEC" },
   practice: { kind: "custom", why: "reshaped into { jp, en }" },
   relatedMiniLesson: { kind: "custom", why: "buildMiniLessonFromAI fills the rest from MINI_LESSONS" },
+  relatedMiniLessonRaw: { kind: "custom", why: "the AI's five fields, kept unhydrated for the DB column" },
   practiceDrills: { kind: "custom", why: "DRILL_SPEC, then the two drill repairs" },
   jlptWords: { kind: "custom", why: "legacy, read from the DB only — never in this response" },
   alternativeWords: { kind: "custom", why: "array of ALTERNATIVE_SPEC" },
@@ -274,6 +305,13 @@ export function parseCorrectionPayload(raw: unknown, fallbackOriginal: string): 
   };
 
   out.relatedMiniLesson = buildMiniLessonFromAI(data.relatedMiniLesson);
+  // Kept beside the hydrated lesson, not derived from it. Reading the five
+  // fields back off a MiniLesson would also pick up whatever
+  // buildMiniLessonFromAI filled in from the static library, and store the
+  // fallback as though the model had written it. Only what actually came back
+  // is saved; anything the model omitted stays absent and falls through to the
+  // library again on the next read.
+  out.relatedMiniLessonRaw = aiMiniLessonPayload(data.relatedMiniLesson);
 
   out.practiceDrills = objArr(data.practiceDrills).map((d) =>
     ensureAnswerInChoices(fixMasuIncompatibleBlank(buildItem(DRILL_SPEC, d, DRILL_CUSTOMS))),
@@ -330,6 +368,17 @@ export interface CorrectionDbColumns {
   practice_sentence: string;
   title: string | null;
   alternative_words: AlternativeWord[];
+  /**
+   * Paid plans only — null on every Free correction, because the prompt does
+   * not ask for either and the model returns nothing to store.
+   *
+   * ⚠️ Both are omitted from the update in /api/correct-existing when empty,
+   * the same way title and alternative_words are, so re-correcting cannot wipe
+   * a lesson or a set of drills the entry already has.
+   */
+  practice_drills: PracticeDrill[] | null;
+  /** The AI's five fields, NOT the hydrated MiniLesson — see AiMiniLessonPayload. */
+  related_mini_lesson: AiMiniLessonPayload | null;
 }
 
 export function correctionToDbColumns(correction: Correction): CorrectionDbColumns {
@@ -347,5 +396,9 @@ export function correctionToDbColumns(correction: Correction): CorrectionDbColum
     practice_sentence: correction.practice.jp,
     title: correction.diaryTitle ? stripRubyText(correction.diaryTitle) || null : null,
     alternative_words: correction.alternativeWords ?? [],
+    // Empty array → null rather than []. The column means "does this diary
+    // have drills", and [] would read as "yes, and there are none of them".
+    practice_drills: correction.practiceDrills?.length ? correction.practiceDrills : null,
+    related_mini_lesson: correction.relatedMiniLessonRaw ?? null,
   };
 }

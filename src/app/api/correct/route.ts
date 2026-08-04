@@ -9,6 +9,11 @@ import { refundCorrection } from "@/lib/correction-refund";
 
 export const runtime = "nodejs";
 
+// ドリル／ミニレッスンの断片は lib/correction-prompt.ts に移した。文言は1字も
+// 変えておらず、4通りのフラグの組み合わせで移動前とバイト一致することを確認済み。
+// /api/correct-existing が同じ関数を呼ぶので、片方だけ直すことができない。
+import * as PROMPT from "@/lib/correction-prompt";
+
 function systemPrompt(
   level: string,
   style: string,
@@ -31,69 +36,12 @@ function systemPrompt(
   //
   // With both flags true the assembled prompt is byte-for-byte identical to
   // the previous unconditional one, so paid-plan corrections are unaffected.
-  const drillsSchema = includeDrills
-    ? `  "practiceDrills": [
-    { "type": "", "question": "", "questionRuby": "", "choices": [], "answer": "", "answerRuby": "", "englishExplanation": "" }
-  ],
-`
-    : "";
-  // Each fragment carries its own leading comma so rule 1's list closes with a
-  // period no matter which combination is active.
-  const drillsInRule1 = includeDrills ? ", every practiceDrills[].englishExplanation" : "";
-  const miniLessonInRule1 = includeMiniLesson
-    ? ", and relatedMiniLesson shortExplanation / exampleEnglish / shortNote"
-    : "";
-  const miniLessonSchema = includeMiniLesson
-    ? `  "relatedMiniLesson": { "id": 1, "shortExplanation": "", "exampleJapaneseRuby": "", "exampleEnglish": "", "shortNote": "" },
-`
-    : "";
-  const drillsRule = includeDrills
-    ? `11. practiceDrills: generate exactly 2 short practice drills based on the learner's mistakes or the relatedMiniLesson topic.
-- Types (use the exact string): "fill-in" (blank fill — mark the blank as ___), "particle-choice" (choose the correct particle), "desu-masu" (choose です or ます), "reorder" (reorder the given words into a correct sentence; put the shuffled words in choices), "rewrite" (rewrite the given phrase more naturally; no choices needed).
-- question: plain text (no ruby tags). questionRuby: same sentence with <ruby> furigana on all kanji. answer: plain text. answerRuby: with <ruby> furigana. englishExplanation: one sentence in ${lang} explaining why.
-- choices:
-  - fill-in: EXACTLY 2 options — the correct answer plus ONE plausible
-    wrong answer. Both must be complete, well-formed words/phrases
-    (never a truncated fragment like "行ってき"), and must be distinct
-    strings from each other.
-  - particle-choice / desu-masu: 3–4 options, all distinct from each other.
-  - reorder: shuffled words. rewrite: [].
-  - For every drill type that has choices, the array MUST include a
-    string that is character-for-character identical to "answer" — same
-    kanji/hiragana notation, not just the same reading (e.g. if answer
-    is "行ってきました", a choice must be "行ってきました", not "行って
-    来ました").
-- Keep every drill simple and at the learner's level. Vary the types. If there were no mistakes, base drills on the relatedMiniLesson.
-- Grammatical consistency (fill-in especially): the fixed text immediately before and after the blank — including the sentence ending — must connect naturally with the answer's actual grammatical form. Forms like 〜そう (様態/looks-like), 〜らしい, 〜ようだ, and 〜みたいだ cannot be directly followed by ます. If the correct answer is (or ends in) one of these forms, do NOT end the sentence in ます — use です instead, or rewrite the whole sentence so the fixed text around the blank fits that form naturally. Mentally fill in the blank and confirm the complete sentence is grammatical before finalizing.
-
-`
-    : "";
-  const miniLessonRule = includeMiniLesson
-    ? `12. relatedMiniLesson: choose the ONE most relevant lesson for the learner's main grammar point, by id, from this FIXED list:
-1 = Hiragana
-2 = Katakana
-3 = Sentence Structure
-4 = Topic & は
-5 = Particles 1: を, に, で
-6 = Particles 2: へ, から, まで, と, も
-7 = は vs が
-8 = Nouns & です
-9 = Adjectives: い & な
-10 = Verb Types: Ichidan & Godan
-11 = ます Form
-12 = Dictionary & ない Form
-13 = Past Form
-14 = Te-form: How to Make It
-15 = Te-form Uses (てください / てもいい / てから)
-16 = 〜ている & 〜てある (progressive / resulting / prepared state)
-17 = 〜てみる / 〜ておく / 〜てしまう
-18 = 〜てくる & 〜ていく (directional change)
-19 = Reasons: から & ので
-20 = Wants & Invitations
-Return only: id (1-20), shortExplanation (in ${lang}, tailored to the learner's level), exampleJapaneseRuby (with <ruby> furigana, tailored to level — keep in Japanese), exampleEnglish (in ${lang}), shortNote (in ${lang}, friendly). If nothing clearly fits, use id 3. Do NOT invent new lessons or change titles.
-
-`
-    : "";
+  const drillsSchema = PROMPT.drillsSchema(includeDrills);
+  const drillsInRule1 = PROMPT.drillsInRule1(includeDrills);
+  const miniLessonInRule1 = PROMPT.miniLessonInRule1(includeMiniLesson);
+  const miniLessonSchema = PROMPT.miniLessonSchema(includeMiniLesson);
+  const drillsRule = PROMPT.drillsRule(includeDrills, lang);
+  const miniLessonRule = PROMPT.miniLessonRule(includeMiniLesson, lang);
   return `You are a friendly Japanese teacher for Japanese learners.
 
 Do not behave like a strict proofreader. Behave like a Japanese teacher who understands that learners need confidence.

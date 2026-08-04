@@ -60,6 +60,21 @@ export interface CommonMistake {
   note: PlainText; // short English explanation of why it's wrong
 }
 
+/**
+ * What the model returns for relatedMiniLesson — the id of a lesson in the
+ * fixed list, plus the four fields it may tailor to this learner.
+ *
+ * Stored as-is in diary_entries.related_mini_lesson. buildMiniLessonFromAI
+ * turns it back into a MiniLesson on read.
+ */
+export interface AiMiniLessonPayload {
+  id: number;
+  shortExplanation: string;
+  exampleJapaneseRuby: string;
+  exampleEnglish: string;
+  shortNote: string;
+}
+
 export interface MiniLesson {
   id: number;
   order: number;
@@ -117,6 +132,20 @@ export interface Correction {
   vocabulary: VocabItem[];
   practice: { jp: string; en: string };
   relatedMiniLesson?: MiniLesson | null;
+  /**
+   * The five fields the AI actually returned for relatedMiniLesson, before
+   * buildMiniLessonFromAI hydrated the rest from MINI_LESSONS.
+   *
+   * This is what gets stored in diary_entries.related_mini_lesson, not the
+   * hydrated object above. title / points / visualImage / commonMistakes belong
+   * to the static library and to LESSON_I18N, which localises them at render
+   * time — freezing a copy into every diary row would mean an edit to a lesson
+   * never reached the diaries that cite it.
+   *
+   * Absent when the AI returned nothing (Free, where the prompt does not ask
+   * for it) and on every correction written before the column existed.
+   */
+  relatedMiniLessonRaw?: AiMiniLessonPayload | null;
   practiceDrills?: PracticeDrill[];
   /** ~3 characteristic words from the diary with approximate JLPT levels (legacy — from DB only). */
   jlptWords?: JlptWord[];
