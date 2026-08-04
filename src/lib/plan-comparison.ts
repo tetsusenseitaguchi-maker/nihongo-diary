@@ -185,16 +185,17 @@ export const COMPARISON_GROUPS: ComparisonGroup[] = [
         // are both uncapped. The "up to 100 items" that the old Plus card
         // advertised was never implemented anywhere.
         //
-        // ⚠️ The 3 is duplicated rather than imported, and has to be: that
+        // ⚠️ The 10 is duplicated rather than imported, and has to be: that
         // constant lives in a route module that imports @/lib/supabase/server
         // and @/lib/ai-provider, so importing it would drag next/headers and
         // the OpenAI SDK into the client bundle this file ships in. If
-        // FREE_VOCAB_LIMIT ever changes, change it here too.
+        // FREE_VOCAB_LIMIT ever changes, change it here too — it went from 3
+        // to 10 when spaced review shipped, and both sites moved together.
         id: "vocabulary",
         labelKey: "plans.row.vocabulary",
         emphasis: true,
         cells: {
-          free: { kind: "num", n: 3 },
+          free: { kind: "num", n: 10 },
           plus: { kind: "i18n", key: "plans.value.unlimited" },
           pro: { kind: "i18n", key: "plans.value.unlimited" },
         },

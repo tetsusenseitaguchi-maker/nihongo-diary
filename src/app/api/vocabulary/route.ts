@@ -10,7 +10,23 @@ import { createChatCompletion, missingApiKeyError } from "@/lib/ai-provider";
 
 export const runtime = "nodejs";
 
-const FREE_VOCAB_LIMIT = 3;
+/**
+ * How many entries a Free learner may keep. Words and grammar together — the
+ * count below does not filter on entry_type.
+ *
+ * Raised from three when spaced review arrived. Three was a cap on a list you
+ * only ever read; with review the list is something you work through, and a
+ * Free learner at five cards a day would have exhausted a three-word book
+ * before the first interval came due.
+ *
+ * ⚠️ Duplicated in lib/plan-comparison.ts, which states it on the purchase
+ * screen and cannot import this file — that module ships to the client and
+ * this one pulls in @/lib/supabase/server and @/lib/ai-provider. The two must
+ * be changed together: a number on a purchase screen that the code does not
+ * enforce is the exact thing that table was built to stop (App Store Review
+ * Guideline 2.3.1).
+ */
+const FREE_VOCAB_LIMIT = 10;
 
 // ------------------------------------------------------------------ GET
 
