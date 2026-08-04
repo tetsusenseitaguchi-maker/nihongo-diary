@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import type { CSSProperties } from "react";
 import { Furigana, NoRuby } from "@/components/Furigana";
 import { AudioLimitNotice, PlayButton } from "@/components/PlayButton";
+import { LinkButton } from "@/components/ui";
+import { Icon } from "@/components/icons";
 import { useT } from "@/contexts/locale";
 import { safeRubyNotation } from "@/lib/reading-validation";
 
@@ -93,6 +95,23 @@ export function VocabularyList() {
       {/* Word count */}
       {entries.length > 0 && (
         <p className="text-sm text-muted">{t("vocab.wordCount", { n: entries.length })}</p>
+      )}
+
+      {/* Review, above the filters.
+          On a phone this is the only standing way into /flashcards — the
+          bottom nav is five fixed tabs and does not grow, so History → My
+          Vocabulary is the whole path to the words. The dashboard card is the
+          other entry point, but it disappears on a day with nothing due, which
+          is exactly the day someone might come looking for the feature.
+
+          Unconditional on purpose, and it does not carry a count: knowing the
+          number here would mean this list fetching the SRS state as well, and
+          the three states behind the link (nothing saved / done for today /
+          nothing due) each have a screen of their own already. */}
+      {entries.length > 0 && (
+        <LinkButton href="/flashcards" size="sm" variant="secondary">
+          <Icon.book className="h-4 w-4" /> {t("vocab.reviewCta")}
+        </LinkButton>
       )}
 
       {/* Filter chips */}

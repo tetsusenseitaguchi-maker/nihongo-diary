@@ -15,6 +15,7 @@ import { getTimezoneFromCookie } from "@/lib/tz-server";
 import { nowInTZ, previousDay } from "@/lib/date-tz";
 import { isNativeRequest } from "@/lib/native";
 import { hasDictation } from "@/lib/dictation";
+import { getDueSummary } from "@/lib/srs-server";
 import { AudioIntroModal } from "@/components/AudioIntroModal";
 
 export const dynamic = "force-dynamic";
@@ -26,9 +27,19 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: profile }, { data }] = await Promise.all([
+  // getDueSummary needs the learner's clock, and it is read before the queries
+  // below so it can join them in the same Promise.all rather than adding a
+  // round trip after them.
+  const tz = await getTimezoneFromCookie();
+
+  const [{ data: profile }, { data }, srs] = await Promise.all([
     supabase
       .from("profiles")
+      // ⚠️ Do not add plan/timezone here for the flashcards card. One absent
+      // column errors the whole query, profile comes back null, and the hero
+      // loses its name — the shape of the incident tts/route.ts:187 documents.
+      // getDueSummary runs its own small profiles read, so a failure there
+      // costs a card rather than the page.
       .select("display_name, username, avatar_url")
       .eq("id", user.id)
       .single(),
@@ -43,6 +54,11 @@ export default async function DashboardPage() {
       .eq("user_id", user.id)
       .order("diary_date", { ascending: false })
       .order("created_at", { ascending: false }),
+    // Third in the same Promise.all, so its own parallel reads overlap the two
+    // above and the page waits no longer than it did. Never throws: a missing
+    // table or a failed read comes back as zero cards and the block below
+    // simply does not render.
+    getDueSummary(supabase, user.id, tz),
   ]);
 
   const t = await getServerT();
@@ -59,7 +75,6 @@ export default async function DashboardPage() {
   const isNative = await isNativeRequest();
 
   const entries = (data ?? []) as DiaryRow[];
-  const tz = await getTimezoneFromCookie();
   const { year, month, day: today, dateStr: todayStr } = nowInTZ(tz);
   const stats = computeStats(entries, todayStr);
   // Same rungs as the badge on the correction result and as the sidebar.
@@ -238,6 +253,38 @@ export default async function DashboardPage() {
               )}
             </div>
             <LinkButton href={`/dictation/${reviewDiaryId}`} size="sm" className="shrink-0">
+              <Icon.arrow className="h-4 w-4" /> {t("dashboard.review.cta")}
+            </LinkButton>
+          </div>
+        </Card>
+      )}
+
+      {/* ── Today's flashcards ────────────────────────────────────────────
+          Under the sentence above, not over it: that one expires tonight and
+          this one does not — an unreviewed card keeps its past due_on and
+          comes back tomorrow at the front of the queue.
+
+          Drawn only when there is something to do. A card reading "0 today"
+          would be the same scolding the streak refuses to print next to a
+          flame, aimed at the learner who has just finished. srs.count is
+          already capped by the daily limit, so the number here is the length
+          of the session that /flashcards will actually run — both come from
+          getDueSummary, which is why they cannot disagree. */}
+      {srs.count > 0 && (
+        <Card accent="none" className="border-moss/20 bg-mint/30 p-5">
+          <div className="flex flex-wrap items-center gap-4">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-paper text-pine">
+              <Icon.book className="h-6 w-6" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 className="font-serif text-lg font-bold text-pine">
+                {t("dashboard.flashcards.title")}
+              </h2>
+              <p className="mt-0.5 text-sm text-ink/70">
+                {t("dashboard.flashcards.body", { n: srs.count })}
+              </p>
+            </div>
+            <LinkButton href="/flashcards" size="sm" className="shrink-0">
               <Icon.arrow className="h-4 w-4" /> {t("dashboard.review.cta")}
             </LinkButton>
           </div>
