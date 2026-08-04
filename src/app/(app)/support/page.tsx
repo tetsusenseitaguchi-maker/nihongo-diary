@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState, useEffect, useTransition } from "react";
 import { Furigana, NoRuby } from "@/components/Furigana";
 import { plainValue } from "@/lib/text-kinds";
@@ -87,6 +88,38 @@ export default function SupportPage() {
             <p className="mt-1 text-cream/80">{t("support.obieSubtext")}</p>
           </div>
         </div>
+      </Card>
+
+      {/* The way to the guide, and through it to the tour.
+
+          Support is the fifth tab in the bottom navigation, so on a phone this
+          is where "I don't know how this works" lands — and until now the only
+          standing route to /how-to-use below lg was the "?" in the header,
+          which is easy to miss. The tour's launcher lives on that page and
+          stays there; this is a door, not a second copy of it.
+
+          Above the tabs on purpose. Below them it would sit under the tab
+          content, and the Lessons tab is twenty accordions long — findable
+          only by someone who already knew to scroll. Here it is on the first
+          screen without displacing the header or Obie.
+
+          Bordered card, deliberately not gloss-green: Obie's banner directly
+          above is a large block of exactly that, and two of them side by side
+          leaves neither one leading. */}
+      <Card className="p-0">
+        <Link
+          href="/how-to-use"
+          className="flex items-center gap-4 p-5 transition-colors hover:bg-mint/30"
+        >
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-mint text-xl">
+            📘
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-serif font-bold text-pine">{t("tutorial.pageTitle")}</span>
+            <span className="mt-0.5 block text-sm text-muted">{t("tutorial.restartTour")}</span>
+          </span>
+          <Icon.arrow className="h-5 w-5 shrink-0 text-moss-600" />
+        </Link>
       </Card>
 
       {/* Tabs — scrollable on narrow screens */}
