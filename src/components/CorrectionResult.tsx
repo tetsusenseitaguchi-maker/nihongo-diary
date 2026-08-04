@@ -879,26 +879,6 @@ export function CorrectionResult({
         </div>
       )}
 
-      {/* Obie Phrase — natural Japanese phrase of the day */}
-      {(correction.obiePhraseRuby || correction.obiePhraseExplanation) && (
-        <div className="gloss-panel flex items-start gap-3 rounded-[var(--radius-card)] p-5" style={tint("--color-tint-sage")}>
-          <ObiePhoto size={44} className="shrink-0 ring-2 ring-pine/20" />
-          <div className="min-w-0">
-            <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-moss-600">
-              🐾 {t("correction.obiePhrase")}
-            </p>
-            {correction.obiePhraseRuby && (
-              <p className="font-jp text-[18px] font-bold leading-loose text-pine">
-                <Furigana text={correction.obiePhraseRuby} />
-              </p>
-            )}
-            {correction.obiePhraseExplanation && (
-              <p className="mt-1 text-sm leading-relaxed text-ink/75"><NoRuby text={correction.obiePhraseExplanation} /></p>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* One locked frame standing in for both paid sections. Free gets neither
           the mini lesson nor the drills, and two padlocked cards with two
           buttons crowded the result — so they share a single card here, in the
