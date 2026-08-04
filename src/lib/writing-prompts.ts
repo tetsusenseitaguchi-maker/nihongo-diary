@@ -64,6 +64,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "家(いえ)", en: "home" },
       { jp: "楽(たの)しい", en: "fun" },
     ],
+    example: { jp: "今日(きょう)は友(とも)だちと買(か)い物(もの)に行(い)きました。", en: "I went shopping with a friend today." },
   },
   {
     id: 2,
@@ -78,6 +79,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "遅(おそ)い", en: "late" },
       { jp: "元気(げんき)", en: "well" },
     ],
+    example: { jp: "今日(きょう)は七時(しちじ)に起(お)きました。", en: "I woke up at seven today." },
   },
   {
     id: 3,
@@ -92,6 +94,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "作(つく)る", en: "to make" },
       { jp: "レストラン", en: "restaurant" },
     ],
+    example: { jp: "朝(あさ)ごはんはパンとコーヒーでした。", en: "I had bread and coffee for breakfast." },
   },
   {
     id: 4,
@@ -106,6 +109,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "冷(つめ)たい", en: "cold" },
       { jp: "あたたかい", en: "warm" },
     ],
+    example: { jp: "今日(きょう)はお茶(ちゃ)をたくさん飲(の)みました。", en: "I drank a lot of tea today." },
   },
   {
     id: 5,
@@ -120,6 +124,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "バス", en: "bus" },
       { jp: "歩(ある)く", en: "to walk" },
     ],
+    example: { jp: "午後(ごご)、公園(こうえん)まで歩(ある)きました。", en: "I walked to the park in the afternoon." },
   },
   {
     id: 6,
@@ -134,6 +139,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "一緒(いっしょ)に", en: "together" },
       { jp: "電話(でんわ)", en: "phone call" },
     ],
+    example: { jp: "今日(きょう)は家族(かぞく)と電話(でんわ)で話(はな)しました。", en: "I talked with my family on the phone today." },
   },
   {
     id: 7,
@@ -148,6 +154,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "風(かぜ)", en: "wind" },
       { jp: "空(そら)", en: "sky" },
     ],
+    example: { jp: "朝(あさ)は雨(あめ)でしたが、午後(ごご)は晴(は)れました。", en: "It rained in the morning, but it cleared up in the afternoon." },
   },
   {
     id: 8,
@@ -176,6 +183,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "面白(おもしろ)い", en: "interesting" },
       { jp: "好(す)き", en: "like" },
     ],
+    example: { jp: "夜(よる)、映画(えいが)を見(み)ました。", en: "I watched a movie at night." },
   },
   {
     id: 10,
@@ -190,6 +198,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "毎日(まいにち)", en: "every day" },
       { jp: "アーティスト", en: "artist" },
     ],
+    example: { jp: "仕事(しごと)のとき、静(しず)かな音楽(おんがく)を聞(き)きました。", en: "I listened to quiet music while working." },
   },
   {
     id: 11,
@@ -204,6 +213,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "思(おも)う", en: "to think" },
       { jp: "友(とも)だち", en: "friend" },
     ],
+    example: { jp: "友(とも)だちとごはんを食(た)べたことが一番(いちばん)楽(たの)しかったです。", en: "Eating with my friend was the most fun." },
   },
   {
     id: 12,
@@ -218,6 +228,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "仕事(しごと)", en: "work" },
       { jp: "勉強(べんきょう)", en: "study" },
     ],
+    example: { jp: "今日(きょう)は少(すこ)し忙(いそが)しかったですが、元気(げんき)です。", en: "I was a little busy today, but I'm doing fine." },
   },
   {
     id: 13,
@@ -232,6 +243,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "遅(おそ)い", en: "late" },
       { jp: "眠(ねむ)い", en: "sleepy" },
     ],
+    example: { jp: "今日(きょう)は早(はや)く寝(ね)たいです。", en: "I want to go to bed early today." },
   },
   {
     id: 14,
@@ -246,6 +258,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "パソコン", en: "computer" },
       { jp: "ゆっくり", en: "relax" },
     ],
+    example: { jp: "家(いえ)で掃除(そうじ)をしてから、本(ほん)を読(よ)みました。", en: "I cleaned at home and then read a book." },
   },
   {
     id: 15,
@@ -260,6 +273,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "安(やす)い", en: "cheap" },
       { jp: "高(たか)い", en: "expensive" },
     ],
+    example: { jp: "スーパーで野菜(やさい)と果物(くだもの)を買(か)いました。", en: "I bought vegetables and fruit at the supermarket." },
   },
   {
     id: 16,
@@ -274,6 +288,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "少(すこ)し", en: "a little" },
       { jp: "とても", en: "very" },
     ],
+    example: { jp: "今日(きょう)はとても元気(げんき)です。", en: "I feel great today." },
   },
   {
     id: 17,
@@ -288,6 +303,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "簡単(かんたん)", en: "easy" },
       { jp: "おいしい", en: "delicious" },
     ],
+    example: { jp: "晩(ばん)ごはんに簡単(かんたん)なパスタを作(つく)りました。", en: "I made simple pasta for dinner." },
   },
   {
     id: 18,
@@ -302,6 +318,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "勉強(べんきょう)する", en: "to study" },
       { jp: "もっと", en: "more" },
     ],
+    example: { jp: "今日(きょう)は三十分(さんじゅっぷん)ぐらい勉強(べんきょう)しました。", en: "I studied for about thirty minutes today." },
   },
   {
     id: 19,
@@ -316,6 +333,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "白(しろ)い", en: "white" },
       { jp: "黒(くろ)い", en: "black" },
     ],
+    example: { jp: "寒(さむ)かったので、黒(くろ)いコートを着(き)ました。", en: "It was cold, so I wore a black coat." },
   },
   {
     id: 20,
@@ -330,6 +348,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "電車(でんしゃ)", en: "train" },
       { jp: "早(はや)い", en: "early" },
     ],
+    example: { jp: "八時(はちじ)に家(いえ)を出(で)て、電車(でんしゃ)に乗(の)りました。", en: "I left home at eight and took the train." },
   },
   {
     id: 21,
@@ -344,6 +363,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "毎日(まいにち)", en: "every day" },
       { jp: "少(すこ)し", en: "a little" },
     ],
+    example: { jp: "日本語(にほんご)で自己紹介(じこしょうかい)の練習(れんしゅう)をしました。", en: "I practised introducing myself in Japanese." },
   },
   {
     id: 22,
@@ -358,6 +378,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "甘(あま)い", en: "sweet" },
       { jp: "食(た)べる", en: "to eat" },
     ],
+    example: { jp: "母(はは)が作(つく)ったカレーが一番(いちばん)おいしかったです。", en: "The curry my mother made was the most delicious." },
   },
   {
     id: 23,
@@ -372,6 +393,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "天気(てんき)", en: "weather" },
       { jp: "行(い)く", en: "to go" },
     ],
+    example: { jp: "公園(こうえん)で写真(しゃしん)をたくさん撮(と)りました。", en: "I took a lot of photos in the park." },
   },
   {
     id: 24,
@@ -386,6 +408,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "長(なが)い", en: "long" },
       { jp: "短(みじか)い", en: "short" },
     ],
+    example: { jp: "今日(きょう)は仕事(しごと)に長(なが)い時間(じかん)を使(つか)いました。", en: "I spent a long time on work today." },
   },
   {
     id: 25,
@@ -400,6 +423,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "とても", en: "very" },
       { jp: "少(すこ)し", en: "a little" },
     ],
+    example: { jp: "友(とも)だちからメールが来(き)て、うれしかったです。", en: "I was happy because I got an email from a friend." },
   },
   {
     id: 26,
@@ -414,6 +438,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "時間(じかん)", en: "time" },
       { jp: "がんばる", en: "to do one's best" },
     ],
+    example: { jp: "宿題(しゅくだい)が難(むずか)しくて、大変(たいへん)でした。", en: "The homework was difficult, so it was tough." },
   },
   {
     id: 27,
@@ -428,6 +453,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "簡単(かんたん)", en: "easy" },
       { jp: "楽(たの)しい", en: "fun" },
     ],
+    example: { jp: "初(はじ)めて日本(にほん)の料理(りょうり)を作(つく)ってみました。", en: "I tried making Japanese food for the first time." },
   },
   {
     id: 28,
@@ -442,6 +468,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "予定(よてい)", en: "plan" },
       { jp: "楽(たの)しみ", en: "looking forward to it" },
     ],
+    example: { jp: "明日(あした)は友(とも)だちに会(あ)う予定(よてい)です。", en: "I'm planning to meet a friend tomorrow." },
   },
   {
     id: 29,
@@ -456,6 +483,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "笑(わら)う", en: "to laugh" },
       { jp: "楽(たの)しい", en: "fun" },
     ],
+    example: { jp: "家族(かぞく)と一緒(いっしょ)に晩(ばん)ごはんを食(た)べたことです。", en: "Eating dinner with my family." },
   },
   {
     id: 30,
@@ -470,6 +498,7 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "のんびり", en: "relaxing" },
       { jp: "今日(きょう)", en: "today" },
     ],
+    example: { jp: "今日(きょう)は普通(ふつう)の日(ひ)でしたが、のんびりできました。", en: "It was an ordinary day, but I could relax." },
   },
 ];
 
