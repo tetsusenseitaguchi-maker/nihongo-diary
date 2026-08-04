@@ -169,6 +169,13 @@ export const WRITING_PROMPTS: WritingPrompt[] = [
       { jp: "書(か)く", en: "to write" },
       { jp: "勉強(べんきょう)する", en: "to study" },
     ],
+    // 三(みっ)つ, not 五(いつ)つ. The reading of 五 ends in the same mora as
+    // the okurigana after it, and dropEchoedOkurigana() in furigana.ts reads
+    // that as the repeated-okurigana glitch it exists to repair — it deletes
+    // the つ and the sentence renders as 「五覚えました」. 五 is the only
+    // counter reading this happens to; 一(ひと) 二(ふた) 三(みっ) 七(なな)
+    // all parse clean.
+    example: { jp: "新(あたら)しい漢字(かんじ)を三(みっ)つ覚(おぼ)えました。", en: "I learned three new kanji." },
   },
   {
     id: 9,
