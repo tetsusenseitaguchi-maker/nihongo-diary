@@ -67,7 +67,10 @@ export async function POST(req: NextRequest) {
     const params: Parameters<typeof stripe.checkout.sessions.create>[0] = {
       mode: "subscription",
       payment_method_types: ["card"],
-      line_items: [{ price: STRIPE_PRICES[plan], quantity: 1 }],
+      // Monthly, explicitly. The yearly prices exist in STRIPE_PRICES but
+      // nothing offers them yet — when a cadence toggle lands, this is where
+      // its value arrives.
+      line_items: [{ price: STRIPE_PRICES[plan].monthly, quantity: 1 }],
       client_reference_id: user.id,
       metadata: { userId: user.id, plan },
       success_url: `${SITE_URL}/upgrade/success?plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,

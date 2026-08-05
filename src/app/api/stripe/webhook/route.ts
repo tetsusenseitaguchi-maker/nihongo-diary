@@ -7,11 +7,26 @@ import { recordBillingEvent, epochToIso, type BillingOutcome } from "@/lib/billi
 // Must be disabled for raw body access (Stripe signature verification requires the raw bytes)
 export const config = { api: { bodyParser: false } };
 
-/** Map Stripe price ID → plan name. Falls back to "free" if unknown. */
-function planFromPriceId(priceId: string): "plus" | "pro" | "free" {
-  if (priceId === STRIPE_PRICES.pro) return "pro";
-  if (priceId === STRIPE_PRICES.plus) return "plus";
-  return "free";
+/**
+ * Map Stripe price ID → plan name. Null means "this price is not one of ours".
+ *
+ * Null rather than "free", and the difference is the whole point. A price we
+ * do not recognise is a fact about this deployment's configuration — a price
+ * added in the dashboard, an environment variable not set — and never a
+ * statement about whether the customer is entitled to anything. Returning
+ * "free" made those two indistinguishable at the update below, so a paying
+ * subscriber on an unmapped price was silently downgraded.
+ *
+ * Every cadence of a plan maps to the same name: plan is what the learner
+ * gets, monthly-vs-yearly is only how they pay for it, and profiles.plan has
+ * no column for the difference.
+ */
+function planFromPriceId(priceId: string): "plus" | "pro" | null {
+  for (const plan of ["plus", "pro"] as const) {
+    const prices = STRIPE_PRICES[plan];
+    if (priceId === prices.monthly || priceId === prices.yearly) return plan;
+  }
+  return null;
 }
 
 /** Return "free" for any non-active/trialing subscription status. */
@@ -152,7 +167,55 @@ export async function POST(request: NextRequest) {
 
         const priceId = sub.items.data[0]?.price.id ?? "";
         const planName = planFromPriceId(priceId);
-        const newPlan = planForStatus(sub.status, planName);
+        const isActive = sub.status === "active" || sub.status === "trialing";
+
+        /**
+         * Paying, on a price this deployment does not know. Do not write plan.
+         *
+         * The condition needs both halves. "Unknown price" alone would also
+         * swallow the downgrades that must happen: past_due, unpaid, paused
+         * and canceled all arrive here too, and for those the plan is decided
+         * by the status, not by the price — planForStatus below returns "free"
+         * whatever the price was. Skipping on price alone would leave someone
+         * who stopped paying on a paid plan indefinitely, which is the same
+         * bug pointing the other way.
+         *
+         * stripe_subscription_id is still written. checkout/route.ts refuses a
+         * second Checkout Session to anyone carrying one, and dropping it here
+         * would open exactly the double-subscription this route cannot repair.
+         *
+         * The billing_events row is deliberately shaped for its reader: the
+         * outcome stays one of the four the table's CHECK allows, and
+         * plan_after IS NULL is what marks "nothing was written to plan".
+         *   select * from billing_events where plan_after is null;
+         */
+        if (planName === null && isActive) {
+          console.error(
+            `[stripe/webhook] unknown price ${priceId} on ${sub.status} subscription ${sub.id} — plan NOT written`,
+          );
+
+          // Same query as the normal path minus `plan`, apple_iap guard included.
+          const { data, error } = await supabase
+            .from("profiles")
+            .update({ stripe_subscription_id: sub.id })
+            .eq("stripe_customer_id", customerId)
+            .neq("billing_source", "apple_iap")
+            .select("id, plan");
+
+          const r = readResult(data, error);
+          await record(r.outcome, event.type, {
+            customerId,
+            userId: r.userId,
+            rowsAffected: r.rows,
+            planAfter: null,
+            detail: `unknown price ${priceId} — plan not written`,
+          });
+          break;
+        }
+
+        // Unchanged. planName can only be null here when the subscription is
+        // not active, and planForStatus ignores its plan argument in that case.
+        const newPlan = planForStatus(sub.status, planName ?? "free");
 
         // Don't clobber a user who has since moved to Apple IAP — see
         // revenuecat/webhook/route.ts for the symmetric guard.
