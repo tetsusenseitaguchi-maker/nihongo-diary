@@ -187,10 +187,26 @@ const LEADING_KANA = /^[ぁ-ゖー]+/;
  *   2. only a PROPER suffix of rt counts. Matching the whole of rt is what
  *      case 1 would be, one character up; requiring something to be left over
  *      is what separates 「ここ|ち」+ち from 「い」+い.
+ *   3. a single BARE VOWEL is never treated as an echo. きょう + うれしかった
+ *      drew as 今日れしかった: the う ending きょう is the tail of a long
+ *      vowel, and okurigana cannot begin with one — long vowels belong to
+ *      on'yomi, which take no okurigana in that position. The same shape ate
+ *      the い of せんせい + いいました. Readings that end in a bare あいうえお
+ *      at two morae or more are long vowels and diphthongs almost without
+ *      exception, so requiring the stripped kana to be anything else costs
+ *      nothing real: ここち + ちよい and かんさつ + さつする both end in a
+ *      consonant mora and are untouched by this.
+ *
+ *      Only length 1 is guarded. A two-kana match is not a coincidence
+ *      between a long vowel and the next word — it is the duplicate this
+ *      function exists for.
  *
  * Longest match wins, so かんさつ + さつする drops both kana rather than
  * stopping at つ.
  */
+
+/** あいうえお alone: the tail of a long vowel, never the start of okurigana. */
+const BARE_VOWEL = /^[あいうえお]$/;
 function dropEchoedOkurigana(segments: RubySegment[]): RubySegment[] {
   let changed = false;
   const out = segments.slice();
@@ -209,6 +225,8 @@ function dropEchoedOkurigana(segments: RubySegment[]): RubySegment[] {
     for (let len = Math.min(run.length, rt.length - 1); len >= 1; len--) {
       // guard 2 — len never reaches rt.length
       if (run.startsWith(rt.slice(rt.length - len))) {
+        // guard 3 — a lone あいうえお is a long vowel, not an echo
+        if (len === 1 && BARE_VOWEL.test(rt.slice(-1))) break;
         out[i + 1] = { type: "text", value: next.value.slice(len) };
         changed = true;
         break;
