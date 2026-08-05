@@ -17,6 +17,7 @@ import { isNativeRequest } from "@/lib/native";
 import { hasDictation } from "@/lib/dictation";
 import { getDueSummary } from "@/lib/srs-server";
 import { AudioIntroModal } from "@/components/AudioIntroModal";
+import { WebPushBanner } from "@/components/WebPushBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -133,6 +134,13 @@ export default async function DashboardPage() {
       {/* One-time, and it holds its own screen back until the tour has been
           seen — see the comment in AudioIntroModal. */}
       <AudioIntroModal dictationDiaryId={dictationDiaryId} isNative={isNative} />
+
+      {/* Renders nothing unless this browser can subscribe, has not already,
+          has not closed it, and belongs to someone who has written or finished
+          the tour — so it costs no space on a first visit, when the tour is
+          already asking for attention. hasWritten is entries.length off the
+          query above; no select is widened for it. */}
+      <WebPushBanner hasWritten={entries.length > 0} />
 
       {/* Hero + stats */}
       <div className="grid gap-5 lg:grid-cols-12">
