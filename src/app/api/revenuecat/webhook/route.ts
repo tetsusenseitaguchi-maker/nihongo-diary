@@ -3,10 +3,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { recordBillingEvent, type BillingOutcome } from "@/lib/billing-events";
 
-/** Map RevenueCat product ID → plan name. Falls back to "free" if unknown. */
+/**
+ * Map RevenueCat product ID → plan name. Falls back to "free" if unknown.
+ *
+ * The yearly IDs are listed ahead of the UI that sells them. An ID missing
+ * here does not fail safe: INITIAL_PURCHASE would write plan='free' alongside
+ * billing_source='apple_iap', which then also blocks stripe/checkout (that
+ * route rejects apple_iap), leaving a paying user with no way back. Nothing
+ * reads this map until a purchase of that product actually happens, so the
+ * rows cost nothing while the products are still in App Store review.
+ */
 const PRODUCT_ID_TO_PLAN: Record<string, "plus" | "pro"> = {
   "com.nihongodiary.app.plus.monthly": "plus",
   "com.nihongodiary.app.pro.monthly": "pro",
+  "com.nihongodiary.app.plus.yearly": "plus",
+  "com.nihongodiary.app.pro.yearly": "pro",
 };
 function planFromProductId(productId: string | undefined): "plus" | "pro" | "free" {
   return PRODUCT_ID_TO_PLAN[productId ?? ""] ?? "free";
