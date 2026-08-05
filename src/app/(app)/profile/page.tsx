@@ -11,6 +11,7 @@ import { ManageSubscriptionButton } from "@/components/ManageSubscriptionButton"
 import { DeleteAccountButton } from "@/components/DeleteAccountButton";
 import { DiscoveryOptOutToggle } from "@/components/DiscoveryOptOutToggle";
 import { DailyReviewPushToggle } from "@/components/DailyReviewPushToggle";
+import { WebPushToggle } from "@/components/WebPushToggle";
 import { ReviewTargetSelector } from "@/components/ReviewTargetSelector";
 import { RestorePurchasesButton } from "@/components/RestorePurchasesButton";
 import { computeStats, type DiaryRow } from "@/lib/diary";
@@ -271,6 +272,13 @@ export default async function ProfilePage() {
             />
           </div>
         </div>
+
+        {/* Renders nothing at all where notifications cannot be subscribed to —
+            inside the iOS app, and in browsers without the Push API — so it
+            needs no gate here. It owns its own heading for that reason: a
+            heading rendered out here would survive the component hiding
+            itself. */}
+        <WebPushToggle />
       </Card>
 
       {/* Danger Zone */}
