@@ -4,7 +4,7 @@ import { normalizePlan, PLAN_LABELS } from "@/lib/plans";
 import { PricingGrid } from "@/components/PricingGrid";
 import { getServerT } from "@/lib/i18n-server";
 import { isNativeRequest } from "@/lib/native";
-import { parseCadence } from "@/lib/stripe";
+import { parseCadence, isYearlyEnabled } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
 
@@ -68,7 +68,10 @@ export default async function UpgradePage({
         mode="upgrade"
         layout="table"
         cadence={cadence}
-        cadenceBasePath="/upgrade"
+        // Undefined hides the toggle entirely. parseCadence above has
+        // already forced monthly, so leaving it drawn would offer a
+        // switch that changes nothing.
+        cadenceBasePath={isYearlyEnabled() ? "/upgrade" : undefined}
         isNative={isNative}
         translateFeature={t}
         labels={{

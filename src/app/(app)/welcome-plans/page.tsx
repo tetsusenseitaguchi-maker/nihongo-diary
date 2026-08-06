@@ -7,7 +7,7 @@ import { PlansIntroSeenMarker } from "@/components/PlansIntroSeenMarker";
 import { getServerT } from "@/lib/i18n-server";
 import { isNativeRequest } from "@/lib/native";
 import { isNewAccount } from "@/lib/plans-intro/seen";
-import { parseCadence } from "@/lib/stripe";
+import { parseCadence, isYearlyEnabled } from "@/lib/stripe";
 
 /**
  * One-time "here are the paid plans" screen, shown straight after signup.
@@ -138,7 +138,10 @@ export default async function WelcomePlansPage({
         mode="upgrade"
         layout="table"
         cadence={cadence}
-        cadenceBasePath="/welcome-plans"
+        // Undefined hides the toggle entirely. parseCadence above has
+        // already forced monthly, so leaving it drawn would offer a
+        // switch that changes nothing.
+        cadenceBasePath={isYearlyEnabled() ? "/welcome-plans" : undefined}
         isNative={isNative}
         translateFeature={t}
         labels={{

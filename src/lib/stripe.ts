@@ -63,7 +63,32 @@ export type Cadence = keyof (typeof STRIPE_PRICES)["plus"];
  * monthly, which is what the page showed before any of this existed.
  */
 export function parseCadence(value: unknown): Cadence {
+  if (!isYearlyEnabled()) return "monthly";
   return value === "yearly" ? "yearly" : "monthly";
+}
+
+/**
+ * Is the annual plan on sale?
+ *
+ * Off unless the variable says exactly "true". Absent, empty, "1", "yes", a
+ * typo — all of them mean off, and off is the behaviour that shipped before
+ * annual existed. The alternative default fails the wrong way: a variable
+ * missing from an environment nobody thought about would put prices in front
+ * of people, and the whole reason this switch exists is that a price can be
+ * wrong.
+ *
+ * Read in two places, and they are different jobs. parseCadence uses it so
+ * ?cadence=yearly resolves to monthly no matter who types it — the flag
+ * cannot be walked around with a URL. The purchase screens use it to decide
+ * whether the toggle is drawn at all, because a switch that silently does
+ * nothing is worse than no switch.
+ *
+ * Nothing about the monthly path reads this. Turning it off does not disable
+ * a code path; it stops one from being reachable, and the code stays where it
+ * is, ready for the variable to come back.
+ */
+export function isYearlyEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_YEARLY_ENABLED === "true";
 }
 
 export { SITE_URL };
