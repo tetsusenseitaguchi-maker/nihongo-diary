@@ -375,7 +375,16 @@ export default async function DashboardPage() {
 
           {/* Templates + Feed */}
           <div className="grid gap-5 md:grid-cols-2">
-            <Card className="p-5">
+            {/* min-w-0: this card holds `truncate` text, whose min-content is
+                the whole line — a grid item defaults to min-width:auto, so
+                that width became the track's floor and both cards in the row
+                rendered wider than the screen (427px against 343px at 375px
+                wide). The inner min-w-0 on the flex row cannot prevent it:
+                min-width:0 permits shrinking inside a container that already
+                has a width, and does nothing about the intrinsic width the
+                item hands upward. The card itself has to be allowed to
+                shrink; then truncate does its job. */}
+            <Card className="min-w-0 p-5">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="font-serif text-lg font-bold text-pine">{t("dashboard.templates")}</h2>
                 <Link href="/support" className="text-xs font-semibold text-moss-600 hover:text-pine">{t("common.seeAll")}</Link>
@@ -396,8 +405,11 @@ export default async function DashboardPage() {
               </ul>
             </Card>
 
-            {/* Feed card */}
-            <Card accent="none" className="flex flex-col border-moss/20 bg-sage/30 p-5">
+            {/* Feed card — min-w-0 for the same reason, though nothing in it
+                is nowrap today. It shares the single track with the card
+                above, so whichever of the two refuses to shrink sets the
+                width of both. */}
+            <Card accent="none" className="flex min-w-0 flex-col border-moss/20 bg-sage/30 p-5">
               <div className="mb-3">
                 <span className="text-2xl">🌱</span>
                 <h2 className="mt-2 font-serif text-lg font-bold text-pine">{t("dashboard.feedSection")}</h2>

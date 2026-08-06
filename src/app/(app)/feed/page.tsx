@@ -484,7 +484,12 @@ export default async function FeedPage({
         />
 
         {/* Right rail (desktop) / Bottom section (mobile) */}
-        <div className="space-y-4">
+        {/* min-w-0: the suggestion list truncates display names, and a name
+            long enough would otherwise set this grid item's minimum width and
+            push the column past the screen — the same shape fixed on the
+            dashboard. Nothing looks wrong today because the names are short;
+            that is what makes it worth pinning down now. */}
+        <div className="min-w-0 space-y-4">
           <UserSearch />
           <Card className="p-5">
             <h2 className="mb-1 font-serif text-lg font-bold text-pine">{t("feed.findLearners")}</h2>

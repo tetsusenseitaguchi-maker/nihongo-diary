@@ -226,7 +226,10 @@ export default async function PlacesPage() {
                   <a
                     key={pin.id}
                     href={`/diary/${pin.diaryEntryId}`}
-                    className="flex items-center gap-3 rounded-xl border border-line bg-paper p-3 transition-shadow hover:shadow-lift"
+                    // min-w-0: the place name below is truncated, and a long
+                    // one would set this grid item's minimum width — see the
+                    // note on the dashboard's Templates card.
+                    className="flex min-w-0 items-center gap-3 rounded-xl border border-line bg-paper p-3 transition-shadow hover:shadow-lift"
                   >
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-mint text-pine">
                       <Icon.mapPin className="h-5 w-5" />

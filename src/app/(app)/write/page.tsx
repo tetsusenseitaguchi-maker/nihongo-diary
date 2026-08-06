@@ -993,7 +993,11 @@ export default function WritePage() {
 
       <div className="grid gap-6 lg:grid-cols-[1.55fr_0.85fr]">
         {/* Notebook */}
-        <div className="space-y-4">
+        {/* min-w-0: Attachments truncates the attached file's name, and an
+            untruncatable one would set this grid item's minimum width — the
+            same shape as the dashboard's Templates card. Phone camera names
+            are long enough to reach it. */}
+        <div className="min-w-0 space-y-4">
           <div className="relative overflow-hidden rounded-[var(--radius-card)] border border-line bg-paper shadow-lift">
             {/* spiral binding */}
             <div className="spiral absolute inset-y-3 left-2 w-3" aria-hidden />
