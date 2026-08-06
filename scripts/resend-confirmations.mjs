@@ -211,8 +211,10 @@ const BAD_EVENTS = new Set(["bounced", "complained", "failed"]);
  * account's suppression list from an earlier bounce, so nothing was offered to
  * the receiving server and no reputation was spent. Counting it as a failure
  * would halt a healthy run because of something that happened weeks ago —
- * every suppression on this account predates the delivery problem being fixed
- * here, and none of them are iCloud.
+ * all but one predate the delivery problem being fixed here. The exception is
+ * a single icloud.com address suppressed on 2026-07-26, mid-outage, which may
+ * be a casualty of it rather than a dead address — worth deciding separately,
+ * not worth stopping a run over.
  *
  * It is still worth reporting: it is the difference between "sent to 53" and
  * "53 people heard from us", and nothing else would show it.
@@ -412,8 +414,10 @@ if (GUARD && ok > 0) {
     if (supp.length > 0) {
       console.log(`\n  ${supp.length} suppressed — Resend did not send (earlier bounce, address on the suppression list):`);
       for (const s2 of supp) console.log(`     ${s2.email}`);
-      console.log("  These are not a failure of this run. Do not clear them without checking why:");
-      console.log("  every suppression on this account is origin=bounce, and none of them are iCloud.");
+      console.log("  Not a failure of this run — Resend declined to send, so nothing was spent.");
+      console.log("  Every suppression on this account is origin=bounce. Check the date before");
+      console.log("  clearing any: one (an icloud.com address, 2026-07-26) was suppressed during");
+      console.log("  the content-filter outage and may be a victim of it rather than a dead address.");
     }
   } catch (e) {
     console.log(`could not read final status: ${e.message}`);
