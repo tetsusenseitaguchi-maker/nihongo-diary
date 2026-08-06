@@ -33,7 +33,24 @@ export default function SignupPage() {
       password,
       options: {
         data: { display_name: displayName, username },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        /**
+         * ⚠️ Only read when the email template builds its link from
+         * {{ .ConfirmationURL }}. The template this ships alongside does not:
+         * it points straight at /auth/confirm with {{ .TokenHash }}, so this
+         * value is unused and the route never sees a PKCE `code` at all.
+         *
+         * Which means the two have to move in one order. Template first, then
+         * this. The other way round, a signup made in the gap gets a
+         * ConfirmationURL that redirects here carrying `code`, /auth/confirm
+         * wants `token_hash`, and the learner lands on the failure page — a
+         * worse outcome than the bug being fixed.
+         *
+         * Kept pointing here rather than left on /auth/callback so that a
+         * revert of the template alone cannot quietly restore the Safari
+         * failure: whichever of the two is live, the destination is the route
+         * that does not need a browser-bound verifier.
+         */
+        emailRedirectTo: `${window.location.origin}/auth/confirm`,
       },
     });
 

@@ -23,7 +23,11 @@ export default function ForgotPasswordPage() {
 
     const supabase = createClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/update-password`,
+      // Same move as signup's emailRedirectTo, and the same ordering rule:
+      // the recovery template switches to /auth/confirm?type=recovery first,
+      // then this. /auth/confirm sends a verified recovery straight to
+      // /update-password on its own, so no `next` is needed here.
+      redirectTo: `${window.location.origin}/auth/confirm`,
     });
 
     if (error) {
