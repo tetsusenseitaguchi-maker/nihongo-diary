@@ -395,6 +395,15 @@ export default async function DashboardPage() {
                     <Link href="/write" className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-mint/50">
                       <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-mint text-pine">#</span>
                       <span className="min-w-0 flex-1">
+                        {/* ここは ruby を含む truncate。省略位置が熟語の直前に来ると、
+                            base（漢字）が切られて rt（ふりがな）だけが省略記号の上に
+                            残る。日本語学習アプリなので、読みだけが浮いた状態は
+                            学習者に誤読を与える。文言を長くする / 表示件数を増やす
+                            ときは 320px で必ず目視すること。
+
+                            現在表示している4件はどの幅でもその位置に来ないため、
+                            実際には発生していない（320px で省略されるのは4件目だが、
+                            ルビが先頭の 今日 だけなので安全）。 */}
                         <span className="block truncate font-jp text-sm font-medium text-ink"><Furigana text={tmpl.starter} /></span>
                         <span className="block truncate text-xs text-muted">{tmpl.description}</span>
                       </span>
