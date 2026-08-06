@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Icon } from "@/components/icons";
 import { ObiePhoto, Avatar } from "@/components/ObiePhoto";
 import { useT } from "@/contexts/locale";
+import { notificationHref } from "@/lib/notification-href";
 
 interface NotifActor {
   display_name: string | null;
@@ -23,22 +24,18 @@ interface NotifItem {
   actor?: NotifActor | null;
 }
 
+/**
+ * Unchanged behaviour, moved: the destinations now live in
+ * @/lib/notification-href so /api/push/send lands a tapped notification in the
+ * same place this list does. Kept as a wrapper rather than inlined at the call
+ * site so the mapping from NotifItem's field names happens once.
+ */
 function notifHref(n: NotifItem): string {
-  switch (n.type) {
-    case "follow":
-      return n.actor?.username ? `/profile/${n.actor.username}` : "/feed";
-    case "new_diary":
-      return n.diary_entry_id ? `/diary/${n.diary_entry_id}` : "/feed";
-    case "reaction":
-    case "comment":
-      return n.diary_entry_id ? `/diary/${n.diary_entry_id}` : "/history";
-    case "reply":
-      return n.diary_entry_id ? `/diary/${n.diary_entry_id}` : "/feed";
-    case "obie_write":
-      return "/write";
-    default:
-      return "/dashboard";
-  }
+  return notificationHref({
+    type: n.type,
+    diaryEntryId: n.diary_entry_id,
+    actorUsername: n.actor?.username,
+  });
 }
 
 export function NotificationBell({ userId }: { userId: string }) {
