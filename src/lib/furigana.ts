@@ -161,7 +161,44 @@ export function parseRubySegments(text: string): RubySegment[] {
     segments.push({ type: "text", value: stripHtmlTags(processed.slice(last)) });
   }
 
-  return dropEchoedOkurigana(restoreTruncatedStem(segments));
+  /**
+   * ⚠️ dropEchoedOkurigana is NOT called here, and putting it back would break
+   *    111 diaries. Read this before deciding the repair is missing.
+   *
+   * It was written for a real glitch — <ruby>心地<rt>ここち</rt></ruby>ちよい,
+   * where the model repeats the tail of the reading as okurigana and the text
+   * draws 心地ちよい. The repair works. The problem is what else matches its
+   * test, which is only ever "the reading ends with the kana that follows it".
+   *
+   * Measured against every diary in the database on 2026-08-07 — 2,422 fields
+   * across 1,210 entries, rendered twice and diffed:
+   *
+   *   · glitch it was written for ......    0 rows
+   *   · correct Japanese it destroyed ..  111 rows
+   *
+   * Not a trade. Every single hit was a deletion of something real: particles
+   * (妹と映画 → 妹映画, 果物のサラダ → 果物サラダ), and okurigana that merely
+   * happened to repeat the reading's last mora (素晴らしい → 素晴しい,
+   * 話していたら → 話ていたら, 美味しかった → 美味かった, 早起きした →
+   * 早起した, 天神祭り → 天神祭). A learner reading their own corrected diary
+   * was being shown 素晴しい as the correct form.
+   *
+   * It reaches further than the screen: lib/ruby-ssml.ts renders through this
+   * same function, so the audio said すばしい, and WordTranslateText segments
+   * the stripped text, so tapping a word that had lost a character found
+   * nothing.
+   *
+   * The 2026-08-06 guard (a lone あいうえお is a long vowel, not an echo)
+   * rescued four shapes and still left these. The condition cannot be narrowed
+   * far enough without a lexicon, which this repo does not have and should not
+   * grow for one glitch that has not occurred.
+   *
+   * The function stays, exported and unwired, as the record of what was tried
+   * and as the starting point if 心地ちよい ever actually turns up. Finding it
+   * is scripts/scan-ruby-duplicates.mjs, which looks for exactly that shape and
+   * is meant to be run monthly.
+   */
+  return restoreTruncatedStem(segments);
 }
 
 /** Leading run of hiragana (plus ー) in a text segment. */
@@ -203,11 +240,16 @@ const LEADING_KANA = /^[ぁ-ゖー]+/;
  *
  * Longest match wins, so かんさつ + さつする drops both kana rather than
  * stopping at つ.
+ *
+ * ⚠️ NOTHING CALLS THIS. It is exported so it stays compiled and readable, and
+ * it is left in place deliberately — see the note at the end of
+ * parseRubySegments for the measurements that unwired it. Do not reconnect it
+ * without repeating them.
  */
 
 /** あいうえお alone: the tail of a long vowel, never the start of okurigana. */
 const BARE_VOWEL = /^[あいうえお]$/;
-function dropEchoedOkurigana(segments: RubySegment[]): RubySegment[] {
+export function dropEchoedOkurigana(segments: RubySegment[]): RubySegment[] {
   let changed = false;
   const out = segments.slice();
 
