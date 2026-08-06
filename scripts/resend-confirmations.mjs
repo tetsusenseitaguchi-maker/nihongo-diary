@@ -84,6 +84,12 @@ const DELAY_MS = Number(value("--delay-ms", "120000"));
 const ASSUME_YES = flag("--yes");
 const INCLUDE_SUSPECT = flag("--include-suspect");
 
+// ── Bounce guard ────────────────────────────────────────────────────────────
+const GUARD = flag("--guard");
+const STATUS_LAG_MS = Number(value("--status-lag-ms", "180000"));
+const MAX_BOUNCES = Number(value("--max-bounces", "5"));
+const MAX_CONSECUTIVE = Number(value("--max-consecutive", "2"));
+
 // ── Environment, read the same way the app does ─────────────────────────────
 function env() {
   const out = {};
@@ -99,6 +105,7 @@ const E = env();
 const URL_ = E.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = E.SUPABASE_SERVICE_ROLE_KEY;
 const ANON_KEY = E.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const RESEND_KEY = E.RESEND_API_KEY || process.env.RESEND_API_KEY || null;
 
 if (!URL_ || !SERVICE_KEY || !ANON_KEY) {
   console.error("✗ .env.local needs NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and NEXT_PUBLIC_SUPABASE_ANON_KEY");
@@ -172,6 +179,83 @@ const SUSPECT_DOMAINS = new Set([
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * What Resend says happened to each message, keyed by recipient.
+ *
+ * GET /emails is the whole account's recent mail, so it is filtered down to
+ * the addresses this run touched. limit=100 comfortably covers a run of 73.
+ */
+async function fetchStatuses(key) {
+  const res = await fetch("https://api.resend.com/emails?limit=100", {
+    headers: { Authorization: `Bearer ${key}` },
+  });
+  if (!res.ok) throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const body = await res.json();
+  const byEmail = new Map();
+  for (const row of body?.data ?? []) {
+    const to = Array.isArray(row.to) ? row.to[0] : row.to;
+    if (!to) continue;
+    // Newest first in the response, so the first sighting is the latest send.
+    if (!byEmail.has(to.toLowerCase())) byEmail.set(to.toLowerCase(), row.last_event);
+  }
+  return byEmail;
+}
+
+/** A verdict that means the message did not land, and that this run caused. */
+const BAD_EVENTS = new Set(["bounced", "complained", "failed"]);
+
+/**
+ * Not a bad event, and deliberately not a stop condition.
+ *
+ * "suppressed" means Resend refused to send at all: the address is on the
+ * account's suppression list from an earlier bounce, so nothing was offered to
+ * the receiving server and no reputation was spent. Counting it as a failure
+ * would halt a healthy run because of something that happened weeks ago —
+ * every suppression on this account predates the delivery problem being fixed
+ * here, and none of them are iCloud.
+ *
+ * It is still worth reporting: it is the difference between "sent to 53" and
+ * "53 people heard from us", and nothing else would show it.
+ */
+const SUPPRESSED = "suppressed";
+
+/**
+ * Should the run stop?
+ *
+ * Only messages older than STATUS_LAG_MS are judged: a bounce takes time to
+ * come back, and treating "no verdict yet" as good would make the guard
+ * useless while treating it as bad would stop every run on its first message.
+ *
+ * The consequence is that the guard trails the sending by lag/delay messages —
+ * two, at the defaults. A domain that starts rejecting is therefore caught
+ * after at most two more attempts, which is why the thresholds are 2 and 5
+ * rather than 1.
+ */
+function verdict(sentList, statuses, now) {
+  const judged = sentList
+    .filter((s) => now - s.at >= STATUS_LAG_MS)
+    .map((s) => ({ email: s.email, event: statuses.get(s.email.toLowerCase()) ?? null }))
+    .filter((s) => s.event !== null);
+
+  const bad = judged.filter((j) => BAD_EVENTS.has(j.event));
+  const suppressed = judged.filter((j) => j.event === SUPPRESSED);
+  let consecutive = 0;
+  for (const j of judged) consecutive = BAD_EVENTS.has(j.event) ? consecutive + 1 : 0;
+
+  return {
+    judged,
+    bounced: bad.length,
+    suppressed: suppressed.length,
+    consecutive,
+    stop:
+      bad.length >= MAX_BOUNCES
+        ? `${bad.length} bounces in total`
+        : consecutive >= MAX_CONSECUTIVE
+          ? `${consecutive} bounces in a row`
+          : null,
+  };
+}
+
 // ── Run ─────────────────────────────────────────────────────────────────────
 const all = await unconfirmed();
 const done = alreadySent();
@@ -230,6 +314,18 @@ if (!ASSUME_YES) {
 
 let ok = 0;
 let failed = 0;
+const sentList = [];
+let stoppedBecause = null;
+
+if (GUARD && !RESEND_KEY) {
+  console.error("\n✗ --guard needs RESEND_API_KEY in .env.local (or the environment).");
+  console.error("  Without it there is no way to see a bounce, and an unattended run");
+  console.error("  would keep sending into a wall. Refusing rather than sending blind.");
+  process.exit(1);
+}
+if (GUARD) {
+  console.log(`guard: stop at ${MAX_CONSECUTIVE} consecutive or ${MAX_BOUNCES} total bounces, judging only messages older than ${STATUS_LAG_MS / 1000}s\n`);
+}
 
 for (const [i, u] of targets.entries()) {
   const { error } = await pub.auth.resend({
@@ -256,12 +352,77 @@ for (const [i, u] of targets.entries()) {
     }
   } else {
     ok++;
+    sentList.push({ email: u.email, at: Date.now() });
     record({ email: u.email, ok: true });
     console.log(`  ✓ ${u.email}`);
   }
 
   if (i < targets.length - 1) await sleep(DELAY_MS);
+
+  if (GUARD) {
+    try {
+      const v = verdict(sentList, await fetchStatuses(RESEND_KEY), Date.now());
+      if (v.judged.length > 0) {
+        console.log(
+          `      ↳ judged ${v.judged.length}, bounced ${v.bounced}, suppressed ${v.suppressed}, run of ${v.consecutive}`,
+        );
+      }
+      if (v.stop) {
+        stoppedBecause = v.stop;
+        console.log(`\n⛔ STOPPING — ${v.stop}.`);
+        for (const j of v.judged.filter((x) => BAD_EVENTS.has(x.event))) {
+          console.log(`     ${j.event.padEnd(10)} ${j.email}`);
+        }
+        break;
+      }
+    } catch (e) {
+      // A failed status check is not a reason to keep sending blind.
+      stoppedBecause = `status check failed: ${e.message}`;
+      console.log(`\n⛔ STOPPING — could not read delivery status: ${e.message}`);
+      break;
+    }
+  }
 }
 
 console.log(`\nsent ${ok}, failed ${failed}, log: ${LOG_PATH}`);
-console.log("Check Resend for Delivered vs Bounced before sending the next batch.");
+
+if (GUARD && ok > 0) {
+  // The last messages have no verdict yet. Wait once more so the summary
+  // describes the run rather than the part of it that had time to settle.
+  console.log(`\nwaiting ${STATUS_LAG_MS / 1000}s for the last verdicts…`);
+  await sleep(STATUS_LAG_MS);
+  try {
+    const statuses = await fetchStatuses(RESEND_KEY);
+    const counts = {};
+    for (const s2 of sentList) {
+      const e = statuses.get(s2.email.toLowerCase()) ?? "(no verdict)";
+      counts[e] = (counts[e] ?? 0) + 1;
+    }
+    console.log("\nfinal delivery status:");
+    for (const [e, n] of Object.entries(counts).sort((a, b) => b[1] - a[1])) {
+      console.log(`  ${String(n).padStart(3)}  ${e}`);
+    }
+    for (const s2 of sentList) {
+      const e = statuses.get(s2.email.toLowerCase());
+      if (e && BAD_EVENTS.has(e)) console.log(`  ✗ ${e}  ${s2.email}`);
+    }
+    // Named, not just counted: these people did not hear from us, and the
+    // reason is on the account rather than in this run.
+    const supp = sentList.filter((s2) => statuses.get(s2.email.toLowerCase()) === SUPPRESSED);
+    if (supp.length > 0) {
+      console.log(`\n  ${supp.length} suppressed — Resend did not send (earlier bounce, address on the suppression list):`);
+      for (const s2 of supp) console.log(`     ${s2.email}`);
+      console.log("  These are not a failure of this run. Do not clear them without checking why:");
+      console.log("  every suppression on this account is origin=bounce, and none of them are iCloud.");
+    }
+  } catch (e) {
+    console.log(`could not read final status: ${e.message}`);
+  }
+}
+
+if (stoppedBecause) {
+  console.log(`\n⛔ Run stopped early: ${stoppedBecause}`);
+  console.log("   The log means a later run continues from here — but find out why first.");
+} else {
+  console.log("\nCheck Resend for Delivered vs Bounced before sending the next batch.");
+}
