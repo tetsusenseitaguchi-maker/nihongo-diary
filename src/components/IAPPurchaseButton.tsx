@@ -2,15 +2,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/contexts/locale";
-import type { PaidPlan } from "@/lib/stripe";
+import type { PaidPlan, Cadence } from "@/lib/stripe";
 import { IAP_PRODUCT_IDS } from "@/lib/revenuecat";
 
 interface Props {
   plan: PaidPlan;
+  /** Must match what PlanPrice is showing, or the price on screen is not the
+   *  price being charged — App Store Guideline 3.1.2(c). */
+  cadence?: Cadence;
   className?: string;
 }
 
-export function IAPPurchaseButton({ plan, className }: Props) {
+export function IAPPurchaseButton({ plan, cadence = "monthly", className }: Props) {
   const t = useT();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -25,7 +28,7 @@ export function IAPPurchaseButton({ plan, className }: Props) {
       const { Purchases } = await import("@revenuecat/purchases-capacitor");
 
       const offerings = await Purchases.getOfferings();
-      const productId = IAP_PRODUCT_IDS[plan];
+      const productId = IAP_PRODUCT_IDS[plan][cadence];
       const pkg = offerings.current?.availablePackages.find(
         (p) => p.product.identifier === productId,
       );

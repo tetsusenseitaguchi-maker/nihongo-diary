@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { PaidPlan } from "@/lib/stripe";
+import type { PaidPlan, Cadence } from "@/lib/stripe";
 import { IAP_PRODUCT_IDS } from "@/lib/revenuecat";
 
 // Same native-detection pattern as PurchaseButton.tsx/NativeGate.tsx.
@@ -26,11 +26,15 @@ export function PlanPrice({
   plan,
   fallback,
   cadence,
+  billingPeriod = "monthly",
   isNative = false,
 }: {
   plan: PaidPlan;
   fallback: string;
+  /** The words beside the price ("/month"). Display only. */
   cadence?: string;
+  /** Which product to price. Display and purchase must agree on this. */
+  billingPeriod?: Cadence;
   isNative?: boolean;
 }) {
   const [price, setPrice] = useState<string | null>(null);
@@ -44,7 +48,7 @@ export function PlanPrice({
         const { Purchases } = await import("@revenuecat/purchases-capacitor");
         const offerings = await Purchases.getOfferings();
         const pkg = offerings.current?.availablePackages.find(
-          (p) => p.product.identifier === IAP_PRODUCT_IDS[plan],
+          (p) => p.product.identifier === IAP_PRODUCT_IDS[plan][billingPeriod],
         );
         if (!cancelled && pkg) setPrice(pkg.product.priceString);
       } catch {
@@ -55,7 +59,7 @@ export function PlanPrice({
     return () => {
       cancelled = true;
     };
-  }, [plan]);
+  }, [plan, billingPeriod]);
 
   // On native, never render the USD fallback — show the IAP price once loaded,
   // otherwise a skeleton. On web, show the static fallback.

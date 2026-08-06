@@ -7,6 +7,7 @@ import { PlansIntroSeenMarker } from "@/components/PlansIntroSeenMarker";
 import { getServerT } from "@/lib/i18n-server";
 import { isNativeRequest } from "@/lib/native";
 import { isNewAccount } from "@/lib/plans-intro/seen";
+import { parseCadence } from "@/lib/stripe";
 
 /**
  * One-time "here are the paid plans" screen, shown straight after signup.
@@ -26,7 +27,14 @@ import { isNewAccount } from "@/lib/plans-intro/seen";
  */
 export const dynamic = "force-dynamic";
 
-export default async function WelcomePlansPage() {
+export default async function WelcomePlansPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cadence?: string | string[] }>;
+}) {
+  // Same allowlist as /upgrade — this screen sells the same subscriptions.
+  const cadence = parseCadence((await searchParams).cadence);
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -129,6 +137,8 @@ export default async function WelcomePlansPage() {
         billingSource={(profile?.billing_source as "stripe" | "apple_iap" | null) ?? null}
         mode="upgrade"
         layout="table"
+        cadence={cadence}
+        cadenceBasePath="/welcome-plans"
         isNative={isNative}
         translateFeature={t}
         labels={{
@@ -144,6 +154,10 @@ export default async function WelcomePlansPage() {
           legalIntro: t("pricing.legalIntro"),
           termsLink: t("pricing.termsLink"),
           privacyLink: t("pricing.privacyLink"),
+          cadenceMonth: t("pricing.cadence.month"),
+          cadenceYear: t("pricing.cadence.year"),
+          toggleMonthly: t("pricing.toggle.monthly"),
+          toggleYearly: t("pricing.toggle.yearly"),
           checkoutEnabled: true,
         }}
       />

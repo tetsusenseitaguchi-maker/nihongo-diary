@@ -4,7 +4,7 @@ import { useT } from "@/contexts/locale";
 import { CheckoutButton } from "@/components/CheckoutButton";
 import { ManageSubscriptionButton } from "@/components/ManageSubscriptionButton";
 import { IAPPurchaseButton } from "@/components/IAPPurchaseButton";
-import type { PaidPlan } from "@/lib/stripe";
+import type { PaidPlan, Cadence } from "@/lib/stripe";
 
 // Same native-detection pattern as NativeGate.tsx: evaluated once at module
 // scope. Server-rendered pass has no `window`, so this is false during SSR
@@ -32,11 +32,14 @@ function ManagedElsewhereNotice({ text }: { text: string }) {
  */
 export function PurchaseButton({
   plan,
+  cadence = "monthly",
   billingSource,
   hasActiveSubscription,
   checkoutEnabled,
 }: {
   plan: PaidPlan;
+  /** Passed straight through to whichever rail this resolves to. */
+  cadence?: Cadence;
   billingSource: "stripe" | "apple_iap" | null;
   hasActiveSubscription: boolean;
   checkoutEnabled?: boolean;
@@ -47,7 +50,7 @@ export function PurchaseButton({
     if (billingSource === "stripe") {
       return <ManagedElsewhereNotice text={t("pricing.manageOnWeb")} />;
     }
-    return <IAPPurchaseButton plan={plan} />;
+    return <IAPPurchaseButton plan={plan} cadence={cadence} />;
   }
 
   // Web
@@ -58,7 +61,7 @@ export function PurchaseButton({
     return <ManageSubscriptionButton />;
   }
   if (checkoutEnabled) {
-    return <CheckoutButton plan={plan} />;
+    return <CheckoutButton plan={plan} cadence={cadence} />;
   }
   return <ManagedElsewhereNotice text={t("pricing.upgradeSoon")} />;
 }

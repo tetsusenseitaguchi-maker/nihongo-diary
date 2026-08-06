@@ -8,13 +8,20 @@ import { PlanPrice } from "@/components/PlanPrice";
 import { NativeGate } from "@/components/NativeGate";
 import { RestorePurchasesButton } from "@/components/RestorePurchasesButton";
 import { PlanComparisonTable, type PlanColumnMeta } from "@/components/PlanComparisonTable";
+import type { Cadence } from "@/lib/stripe";
 import { COMPARISON_PLANS, type ComparisonPlan } from "@/lib/plan-comparison";
 
 type Tier = {
   id: Plan;
   name: string;
+  /** Monthly USD, shown on the web. Native never renders it — see PlanPrice. */
   price: string;
-  cadence?: string;
+  /** Annual USD. Absent on tiers that are not sold by the year (Teacher). */
+  yearlyPrice?: string;
+  /** True when this tier can be bought on either cycle. Teacher cannot, so it
+   *  keeps saying /month whatever the toggle is set to — a price with the
+   *  wrong period on it is the thing Guideline 3.1.2(c) is about. */
+  hasYearly?: boolean;
   highlight?: boolean;
   comingSoon?: boolean;
   tagline?: string;
@@ -48,7 +55,8 @@ export const TIERS: Tier[] = [
     id: "plus",
     name: "Plus",
     price: "$9",
-    cadence: "/month",
+    yearlyPrice: "$79.99",
+    hasYearly: true,
     highlight: true,
     tagline: "Level up seriously. Every entry builds real skill.",
     taglineKey: "pricing.tagline.plus",
@@ -65,7 +73,8 @@ export const TIERS: Tier[] = [
     id: "pro",
     name: "Pro",
     price: "$19",
-    cadence: "/month",
+    yearlyPrice: "$159.99",
+    hasYearly: true,
     tagline: "For those who want to master Japanese.",
     taglineKey: "pricing.tagline.pro",
     features: [
@@ -80,7 +89,6 @@ export const TIERS: Tier[] = [
     id: "teacher_feedback",
     name: "Teacher",
     price: "$49",
-    cadence: "/month",
     comingSoon: true,
     features: [
       "pricing.features.teacher.1",
@@ -98,18 +106,22 @@ export const TIERS: Tier[] = [
  * cycle. Sharing one source also means the two layouts cannot end up quoting
  * different prices for the same plan.
  */
-const TABLE_COLUMNS: Record<ComparisonPlan, PlanColumnMeta> = COMPARISON_PLANS.reduce(
-  (acc, id) => {
-    const tier = TIERS.find((candidate) => candidate.id === id);
-    acc[id] = {
-      priceFallback: tier?.price ?? "",
-      cadence: tier?.cadence,
-      highlight: tier?.highlight,
-    };
-    return acc;
-  },
-  {} as Record<ComparisonPlan, PlanColumnMeta>,
-);
+function tableColumns(cadence: Cadence, labels: PricingLabels): Record<ComparisonPlan, PlanColumnMeta> {
+  return COMPARISON_PLANS.reduce(
+    (acc, id) => {
+      const tier = TIERS.find((candidate) => candidate.id === id);
+      const yearly = cadence === "yearly" && tier?.hasYearly;
+      acc[id] = {
+        priceFallback: (yearly ? tier?.yearlyPrice : tier?.price) ?? "",
+        // Free has no period to state; the paid columns must have one.
+        cadence: id === "free" ? undefined : yearly ? labels.cadenceYear : labels.cadenceMonth,
+        highlight: tier?.highlight,
+      };
+      return acc;
+    },
+    {} as Record<ComparisonPlan, PlanColumnMeta>,
+  );
+}
 
 export type PricingLabels = {
   mostPopular: string;
@@ -136,6 +148,14 @@ export type PricingLabels = {
    *  links must be on the purchase screen itself (Guideline 3.1.2(c)). */
   termsLink?: string;
   privacyLink?: string;
+  /** The billing period, in words, beside the price. Required on a purchase
+   *  screen by App Store Review Guideline 3.1.2(c) — and required to be the
+   *  RIGHT one, which is the whole reason the toggle exists. */
+  cadenceMonth?: string;
+  cadenceYear?: string;
+  /** The toggle itself. */
+  toggleMonthly?: string;
+  toggleYearly?: string;
   /** When true, paid plan buttons become live Stripe checkout links */
   checkoutEnabled?: boolean;
 };
@@ -153,6 +173,10 @@ const DEFAULT_LABELS: PricingLabels = {
   legalIntro: "Subscriptions renew automatically until cancelled.",
   termsLink: "Terms of Use (EULA)",
   privacyLink: "Privacy Policy",
+  cadenceMonth: "/month",
+  cadenceYear: "/year",
+  toggleMonthly: "Monthly",
+  toggleYearly: "Yearly",
 };
 
 /**
@@ -175,6 +199,8 @@ export function PricingGrid({
   labels = DEFAULT_LABELS,
   translateFeature,
   isNative = false,
+  cadence = "monthly",
+  cadenceBasePath,
 }: {
   currentPlan?: Plan;
   /** True when the viewer already has a Stripe subscription — switching
@@ -205,16 +231,62 @@ export function PricingGrid({
    *  <NativeGate/> (App Store Guideline 3.1.2). NativeGate stays as a
    *  client-side second line of defense for requests where the UA is absent. */
   isNative?: boolean;
+  /**
+   * Which billing period the prices, the periods beside them, and the
+   * purchase buttons all describe. One value feeding all three is the point:
+   * a page that shows an annual price under a "/month" label is the
+   * Guideline 3.1.2(c) failure this whole prop exists to prevent.
+   */
+  cadence?: Cadence;
+  /**
+   * Where the toggle links. Given a path, the toggle renders and switches by
+   * navigation — the grid stays a Server Component and no client state is
+   * introduced anywhere near the purchase screen. Omitted (the landing page)
+   * there is no toggle and everything reads monthly, exactly as before.
+   */
+  cadenceBasePath?: string;
 }) {
   // Same fallback the feature list uses below: with no translator the keys
   // show through rather than the component failing.
   const t = translateFeature ?? ((key: string) => key);
 
+  const yearly = cadence === "yearly";
+  const columns = tableColumns(cadence, labels);
+
   return (
     <div className="space-y-5">
+      {/* Monthly / Yearly. Two links rather than a switch: the page is already
+          dynamic, so the server re-renders with the other set of prices and
+          nothing has to be kept in sync on the client. */}
+      {cadenceBasePath && (
+        <div className="flex justify-center">
+          <div className="inline-flex rounded-full border border-line bg-paper p-1">
+            <Link
+              href={cadenceBasePath}
+              aria-current={!yearly}
+              className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
+                !yearly ? "bg-pine text-cream" : "text-muted hover:text-pine"
+              }`}
+            >
+              {labels.toggleMonthly ?? DEFAULT_LABELS.toggleMonthly}
+            </Link>
+            <Link
+              href={`${cadenceBasePath}?cadence=yearly`}
+              aria-current={yearly}
+              className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
+                yearly ? "bg-pine text-cream" : "text-muted hover:text-pine"
+              }`}
+            >
+              {labels.toggleYearly ?? DEFAULT_LABELS.toggleYearly}
+            </Link>
+          </div>
+        </div>
+      )}
+
       {layout === "table" && (
         <PlanComparisonTable
-          columns={TABLE_COLUMNS}
+          columns={columns}
+          cadence={cadence}
           currentPlan={currentPlan}
           hasActiveSubscription={hasActiveSubscription}
           billingSource={billingSource}
@@ -264,7 +336,13 @@ export function PricingGrid({
               <h2 className="font-serif text-xl font-bold text-pine">{tier.name}</h2>
               <p className="mt-1">
                 {mode === "upgrade" && (tier.id === "plus" || tier.id === "pro") ? (
-                  <PlanPrice plan={tier.id} fallback={tier.price} cadence={tier.cadence} isNative={isNative} />
+                  <PlanPrice
+                    plan={tier.id}
+                    fallback={(yearly && tier.hasYearly ? tier.yearlyPrice : tier.price) ?? tier.price}
+                    cadence={yearly && tier.hasYearly ? labels.cadenceYear : labels.cadenceMonth}
+                    billingPeriod={tier.hasYearly ? cadence : "monthly"}
+                    isNative={isNative}
+                  />
                 ) : tier.id === "free" ? (
                   // Native shows "Free" — the hardcoded "$0" is an external USD
                   // price (App Store Guideline 3.1.1). Web is unchanged.
@@ -290,11 +368,15 @@ export function PricingGrid({
                 ) : (
                   <>
                     <span className="font-serif text-3xl font-bold text-pine">
-                      {tier.price}
+                      {yearly && tier.hasYearly ? tier.yearlyPrice : tier.price}
                     </span>
-                    {tier.cadence && (
-                      <span className="text-sm text-muted">{tier.cadence}</span>
-                    )}
+                    {/* Free was handled by the branch above, so every tier
+                        reaching here is a paid one and must state its period.
+                        Teacher has no annual price, so it keeps saying
+                        /month whatever the toggle says. */}
+                    <span className="text-sm text-muted">
+                      {yearly && tier.hasYearly ? labels.cadenceYear : labels.cadenceMonth}
+                    </span>
                   </>
                 )}
               </p>
@@ -360,12 +442,13 @@ export function PricingGrid({
                 ) : mode === "upgrade" && (tier.id === "plus" || tier.id === "pro") ? (
                   <PurchaseButton
                     plan={tier.id}
+                    cadence={cadence}
                     billingSource={billingSource}
                     hasActiveSubscription={hasActiveSubscription}
                     checkoutEnabled={labels.checkoutEnabled}
                   />
                 ) : mode === "landing" && labels.checkoutEnabled && (tier.id === "plus" || tier.id === "pro") ? (
-                  <CheckoutButton plan={tier.id} />
+                  <CheckoutButton plan={tier.id} cadence={cadence} />
                 ) : (
                   <button
                     disabled

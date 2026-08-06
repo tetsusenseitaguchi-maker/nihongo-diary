@@ -4,10 +4,19 @@ import { normalizePlan, PLAN_LABELS } from "@/lib/plans";
 import { PricingGrid } from "@/components/PricingGrid";
 import { getServerT } from "@/lib/i18n-server";
 import { isNativeRequest } from "@/lib/native";
+import { parseCadence } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
 
-export default async function UpgradePage() {
+export default async function UpgradePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cadence?: string | string[] }>;
+}) {
+  // Whoever is typing owns this value, so it goes through the same one-item
+  // allowlist the checkout route uses. Anything else is monthly.
+  const cadence = parseCadence((await searchParams).cadence);
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -58,6 +67,8 @@ export default async function UpgradePage() {
         billingSource={(profile?.billing_source as "stripe" | "apple_iap" | null) ?? null}
         mode="upgrade"
         layout="table"
+        cadence={cadence}
+        cadenceBasePath="/upgrade"
         isNative={isNative}
         translateFeature={t}
         labels={{
@@ -73,6 +84,10 @@ export default async function UpgradePage() {
           legalIntro: t("pricing.legalIntro"),
           termsLink: t("pricing.termsLink"),
           privacyLink: t("pricing.privacyLink"),
+          cadenceMonth: t("pricing.cadence.month"),
+          cadenceYear: t("pricing.cadence.year"),
+          toggleMonthly: t("pricing.toggle.monthly"),
+          toggleYearly: t("pricing.toggle.yearly"),
           checkoutEnabled: true,
         }}
       />

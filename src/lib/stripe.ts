@@ -51,4 +51,19 @@ export type PaidPlan = keyof typeof STRIPE_PRICES;
  */
 export type Cadence = keyof (typeof STRIPE_PRICES)["plus"];
 
+/**
+ * Anything at all → a cadence, with monthly as the answer to everything that
+ * is not exactly "yearly".
+ *
+ * The value arrives from a query string (?cadence=…) and from a POST body,
+ * which is to say from whoever is typing. An allowlist of one is the whole
+ * check: no casting, no `as Cadence`, nothing that could carry an unexpected
+ * string into STRIPE_PRICES[plan][…] or into the markup. Arrays (?cadence=a&
+ * cadence=b hands Next.js a string[]), undefined and objects all land on
+ * monthly, which is what the page showed before any of this existed.
+ */
+export function parseCadence(value: unknown): Cadence {
+  return value === "yearly" ? "yearly" : "monthly";
+}
+
 export { SITE_URL };

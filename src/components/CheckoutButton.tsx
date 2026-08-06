@@ -1,14 +1,16 @@
 "use client";
 import { useState } from "react";
 import { useT } from "@/contexts/locale";
-import type { PaidPlan } from "@/lib/stripe";
+import type { PaidPlan, Cadence } from "@/lib/stripe";
 
 interface Props {
   plan: PaidPlan;
+  /** Sent to checkout so the session bills the period the page displayed. */
+  cadence?: Cadence;
   className?: string;
 }
 
-export function CheckoutButton({ plan, className }: Props) {
+export function CheckoutButton({ plan, cadence = "monthly", className }: Props) {
   const t = useT();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -22,7 +24,7 @@ export function CheckoutButton({ plan, className }: Props) {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, cadence }),
       });
       const data: { url?: string; error?: string } = await res.json();
       if (data.url) {

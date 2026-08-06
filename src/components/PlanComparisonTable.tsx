@@ -1,6 +1,7 @@
 import { Icon } from "@/components/icons";
 import { NoteTooltip } from "@/components/NoteTooltip";
 import { PlanPrice } from "@/components/PlanPrice";
+import type { Cadence } from "@/lib/stripe";
 import { PurchaseButton } from "@/components/PurchaseButton";
 // Still needed below the table: the Teacher note is web-only. The free
 // column's "$0" → "Free" swap used it too, and that use is gone with the
@@ -92,6 +93,7 @@ export function PlanComparisonTable({
   isNative = false,
   checkoutEnabled = false,
   t,
+  cadence = "monthly",
 }: {
   /**
    * Prices and emphasis per column. Passed in rather than imported from
@@ -108,6 +110,8 @@ export function PlanComparisonTable({
    * sent to the native app, rather than hidden after hydration.
    */
   isNative?: boolean;
+  /** Which product the prices and the buttons describe. Both must agree. */
+  cadence?: Cadence;
   checkoutEnabled?: boolean;
   /**
    * Translator. Takes vars because two cells interpolate {n} from
@@ -177,7 +181,7 @@ export function PlanComparisonTable({
                       the only .animate-pulse is its skeleton.
                     */}
                     <span className="mt-0.5 block leading-tight [&_.animate-pulse]:w-10 [&_.font-serif]:text-xl sm:[&_.animate-pulse]:w-16 sm:[&_.font-serif]:text-2xl">
-                      <PlanPrice plan={p} fallback={col.priceFallback} isNative={isNative} />
+                      <PlanPrice plan={p} fallback={col.priceFallback} billingPeriod={cadence} isNative={isNative} />
                     </span>
                     {/*
                       The cadence is rendered here instead of being handed to
@@ -253,6 +257,7 @@ export function PlanComparisonTable({
             <PurchaseButton
               key={p}
               plan={p}
+              cadence={cadence}
               billingSource={billingSource}
               hasActiveSubscription={hasActiveSubscription}
               checkoutEnabled={checkoutEnabled}

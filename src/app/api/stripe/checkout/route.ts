@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStripe, STRIPE_PRICES, SITE_URL, type PaidPlan } from "@/lib/stripe";
+import { getStripe, STRIPE_PRICES, SITE_URL, parseCadence, type PaidPlan } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: NextRequest) {
-  const body: { plan?: string } = await req.json();
+  const body: { plan?: string; cadence?: string } = await req.json();
   const plan = body.plan as PaidPlan | undefined;
 
   if (plan !== "plus" && plan !== "pro") {
     return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
   }
+
+  // Anything that is not exactly "yearly" bills monthly — the same one-item
+  // allowlist the page uses on the query string, so a hand-edited request
+  // cannot reach a price id that does not exist.
+  const cadence = parseCadence(body.cadence);
 
   const supabase = await createClient();
   const {
@@ -67,14 +72,13 @@ export async function POST(req: NextRequest) {
     const params: Parameters<typeof stripe.checkout.sessions.create>[0] = {
       mode: "subscription",
       payment_method_types: ["card"],
-      // Monthly, explicitly. The yearly prices exist in STRIPE_PRICES but
-      // nothing offers them yet — when a cadence toggle lands, this is where
-      // its value arrives.
-      line_items: [{ price: STRIPE_PRICES[plan].monthly, quantity: 1 }],
+      line_items: [{ price: STRIPE_PRICES[plan][cadence], quantity: 1 }],
       client_reference_id: user.id,
-      metadata: { userId: user.id, plan },
+      // plan is what the webhook reads back on checkout.session.completed;
+      // cadence rides along for the audit trail, not for any branch.
+      metadata: { userId: user.id, plan, cadence },
       success_url: `${SITE_URL}/upgrade/success?plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${SITE_URL}/upgrade`,
+      cancel_url: `${SITE_URL}/upgrade${cadence === "yearly" ? "?cadence=yearly" : ""}`,
       allow_promotion_codes: true,
     };
 
