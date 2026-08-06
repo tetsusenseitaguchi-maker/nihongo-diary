@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPush } from "@/lib/apns";
+import { sendWebPush } from "@/lib/web-push";
+import { notificationHref } from "@/lib/notification-href";
 import { getServerT } from "@/lib/i18n-server";
 import { normaliseLocale } from "@/lib/i18n";
 import { currentStreak } from "@/lib/streak";
@@ -69,6 +71,14 @@ interface Candidate {
   written_dates: string[] | null;
 }
 
+/** Same row minus push_token — the web function does not return one. */
+interface WebCandidate {
+  user_id: string;
+  preferred_language: string | null;
+  local_date: string;
+  written_dates: string[] | null;
+}
+
 export async function POST(req: Request) {
   const secret = process.env.CRON_SECRET;
   // Mandatory. Without it this endpoint would let anyone on the internet
@@ -128,6 +138,51 @@ export async function POST(req: Request) {
     streak: currentStreak(r.written_dates ?? [], r.local_date),
   }));
 
+  /**
+   * The same cohort, for browsers. See the note in daily-review/route.ts —
+   * separate RPC because the one above filters on push_token in SQL and is
+   * not to be edited, and supabase/add-web-push-candidates.sql holds the two
+   * definitions side by side.
+   *
+   * Fails soft: a missing function must cost the browsers their nudge, never
+   * the phones theirs.
+   */
+  const { data: webData, error: webError } = await admin.rpc("streak_reminder_candidates_web", {
+    p_user_id: onlyUserId,
+  });
+  if (webError) {
+    console.error("[streak-reminder] web candidate query failed:", webError.message);
+  }
+  const webRows = (webData ?? []) as WebCandidate[];
+  const webWithStreak = webRows.map((r) => ({
+    row: r,
+    streak: currentStreak(r.written_dates ?? [], r.local_date),
+  }));
+
+  /**
+   * ⚠️ The drift alarm — free, because both lists are already here. The sets
+   * are disjoint by construction (push_token is null / is not null), so an
+   * overlap means one function was edited and the other was not. It reports
+   * rather than blocks: the claim on streak_reminder_sends is keyed
+   * (user_id, sent_date) and carries no column for the rail, so anyone in
+   * both lists is still claimed once and nudged once.
+   */
+  const apnsIds = new Set(withStreak.map((b) => b.row.user_id));
+  const overlap = webWithStreak.filter((b) => apnsIds.has(b.row.user_id));
+  if (overlap.length > 0) {
+    console.error(
+      `[streak-reminder] ⚠️ ${overlap.length} learners are in BOTH candidate sets — check the push_token test in streak_reminder_candidates_web`,
+    );
+  }
+
+  const webCapped = webWithStreak.length > MAX_PER_RUN;
+  if (webCapped) {
+    console.warn(
+      `[streak-reminder] ${webWithStreak.length} web-due this hour; handling ${MAX_PER_RUN} this run`,
+    );
+  }
+  const webBatch = webWithStreak.slice(0, MAX_PER_RUN);
+
   const capped = withStreak.length > MAX_PER_RUN;
   if (capped) {
     console.warn(
@@ -143,9 +198,18 @@ export async function POST(req: Request) {
       onlyUserId,
       candidates: rows.length,
       capped,
+      webCandidates: webRows.length,
+      webCapped,
+      overlap: overlap.length,
       // Deliberately no push_token — a dry run is for reading, and this
       // response goes wherever the person running it is looking.
       recipients: batch.map((b) => ({
+        userId: b.row.user_id,
+        localDate: b.row.local_date,
+        streak: b.streak,
+        language: normaliseLocale(b.row.preferred_language ?? undefined),
+      })),
+      webRecipients: webBatch.map((b) => ({
         userId: b.row.user_id,
         localDate: b.row.local_date,
         streak: b.streak,
@@ -210,8 +274,53 @@ export async function POST(req: Request) {
     await Promise.all(batch.slice(i, i + CONCURRENCY).map(handle));
   }
 
+  // ── The same evening, for the browsers ──────────────────────────────────
+  // After the phones, so nothing new can delay the existing delivery. The two
+  // batches hold different people, so order changes nothing else.
+  let webSent = 0;
+  let webAlready = 0;
+  let webFailed = 0;
+
+  async function handleWeb({ row, streak }: { row: WebCandidate; streak: number }) {
+    // Same claim, same table, same primary key — "already nudged today" is a
+    // question about the learner, not about the rail, and this is the last
+    // defence if the two candidate sets ever stop being disjoint.
+    const { error: claimErr } = await admin
+      .from("streak_reminder_sends")
+      .insert({ user_id: row.user_id, sent_date: row.local_date, streak_at_send: streak });
+
+    if (claimErr) {
+      if (claimErr.code === "23505") {
+        webAlready++;
+      } else {
+        console.error("[streak-reminder] web claim failed:", claimErr.message);
+        webFailed++;
+      }
+      return;
+    }
+
+    const t = await getServerT(normaliseLocale(row.preferred_language ?? undefined));
+
+    // Same copy as the phones, day-one pair included. Two versions of this
+    // would drift, and the drift would be invisible.
+    const title = streak === 1 ? t("notification.streak.titleDayOne") : t("notification.streak.title", { n: streak });
+    const body = streak === 1 ? t("notification.streak.bodyDayOne") : t("notification.streak.body");
+
+    await sendWebPush(row.user_id, {
+      title,
+      body,
+      // No diary to point at — the whole message is that today is still empty.
+      url: notificationHref({ type: "streak_reminder" }),
+    });
+    webSent++;
+  }
+
+  for (let i = 0; i < webBatch.length; i += CONCURRENCY) {
+    await Promise.all(webBatch.slice(i, i + CONCURRENCY).map(handleWeb));
+  }
+
   console.log(
-    `[streak-reminder] candidates=${rows.length} sent=${sent} already=${alreadySent} failed=${failed}`,
+    `[streak-reminder] candidates=${rows.length} sent=${sent} already=${alreadySent} failed=${failed} · web: due=${webWithStreak.length} sent=${webSent} already=${webAlready} failed=${webFailed} overlap=${overlap.length}`,
   );
 
   return NextResponse.json({
@@ -222,5 +331,11 @@ export async function POST(req: Request) {
     sent,
     alreadySent,
     failed,
+    webDue: webWithStreak.length,
+    webCapped,
+    webSent,
+    webAlready,
+    webFailed,
+    overlap: overlap.length,
   });
 }

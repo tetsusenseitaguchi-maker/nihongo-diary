@@ -25,6 +25,18 @@ export type NotificationTarget = {
 
 export function notificationHref(n: NotificationTarget): string {
   switch (n.type) {
+    // ── Push only. These two never appear in the bell ────────────────────────
+    // The morning reminder and the evening streak nudge write no rows in
+    // `notifications` — both cron routes say so, and it is deliberate: they
+    // are a message to one person at one hour, not an event in their history.
+    // So NotificationBell can never receive these types, and they are here for
+    // the one reason that matters — every destination a push can carry lives
+    // in this file, and none of them can quietly fall through to /dashboard.
+    case "daily_review":
+      return n.diaryEntryId ? `/diary/${n.diaryEntryId}` : "/write";
+    case "streak_reminder":
+      return "/write";
+
     case "follow":
       return n.actorUsername ? `/profile/${n.actorUsername}` : "/feed";
     case "new_diary":

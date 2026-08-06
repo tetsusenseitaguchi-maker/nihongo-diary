@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPush } from "@/lib/apns";
+import { sendWebPush } from "@/lib/web-push";
+import { notificationHref } from "@/lib/notification-href";
 import { getServerT } from "@/lib/i18n-server";
 import { normaliseLocale } from "@/lib/i18n";
 import { hasDictation } from "@/lib/dictation";
@@ -69,6 +71,15 @@ interface Candidate {
   local_date: string;
 }
 
+/** Same row minus push_token — the web function does not return one. */
+interface WebCandidate {
+  user_id: string;
+  preferred_language: string | null;
+  diary_entry_id: string;
+  natural_japanese: string;
+  local_date: string;
+}
+
 export async function POST(req: Request) {
   const secret = process.env.CRON_SECRET;
   // Mandatory. Without it this endpoint would let anyone on the internet
@@ -125,6 +136,60 @@ export async function POST(req: Request) {
   // marked has no exercise to come back to, so there is nothing to send about.
   const eligible = rows.filter((r) => hasDictation(r.natural_japanese));
 
+  /**
+   * The same cohort, for browsers.
+   *
+   * A separate RPC because the one above filters on push_token in SQL, which
+   * makes a browser subscriber invisible rather than merely unnotified — and
+   * that function is the live iOS delivery and not to be edited. See
+   * supabase/add-web-push-candidates.sql, which carries both definitions side
+   * by side for exactly the comparison this pairing needs.
+   *
+   * Fails soft, unlike the query above. That one runs before anything has
+   * been sent, so a 500 costs nothing; this one runs alongside a send that is
+   * about to happen, and a missing function — the SQL not yet run in the
+   * dashboard — must cost the browsers their reminder, never the phones
+   * theirs.
+   */
+  const { data: webData, error: webError } = await admin.rpc("daily_review_candidates_web", {
+    p_hour: hour,
+    p_user_id: onlyUserId,
+  });
+  if (webError) {
+    console.error("[daily-review] web candidate query failed:", webError.message);
+  }
+  const webRows = (webData ?? []) as WebCandidate[];
+  const webEligible = webRows.filter((r) => hasDictation(r.natural_japanese));
+
+  /**
+   * ⚠️ The drift alarm. The two candidate sets are disjoint by construction —
+   * push_token is null on one side, is not null on the other — so an overlap
+   * means one of the two functions was edited and the other was not.
+   *
+   * Free to compute: both lists are already here. Nobody has to remember to
+   * run anything.
+   *
+   * It reports rather than blocks, and that is correct: the claim on
+   * daily_review_sends is keyed (user_id, sent_date) with no column for which
+   * rail sent it, so a learner in both lists is claimed once and notified
+   * once whatever this prints.
+   */
+  const apnsIds = new Set(eligible.map((r) => r.user_id));
+  const overlap = webEligible.filter((r) => apnsIds.has(r.user_id));
+  if (overlap.length > 0) {
+    console.error(
+      `[daily-review] ⚠️ ${overlap.length} learners are in BOTH candidate sets — check the push_token test in daily_review_candidates_web`,
+    );
+  }
+
+  const webCapped = webEligible.length > MAX_PER_RUN;
+  if (webCapped) {
+    console.warn(
+      `[daily-review] ${webEligible.length} web-eligible at hour ${hour}; handling ${MAX_PER_RUN} this run`,
+    );
+  }
+  const webBatch = webEligible.slice(0, MAX_PER_RUN);
+
   const capped = eligible.length > MAX_PER_RUN;
   if (capped) {
     console.warn(
@@ -142,9 +207,19 @@ export async function POST(req: Request) {
       candidates: rows.length,
       eligible: eligible.length,
       capped,
+      webCandidates: webRows.length,
+      webEligible: webEligible.length,
+      webCapped,
+      overlap: overlap.length,
       // Deliberately no push_token — a dry run is for reading, and this
       // response goes wherever the person running it is looking.
       recipients: batch.map((r) => ({
+        userId: r.user_id,
+        diaryEntryId: r.diary_entry_id,
+        localDate: r.local_date,
+        language: normaliseLocale(r.preferred_language ?? undefined),
+      })),
+      webRecipients: webBatch.map((r) => ({
         userId: r.user_id,
         diaryEntryId: r.diary_entry_id,
         localDate: r.local_date,
@@ -194,8 +269,51 @@ export async function POST(req: Request) {
     await Promise.all(batch.slice(i, i + CONCURRENCY).map(handle));
   }
 
+  // ── The same day, for the browsers ──────────────────────────────────────
+  // After the phones, not before: the existing delivery finishes first, so
+  // nothing new can delay it. Order is otherwise immaterial — the two batches
+  // hold different people.
+  let webSent = 0;
+  let webAlready = 0;
+  let webFailed = 0;
+
+  async function handleWeb(row: WebCandidate) {
+    // The same claim, in the same table, against the same primary key. That
+    // is what makes "already notified today" a question about the learner
+    // rather than about the rail — and the last defence if the two candidate
+    // sets ever stop being disjoint.
+    const { error: claimErr } = await admin
+      .from("daily_review_sends")
+      .insert({ user_id: row.user_id, sent_date: row.local_date });
+
+    if (claimErr) {
+      if (claimErr.code === "23505") {
+        webAlready++;
+      } else {
+        console.error("[daily-review] web claim failed:", claimErr.message);
+        webFailed++;
+      }
+      return;
+    }
+
+    const t = await getServerT(normaliseLocale(row.preferred_language ?? undefined));
+
+    // Same copy as the phones — there is no reason for the two to differ, and
+    // one of them drifting would be invisible.
+    await sendWebPush(row.user_id, {
+      title: t("notification.dailyReview.title"),
+      body: t("notification.dailyReview.body"),
+      url: notificationHref({ type: "daily_review", diaryEntryId: row.diary_entry_id }),
+    });
+    webSent++;
+  }
+
+  for (let i = 0; i < webBatch.length; i += CONCURRENCY) {
+    await Promise.all(webBatch.slice(i, i + CONCURRENCY).map(handleWeb));
+  }
+
   console.log(
-    `[daily-review] hour=${hour} candidates=${rows.length} eligible=${eligible.length} sent=${sent} already=${alreadySent} failed=${failed}`,
+    `[daily-review] hour=${hour} candidates=${rows.length} eligible=${eligible.length} sent=${sent} already=${alreadySent} failed=${failed} · web: eligible=${webEligible.length} sent=${webSent} already=${webAlready} failed=${webFailed} overlap=${overlap.length}`,
   );
 
   return NextResponse.json({
@@ -208,5 +326,11 @@ export async function POST(req: Request) {
     sent,
     alreadySent,
     failed,
+    webEligible: webEligible.length,
+    webCapped,
+    webSent,
+    webAlready,
+    webFailed,
+    overlap: overlap.length,
   });
 }
