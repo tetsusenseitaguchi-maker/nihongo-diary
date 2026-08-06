@@ -17,3 +17,6 @@ next-env.d.ts
 
 # App Store submission screenshots — kept locally, not in the repo
 appstore-screenshots/
+
+# Resend log — holds learners email addresses. Never commit.
+scripts/logs/
