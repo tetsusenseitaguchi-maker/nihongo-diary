@@ -950,17 +950,27 @@ export function CorrectionResult({
                   {isIosApp ? t("locked.blurred.descIos") : t("locked.blurred.desc")}
                 </p>
               </div>
-              {/* Plan name and /upgrade never reach the iOS shell — App Store
-                  Guideline 3.1.1. isIosApp rather than <NativeGate>, matching
-                  LockedSection and the vocabulary banner in this same file. */}
-              {!isIosApp && (
-                <a
-                  href="/upgrade"
-                  className="gloss-btn shrink-0 rounded-full px-4 py-2 text-xs font-semibold text-cream hover:brightness-105"
-                >
-                  {t("locked.upgradeBtn")}
-                </a>
-              )}
+              {/* ⚠️ Shown on iOS too, unlike the other two banners in this file.
+                  3.1.1 forbids sending someone to a payment mechanism that is
+                  not IAP; it does not forbid naming a plan or linking to a
+                  screen inside the app. /upgrade IS that screen on iOS —
+                  PurchaseButton resolves to IAPPurchaseButton there and
+                  CheckoutButton exists only on the web branch, so Stripe is
+                  unreachable from the shell by construction, and PlanPrice
+                  shows the real StoreKit price rather than the USD figure.
+
+                  Hiding it was over-correction: a Free learner on iOS met a
+                  bar explaining that more exists and had nothing to tap.
+
+                  Deliberately still no price here. A hardcoded amount would be
+                  wrong in most storefronts and inaccurate under 2.3.1; the one
+                  place a price may appear is where it comes from StoreKit. */}
+              <a
+                href="/upgrade"
+                className="gloss-btn shrink-0 rounded-full px-4 py-2 text-xs font-semibold text-cream hover:brightness-105"
+              >
+                {t("locked.upgradeBtn")}
+              </a>
             </div>
           )}
 
