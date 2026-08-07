@@ -1583,7 +1583,15 @@ export default function WritePage() {
               // where the learner has just been handed this correction. The
               // tour sample, the demo route and diary detail all leave it out;
               // see the prop's own docs for why each of them must.
-              locked={{ drills: isFreePlan, miniLesson: isFreePlan, nextSteps: isFreePlan }}
+              locked={{
+                drills: isFreePlan,
+                miniLesson: isFreePlan,
+                nextSteps: isFreePlan,
+                mistakes: isFreePlan,
+                vocabulary: isFreePlan,
+                explanation: isFreePlan,
+                teacherNote: isFreePlan,
+              }}
               plan={plan}
             />
             <p className="pt-1 text-center text-xs text-muted">

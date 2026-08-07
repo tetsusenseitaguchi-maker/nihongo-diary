@@ -429,6 +429,13 @@ const READING_DICTIONARY_RAW: [string, string][] = [
   ["来年", "らいねん"], ["再来年", "さらいねん"], ["毎日", "まいにち"], ["一日中", "いちにちじゅう"],
   ["今日中", "きょうじゅう"], ["何時", "なんじ"], ["時計", "とけい"], ["時雨", "しぐれ"],
   ["梅雨", "つゆ"], ["五月雨", "さみだれ"], ["七夕", "たなばた"],
+  // 一日 alone is いちにち — "a day", as in 良い一日でした. ついたち is the
+  // first OF THE MONTH, and a learner writing that date writes 8月1日, where
+  // this entry does not match. Measured 2026-08-08: of 32 diaries carrying
+  // 一日, five read ついたち and all five were 良い/楽しい/忙しい一日 — the
+  // reading was wrong every time it was chosen. 2日 through 20日 were already
+  // here; 1日 was the hole.
+  ["一日", "いちにち"],
   ["二日", "ふつか"], ["三日", "みっか"], ["四日", "よっか"], ["五日", "いつか"],
   ["六日", "むいか"], ["七日", "なのか"], ["八日", "ようか"], ["九日", "ここのか"],
   ["十日", "とおか"], ["十四日", "じゅうよっか"], ["二十日", "はつか"], ["二十四日", "にじゅうよっか"],

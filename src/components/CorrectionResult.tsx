@@ -117,6 +117,26 @@ function BlurGate({
   );
 }
 
+/**
+ * Split prose into sentences, for showing the first one and blurring the rest.
+ *
+ * Both terminators, because this text is written in the learner's own UI
+ * language: 。！？ for Japanese and Chinese, .!? for the seven others. The
+ * lookbehind keeps the punctuation attached to the sentence it ends, so the
+ * visible first line reads as a finished thought rather than trailing off.
+ *
+ * Splitting on sentences rather than clipping to a height is deliberate: a
+ * max-height cut lands mid-word at some font sizes and mid-character in
+ * Japanese, and what is visible then teaches nothing.
+ */
+function splitSentences(text: string): string[] {
+  return String(text ?? "")
+    .trim()
+    .split(/(?<=[。！？!?.])\s*/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 function Label({ en, jp }: { en: string; jp: string }) {
   return (
     <p className="mb-2 flex flex-wrap items-baseline gap-x-2">
@@ -219,7 +239,22 @@ export function CorrectionResult({
    * "free", which would blur all three of the callers above the moment the
    * condition was written that way.
    */
-  locked?: { drills?: boolean; miniLesson?: boolean; nextSteps?: boolean };
+  locked?: {
+    drills?: boolean;
+    miniLesson?: boolean;
+    nextSteps?: boolean;
+    /** Show the first mistake, blur the rest. Nothing blurs at 0 or 1 — 27% of
+     *  Free corrections, measured 2026-08-08. A learner with one mistake is
+     *  shown one mistake, not a pane of glass over an empty section. */
+    mistakes?: boolean;
+    /** Same, for the word list. 92.6% of corrections carry exactly three, so
+     *  this one bites almost every time. */
+    vocabulary?: boolean;
+    /** First SENTENCE only. Not two: 9.4% of explanations are one or two
+     *  sentences, against 0.5% that are one. */
+    explanation?: boolean;
+    teacherNote?: boolean;
+  };
   /**
    * Saved expressions this diary actually used, from /api/learned/scan.
    *
@@ -310,6 +345,8 @@ export function CorrectionResult({
    */
   const hideAfterFirst = (i: number) => !!locked?.nextSteps && i > 0;
 
+
+
   /**
    * Is anything actually blurred? Decided once for the whole section rather
    * than per block, because the banner below is one bar for all three.
@@ -322,6 +359,48 @@ export function CorrectionResult({
     ((correction.nextVocab?.length ?? 0) > 1 ||
       (correction.nextGrammar?.length ?? 0) > 1 ||
       (correction.alternativeWords?.length ?? 0) > 1);
+
+  /**
+   * The same rule as hideAfterFirst, one flag per section.
+   *
+   * Each reads its own key and nothing else — never `plan`, whose default is
+   * "free" and would put glass over the tour sample, the demo route and every
+   * diary reopened from history. Only the write page opts in, and only for a
+   * Free learner.
+   */
+  const hideMistake = (i: number) => !!locked?.mistakes && i > 0;
+  const hideVocab = (i: number) => !!locked?.vocabulary && i > 0;
+
+  /**
+   * Prose split into "the first sentence" and "the rest", or the whole thing
+   * and nothing when this section is not locked.
+   *
+   * The rest is joined back with a space rather than kept as lines: it is
+   * behind glass, so its shape does not matter, and one paragraph blurs more
+   * evenly than several.
+   */
+  const explanationParts = locked?.explanation ? splitSentences(plainValue(correction.explanation)) : [];
+  const explanationFirst = explanationParts[0] ?? "";
+  const explanationRest = explanationParts.slice(1);
+
+  const noteParts = locked?.teacherNote ? splitSentences(plainValue(correction.correctionNote)) : [];
+  const noteFirst = noteParts[0] ?? "";
+  const noteRest = noteParts.slice(1);
+
+  /**
+   * Is anything behind glass anywhere on this result?
+   *
+   * One bar at the bottom rather than one per section: five bars would shout,
+   * and each would need four i18n keys in eight languages for the privilege.
+   * Every clause asks "is there a second thing" — a section that came back
+   * with one item has nothing hidden and must not claim otherwise.
+   */
+  const anythingBlurred =
+    nextStepsBlurred ||
+    (!!locked?.mistakes && correction.mistakes.length > 1) ||
+    (!!locked?.vocabulary && correction.vocabulary.length > 1) ||
+    explanationRest.length > 0 ||
+    noteRest.length > 0;
 
   /**
    * One lifetime allowance is shared by every 🔊 on this result, so the state
@@ -520,7 +599,18 @@ export function CorrectionResult({
       {/* English Explanation */}
       <div className="gloss-panel rounded-[var(--radius-card)] p-6" style={tint("--color-tint-blue")}>
         <Label en={t("correction.explanation")} jp="解説(かいせつ)" />
-        <p className="text-sm leading-relaxed text-ink/80"><NoRuby text={correction.explanation} /></p>
+        {explanationRest.length === 0 ? (
+          <p className="text-sm leading-relaxed text-ink/80"><NoRuby text={correction.explanation} /></p>
+        ) : (
+          <>
+            <p className="text-sm leading-relaxed text-ink/80"><NoRuby text={explanationFirst} /></p>
+            <BlurGate on className="mt-1">
+              <p className="text-sm leading-relaxed text-ink/80">
+                <NoRuby text={explanationRest.join(" ")} />
+              </p>
+            </BlurGate>
+          </>
+        )}
       </div>
 
       {/* Teacher's note — "not wrong, but more natural" */}
@@ -529,7 +619,18 @@ export function CorrectionResult({
           <span className="text-lg">💡</span>
           <div>
             <Label en={t("correction.teachersNote")} jp="ひとことメモ" />
-            <p className="text-sm leading-relaxed text-ink/80"><NoRuby text={correction.correctionNote} /></p>
+            {noteRest.length === 0 ? (
+              <p className="text-sm leading-relaxed text-ink/80"><NoRuby text={correction.correctionNote} /></p>
+            ) : (
+              <>
+                <p className="text-sm leading-relaxed text-ink/80"><NoRuby text={noteFirst} /></p>
+                <BlurGate on className="mt-1">
+                  <p className="text-sm leading-relaxed text-ink/80">
+                    <NoRuby text={noteRest.join(" ")} />
+                  </p>
+                </BlurGate>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -544,6 +645,7 @@ export function CorrectionResult({
             <ul className="space-y-3 text-sm">
               {correction.mistakes.map((m, i) => (
                 <li key={i} className="rounded-xl bg-paper/60 p-3">
+                  <BlurGate on={hideMistake(i)}>
                   <Furigana text={m.before} className="font-jp text-ink/45 line-through" />
                   <span className="mx-1.5 text-moss">→</span>
                   <Furigana text={m.after} className="font-jp font-semibold text-pine" />
@@ -579,6 +681,7 @@ export function CorrectionResult({
                       {audioNotice(`mistake:${i}`, "mt-2")}
                     </>
                   )}
+                </BlurGate>
                 </li>
               ))}
             </ul>
@@ -600,6 +703,7 @@ export function CorrectionResult({
           <ul className="space-y-3 text-sm">
             {correction.vocabulary.map((v, i) => (
               <li key={i} className="rounded-xl bg-paper/60 p-3">
+                <BlurGate on={hideVocab(i)}>
                 {/* The headword had no button at all until now, while the same
                     word on the vocabulary page did. kind="word" — a headword
                     is a dictionary word, so it goes in the shared bucket and
@@ -659,6 +763,7 @@ export function CorrectionResult({
                 )}
                 {audioNotice(`vocabWord:${i}`, "mt-2")}
                 {audioNotice(`vocab:${i}`, "mt-2")}
+              </BlurGate>
               </li>
             ))}
           </ul>
@@ -822,14 +927,19 @@ export function CorrectionResult({
               the model mostly obliges, but vocab.limitDesc spent months
               telling learners they had saved 3 words after the cap moved to
               10. A number in a string is a number that goes stale. */}
-          {nextStepsBlurred && (
+          {/* ⚠️ One bar for the whole result, not one per section.
+              It sits here, at the end of the last blurred block, because this
+              is the bottom of the correction. Five bars would shout, and each
+              would want four keys in eight languages to say the same thing.
+              anythingBlurred is what decides — see its definition. */}
+          {anythingBlurred && (
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-line bg-paper/40 px-4 py-3">
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-ink/70">
-                  {isIosApp ? t("locked.nextSteps.titleIos") : t("locked.nextSteps.title")}
+                  {isIosApp ? t("locked.blurred.titleIos") : t("locked.blurred.title")}
                 </p>
                 <p className="mt-0.5 text-xs text-ink/60">
-                  {isIosApp ? t("locked.nextSteps.descIos") : t("locked.nextSteps.desc")}
+                  {isIosApp ? t("locked.blurred.descIos") : t("locked.blurred.desc")}
                 </p>
               </div>
               {/* Plan name and /upgrade never reach the iOS shell — App Store
