@@ -250,8 +250,10 @@ export function CorrectionResult({
     /** Same, for the word list. 92.6% of corrections carry exactly three, so
      *  this one bites almost every time. */
     vocabulary?: boolean;
-    /** First SENTENCE only. Not two: 9.4% of explanations are one or two
-     *  sentences, against 0.5% that are one. */
+    /** First TWO sentences. One was tried and rejected on a device: a single
+     *  line above ten blurred ones reads as a wall, and the other sections are
+     *  one or two lines each. Two leaves 9.4% of explanations with nothing
+     *  hidden, against 0.5% at one — the lost coverage buys back the bulk. */
     explanation?: boolean;
     teacherNote?: boolean;
   };
@@ -380,12 +382,12 @@ export function CorrectionResult({
    * evenly than several.
    */
   const explanationParts = locked?.explanation ? splitSentences(plainValue(correction.explanation)) : [];
-  const explanationFirst = explanationParts[0] ?? "";
-  const explanationRest = explanationParts.slice(1);
+  const explanationFirst = explanationParts.slice(0, 2).join(" ");
+  const explanationRest = explanationParts.slice(2);
 
   const noteParts = locked?.teacherNote ? splitSentences(plainValue(correction.correctionNote)) : [];
-  const noteFirst = noteParts[0] ?? "";
-  const noteRest = noteParts.slice(1);
+  const noteFirst = noteParts.slice(0, 2).join(" ");
+  const noteRest = noteParts.slice(2);
 
   /**
    * Is anything behind glass anywhere on this result?
@@ -604,7 +606,13 @@ export function CorrectionResult({
         ) : (
           <>
             <p className="text-sm leading-relaxed text-ink/80"><NoRuby text={explanationFirst} /></p>
-            <BlurGate on className="mt-1">
+            {/* Capped at three lines. The point is that there IS more, not how
+                much: ten blurred lines under one readable one is a wall, and a
+                wall reads as the app being broken rather than as something
+                held back. max-h + overflow-hidden rather than line-clamp —
+                the text is already unreadable, so an ellipsis would be
+                decoration nobody can see. */}
+            <BlurGate on className="mt-1 max-h-[4.5rem] overflow-hidden">
               <p className="text-sm leading-relaxed text-ink/80">
                 <NoRuby text={explanationRest.join(" ")} />
               </p>
@@ -624,7 +632,7 @@ export function CorrectionResult({
             ) : (
               <>
                 <p className="text-sm leading-relaxed text-ink/80"><NoRuby text={noteFirst} /></p>
-                <BlurGate on className="mt-1">
+                <BlurGate on className="mt-1 max-h-[4.5rem] overflow-hidden">
                   <p className="text-sm leading-relaxed text-ink/80">
                     <NoRuby text={noteRest.join(" ")} />
                   </p>
@@ -994,7 +1002,19 @@ export function CorrectionResult({
           buttons crowded the result — so they share a single card here, in the
           mini lesson's usual slot. The drills block below renders nothing when
           locked. */}
-      {locked?.miniLesson && locked?.drills && (
+      {/* ⚠️ Suppressed when the blur bar is showing. Both say "there is more on
+          a paid plan" and they render a few hundred pixels apart, which on a
+          phone is two pitches back to back — reported from a device on
+          2026-08-08. They are not duplicates: this frame stands in for the two
+          sections a Free learner never gets generated at all (mini lesson,
+          drills), while the bar explains the parts that WERE generated and are
+          behind glass. The bar wins because it is attached to something the
+          learner can actually see the shape of.
+
+          When nothing is blurred — 0% of Free corrections on the measured
+          corpus, but not impossible — this frame is the only sign the paid
+          sections exist, so it still renders. */}
+      {locked?.miniLesson && locked?.drills && !anythingBlurred && (
         <LockedSection
           titleKey="locked.combined.title"
           titleIosKey="locked.combined.titleIos"
