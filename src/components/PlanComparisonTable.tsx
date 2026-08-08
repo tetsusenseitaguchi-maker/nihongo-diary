@@ -39,19 +39,20 @@ import {
  * here — one copy, rendered once, is the point.
  *
  * What this component *does* have to carry, because it replaces the loop:
- * PlanPrice for paid columns, the "$0" → "Free" swap for the free column, the
- * in-app subscription-management link for Apple subscribers, and PurchaseButton
- * itself. Teacher is absent by design — see plan-comparison.ts.
+ * PlanPrice for the paid columns, the in-app subscription-management link for
+ * Apple subscribers, and PurchaseButton itself. Teacher is absent by design —
+ * see plan-comparison.ts. There is no "$0" → "Free" swap: the free column,
+ * when it has one, prints no price at all (see the header below).
  */
 
 /**
- * The plans that get a column of their own.
+ * The PAID plans that get a column of their own. See VISIBLE_COLUMNS below
+ * for the two the table actually draws — Free joins them when Pro is off.
  *
- * Free is not one of them — it appears under each row's label instead, as
- * "Free: 1". Three columns left ~73px each at 375px, which is where the
- * price overflow, the wrapped values and the two-line labels all came from;
- * two columns give the labels ~143px and the values ~96px and the crowding
- * goes away.
+ * Three columns left ~73px each at 375px, which is where the price overflow,
+ * the wrapped values and the two-line labels all came from; two columns give
+ * the labels ~143px and the values ~96px and the crowding goes away. That is
+ * the constraint VISIBLE_COLUMNS exists to hold, whichever two it picks.
  *
  * Deliberately local, and deliberately not COMPARISON_PLANS. plan-comparison.ts
  * still lists all three and still carries every free value — this is a
@@ -62,32 +63,45 @@ import {
 const COLUMN_PLANS = ["plus", "pro"] as const satisfies readonly ComparisonPlan[];
 
 /**
- * The columns actually drawn. Pro leaves when it is not on sale.
+ * The columns actually drawn — always two of them, whichever two are on sale.
  *
  * Module scope rather than inside the component: NEXT_PUBLIC_PRO_ENABLED is
  * inlined at build time, so this is a constant, and the group-heading colSpan
  * below lives outside the component and needs the same number.
  *
- * With Pro off this is a single column, and the table reads as Plus against
- * free rather than as a comparison of two paid tiers. That is survivable
- * because every row already carries its free value inline under the label
- * (INLINE_PLAN), so no number goes missing — but it is a thinner table, and
- * promoting Free to a real column is the obvious follow-up if it reads too
- * thin on a device. Deliberately not done here: that is a layout change to
- * the table, not part of hiding a plan.
+ *   Pro on sale   Plus | Pro, Free inline under each label (the 912e9e4 layout)
+ *   Pro off       Free | Plus, and no inline line — Free is a column again
  *
- * Typed off COLUMN_PLANS rather than as ComparisonPlan[]: the source array is
- * `as const`, so its members are "plus" | "pro", and PlanPrice and
- * PurchaseButton both take PaidPlan. Widening to ComparisonPlan would let
- * "free" in as far as the type system is concerned and neither would accept
- * it — a compile error rather than a bug, but the narrow type is the honest
- * one and it keeps the filter from being mistaken for something that could
- * ever yield Free.
+ * Two configurations rather than one because the count is what has to stay
+ * fixed. Free promoted *and* Pro on sale is four columns, and at 375px that
+ * gives the values ~69px each — under the ~73px that 912e9e4 identified as
+ * the cause of the price overflow, the wrapped values and the two-line
+ * labels. Holding at two keeps both configurations on the measured 44/28/28,
+ * so the colgroup rule below needs no special case and neither does anything
+ * else.
+ *
+ * This is not the responsive column count 912e9e4 rejected. That objection
+ * was about the count changing with the viewport: non-responsive colgroup
+ * widths and colSpan, the free cell in the DOM twice for screen readers, and
+ * every App Store check run at two breakpoints. This resolves at build time
+ * to a single number, one DOM, one breakpoint.
+ *
+ * ⚠️ Promoting Free back to a column reverses half of 912e9e4, knowingly.
+ * Its space argument is answered — two columns, same widths. Its other
+ * argument was that an equal column lets Free compete with the paid tiers,
+ * which is what the cards this table replaced got wrong. That was about
+ * bullet counts, where Free's ten lines beat Plus's five; a table states one
+ * fact per row, so the same content reads as 1 → 10 in Plus's favour. The
+ * residual risk is the rows where Free simply gets a tick: a column of them
+ * can read as "free is basically complete". plan-comparison.ts already
+ * orders the rows whose numbers climb first, which is the mitigation.
  */
-type ColumnPlan = (typeof COLUMN_PLANS)[number];
-const VISIBLE_COLUMNS: readonly ColumnPlan[] = COLUMN_PLANS.filter(
-  (p) => p !== "pro" || isProEnabled(),
-);
+const VISIBLE_COLUMNS: readonly ComparisonPlan[] = isProEnabled()
+  ? COLUMN_PLANS
+  : (["free", "plus"] as const);
+
+/** True when Free has a column, and so does not need its inline line. */
+const FREE_IS_COLUMN = VISIBLE_COLUMNS.includes("free");
 
 /** The plan shown inline under each label rather than in a column. */
 const INLINE_PLAN: ComparisonPlan = "free";
@@ -185,31 +199,52 @@ export function PlanComparisonTable({
                 const col = columns[p];
                 return (
                   <th key={p} scope="col" className="px-1 pb-3 pt-1 text-center align-top">
-                    {/* Fixed-height slot, rendered for every column whether or
-                        not it has a badge. Keep it: only Plus has a badge, and
-                        without the slot reserved it pushes Plus's name and
-                        price down while Pro's stay up — the misalignment this
-                        was added to fix. Two columns give the badge more room
-                        horizontally; they do not remove the need for the slot.
-                        align-top plus a single-line name then puts both names
-                        at the same y whatever the price below them does. */}
-                    <span className="mb-1 flex h-5 items-center justify-center">
-                      {col.highlight && (
-                        <span className="rounded-full bg-mint px-2 py-0.5 text-[10px] font-bold text-pine">
-                          {t("pricing.mostPopular")}
-                        </span>
-                      )}
-                    </span>
+                    {/* No "Most popular" badge, and no reserved slot for one.
+                        The badge said Plus was the popular choice out of
+                        several; with Pro off sale it sat above the only paid
+                        column there is, recommending a plan against nothing.
+                        The h-5 slot existed solely to keep Plus's name level
+                        with Pro's when only one of the two carried a badge —
+                        with no badge anywhere the columns align on their own,
+                        so the slot goes with it rather than reserving space
+                        for something that can no longer appear.
+
+                        col.highlight is left alone in PlanColumnMeta: the
+                        cards layout still reads TIERS' highlight for its ring
+                        and its own badge, and so does labels.mostPopular.
+                        This component simply stops asking. */}
                     <span className="block font-serif text-sm font-bold text-pine sm:text-base">
                       {PLAN_LABELS[p]}
                     </span>
                     {/*
-                      Every column here is a paid plan, so every price goes
-                      through PlanPrice — which shows the real StoreKit
-                      priceString on native and never falls back to the USD
-                      figure (Guidelines 3.1.1 / 3.1.2). Dropping the free
-                      column took its "$0" → "Free" swap with it, one fewer
-                      place a USD string could reach the native shell.
+                      Paid columns price through PlanPrice — the real StoreKit
+                      priceString on native, never a fallback to the USD figure
+                      (Guidelines 3.1.1 / 3.1.2).
+
+                      Free renders nothing here at all. Three reasons, and the
+                      third is the one that decided it:
+
+                      · PlanPrice takes a PaidPlan and looks up an IAP product.
+                        Free has none, so on native it would sit on the
+                        skeleton forever waiting for a price never coming.
+                      · col.priceFallback is "$0", and 912e9e4 counted losing
+                        the free column's "$0" → "Free" swap as a gain: one
+                        fewer place a USD string could reach the native shell.
+                        Bringing the column back should not bring the dollar
+                        sign with it.
+                      · The obvious remaining option, the word "Free", is what
+                        PLAN_LABELS.free already renders one line above. Drawn,
+                        it came out as "Free" stacked on "Free" — measured, not
+                        guessed. The plan's name IS its price here, so the slot
+                        stays empty rather than saying it twice.
+
+                      align-top on the th keeps both column names level, so the
+                      empty slot costs nothing in alignment — that is the same
+                      property the reserved badge slot used to provide.
+
+                      `p !== "free"` is also what narrows p to PaidPlan for the
+                      PlanPrice call; VISIBLE_COLUMNS is ComparisonPlan[] now
+                      that Free can be in it.
 
                       PlanPrice hardcodes text-3xl and a w-16 skeleton, both
                       sized for the cards, and is shared with that layout so it
@@ -218,9 +253,11 @@ export function PlanComparisonTable({
                       PlanPrice's price (the plan name is a sibling above) and
                       the only .animate-pulse is its skeleton.
                     */}
-                    <span className="mt-0.5 block leading-tight [&_.animate-pulse]:w-10 [&_.font-serif]:text-xl sm:[&_.animate-pulse]:w-16 sm:[&_.font-serif]:text-2xl">
-                      <PlanPrice plan={p} fallback={col.priceFallback} billingPeriod={cadence} isNative={isNative} />
-                    </span>
+                    {p !== "free" && (
+                      <span className="mt-0.5 block leading-tight [&_.animate-pulse]:w-10 [&_.font-serif]:text-xl sm:[&_.animate-pulse]:w-16 sm:[&_.font-serif]:text-2xl">
+                        <PlanPrice plan={p} fallback={col.priceFallback} billingPeriod={cadence} isNative={isNative} />
+                      </span>
+                    )}
                     {/*
                       The cadence is rendered here instead of being handed to
                       PlanPrice, which puts it inline beside the price — the
@@ -438,21 +475,35 @@ function GroupRows({
                 <NoteTooltip text={t(row.noteKey)} label={t(K.noteToggle)} />
               )}
               {/*
-                Free, inline. Small and grey rather than a column of its own,
-                which is the point: as an equal third column the free tier
-                competed with the paid ones, and this table exists because the
-                cards before it made Free look like the richer choice.
+                Free, inline — only when it has no column of its own, which is
+                to say only while Pro is on sale and holds the second one.
+
+                Small and grey rather than a column was the point when there
+                were two paid tiers: as an equal third column the free tier
+                competed with them, and this table exists because the cards
+                before it made Free look like the richer choice. With Pro off
+                that pressure is gone — one paid column has nothing to be
+                out-competed by — and the empty half of the table costs more
+                than the risk does.
 
                 Every row carries it, including the ones Free does not get.
-                There is no "Free" column header any more, so the word has to
-                be on each line or the number underneath a label means nothing.
-                Below the label rather than beside it, so the first line — and
-                with it the row's baseline, and the values aligned to it — does
-                not move.
+                There is no "Free" column header in this configuration, so the
+                word has to be on each line or the number underneath a label
+                means nothing. Below the label rather than beside it, so the
+                first line — and with it the row's baseline, and the values
+                aligned to it — does not move.
+
+                Nothing is lost in the other configuration: the same
+                row.cells.free goes through CellValue instead, so "Free: 1"
+                becomes 1 and "Not on Free" becomes the ✗ with its sr-only
+                "Not included". The words were only ever standing in for a
+                column header that had gone missing.
               */}
-              <span className="mt-0.5 block text-[10px] font-normal leading-snug text-muted">
-                {freeInline(row.cells[INLINE_PLAN], t)}
-              </span>
+              {!FREE_IS_COLUMN && (
+                <span className="mt-0.5 block text-[10px] font-normal leading-snug text-muted">
+                  {freeInline(row.cells[INLINE_PLAN], t)}
+                </span>
+              )}
             </th>
             {VISIBLE_COLUMNS.map((p) => (
               // No horizontal padding, and a step down in size below sm. The
