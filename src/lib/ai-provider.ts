@@ -52,6 +52,23 @@ export function missingApiKeyError(): string | null {
   return null;
 }
 
+/**
+ * ⚠️ system を配列（複数ブロック）で送るときの落とし穴。
+ *
+ * Anthropic の API はブロックとブロックの間に区切り文字を入れない。
+ * count_tokens で確認済み: [A, B] の2ブロックは A+B と同じトークン数で、
+ * A + "\n\n" + B より2トークン少ない。つまり前のブロックの最終行と次の
+ * ブロックの先頭行が改行なしで直結する。
+ *
+ * prompt caching の cache_control を置くために system を分割する場合、
+ * 区切りは自分で入れること。入れ忘れると
+ *   "...alternativeWords[].alternativeReading.1. Write ALL explanatory text"
+ * のように連結され、ルールがルールとして読まれなくなる。2026-08-08 の
+ * 並べ替え検証で実際に踏んだ。
+ *
+ * 下の splitSystem が "\n\n" で join しているのは system "メッセージ" を
+ * 1本の文字列にまとめる話で、こちらとは別物。混同しないこと。
+ */
 function splitSystem(messages: ChatMessage[]): {
   system: string;
   rest: { role: "user" | "assistant"; content: string }[];
