@@ -9,6 +9,7 @@ import { NoRuby } from "@/components/Furigana";
 import { NativeGate } from "@/components/NativeGate";
 import { useT } from "@/contexts/locale";
 import type { PracticeDrill } from "@/lib/types";
+import { isProEnabled } from "@/lib/plan-visibility";
 
 const LEVELS = ["N5", "N4", "N3", "Natural"] as const;
 
@@ -70,8 +71,13 @@ export function MiniLessonReview({ plan }: { plan: Plan | null }) {
               <h3 className="font-serif text-lg font-bold text-pine">
                 {t("review.title")}
               </h3>
+              {/* descPro names the plan the drills live on ("available on the
+                  Pro plan"), which is only worth saying while that plan can be
+                  bought. descFree names none — it just describes what the
+                  drills are — so it is the honest line for everyone once Pro
+                  is off sale. */}
               <p className="mt-1 text-sm leading-relaxed text-ink/75">
-                {isPlus
+                {isPlus && isProEnabled()
                   ? t("review.descPro")
                   : t("review.descFree")}
               </p>
@@ -92,17 +98,26 @@ export function MiniLessonReview({ plan }: { plan: Plan | null }) {
                 </div>
               </div>
 
-              <NativeGate>
-                <div className="mt-5 flex items-center gap-3 rounded-xl bg-sand/60 px-4 py-3">
-                  <span className="text-lg">🔒</span>
-                  <p className="text-sm font-medium text-ink/80">
-                    {t("review.availableOn")}
-                    <a href="/upgrade" className="font-semibold text-moss-600 hover:text-pine">
-                      {t("review.proAndAbove")}
-                    </a>
-                  </p>
-                </div>
-              </NativeGate>
+              {/* "Available on Pro plan and above →" goes while Pro is off
+                  sale. Review drills are PLAN_LIMITS.reviewDrills, true on pro
+                  and teacher_feedback only — so with Pro unsellable this bar
+                  pointed Free and Plus learners alike at /upgrade to buy
+                  something not on it. The card above stays: it says what the
+                  drills are, which is true whatever is for sale. It just no
+                  longer promises a way to get them. */}
+              {isProEnabled() && (
+                <NativeGate>
+                  <div className="mt-5 flex items-center gap-3 rounded-xl bg-sand/60 px-4 py-3">
+                    <span className="text-lg">🔒</span>
+                    <p className="text-sm font-medium text-ink/80">
+                      {t("review.availableOn")}
+                      <a href="/upgrade" className="font-semibold text-moss-600 hover:text-pine">
+                        {t("review.proAndAbove")}
+                      </a>
+                    </p>
+                  </div>
+                </NativeGate>
+              )}
             </div>
           </div>
         </div>

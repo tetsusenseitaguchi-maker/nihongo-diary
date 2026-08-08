@@ -103,6 +103,27 @@ const VISIBLE_COLUMNS: readonly ComparisonPlan[] = isProEnabled()
 /** True when Free has a column, and so does not need its inline line. */
 const FREE_IS_COLUMN = VISIBLE_COLUMNS.includes("free");
 
+/**
+ * Rows no visible column can supply, dropped.
+ *
+ * There is exactly one: reviewDrills is `free: no, plus: no, pro: yes` —
+ * plan-comparison.ts calls it "the only genuine Pro-over-Plus difference in
+ * the whole table". With Pro off sale it renders as a dash against a dash,
+ * annotated "Pro only", which is a feature advertised on a purchase screen
+ * that nothing on that screen can buy.
+ *
+ * That is the same objection this table was built on. Its own note says a
+ * stated number the code does not enforce is a false claim on a purchase
+ * screen (App Store Guideline 2.3.1); a stated feature no buyable plan
+ * provides is the same claim with the number left out. So the row goes with
+ * the column, and comes back with it.
+ *
+ * Filtered here rather than in plan-comparison.ts for the same reason the
+ * columns are: that file is the inventory of what the plans do, and it stays
+ * true whatever is on sale. This file decides what gets drawn.
+ */
+const HIDDEN_ROW_IDS: readonly string[] = isProEnabled() ? [] : ["reviewDrills"];
+
 /** The plan shown inline under each label rather than in a column. */
 const INLINE_PLAN: ComparisonPlan = "free";
 
@@ -440,7 +461,7 @@ function GroupRows({
         </th>
       </tr>
 
-      {group.rows.map((row, i) => {
+      {group.rows.filter((row) => !HIDDEN_ROW_IDS.includes(row.id)).map((row, i) => {
         // Banding in place of rules. Emphasis keeps its mint, so the four rows
         // whose numbers climb still read as one block, and everything else
         // alternates against the page.

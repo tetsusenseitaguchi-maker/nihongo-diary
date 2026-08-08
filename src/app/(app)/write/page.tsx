@@ -35,6 +35,9 @@ import { useT } from "@/contexts/locale";
 import { todayInTZ } from "@/lib/date-tz";
 import { normalizeRubyText } from "@/lib/furigana";
 import { parseCorrectionPayload, correctionToDbColumns } from "@/lib/correction-payload";
+// Safe from a Client Component: plan-visibility.ts imports nothing, so this
+// pulls in no SDK. That is the reason it is not in lib/stripe.ts.
+import { isProEnabled } from "@/lib/plan-visibility";
 
 const DiaryMapPicker = dynamicLoad(
   () => import("@/components/DiaryMapPicker").then((m) => m.DiaryMapPicker),
@@ -965,10 +968,20 @@ export default function WritePage() {
               limit: limits.corrections,
               plusLimit: PLAN_LIMITS.plus.corrections,
             })}
-            {plan === "plus" && t("write.limitReachedPlus", {
-              limit: limits.corrections,
-              proLimit: PLAN_LIMITS.pro.corrections,
-            })}
+            {/* A Plus learner is only offered Pro while Pro is on sale.
+                limitReachedPlus ends "Pro gives you 25/day + AI review
+                drills", which with Pro off sale is an offer that cannot be
+                taken — and this message reaches someone who is already
+                paying. limitReachedPro is the same sentence without the
+                upsell ("used up 🌸 Resets tomorrow."), which is exactly what
+                is wanted here; it is named for the plan it was written for,
+                not for the only plan allowed to see it. */}
+            {plan === "plus" && (isProEnabled()
+              ? t("write.limitReachedPlus", {
+                  limit: limits.corrections,
+                  proLimit: PLAN_LIMITS.pro.corrections,
+                })
+              : t("write.limitReachedPro", { limit: limits.corrections }))}
             {(plan === "pro" || plan === "teacher_feedback") && t("write.limitReachedPro", {
               limit: limits.corrections,
             })}
@@ -979,7 +992,12 @@ export default function WritePage() {
               {t("write.upgradeToPlus")}
             </a>
           )}
-          {!isIosApp && plan === "plus" && (
+          {/* …and the button with it. /upgrade has no Pro on it while the
+              flag is off, so this was a CTA that landed a paying learner on a
+              page offering them a cheaper plan. Nothing replaces it: a Plus
+              learner at their daily limit has already bought what is for
+              sale. */}
+          {!isIosApp && plan === "plus" && isProEnabled() && (
             <a href="/upgrade" className="gloss-btn shrink-0 rounded-full px-4 py-2 text-sm font-semibold text-cream hover:brightness-105">
               {t("write.upgradeToPro")}
             </a>
