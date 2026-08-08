@@ -90,6 +90,7 @@ CRITICAL furigana rules:
 - Put ONLY the kanji inside <ruby>, and put the kanji's reading inside <rt>. Okurigana (the hiragana that follows a kanji) MUST stay OUTSIDE the ruby tag.
 - NEVER wrap hiragana or katakana in <ruby>. Only kanji get furigana.
 - The reading in <rt> must be the reading of the kanji only — never repeat the kana that is already visible.
+- The mirror of the rule above, and the more damaging one: <rt> must never ABSORB the okurigana. Any kana the reading covers beyond the kanji itself must still appear as text after </ruby>, or it vanishes from the sentence — the learner sees 話ましょう, not 話しましょう. Wrong: <ruby>話<rt>はなし</rt></ruby>ましょう, <ruby>食<rt>たべ</rt></ruby>ます, <ruby>大好<rt>だいすき</rt></ruby>です, <ruby>曇<rt>くもり</rt></ruby>でした. Right: <ruby>話<rt>はな</rt></ruby>しましょう, <ruby>食<rt>た</rt></ruby>べます, <ruby>大好<rt>だいす</rt></ruby>きです, <ruby>曇<rt>くも</rt></ruby>りでした.
 - When a kanji is immediately followed by okurigana (the hiragana that completes a verb/adjective stem, e.g. 歩きました, 珍しい), it MUST use its kun'yomi (訓読み) reading — never the on'yomi (音読み) — and <rt> must contain the FULL kun'yomi reading, not a truncated single-mora guess. Correct: <ruby>歩<rt>ある</rt></ruby>きました, <ruby>珍<rt>めずら</rt></ruby>しい. Wrong: <ruby>歩<rt>あ</rt></ruby>きました (truncated reading), <ruby>珍<rt>ちん</rt></ruby>しい (on'yomi used instead of kun'yomi).
 
 3. Furigana must be accurate and chosen from context.
