@@ -27,6 +27,8 @@ import { Furigana } from "@/components/Furigana";
 import { WordTranslateText } from "@/components/WordTranslateText";
 import type { Correction, MistakeItem, VocabItem, JlptWord, AlternativeWord, PracticeDrill } from "@/lib/types";
 import { buildMiniLessonFromAI } from "@/lib/lessons";
+import { getTimezoneFromCookie } from "@/lib/tz-server";
+import { todayInTZ } from "@/lib/date-tz";
 
 export const dynamic = "force-dynamic";
 
@@ -147,6 +149,38 @@ export default async function DiaryDetailPage({
     .eq("id", user.id)
     .single();
   const viewerPlan = normalizePlan(planRow?.plan as string | null | undefined);
+
+  /**
+   * Blur the paid parts of the correction once the day it was made is over.
+   *
+   * /write already does this on the screen where the correction is handed
+   * over; this page did not, so a Free learner who opened the same diary from
+   * their history read everything the blur was hiding. The limit was one
+   * navigation away from not existing.
+   *
+   * Three conditions, and each is doing work:
+   *
+   *  · isOwner — this route also serves other people's public diaries, and
+   *    Feed access with full corrections is something Free is sold on
+   *    (lp.pricing.free.f3). Somebody else's diary is not the viewer's
+   *    allowance and is never blurred.
+   *  · Free only — same test as write/page.tsx's isFreePlan.
+   *  · corrected_at is before today, in the LEARNER'S timezone. Not UTC:
+   *    profiles.timezone once went missing and put every user on the wrong
+   *    day, so date comparisons here go through the same user_tz cookie the
+   *    rest of the app uses.
+   *
+   * corrected_at is null on entries that were never corrected (drafts, ones
+   * waiting on peer corrections). Those fall through to false, which is
+   * right — there is no correction to hide.
+   */
+  const tz = await getTimezoneFromCookie();
+  const correctedAt = entry.corrected_at as string | null;
+  const correctedOn = correctedAt
+    ? new Date(correctedAt).toLocaleDateString("en-CA", { timeZone: tz })
+    : null;
+  const blurCorrection =
+    isOwner && viewerPlan === "free" && correctedOn !== null && correctedOn < todayInTZ(tz);
 
   const entryTranslations = (entry.translations as Record<string, string> | null) ?? {};
   const t = await getServerT();
@@ -354,7 +388,28 @@ export default async function DiaryDetailPage({
               <h2 className="font-serif text-xl font-bold text-pine">添削結果</h2>
               <span className="text-sm font-medium text-muted">{t("write.resultTitle")}</span>
             </div>
-            <CorrectionResult correction={correction} plan={viewerPlan} />
+            {/* Six flags, not the seven /write passes. nextSteps is omitted
+                on purpose — the prop's own docs say it belongs to the screen
+                where the learner has just been handed the correction, and
+                name this page as one of the three that must leave it out.
+                Blurring a section the page does not render would be a padlock
+                over nothing. */}
+            <CorrectionResult
+              correction={correction}
+              plan={viewerPlan}
+              locked={
+                blurCorrection
+                  ? {
+                      drills: true,
+                      miniLesson: true,
+                      mistakes: true,
+                      vocabulary: true,
+                      explanation: true,
+                      teacherNote: true,
+                    }
+                  : undefined
+              }
+            />
             {/* Their own voice, from the day they wrote this. No controls
                 beyond play — there is nothing to score and nothing to compare
                 it against, which is the point. Absent for every diary written

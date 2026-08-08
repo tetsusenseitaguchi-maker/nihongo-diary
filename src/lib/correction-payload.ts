@@ -376,6 +376,31 @@ export interface CorrectionDbColumns {
   practice_drills: PracticeDrill[] | null;
   /** The AI's five fields, NOT the hydrated MiniLesson — see AiMiniLessonPayload. */
   related_mini_lesson: AiMiniLessonPayload | null;
+  /**
+   * When this correction was produced. Drives the history blur: a Free learner
+   * reads the whole thing on the day they got it, and a sample of it after
+   * (diary/[id]/page.tsx).
+   *
+   * ⚠️ This is the one field that is not derived from `correction`, and it
+   * makes this function impure — the same input returns a different object a
+   * second later. Accepted deliberately, because the alternative is worse.
+   * The two writers are /write's insert and /api/correct-existing's update,
+   * and they are the pair with a documented history of drifting apart (see
+   * the note above about the diary title). Setting the timestamp at both call
+   * sites is exactly the shape that drifted; setting it here cannot.
+   *
+   * Nothing reads it back through this module, so the impurity is confined:
+   * no caller compares two CorrectionDbColumns, and the value is written and
+   * never round-tripped.
+   *
+   * Why not created_at or updated_at — a re-correction spends a Free
+   * learner's daily correction (correct-existing calls try_use_correction),
+   * so created_at would charge them and hand back a blurred result;
+   * updated_at is bumped by the public toggle, shadowing recordings, the
+   * translation cache and three more writers that have nothing to do with
+   * correcting. supabase/add-corrected-at.sql has the full reasoning.
+   */
+  corrected_at: string;
 }
 
 export function correctionToDbColumns(correction: Correction): CorrectionDbColumns {
@@ -397,5 +422,8 @@ export function correctionToDbColumns(correction: Correction): CorrectionDbColum
     // have drills", and [] would read as "yes, and there are none of them".
     practice_drills: correction.practiceDrills?.length ? correction.practiceDrills : null,
     related_mini_lesson: correction.relatedMiniLessonRaw ?? null,
+    // Not from `correction` — see the field's note above for why it lives here
+    // and not at the two call sites.
+    corrected_at: new Date().toISOString(),
   };
 }
