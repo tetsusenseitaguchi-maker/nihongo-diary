@@ -50,6 +50,33 @@
  * registered is what makes this reversible.
  *
  * Changing it needs a redeploy: NEXT_PUBLIC_ values are baked in at build time.
+ *
+ * ── ⚠️ Turning this back on is NOT only this variable ──────────────────────
+ *
+ * Eight strings were rewritten to name Plus alone while Pro is off sale, in
+ * all nine locales. They are not flag-driven — a plan-neutral wording would
+ * have needed the same revisit later, so the copy says the strongest true
+ * thing for the state we are actually in. With Pro on sale each of these
+ * under-states, because Pro does the thing too:
+ *
+ *   locked.blurred.desc        "Plus shows every mistake, word and note…"
+ *   audio.wholeOnPaid          "Plus plays the whole text."
+ *   audio.moreOnPaid           "Plus also reads your mistakes…"
+ *   audioIntro.limit           "…Plus is unlimited."
+ *   wordLookup.moreOnPaid      "Plus looks up as many as you like."
+ *   plans.note.audioScope      "…Plus also hears the whole text…"
+ *   plans.note.weeklyReport    "…Plus adds your most-used words…"
+ *   welcomePlans.description   "…what Plus adds…"
+ *
+ * A ninth, plans.teacher.desc, now reads "Everything in Plus, plus personal
+ * feedback…" where it said "Everything in Pro". That one is a slight
+ * UNDER-statement even today — Teacher carries review drills and Plus does
+ * not — accepted because Teacher is coming-soon and unbuyable, so naming a
+ * plan nobody can see cost more than the imprecision does.
+ *
+ * Two more things come back with the variable, both already conditional and
+ * needing no edit: the reviewDrills row and column in PlanComparisonTable,
+ * and the Pro upsells in write/page.tsx and MiniLessonReview.
  */
 export function isProEnabled(): boolean {
   return process.env.NEXT_PUBLIC_PRO_ENABLED === "true";

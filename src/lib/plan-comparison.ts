@@ -2,15 +2,22 @@ import { PLAN_LIMITS } from "@/lib/plans";
 import { RECHECK_LIMITS } from "@/lib/recheck-limits";
 import { AUDIO_DAILY_LIMITS } from "@/lib/audio-limits";
 import { WORD_LOOKUP_DAILY_LIMITS } from "@/lib/word-lookup-limits";
+import { REVIEW_DAILY_LIMITS } from "@/lib/srs-limits";
 
 /**
  * Row data for the plan comparison table.
  *
- * A read-only consumer of PLAN_LIMITS, RECHECK_LIMITS, AUDIO_DAILY_LIMITS and
- * WORD_LOOKUP_DAILY_LIMITS — the same pattern recheck-limits.ts already uses
- * and documents, and for the same reason: billing-adjacent numbers get
- * imported, never copied. Nothing here writes back, and plans.ts is untouched.
- * normalizePlan is not imported at all.
+ * A read-only consumer of PLAN_LIMITS, RECHECK_LIMITS, AUDIO_DAILY_LIMITS,
+ * WORD_LOOKUP_DAILY_LIMITS and REVIEW_DAILY_LIMITS — the same pattern
+ * recheck-limits.ts already uses and documents, and for the same reason:
+ * billing-adjacent numbers get imported, never copied. Nothing here writes
+ * back, and plans.ts is untouched. normalizePlan is not imported at all.
+ *
+ * Those five are the whole set. Audited 2026-08-08: SHADOWING_DAILY_LIMITS is
+ * null on every plan by decision (shadowing-limits.ts explains why), peer
+ * corrections carry no plan check anywhere, and Discovery is a privacy toggle
+ * on the profile rather than a paid feature — so their absence here is
+ * correct, not an oversight. If a sixth limits module appears, it needs a row.
  *
  * The two audio/lookup maps cost nothing to pull in: both modules import only
  * @/lib/plans, and audio-limits.ts already ships to the client through
@@ -198,6 +205,36 @@ export const COMPARISON_GROUPS: ComparisonGroup[] = [
           free: { kind: "num", n: 10 },
           plus: { kind: "i18n", key: "plans.value.unlimited" },
           pro: { kind: "i18n", key: "plans.value.unlimited" },
+        },
+      },
+      {
+        // source: REVIEW_DAILY_LIMITS (srs-limits.ts), resolved by
+        // api/vocabulary/srs/answer:82 and passed to try_use_vocab_review as
+        // p_limit. Only a metered plan reaches the RPC, same shape as the
+        // three rows around it.
+        //
+        // Directly under the vocabulary book because the two numbers were
+        // chosen against each other: srs-limits.ts says Free's five "噛み合って
+        // いて" with the ten-word cap — a full book comes round in about two
+        // days. Listing the book without the review that empties it stated
+        // half of one decision.
+        //
+        // The last plan difference that had no row. Everything else in
+        // PLAN_LIMITS, RECHECK_LIMITS, AUDIO_DAILY_LIMITS and
+        // WORD_LOOKUP_DAILY_LIMITS was already here; shadowing and peer
+        // corrections have no plan difference at all, and Discovery is a
+        // privacy toggle rather than a paid feature.
+        //
+        // `emphasis` for the reason at the top of this group: 5 → 30 →
+        // unlimited is a number that climbs, and those lead together.
+        id: "vocabReview",
+        labelKey: "plans.row.vocabReview",
+        noteKey: "plans.note.vocabReview",
+        emphasis: true,
+        cells: {
+          free: perDay(REVIEW_DAILY_LIMITS.free), // 5
+          plus: perDay(REVIEW_DAILY_LIMITS.plus), // 30
+          pro: perDay(REVIEW_DAILY_LIMITS.pro), // unlimited
         },
       },
       {
