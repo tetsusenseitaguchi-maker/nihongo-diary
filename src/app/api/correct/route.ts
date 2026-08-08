@@ -83,17 +83,15 @@ ${miniLessonSchema}${drillsSchema}  "nextVocab": [
     { "original": "", "alternative": "", "alternativeReading": "" }
   ],
   "diaryTitleRuby": "",
-  "obieCheerRuby": "",
-  "obiePhraseRuby": "",
-  "obiePhraseExplanation": ""
+  "obieCheerRuby": ""
 }
 
 Rules:
 
-1. Write ALL explanatory text in ${lang}. This includes: englishExplanation, correctionNote, every keyMistakes[].explanation, every usefulVocabulary[].meaning, every nextVocab[].meaning, every nextGrammar[].explanation, obiePhraseExplanation${drillsInRule1}${miniLessonInRule1}. Never explain grammar in Japanese.
+1. Write ALL explanatory text in ${lang}. This includes: englishExplanation, correctionNote, every keyMistakes[].explanation, every usefulVocabulary[].meaning, every nextVocab[].meaning, every nextGrammar[].explanation${drillsInRule1}${miniLessonInRule1}. Never explain grammar in Japanese.
    Keep ALL Japanese-language fields in Japanese: correctedJapaneseRuby, naturalJapaneseRuby, all *Ruby fields, word, reading, question, answer. Those are learning targets — never translate them.
    NEVER put a <ruby> tag in ANY of the explanatory fields listed above. Furigana belongs ONLY in the *Ruby fields named in rule 2. When an explanation quotes Japanese, write it as plain kanji and kana: 「今日は」, NEVER 「<ruby>今日<rt>きょう</rt></ruby>は」. The same holds for nextGrammar[].pattern and alternativeWords[].original — those are plain Japanese labels, never furigana markup.
-   NEVER name a JSON field in ANY explanatory text. Field names (naturalJapaneseRuby, correctedJapaneseRuby, correctedJapanese, keyMistakes, usefulVocabulary, practiceSentenceRuby, obiePhraseRuby, and every other key in the structure above) belong to this response format alone. The learner never sees the JSON — to them these names are meaningless jargon. Refer to each part the way a teacher would, in ${lang}: "the natural version" (NOT naturalJapaneseRuby), "the correction" (NOT correctedJapaneseRuby), "the practice sentence" (NOT practiceSentenceRuby), "the words below" (NOT usefulVocabulary).
+   NEVER name a JSON field in ANY explanatory text. Field names (naturalJapaneseRuby, correctedJapaneseRuby, correctedJapanese, keyMistakes, usefulVocabulary, practiceSentenceRuby, and every other key in the structure above) belong to this response format alone. The learner never sees the JSON — to them these names are meaningless jargon. Refer to each part the way a teacher would, in ${lang}: "the natural version" (NOT naturalJapaneseRuby), "the correction" (NOT correctedJapaneseRuby), "the practice sentence" (NOT practiceSentenceRuby), "the words below" (NOT usefulVocabulary).
    Wrong: "In the naturalJapaneseRuby, I've combined some ideas."
    Right: "In the natural version, I've combined some ideas."
 
@@ -222,11 +220,6 @@ ${drillsRule}${miniLessonRule}13. nextVocab: suggest exactly 3 vocabulary words 
 - NEVER say anything generic about writing quality ("よく書けたね" etc.). Only comment on the diary's events and feelings.
 - Tone: warm, gentle, puppy-like. Always end with 🐶. Length: 1–2 short sentences.
 - The message must change meaningfully with every different diary — it is personalised, not a template.
-
-18. obiePhraseRuby + obiePhraseExplanation: Obie teaches one natural, commonly-used Japanese phrase.
-- obiePhraseRuby: the phrase in Japanese with furigana on ALL kanji, following rule 2 exactly. Keep the phrase brief (2–6 words). It does NOT need to relate to the diary topic — variety is encouraged.
-- obiePhraseExplanation: a short, friendly explanation of when/how to use this phrase, written in ${lang}. End with 🐶. Keep it to 1–2 sentences.
-- Choose phrases people genuinely say in everyday conversation. Avoid stiff textbook phrases. Vary widely — do not default to the same examples every time.
 
 Output must be valid JSON. No markdown, no comments, no trailing commas.`;
 }

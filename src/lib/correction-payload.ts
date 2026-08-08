@@ -243,9 +243,6 @@ const CORRECTION_SPEC: { [K in keyof Correction]-?: FieldSpec } = {
   nextGrammar: { kind: "custom", why: "array of NEXT_GRAMMAR_SPEC" },
   diaryTitle: { kind: "ruby", from: "diaryTitleRuby" },
   obieCheer: { kind: "ruby", from: "obieCheerRuby" },
-  obiePhraseRuby: { kind: "ruby", from: "obiePhraseRuby" },
-  // The gloss for obiePhraseRuby, written in the learner's UI language.
-  obiePhraseExplanation: { kind: "text", from: "obiePhraseExplanation" },
 };
 
 /**

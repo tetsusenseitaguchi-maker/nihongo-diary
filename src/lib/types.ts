@@ -159,10 +159,6 @@ export interface Correction {
   diaryTitle?: string;
   /** Obie's personalised encouragement reacting to diary content (Japanese with <ruby> furigana). */
   obieCheer?: string;
-  /** A natural Japanese phrase Obie teaches (with <ruby> furigana). */
-  obiePhraseRuby?: string;
-  /** Explanation of obiePhraseRuby in the user's UI language. */
-  obiePhraseExplanation?: PlainText;
 }
 
 /** A single "previous point that was fixed" in the revise & recheck flow. */
