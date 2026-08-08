@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe, STRIPE_PRICES, SITE_URL, parseCadence, type PaidPlan } from "@/lib/stripe";
+import { isProEnabled } from "@/lib/plan-visibility";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: NextRequest) {
@@ -7,6 +8,23 @@ export async function POST(req: NextRequest) {
   const plan = body.plan as PaidPlan | undefined;
 
   if (plan !== "plus" && plan !== "pro") {
+    return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+  }
+
+  // Pro off sale is refused here too, not only hidden in the UI — the same
+  // reasoning as parseCadence and ?cadence=yearly: a flag that only removes a
+  // button can be walked around with a hand-written POST. Checked before the
+  // auth lookup, alongside the plan allowlist it belongs with, so the answer
+  // does not depend on who is asking.
+  //
+  // This closes the Stripe side completely. It cannot close the IAP side: a
+  // native purchase goes straight to a product that is still live in App Store
+  // Connect, and keeping those products registered is what makes the flag
+  // reversible without a review. Accepted — see lib/plan-visibility.ts.
+  //
+  // Nothing about an EXISTING Pro subscription passes through here. Renewals
+  // arrive at the webhooks, which do not read this flag.
+  if (plan === "pro" && !isProEnabled()) {
     return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
   }
 

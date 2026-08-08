@@ -10,6 +10,7 @@ import { RestorePurchasesButton } from "@/components/RestorePurchasesButton";
 import { PlanComparisonTable, type PlanColumnMeta } from "@/components/PlanComparisonTable";
 import type { Cadence } from "@/lib/stripe";
 import { COMPARISON_PLANS, type ComparisonPlan } from "@/lib/plan-comparison";
+import { isProEnabled } from "@/lib/plan-visibility";
 
 type Tier = {
   id: Plan;
@@ -310,6 +311,14 @@ export function PricingGrid({
           // and aren't registered as IAP products. On native, don't render them
           // at all — server-side (App Store Guideline 3.1.2).
           if (isNative && isComingSoon) return null;
+
+          // Pro is off sale. Kept for whoever is already on it, on the same
+          // reasoning as the table's button row: their card is a "Current
+          // plan" marker, not an offer. Only the cards layout reaches this —
+          // /upgrade and /welcome-plans both render layout="table" — but the
+          // two layouts are supposed to state the same thing, and leaving one
+          // of them selling Pro is how they drift apart.
+          if (tier.id === "pro" && !isProEnabled() && !isCurrent) return null;
 
           const card = (
             <Card

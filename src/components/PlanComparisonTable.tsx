@@ -8,6 +8,7 @@ import { PurchaseButton } from "@/components/PurchaseButton";
 // column.
 import { NativeGate } from "@/components/NativeGate";
 import { PLAN_LABELS } from "@/lib/plans";
+import { isProEnabled } from "@/lib/plan-visibility";
 import {
   COMPARISON_GROUPS,
   COMPARISON_PLANS,
@@ -59,6 +60,34 @@ import {
  * "Current plan" entry.
  */
 const COLUMN_PLANS = ["plus", "pro"] as const satisfies readonly ComparisonPlan[];
+
+/**
+ * The columns actually drawn. Pro leaves when it is not on sale.
+ *
+ * Module scope rather than inside the component: NEXT_PUBLIC_PRO_ENABLED is
+ * inlined at build time, so this is a constant, and the group-heading colSpan
+ * below lives outside the component and needs the same number.
+ *
+ * With Pro off this is a single column, and the table reads as Plus against
+ * free rather than as a comparison of two paid tiers. That is survivable
+ * because every row already carries its free value inline under the label
+ * (INLINE_PLAN), so no number goes missing — but it is a thinner table, and
+ * promoting Free to a real column is the obvious follow-up if it reads too
+ * thin on a device. Deliberately not done here: that is a layout change to
+ * the table, not part of hiding a plan.
+ *
+ * Typed off COLUMN_PLANS rather than as ComparisonPlan[]: the source array is
+ * `as const`, so its members are "plus" | "pro", and PlanPrice and
+ * PurchaseButton both take PaidPlan. Widening to ComparisonPlan would let
+ * "free" in as far as the type system is concerned and neither would accept
+ * it — a compile error rather than a bug, but the narrow type is the honest
+ * one and it keeps the filter from being mistaken for something that could
+ * ever yield Free.
+ */
+type ColumnPlan = (typeof COLUMN_PLANS)[number];
+const VISIBLE_COLUMNS: readonly ColumnPlan[] = COLUMN_PLANS.filter(
+  (p) => p !== "pro" || isProEnabled(),
+);
 
 /** The plan shown inline under each label rather than in a column. */
 const INLINE_PLAN: ComparisonPlan = "free";
@@ -128,22 +157,31 @@ export function PlanComparisonTable({
         <table className="w-full min-w-[340px] table-fixed border-collapse text-xs sm:text-sm">
           <caption className="sr-only">{t(K.caption)}</caption>
 
-          {/* One column per COLUMN_PLANS entry, plus the labels. colgroup
+          {/* One column per VISIBLE_COLUMNS entry, plus the labels. colgroup
               rather than per-cell widths so the group heading rows, which span
               the whole table, cannot pull the columns out of alignment.
               44/28/28 at 375px is ~143px for a label and ~96px for a value,
               against ~115px and ~73px on three columns — enough that the
-              longest values and all but one label now hold a single line. */}
+              longest values and all but one label now hold a single line.
+
+              Generated rather than written out because dropping Pro drops a
+              column, and three <col> against two columns leaves 28% of the
+              table unallocated. The rule keeps every value column at the 28%
+              those measurements tuned, and gives the remainder to the labels:
+              two columns come out 44/28/28, byte-identical to before, and one
+              column comes out 72/28 — the value column unchanged, the freed
+              space going to the text that actually wraps. */}
           <colgroup>
-            <col style={{ width: "44%" }} />
-            <col style={{ width: "28%" }} />
-            <col style={{ width: "28%" }} />
+            <col style={{ width: `${100 - 28 * VISIBLE_COLUMNS.length}%` }} />
+            {VISIBLE_COLUMNS.map((p) => (
+              <col key={p} style={{ width: "28%" }} />
+            ))}
           </colgroup>
 
           <thead>
             <tr className="border-b border-line">
               <td />
-              {COLUMN_PLANS.map((p) => {
+              {VISIBLE_COLUMNS.map((p) => {
                 const col = columns[p];
                 return (
                   <th key={p} scope="col" className="px-1 pb-3 pt-1 text-center align-top">
@@ -220,6 +258,15 @@ export function PlanComparisonTable({
       */}
       <div className="mx-auto max-w-sm space-y-3 [&_button]:min-h-[44px]">
         {COMPARISON_PLANS.map((p) => {
+          // Pro leaves the sales surfaces, but a Pro subscriber's own entry is
+          // not a sales surface — for them this slot is the "Current plan"
+          // chip and the Apple subscription-management link, which is the one
+          // in-app route to cancelling (Guideline 3.1.2). Gating on the flag
+          // alone would take that away from the people who are paying for it,
+          // and leave them a page whose only button offers a cheaper plan.
+          // So: no Pro button for anyone else, no change at all for them.
+          if (p === "pro" && !isProEnabled() && currentPlan !== "pro") return null;
+
           if (currentPlan === p) {
             return (
               <div key={p} className="space-y-2">
@@ -347,7 +394,7 @@ function GroupRows({
       <tr>
         <th
           scope="colgroup"
-          colSpan={COLUMN_PLANS.length + 1}
+          colSpan={VISIBLE_COLUMNS.length + 1}
           className={`pb-1 pt-5 text-left text-[11px] font-bold uppercase tracking-wide text-moss-600 ${
             isFirst ? "" : "border-t border-line"
           }`}
@@ -407,7 +454,7 @@ function GroupRows({
                 {freeInline(row.cells[INLINE_PLAN], t)}
               </span>
             </th>
-            {COLUMN_PLANS.map((p) => (
+            {VISIBLE_COLUMNS.map((p) => (
               // No horizontal padding, and a step down in size below sm. The
               // ordinary cells hold the longest strings — at 375px
               // "3 / correction" comes to ~70px against a ~69px content box

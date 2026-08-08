@@ -6,6 +6,7 @@ import { Card } from "@/components/ui";
 import { Icon, renderIcon } from "@/components/icons";
 import { PublicLangSwitcher } from "@/components/PublicLangSwitcher";
 import { NativeGate } from "@/components/NativeGate";
+import { isProEnabled } from "@/lib/plan-visibility";
 import { type Locale } from "@/lib/i18n";
 
 type T = (key: string, params?: Record<string, string | number>) => string;
@@ -372,6 +373,13 @@ export function LandingPageNew({
               highlight={true}
               badge={t("lp.pricing.badge.popular")}
             />
+            {/* This card is the landing page's own, not PricingGrid's — the
+                live LP builds its pricing block from lp.pricing.* keys and
+                shares nothing with TIERS. Hiding Pro in PricingGrid alone
+                would leave it standing right here, which is the whole reason
+                this guard is a separate edit. Wrapper only: the card markup
+                keeps its indentation so this stays a two-line change. */}
+            {isProEnabled() && (
             <PricingCard
               name={t("lp.pricing.pro.name")}
               price={t("lp.pricing.pro.price")}
@@ -387,6 +395,7 @@ export function LandingPageNew({
               ctaHref="/upgrade"
               highlight={false}
             />
+            )}
           </div>
           <p className="mt-8 text-center">
             <Link
