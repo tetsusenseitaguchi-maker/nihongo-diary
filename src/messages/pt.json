@@ -251,7 +251,7 @@
   "diary.noCorrectionYet": "No correction yet",
   "diary.correctionError": "Correction failed. Please try again.",
   "feed.noCorrectionYet": "No correction yet",
-  "write.justSave": "Just save (no correction)",
+  "write.justSave": "Just save",
   "write.justSaving": "Saving…",
   "write.justSaveError": "Save failed. Please try again.",
   "translate.failed": "Translation failed. Please try again.",

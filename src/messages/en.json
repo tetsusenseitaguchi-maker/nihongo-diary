@@ -227,7 +227,7 @@
   "write.upgradeToPlus": "Upgrade to Plus →",
   "write.upgradeToPro": "Upgrade to Pro →",
   "write.networkError": "Network error. Check your connection and try again.",
-  "write.justSave": "Just save (no correction)",
+  "write.justSave": "Just save",
   "write.justSaving": "Saving…",
   "write.justSaveError": "Save failed. Please try again.",
   "write.moods": "😊 Happy|🙂 Okay|😌 Calm|😴 Tired|😣 Tough",

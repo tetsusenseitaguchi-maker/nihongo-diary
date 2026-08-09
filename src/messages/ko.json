@@ -198,7 +198,7 @@
   "write.upgradeToPlus": "Plus로 업그레이드 →",
   "write.upgradeToPro": "Pro로 업그레이드 →",
   "write.networkError": "네트워크 오류. 연결을 확인하고 다시 시도하세요.",
-  "write.justSave": "Just save (no correction)",
+  "write.justSave": "Just save",
   "write.justSaving": "Saving…",
   "write.justSaveError": "Save failed. Please try again.",
   "write.moods": "😊 행복|🙂 괴찮아요|😌 평온|😴 피곤|😣 힘들어",

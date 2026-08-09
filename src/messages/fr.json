@@ -198,7 +198,7 @@
   "write.upgradeToPlus": "Passer à Plus →",
   "write.upgradeToPro": "Passer à Pro →",
   "write.networkError": "Erreur réseau. Vérifiez votre connexion et réessayez.",
-  "write.justSave": "Just save (no correction)",
+  "write.justSave": "Just save",
   "write.justSaving": "Saving…",
   "write.justSaveError": "Save failed. Please try again.",
   "write.moods": "😊 Heureux|🙂 Bien|😌 Calme|😴 Fatigué|😣 Difficile",

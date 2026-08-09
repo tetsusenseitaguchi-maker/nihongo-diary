@@ -198,7 +198,7 @@
   "write.upgradeToPlus": "Plusにアップグレード →",
   "write.upgradeToPro": "Proにアップグレード →",
   "write.networkError": "ネットワークエラーです。接続を確認して再試行してください。",
-  "write.justSave": "Just save (no correction)",
+  "write.justSave": "Just save",
   "write.justSaving": "Saving…",
   "write.justSaveError": "Save failed. Please try again.",
   "write.moods": "😊 うれしい|🙂 ふつう|😌 おだやか|😴 つかれた|😣 つらい",
