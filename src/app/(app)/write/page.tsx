@@ -1259,34 +1259,82 @@ export default function WritePage() {
               </div>
 
               {/* actions */}
-              <div className="mt-5 flex flex-wrap items-center justify-end gap-3">
+              <div className="mt-5">
+                {/*
+                  主役は AI 添削ひとつ。副次の2つは下段の小さなテキストリンクに
+                  落とす。以前は3つとも同じ大きさの pill を justify-end で並べて
+                  いたが、375px では入りきらず折り返して縦積みになり、目線が最初
+                  に当たるのが一番使われない機能だった。
+
+                  data-tour="write-correct" はこのボタンに付いたまま維持すること。
+                  ツアーのステップ4がこのアンカーを指している。`!result` の外に
+                  置いてあるのも意図的で、添削後にアンカーごと消えるとツアーが
+                  空振りする。
+                */}
+                <div className="flex justify-center">
+                  <Button
+                    data-tour="write-correct"
+                    size="lg"
+                    className="w-full sm:w-auto sm:min-w-[16rem]"
+                    onClick={handleCorrect}
+                    disabled={!text.trim() || overLimit || loading || seekingPeer || justSaving || remaining <= 0}
+                  >
+                    {loading ? (
+                      t("write.correcting")
+                    ) : remaining <= 0 ? (
+                      t("write.limitTitle")
+                    ) : (
+                      <><Icon.sparkle className="h-4 w-4" /> {t("write.correctBtn")}</>
+                    )}
+                  </Button>
+                </div>
+
                 {!result && (
-                  <>
+                  /*
+                    375px でこのカードの実効幅は 283px しかない（画面 375 − main の
+                    px-4 が 32 − カードの pl-9 + pr-6 が 60）。英語の
+                    "Ask the community · Just save (no correction)" は 45 文字で、
+                    text-sm だと約 290px ではみ出す。text-xs まで落として収める。
+
+                    size="sm" は text-sm を含むので、className の text-xs と衝突する。
+                    CSS の勝敗は class 属性の並び順ではなくスタイルシート上の定義順で
+                    決まり、生成物では text-xs が text-sm より後に来るので text-xs が
+                    勝つ（ビルド後の CSS で確認済み）。Tailwind の並び順に依存している
+                    ので、上書きが効かなくなったらここを疑う。
+
+                    flex-wrap は保険。write.justSave は9言語すべて英語のままなので今は
+                    全員この幅だが、訳が入れば溢れる。そのとき崩れずに2行へ落ちる。
+                  */
+                  <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
                     <Button
                       variant="ghost"
+                      size="sm"
+                      className="text-xs"
+                      onClick={handleSeekPeerCorrection}
+                      disabled={!text.trim() || overLimit || loading || justSaving || seekingPeer || saving}
+                    >
+                      {seekingPeer ? t("write.seekingPeer") : t("write.seekPeer")}
+                    </Button>
+                    <span aria-hidden className="text-xs text-muted">·</span>
+                    {/*
+                      Free の添削は1日1回。remaining <= 0 の日は上の主役ボタンが
+                      disabled になり、Just save がその日唯一の保存経路になる。実測でも
+                      Just save 123件のうち 28.5% がその状況下だった。小さなテキスト
+                      リンクのままだと保存手段が無い画面に見えるので、枠切れの日だけ
+                      副次から昇格させる。remaining は読むだけで、添削回数のカウント
+                      そのものには触れていない。
+                    */}
+                    <Button
+                      variant={remaining <= 0 ? "secondary" : "ghost"}
+                      size={remaining <= 0 ? "md" : "sm"}
+                      className={remaining <= 0 ? "" : "text-xs"}
                       onClick={handleJustSave}
                       disabled={!text.trim() || overLimit || loading || justSaving || seekingPeer || saving}
                     >
                       {justSaving ? t("write.justSaving") : t("write.justSave")}
                     </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={handleSeekPeerCorrection}
-                      disabled={!text.trim() || overLimit || loading || justSaving || seekingPeer || saving}
-                    >
-                      {seekingPeer ? t("write.seekingPeer") : <><Icon.feed className="h-4 w-4" /> {t("write.seekPeer")}</>}
-                    </Button>
-                  </>
+                  </div>
                 )}
-                <Button data-tour="write-correct" onClick={handleCorrect} disabled={!text.trim() || overLimit || loading || seekingPeer || justSaving || remaining <= 0}>
-                  {loading ? (
-                    t("write.correcting")
-                  ) : remaining <= 0 ? (
-                    t("write.limitTitle")
-                  ) : (
-                    <><Icon.sparkle className="h-4 w-4" /> {t("write.correctBtn")}</>
-                  )}
-                </Button>
               </div>
               {overLimit && (
                 <p className="mt-2 text-right text-sm text-apricot">
