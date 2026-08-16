@@ -32,7 +32,7 @@ import { RECHECK_LIMITS } from "@/lib/recheck-limits";
 import { limitsFor, normalizePlan, PLAN_LABELS, PLAN_LIMITS, type Plan } from "@/lib/plans";
 import { PRESET_TAGS, PRESET_TAG_KEYS } from "@/lib/tags";
 import { useT } from "@/contexts/locale";
-import { todayInTZ } from "@/lib/date-tz";
+import { todayInTZ, previousDay } from "@/lib/date-tz";
 import { normalizeRubyText } from "@/lib/furigana";
 import { parseCorrectionPayload, correctionToDbColumns } from "@/lib/correction-payload";
 // Safe from a Client Component: plan-visibility.ts imports nothing, so this
@@ -80,6 +80,20 @@ const styleJP: Record<CorrectionStyle, string> = {
   Natural: "です・ます体",
   Native: "ナチュラル",
 };
+/**
+ * The days a diary can be filed under, in the order they are drawn.
+ *
+ * Yesterday and no further. Two buttons is the whole feature: it covers the
+ * learner who wrote at 01:00 and the one who forgot until the next morning,
+ * which is what people actually ask for, and it is small enough that no
+ * server-side check is worth the timezone risk of adding one (see dateChoice).
+ * A free date picker would be a different feature with a different answer.
+ */
+const DATE_CHOICES = [
+  { key: "today", labelKey: "write.dateToday" },
+  { key: "yesterday", labelKey: "write.dateYesterday" },
+] as const;
+
 const DEFAULT_MOODS = ["😊 Happy", "🙂 Okay", "😌 Calm", "😴 Tired", "😣 Tough"];
 const DEFAULT_WEATHERS = ["☀️ Sunny", "☁️ Cloudy", "🌧️ Rainy"];
 
@@ -89,7 +103,16 @@ const tips = [
   { jp: "自分(じぶん)の気持(きも)ちを書(か)こう", en: "Write how you feel" },
 ];
 
-// Display only: the date shown in the notebook header (when the page was opened).
+/**
+ * First-paint fallback for the notebook header only.
+ *
+ * ⚠️ Browser timezone, NOT the user_tz cookie — so this can be a day off from
+ * the date a diary is actually filed under. That was harmless while the header
+ * was decoration, but it now names the date the 今日/昨日 toggle will save, and
+ * a header that names the wrong day is worse than no header. Everything after
+ * the first paint uses todayLocal (todayInTZ(getClientTZ())); this covers only
+ * the render before that effect has run, so the line is never blank.
+ */
 function todayISO() {
   return new Date().toLocaleDateString("en-CA");
 }
@@ -196,6 +219,22 @@ function Selector({
 
 export default function WritePage() {
   const [date] = useState(todayISO());
+  /**
+   * Which day this diary is being written for.
+   *
+   * An offset, deliberately not a "YYYY-MM-DD" fixed at mount. saveEntry resolves
+   * it against todayInTZ() at submission time, which is what keeps the existing
+   * across-midnight rule intact: someone who starts at 23:50 and submits at 00:05
+   * files under the day they submitted, and "yesterday" stays one day behind that
+   * — not one day behind whenever the page happened to open.
+   *
+   * Yesterday only. There is no server-side check on diary_date and there
+   * deliberately isn't one: a DB constraint would have to compare against
+   * current_date, which is UTC, and that is the same timezone trap streak.ts:18-24
+   * warns about. A two-button client toggle cannot express a date worth
+   * defending against — backdating one day gains the learner nothing.
+   */
+  const [dateChoice, setDateChoice] = useState<"today" | "yesterday">("today");
   const [tags, setTags] = useState<string[]>([]);
   const [customTagInput, setCustomTagInput] = useState("");
   const [text, setText] = useState("");
@@ -366,19 +405,69 @@ export default function WritePage() {
   const shadowRemaining = shadowLimit === null ? null : Math.max(0, shadowLimit - shadowUsedToday);
 
   /**
-   * The streak to show on the result, today included.
+   * The date this diary will be filed under, resolved for display.
    *
-   * Today is added to the set rather than waited for: the learner has just
+   * Null until the timezone is known, which the header reads as "keep showing
+   * the first-paint fallback". The save paths do NOT use this — they resolve
+   * the same offset again at submission time, on purpose (see dateChoice).
+   */
+  const targetDate = todayLocal
+    ? (dateChoice === "yesterday" ? previousDay(todayLocal) : todayLocal)
+    : null;
+
+  /**
+   * The date to write into diary_date, read fresh at the moment of saving.
+   *
+   * Deliberately not targetDate: that one is derived from todayLocal, which was
+   * fixed when the page mounted. Both save paths call this instead so a session
+   * that crosses midnight files under the day it submitted — the rule the
+   * comment in saveEntry has always described — with the toggle applied on top.
+   */
+  function resolveDiaryDate(): string {
+    const base = todayInTZ(getClientTZ());
+    return dateChoice === "yesterday" ? previousDay(base) : base;
+  }
+
+  /**
+   * The toggle is frozen while anything is in flight. Every one of these ends in
+   * a save, and a date that can still change between pressing 添削する and the
+   * insert landing is a date nobody can be sure of — including the learner, who
+   * has already looked away from the header by then.
+   */
+  const dateLocked = loading || saving || justSaving || seekingPeer;
+
+  /**
+   * The streak to show on the result, the day being written included.
+   *
+   * That day is added to the set rather than waited for: the learner has just
    * written it, and the auto-save that follows a correction may still be in
    * flight. Counting it only after savedEntryId lands would make the badge
    * flicker in on a delay, and the one thing it must not do is arrive late to
    * the moment it is celebrating.
    *
+   * ⚠️ targetDate, NOT todayLocal. Adding today unconditionally credits a day
+   * the learner did not write, and it is wrong in both directions:
+   *
+   *   · Inflated — they already have yesterday and are writing a second diary
+   *     for it. {yesterday, today} walks two days and reads 2; the honest
+   *     answer is 1, because today is still empty.
+   *   · Deflated, and worse — their last diaries were two and three days ago,
+   *     and filling in yesterday closes the gap. {D-2, D-3, today} stops at
+   *     today and reads 1, hiding a run of 3.
+   *
+   * The badge exists to be believed, and 1 shown to someone who just earned 3
+   * is the version that costs something.
+   *
+   * The second argument stays todayLocal — the walk starts from the real today
+   * either way, and streak.ts's grace (start from yesterday when today is empty)
+   * is what makes a backfilled yesterday come out right. streak.ts itself is
+   * untouched; this is only what gets handed to it.
+   *
    * 0 until the timezone is known (todayLocal null on the first paint), which
    * CorrectionTopBlock reads as "draw nothing".
    */
-  const streakDays = todayLocal
-    ? currentStreak(new Set([...writtenDates, todayLocal]), todayLocal)
+  const streakDays = todayLocal && targetDate
+    ? currentStreak(new Set([...writtenDates, targetDate]), todayLocal)
     : 0;
 
   // No natural version means there is nothing to read aloud — a correction that
@@ -624,8 +713,9 @@ export default function WritePage() {
     // Compute diary_date at submission time using the same timezone as the streak
     // logic (layout.tsx / diary.ts). If the user writes across midnight their diary
     // is filed under the calendar day they actually submitted, not when they opened
-    // the page.
-    const diaryDate = todayInTZ(getClientTZ());
+    // the page. dateChoice is applied here, as an offset from that same moment, so
+    // the across-midnight rule holds for 「昨日」 too.
+    const diaryDate = resolveDiaryDate();
 
     // alternative_words is not in this insert: it is written by the separate
     // update further down, which is how this flow has always done it.
@@ -727,7 +817,7 @@ export default function WritePage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
 
-    const diaryDate = todayInTZ(getClientTZ());
+    const diaryDate = resolveDiaryDate();
 
     const { data, error } = await supabase
       .from("diary_entries")
@@ -1026,11 +1116,50 @@ export default function WritePage() {
 
             <div className="pl-9 pr-6 py-6">
               {/* date */}
-              <div className="mb-4 flex items-center gap-2 border-b border-line pb-3">
-                <span className="font-serif text-lg font-bold text-pine">
-                  {jpDate(date)}
-                </span>
-                <span>🌸</span>
+              {/*
+                The header names the day this diary will be filed under, and the
+                toggle under it is what chooses that day. Only one of the two
+                spells the date out: repeating it on the buttons would give the
+                same fact two places to drift apart. The buttons say 今日 / 昨日,
+                the line above says which date that is.
+
+                targetDate ?? date — targetDate is null for the one render before
+                the timezone effect runs, and `date` (browser timezone) covers it
+                so the line is never blank. See todayISO's comment for why the
+                fallback is not good enough to keep past that first paint.
+
+                Stacked rather than one row: at 375px the serif date is already
+                ~170px of a ~315px content box, and the toggle beside it would
+                wrap mid-control.
+              */}
+              <div className="mb-4 border-b border-line pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="font-serif text-lg font-bold text-pine">
+                    {jpDate(targetDate ?? date)}
+                  </span>
+                  <span>🌸</span>
+                </div>
+                <div className="mt-2 flex gap-1.5" role="group" aria-label={t("write.dateChoiceLabel")}>
+                  {DATE_CHOICES.map((choice) => {
+                    const active = dateChoice === choice.key;
+                    return (
+                      <button
+                        key={choice.key}
+                        type="button"
+                        aria-pressed={active}
+                        disabled={dateLocked}
+                        onClick={() => setDateChoice(choice.key)}
+                        className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                          active
+                            ? "bg-pine text-cream"
+                            : "border border-line bg-paper text-ink/70 hover:border-moss hover:text-pine"
+                        }`}
+                      >
+                        {t(choice.labelKey)}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* tag selector */}
