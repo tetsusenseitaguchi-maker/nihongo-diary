@@ -47,10 +47,31 @@ import { useT } from "@/contexts/locale";
  * tap-to-navigate line can coexist with an auto-dismissing surface.
  */
 
-/** Tuned on device. Count-up first, then hold the final state, then fade. */
-const COUNT_UP_MS = 400;
-const HOLD_MS = 1200;
-const FADE_MS = 200;
+/**
+ * Count-up, then hold the final state, then fade.
+ *
+ * The first pass ran 400 + 1200 + 200 = 1.6s and was unreadable on a phone —
+ * the numbers were gone before they could be taken in. The count-up is the
+ * expensive part of that: while it runs the figure is still moving, so it does
+ * not count as reading time, and a 400ms count read as a flicker rather than
+ * as counting.
+ *
+ * The hold now scales with how much there is to read, because the recap is
+ * between one and three lines depending on the learner. A fixed hold is either
+ * long for the one-line version or short for the three-line one; this is the
+ * cheapest way to be neither.
+ *
+ *   1 line  (no goal set, or goal only)  ≈ 0.6 + 1.8 + 0.25 = 2.65s
+ *   2 lines                              ≈ 0.6 + 2.2 + 0.25 = 3.05s
+ *   3 lines (goal + streak + characters) ≈ 0.6 + 2.6 + 0.25 = 3.45s
+ *
+ * Tap still skips instantly, so the ceiling only costs the people who let it
+ * play. Tune here.
+ */
+const COUNT_UP_MS = 600;
+const HOLD_BASE_MS = 1400;
+const HOLD_PER_LINE_MS = 400;
+const FADE_MS = 250;
 
 /** The goal card's anchor in the dashboard hero. */
 export const WEEKLY_GOAL_ANCHOR_ID = "weekly-goal";
@@ -88,6 +109,14 @@ export function DailyRecapOverlay({
 }) {
   const t = useT();
   const { isActive } = useTour();
+
+  // How many lines this learner will actually see. Derived from props so the
+  // auto-close timer can read it before anything renders — the same three
+  // conditions the markup below uses, kept in one place so they cannot drift.
+  const noGoal = weeklyTarget === null;
+  const showStreak = currentStreak > 0;
+  const showChars = totalChars > 0;
+  const visibleLines = noGoal ? 1 : 1 + (showStreak ? 1 : 0) + (showChars ? 1 : 0);
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -124,10 +153,11 @@ export function DailyRecapOverlay({
   useEffect(() => {
     if (!open || closedRef.current) return;
     const countUp = reduceMotion.current ? 0 : COUNT_UP_MS;
+    const hold = HOLD_BASE_MS + visibleLines * HOLD_PER_LINE_MS;
     const settle = setTimeout(() => setDone(true), countUp);
-    const leave = setTimeout(() => close(), countUp + HOLD_MS);
+    const leave = setTimeout(() => close(), countUp + hold);
     return () => { clearTimeout(settle); clearTimeout(leave); };
-  }, [open]);
+  }, [open, visibleLines]);
 
   // The page behind a full-screen surface should not scroll under the thumb.
   useEffect(() => {
@@ -158,10 +188,6 @@ export function DailyRecapOverlay({
   const chars = useCountUp(totalChars, open, skip);
 
   if (!open) return null;
-
-  const noGoal = weeklyTarget === null;
-  const showStreak = currentStreak > 0;
-  const showChars = totalChars > 0;
 
   return (
     <div
