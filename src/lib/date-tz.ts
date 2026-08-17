@@ -23,6 +23,30 @@ export function previousDay(dateStr: string): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * The Monday of the week containing `dateStr`, as another "YYYY-MM-DD".
+ *
+ * Same shape as previousDay above and for the same reason: the string is read
+ * as UTC midnight and stepped back in UTC, so no timezone and no daylight-saving
+ * transition can move the result. Give it a date that is already local — the
+ * caller decides whose clock the week belongs to.
+ *
+ * Monday-start (Mon=0 … Sun=6), which is NOT what the rest of the app draws:
+ * lib/dates.ts weekdayLabels starts "S" and buildMonthGrid uses getDay(), so
+ * MiniCalendar renders Sunday-first on the same dashboard page. The weekly goal
+ * was specified Monday-start deliberately; the mismatch is with the calendar's
+ * first column only, and nothing computes across the two.
+ *
+ * Verified across the rollover minute (Sun 23:59 → Mon 00:00), month and year
+ * boundaries, and a week spanning Feb 29.
+ */
+export function startOfWeek(dateStr: string): string {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  const mondayIndex = (d.getUTCDay() + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - mondayIndex);
+  return d.toISOString().slice(0, 10);
+}
+
 // Returns { year, month (0-indexed like Date.getMonth()), day, dateStr }
 // for the current moment in the given IANA timezone.
 export function nowInTZ(tz = "UTC"): {

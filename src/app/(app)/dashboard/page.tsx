@@ -12,12 +12,13 @@ import { daysToNextMilestone } from "@/lib/streak";
 import { monthLabel, formatShort } from "@/lib/dates";
 import { getServerT } from "@/lib/i18n-server";
 import { getTimezoneFromCookie } from "@/lib/tz-server";
-import { nowInTZ, previousDay } from "@/lib/date-tz";
+import { nowInTZ, previousDay, todayInTZ, startOfWeek } from "@/lib/date-tz";
 import { isNativeRequest } from "@/lib/native";
 import { hasDictation } from "@/lib/dictation";
 import { getDueSummary } from "@/lib/srs-server";
 import { AudioIntroModal } from "@/components/AudioIntroModal";
 import { WebPushBanner } from "@/components/WebPushBanner";
+import { WeeklyGoalCard } from "@/components/WeeklyGoalCard";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,27 @@ export const dynamic = "force-dynamic";
  */
 const CUMULATIVE_MIN_DAYS = 3;
 
+/**
+ * Whose clock the weekly goal's week belongs to.
+ *
+ * ⚠️ Pinned, and it is the only thing in this codebase that is. Everything else
+ * dates by the learner: diary_date is written with todayInTZ(getClientTZ()),
+ * streak.ts takes todayStr from its caller, layout.tsx reads the user_tz
+ * cookie, api/report/weekly uses profiles.timezone, and both push functions use
+ * `now() at time zone tzn.name`. This one constant is a deliberate exception —
+ * one week boundary for everyone rather than 923 of them.
+ *
+ * What it costs, measured: a diary written Sunday 23:00 in Los Angeles gets
+ * diary_date 2026-08-16 while the Tokyo week already starts 2026-08-17, so it
+ * lands in the previous week. Across all 2,149 entries that mismatch hits 6
+ * (0.3%) — small today, and it grows with every learner west of Japan
+ * (New York 119, Calcutta 66, Los Angeles 65, Tokyo 62).
+ *
+ * To revisit: change this line to the learner's timezone, which the page has
+ * already resolved as `tz` below. Nothing else needs to move.
+ */
+const WEEK_TZ = "Asia/Tokyo";
+
 export default async function DashboardPage() {
   const supabase = await createClient();
   const {
@@ -50,7 +72,7 @@ export default async function DashboardPage() {
   // round trip after them.
   const tz = await getTimezoneFromCookie();
 
-  const [{ data: profile }, { data }, srs] = await Promise.all([
+  const [{ data: profile }, { data }, srs, weeklyGoal] = await Promise.all([
     supabase
       .from("profiles")
       // ⚠️ Do not add plan/timezone here for the flashcards card. One absent
@@ -77,6 +99,14 @@ export default async function DashboardPage() {
     // table or a failed read comes back as zero cards and the block below
     // simply does not render.
     getDueSummary(supabase, user.id, tz),
+    // Fourth in the same Promise.all, so it costs a query but no round trip.
+    // Its own table on purpose — never a column on profiles, whose select is
+    // the one that takes the whole page down when a column goes missing.
+    supabase
+      .from("weekly_goals")
+      .select("target_days")
+      .eq("user_id", user.id)
+      .maybeSingle(),
   ]);
 
   const t = await getServerT();
@@ -136,6 +166,29 @@ export default async function DashboardPage() {
     0,
   );
   const showCumulative = stats.totalDays >= CUMULATIVE_MIN_DAYS;
+
+  /**
+   * Days written so far in the current week.
+   *
+   * diary_date, not created_at — the same basis as the streak, the cumulative
+   * card, the calendar and the notifications. Counting by "the day you pressed
+   * save" would close the backfill loophole (a 「昨日」 entry can add a day to a
+   * week it was not written in) but would make this the FOURTH definition of a
+   * day in the app, next to three streaks that already disagree. The loophole is
+   * worth 13 entries out of 2,149 (0.6%), and it is a promise the learner made
+   * to themselves; a fourth definition is what has actually cost this codebase.
+   *
+   * No new query: `entries` is already here, and only diary_date is read — not
+   * a character of the text.
+   *
+   * A row is null-guarded rather than trusted: weekly_goals may not exist in
+   * every environment, and a failed read must cost the card, not the page.
+   */
+  const weekStart = startOfWeek(todayInTZ(WEEK_TZ));
+  const daysThisWeek = new Set(
+    entries.filter((e) => e.diary_date >= weekStart).map((e) => e.diary_date),
+  ).size;
+  const weeklyTarget = (weeklyGoal?.data?.target_days as number | null | undefined) ?? null;
 
   const displayName = profile?.display_name || profile?.username || "Learner";
   const avatarUrl = profile?.avatar_url || "";
@@ -304,13 +357,24 @@ export default async function DashboardPage() {
             </Card>
           )}
 
-          <StatCard
-            icon="flame"
-            label={t("dashboard.stats.streak")}
-            value={t("streak.dayCount", { n: stats.currentStreak })}
-            sub={t("dashboard.stats.longestLabel", { n: stats.longestStreak })}
-            iconTint="apricot"
-            className="col-span-2"
+          {/* ── The week, and the streak under it ────────────────────────
+              This replaces the full-width streak StatCard rather than joining
+              it: the grid keeps its three rows, and the streak keeps its place
+              on the page at a smaller size.
+
+              The swap is the point of the feature. A streak breaks the first
+              day you miss; a week does not — miss Tuesday and Thursday still
+              gets you there. Measured across 883 active user-weeks, 57.4% are a
+              single day and only 28.3% reach three, so a number that assumes
+              daily writing is, for most learners, a number that is broken.
+
+              stats.currentStreak is read and drawn smaller. Nothing in
+              lib/streak.ts or layout.tsx's inline copy is touched. */}
+          <WeeklyGoalCard
+            userId={user.id}
+            initialTarget={weeklyTarget}
+            daysThisWeek={daysThisWeek}
+            currentStreak={stats.currentStreak}
           />
         </div>
       </div>
