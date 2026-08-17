@@ -6,6 +6,7 @@ import { hasSeenTour } from "@/lib/tour/seen";
 import { useTour } from "@/contexts/tour";
 import { getClientTZ, todayInTZ } from "@/lib/date-tz";
 import { useT } from "@/contexts/locale";
+import { ActivityGrid } from "@/components/ActivityGrid";
 
 /**
  * 「今日のあなた」 — a full-screen recap, once a day, that gets out of the way.
@@ -41,31 +42,39 @@ import { useT } from "@/contexts/locale";
  * below the fold, and an overlay that closed onto empty screen would have
  * promised something it did not deliver.
  *
- * The tap is now required, not a shortcut — see the timing note below for why
- * the auto-close was removed. Escape and the × do the same thing.
+ * The tap is a shortcut, never a requirement: the overlay closes on its own in
+ * every state, so ignoring it costs nothing. That is what lets a
+ * tap-to-act line sit on an auto-dismissing surface at all. Escape and the ×
+ * are the other two ways out.
+ *
+ * ⚠️ This was briefly implemented as tap-only, in every state, and that was
+ * wrong: it turned a once-a-day recap into a once-a-day obstacle. The problem
+ * it was reaching for — nobody could read it — is solved by the timings below
+ * instead.
  */
 
 /**
- * Count-up, then it waits.
+ * Count-up, then the grid's wave, then a hold, then it leaves.
  *
- * ── Why there is no auto-close ─────────────────────────────────────────────
- * There was, twice. 400 + 1200ms was unreadable on a phone; scaling the hold
- * with the line count (up to 3.45s) was still not enough. The problem is not a
- * number that can be tuned: a surface that leaves on its own has to be read in
- * whatever time the slowest glance takes, and any value large enough to be safe
- * for that is long enough to feel stuck for everyone else.
+ * The order is the point: the numbers settle before the grid starts moving, so
+ * the eye reads them and then travels down rather than choosing between two
+ * things animating at once.
  *
- * So it waits for a tap. That inverts the earlier reasoning — the tap used to
- * be a shortcut precisely BECAUSE the overlay always closed by itself — and the
- * trade it buys is real: once a day, the dashboard costs one tap to reach.
- * Worth it against a daily animation nobody can read.
+ *   (1) goal + streak + characters + grid   0.6 + 0.52 + 1.2 = 2.32s
+ *   (2) goal only, no grid                  0.6 +  0   + 1.2 = 1.80s
+ *   (3) no goal set, nothing to count       0   +  0   + 1.2 = 1.20s
  *
- * No safety timeout either. A surprise close at, say, 15s is exactly the
- * behaviour this change exists to remove, and there is nothing here that can
- * wedge: the surface is a single element with three ways out (anywhere on it,
- * the ×, Escape).
+ * plus a 0.25s fade in each case. Two earlier attempts at this were too short
+ * (1.6s flat, then 3.45s scaled by line count) — the difference now is that the
+ * animation ends well before the hold does, so the whole hold is reading time.
+ *
+ * GRID_WAVE_MS is measured, not guessed: (11 + 6) × 12ms of stagger + 320ms for
+ * one cell = 524ms, and globals.css carries the same arithmetic next to the
+ * keyframes. If either moves, both move.
  */
 const COUNT_UP_MS = 600;
+const GRID_WAVE_MS = 524;
+const HOLD_MS = 1200;
 const FADE_MS = 250;
 
 /** The goal card's anchor in the dashboard hero. */
@@ -95,12 +104,17 @@ export function DailyRecapOverlay({
   daysThisWeek,
   currentStreak,
   totalChars,
+  writtenDates,
+  todayStr,
 }: {
   /** weekly_goals.target_days, or null when the learner has not set one. */
   weeklyTarget: number | null;
   daysThisWeek: number;
   currentStreak: number;
   totalChars: number;
+  /** Every diary_date the learner has — the same set the dashboard card uses. */
+  writtenDates: Set<string>;
+  todayStr: string;
 }) {
   const t = useT();
   const { isActive } = useTour();
@@ -110,6 +124,16 @@ export function DailyRecapOverlay({
   const noGoal = weeklyTarget === null;
   const showStreak = currentStreak > 0;
   const showChars = totalChars > 0;
+  /**
+   * The grid rides with pattern (1) only.
+   *
+   * 84 squares with nothing lit is the same mistake as a 0 next to a flame,
+   * with far more area to make it: at 84 days, 35.1% of active learners have
+   * three or more cells and 20.6% have five. showChars is the test because it
+   * is the one that answers "has this person ever written", which is exactly
+   * when a three-month grid has something to show.
+   */
+  const showGrid = !noGoal && showChars;
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -161,12 +185,15 @@ export function DailyRecapOverlay({
     setOpen(true);
   }, [isActive]);
 
-  // Let the count-up finish, then stop animating and wait. Nothing closes it.
+  // Settle the numbers, let the wave run, hold, leave.
   useEffect(() => {
     if (!open || closedRef.current) return;
-    const settle = setTimeout(() => setDone(true), reduceMotion.current ? 0 : COUNT_UP_MS);
-    return () => clearTimeout(settle);
-  }, [open]);
+    const countUp = reduceMotion.current || noGoal ? 0 : COUNT_UP_MS;
+    const wave = reduceMotion.current || !showGrid ? 0 : GRID_WAVE_MS;
+    const settle = setTimeout(() => setDone(true), countUp);
+    const leave = setTimeout(() => close(false), countUp + wave + HOLD_MS);
+    return () => { clearTimeout(settle); clearTimeout(leave); };
+  }, [open, noGoal, showGrid]);
 
   // Escape closes it too — a full-screen dialog that only answers to a tap is
   // unusable with a keyboard.
@@ -274,6 +301,24 @@ export function DailyRecapOverlay({
               <p className="font-serif text-2xl font-bold text-pine">
                 ✍️ {t("recap.chars", { n: chars.toLocaleString("en-US") })}
               </p>
+            )}
+
+            {showGrid && (
+              <div className="flex justify-center">
+                {/* --wave-start delays the whole grid until the numbers have
+                    settled, so the two never animate at once. Reduced motion
+                    zeroes both this and the per-cell stagger in globals.css. */}
+                <div style={{ ["--wave-start" as string]: `${reduceMotion.current ? 0 : COUNT_UP_MS}ms` } as React.CSSProperties}>
+                  <ActivityGrid
+                    writtenDates={writtenDates}
+                    endDate={todayStr}
+                    animate
+                    cellPx={18}
+                    showLabels={false}
+                    summaryLabel={t("recap.gridAria")}
+                  />
+                </div>
+              </div>
             )}
           </div>
         )}
