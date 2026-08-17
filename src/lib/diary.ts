@@ -11,7 +11,22 @@ export interface DiaryRow {
 }
 
 export interface DiaryStats {
+  /** Diaries written. Not days — several can share one diary_date. */
   total: number;
+  /**
+   * Calendar days written on, counted once each.
+   *
+   * Distinct from `total`, and the gap between them is no longer theoretical:
+   * /write can file a diary under yesterday, so a learner can add a second
+   * entry to a day they already have. Anything phrased as "days" must read this
+   * one; `total` answers a different question and is a bigger number.
+   *
+   * Safe for every caller — it needs only diary_date, which is the one column
+   * all four of them actually select. (profile/page.tsx and
+   * profile/[username]/page.tsx pass rows that have nothing else, despite what
+   * DiaryRow claims.)
+   */
+  totalDays: number;
   thisMonthCount: number;
   lastMonthCount: number;
   monthDelta: number;
@@ -83,6 +98,9 @@ export function computeStats(entries: DiaryRow[], todayStr?: string): DiaryStats
 
   return {
     total: entries.length,
+    // dateSet was already built at the top of this function for the streak
+    // walk; this only stops throwing its size away.
+    totalDays: dateSet.size,
     thisMonthCount,
     lastMonthCount,
     monthDelta: thisMonthCount - lastMonthCount,

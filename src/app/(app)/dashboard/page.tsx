@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Card, LinkButton } from "@/components/ui";
+import { Card, LinkButton, SectionLabel } from "@/components/ui";
 import { Icon, renderIcon } from "@/components/icons";
 import { MiniCalendar } from "@/components/MiniCalendar";
 import { Furigana, NoRuby } from "@/components/Furigana";
@@ -20,6 +20,23 @@ import { AudioIntroModal } from "@/components/AudioIntroModal";
 import { WebPushBanner } from "@/components/WebPushBanner";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Days written before the cumulative band appears at all.
+ *
+ * Three, because the numbers it shows are only encouraging once there is
+ * something in them. Measured on production: the median writer has written on
+ * ONE day and 114 characters in total, and half of everyone who signed up has
+ * never written at all. A band reading "1 day / 114 characters" is not a
+ * record of progress, it is a receipt for how little has happened — aimed at
+ * exactly the learner most likely to leave.
+ *
+ * Below the threshold nothing is drawn. No placeholder, no "0 days", no
+ * "2 more to unlock": a target printed next to an empty number is the same
+ * scolding by another route, and the flashcards card above already refuses to
+ * render "0 today" for the same reason.
+ */
+const CUMULATIVE_MIN_DAYS = 3;
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -80,6 +97,29 @@ export default async function DashboardPage() {
   const stats = computeStats(entries, todayStr);
   // Same rungs as the badge on the correction result and as the sidebar.
   const nextMilestone = daysToNextMilestone(stats.currentStreak);
+
+  /**
+   * Everything the learner has ever written, in characters.
+   *
+   * Computed here rather than in computeStats on purpose. That function is
+   * called by four pages and two of them — profile/page.tsx and
+   * profile/[username]/page.tsx — hand it rows built from a `diary_date`-only
+   * select, cast through `as DiaryRow`. original_text is undefined in those
+   * callers, so a character count living inside computeStats would be NaN on
+   * two pages to serve one. This page is the only caller that actually selects
+   * the column, and the only one that shows the number.
+   *
+   * Code points, not `.length`: UTF-16 counts an emoji as two, and a learner
+   * who ends a sentence with 🌸 has not written an extra character. Grapheme
+   * clusters would be more exact still and are not worth an Intl.Segmenter here
+   * — the text being counted is Japanese prose.
+   *
+   * No new query and no new bytes: `data` above already carries original_text
+   * for every entry, and the heaviest account in production is 54 entries and
+   * 16 KB.
+   */
+  const totalChars = entries.reduce((n, e) => n + [...(e.original_text ?? "")].length, 0);
+  const showCumulative = stats.totalDays >= CUMULATIVE_MIN_DAYS;
 
   const displayName = profile?.display_name || profile?.username || "Learner";
   const avatarUrl = profile?.avatar_url || "";
@@ -297,6 +337,43 @@ export default async function DashboardPage() {
             </LinkButton>
           </div>
         </Card>
+      )}
+
+      {/* ── What has piled up ─────────────────────────────────────────────
+          Below the two cards above, not above them: those expire (the sentence
+          tonight, the flashcards when the queue empties) and this one never
+          does. It is the slowest thing on the page and belongs at the end of
+          the urgent block, where it reads as a floor rather than a task.
+
+          Both numbers are cumulative and neither can go down, which is the
+          whole point of showing them — see CUMULATIVE_MIN_DAYS for who sees
+          this at all. */}
+      {showCumulative && (
+        <section className="space-y-3">
+          <SectionLabel>{t("dashboard.cumulative.title")}</SectionLabel>
+          <div className="grid grid-cols-2 gap-4">
+            <StatCard
+              icon="calendar"
+              label={t("dashboard.cumulative.daysLabel")}
+              value={stats.totalDays}
+              // stats.total, not totalDays — the sub is the count of diaries,
+              // which is the larger number now that a day can hold several.
+              sub={t("dashboard.cumulative.daysSub", { n: stats.total })}
+              iconTint="apricot"
+            />
+            <StatCard
+              icon="pen"
+              label={t("dashboard.cumulative.charsLabel")}
+              value={totalChars.toLocaleString("en-US")}
+              // Explicit locale: this renders on the server, whose own locale
+              // is not the learner's and is not worth inheriting silently.
+              sub={t("dashboard.cumulative.charsSub", {
+                n: Math.round(totalChars / Math.max(1, stats.total)).toLocaleString("en-US"),
+              })}
+              iconTint="apricot"
+            />
+          </div>
+        </section>
       )}
 
       {/* Main + rail */}
