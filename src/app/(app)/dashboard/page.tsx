@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Card, LinkButton, SectionLabel } from "@/components/ui";
+import { Card, LinkButton } from "@/components/ui";
 import { Icon, renderIcon } from "@/components/icons";
 import { MiniCalendar } from "@/components/MiniCalendar";
 import { Furigana, NoRuby } from "@/components/Furigana";
@@ -22,7 +22,7 @@ import { WebPushBanner } from "@/components/WebPushBanner";
 export const dynamic = "force-dynamic";
 
 /**
- * Days written before the cumulative band appears at all.
+ * Days written before the third hero card appears at all.
  *
  * Three, because the numbers it shows are only encouraging once there is
  * something in them. Measured on production: the median writer has written on
@@ -109,16 +109,32 @@ export default async function DashboardPage() {
    * two pages to serve one. This page is the only caller that actually selects
    * the column, and the only one that shows the number.
    *
+   * ⚠️ original_text, NEVER original_text_ruby. The ruby column is the same
+   * prose wrapped in <ruby>漢字<rt>かんじ</rt></ruby> markup, and counting it
+   * would report 774,642 characters where the learners actually wrote 159,151
+   * — a 387% overstatement, measured across all 2,140 entries. original_text is
+   * the raw textarea value and carries no markup at all: zero entries contain
+   * a `<ruby>`, and zero contain any HTML tag.
+   *
    * Code points, not `.length`: UTF-16 counts an emoji as two, and a learner
    * who ends a sentence with 🌸 has not written an extra character. Grapheme
    * clusters would be more exact still and are not worth an Intl.Segmenter here
    * — the text being counted is Japanese prose.
    *
+   * Whitespace and zero-width characters are dropped. A line break is not a
+   * character the learner wrote, and leaving them in would let blank lines pad
+   * the figure — which matters for a number whose whole job is to be a total
+   * that only ever grows. 1.66% of the corpus, so the honest number is barely
+   * smaller; the point is that it cannot be gamed.
+   *
    * No new query and no new bytes: `data` above already carries original_text
    * for every entry, and the heaviest account in production is 54 entries and
    * 16 KB.
    */
-  const totalChars = entries.reduce((n, e) => n + [...(e.original_text ?? "")].length, 0);
+  const totalChars = entries.reduce(
+    (n, e) => n + [...(e.original_text ?? "")].filter((c) => !/[\s​-‍﻿]/u.test(c)).length,
+    0,
+  );
   const showCumulative = stats.totalDays >= CUMULATIVE_MIN_DAYS;
 
   const displayName = profile?.display_name || profile?.username || "Learner";
@@ -256,6 +272,38 @@ export default async function DashboardPage() {
             sub={`${stats.monthDelta >= 0 ? "+" : ""}${stats.monthDelta}`}
             subAccent
           />
+          {/* ── What has piled up ────────────────────────────────────────
+              The third card, full width under the two counts it belongs with:
+              Total Diaries counts entries, This Month counts entries in a
+              window, and this one counts the two things that only ever go up.
+
+              Two figures in one card rather than two cards, because they are
+              one idea — days and characters are the same pile measured twice —
+              and because a fourth card would push the streak onto a third row.
+
+              Absent below the threshold (see CUMULATIVE_MIN_DAYS), and when it
+              is absent the grid is exactly the three-card layout it was before:
+              two halves, then the streak across the bottom. Nothing reflows. */}
+          {showCumulative && (
+            <Card accent="apricot" className="col-span-2 p-4">
+              <div className="grid grid-cols-2 divide-x divide-line">
+                <div className="pr-4">
+                  <p className="text-xs font-semibold text-muted">{t("dashboard.cumulative.daysLabel")}</p>
+                  <p className="mt-2 font-serif text-3xl font-bold text-pine">{stats.totalDays}</p>
+                </div>
+                <div className="pl-4">
+                  <p className="text-xs font-semibold text-muted">{t("dashboard.cumulative.charsLabel")}</p>
+                  {/* Explicit locale: this renders on the server, whose own
+                      locale is not the learner's and is not worth inheriting. */}
+                  <p className="mt-2 font-serif text-3xl font-bold text-pine">{totalChars.toLocaleString("en-US")}</p>
+                </div>
+              </div>
+              {/* Cumulative, never an average — the count of diaries behind the
+                  two totals, so the numbers read as a pile rather than a rate. */}
+              <p className="mt-2 text-xs text-muted">{t("dashboard.cumulative.daysSub", { n: stats.total })}</p>
+            </Card>
+          )}
+
           <StatCard
             icon="flame"
             label={t("dashboard.stats.streak")}
@@ -337,43 +385,6 @@ export default async function DashboardPage() {
             </LinkButton>
           </div>
         </Card>
-      )}
-
-      {/* ── What has piled up ─────────────────────────────────────────────
-          Below the two cards above, not above them: those expire (the sentence
-          tonight, the flashcards when the queue empties) and this one never
-          does. It is the slowest thing on the page and belongs at the end of
-          the urgent block, where it reads as a floor rather than a task.
-
-          Both numbers are cumulative and neither can go down, which is the
-          whole point of showing them — see CUMULATIVE_MIN_DAYS for who sees
-          this at all. */}
-      {showCumulative && (
-        <section className="space-y-3">
-          <SectionLabel>{t("dashboard.cumulative.title")}</SectionLabel>
-          <div className="grid grid-cols-2 gap-4">
-            <StatCard
-              icon="calendar"
-              label={t("dashboard.cumulative.daysLabel")}
-              value={stats.totalDays}
-              // stats.total, not totalDays — the sub is the count of diaries,
-              // which is the larger number now that a day can hold several.
-              sub={t("dashboard.cumulative.daysSub", { n: stats.total })}
-              iconTint="apricot"
-            />
-            <StatCard
-              icon="pen"
-              label={t("dashboard.cumulative.charsLabel")}
-              value={totalChars.toLocaleString("en-US")}
-              // Explicit locale: this renders on the server, whose own locale
-              // is not the learner's and is not worth inheriting silently.
-              sub={t("dashboard.cumulative.charsSub", {
-                n: Math.round(totalChars / Math.max(1, stats.total)).toLocaleString("en-US"),
-              })}
-              iconTint="apricot"
-            />
-          </div>
-        </section>
       )}
 
       {/* Main + rail */}
