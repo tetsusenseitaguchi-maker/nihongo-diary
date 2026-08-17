@@ -73,6 +73,48 @@
  */
 
 
+/**
+ * ── Free の出力量を抑える断片 ─────────────────────────────────────
+ *
+ * lean=false で全て空文字（または従来と同じ数字）を返す。有料プランの
+ * プロンプトが移動前とバイト単位で一致することが前提条件なので、ここに
+ * 足すものは必ず「false のとき無」になる形で書くこと。
+ *
+ * ⚠️ 数は「2」で固定。1 ではない。
+ * CorrectionResult の hideMistake / hideVocab / hideAfterFirst は
+ * どれも `i > 0` で、アップグレード導線のバナーは `length > 1` を
+ * 条件にしている。つまり 1 件しか生成しないと、すりガラスも課金導線も
+ * 消える。2 件生成して 1 件見せ 1 件隠す、が Free の設計。
+ *
+ * ⚠️ keyMistakes だけ「exactly」ではなく「at most」。ルール6b が
+ * 「正しい日本語を直すな、直す根拠を言えないなら直すな」と要求して
+ * いるので、2件ちょうどを強制すると存在しない誤りを捏造させることに
+ * なる。実際に誤りが1つしかない日記（実測27%）ではブラーが出ないが、
+ * 捏造よりはるかにましなので、その順序で妥協している。
+ */
+export function keyMistakesCap(lean: boolean): string {
+  return lean
+    ? " The keyMistakes array must contain AT MOST 2 objects. If the diary has more mistakes than that, keep only the two most important and omit the rest entirely. Never add a mistake that is not real just to reach two."
+    : "";
+}
+
+export function vocabularyCap(lean: boolean): string {
+  return lean ? " Return exactly 2 words." : "";
+}
+
+export function explanationCap(lean: boolean): string {
+  return lean ? " Keep englishExplanation to at most 4 sentences." : "";
+}
+
+export function correctionNoteCap(lean: boolean): string {
+  return lean ? " Keep it to at most 3 sentences." : "";
+}
+
+/** The literal digit in "suggest exactly N …". 3 is the pre-existing value. */
+export function suggestionCount(lean: boolean): string {
+  return lean ? "2" : "3";
+}
+
 export function drillsSchema(include: boolean): string {
   return include
     ? `  "practiceDrills": [

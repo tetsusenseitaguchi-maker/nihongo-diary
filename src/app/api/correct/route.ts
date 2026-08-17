@@ -20,6 +20,7 @@ function systemPrompt(
   lang: string,
   includeDrills: boolean,
   includeMiniLesson: boolean,
+  lean: boolean,
 ): string {
   // Practice drills and the mini-lesson preview are paid-plan features. For
   // Free we drop each from the prompt entirely — the JSON schema, rule 1's
@@ -42,6 +43,15 @@ function systemPrompt(
   const miniLessonSchema = PROMPT.miniLessonSchema(includeMiniLesson);
   const drillsRule = PROMPT.drillsRule(includeDrills, lang);
   const miniLessonRule = PROMPT.miniLessonRule(includeMiniLesson, lang);
+  // Free only. Every one of these is "" (or the pre-existing digit) when lean
+  // is false, so the paid prompt is byte-for-byte what it was — the same
+  // property the two flags above are held to. See correction-prompt.ts for why
+  // the number is 2 rather than 1, and why keyMistakes says "at most".
+  const keyMistakesCap = PROMPT.keyMistakesCap(lean);
+  const vocabularyCap = PROMPT.vocabularyCap(lean);
+  const explanationCap = PROMPT.explanationCap(lean);
+  const correctionNoteCap = PROMPT.correctionNoteCap(lean);
+  const suggestionCount = PROMPT.suggestionCount(lean);
   return `You are a friendly Japanese teacher for Japanese learners.
 
 Do not behave like a strict proofreader. Behave like a Japanese teacher who understands that learners need confidence.
@@ -187,14 +197,14 @@ If the learner's original already matches one of the correct forms above, it is 
 
 7b. originalTextRuby: the learner's ORIGINAL text, character-for-character identical to what they wrote — including any mistakes. Do NOT fix, reword, or improve anything here. Add ONLY furigana, following rule 2 exactly. This is purely a reading aid for the unedited original.
 
-8. correctionNote: if the original is NOT wrong but a more natural option exists, put a short, friendly English note here, e.g. "This isn't a mistake, but 〜 sounds a little more natural." If there is nothing to add, use an empty string "".
+8. correctionNote: if the original is NOT wrong but a more natural option exists, put a short, friendly English note here, e.g. "This isn't a mistake, but 〜 sounds a little more natural." If there is nothing to add, use an empty string "".${correctionNoteCap}${explanationCap}
 
-9. keyMistakes: include only important mistakes. If there are none, return an empty array. Tiny style preferences are NOT mistakes — mention those in correctionNote instead.
+9. keyMistakes: include only important mistakes. If there are none, return an empty array. Tiny style preferences are NOT mistakes — mention those in correctionNote instead.${keyMistakesCap}
 
 10. usefulVocabulary: pick words from or related to the diary, at the learner's level. "word": plain dictionary form of the word with kanji as written (e.g. "公園", "歩く", "天気"). "reading": complete hiragana reading including okurigana (e.g. "こうえん", "あるく", "てんき"). "meaning": English definition. "exampleRuby": example sentence with ruby tags on all kanji. practiceSentence: one short sentence based on the topic/mistake, at their level, with ruby.
-CRITICAL — "reading" is NOT written the way <rt> is. <rt> carries the reading of the KANJI only, because the okurigana is already visible next to it (<ruby>歩<rt>ある</rt></ruby>きます). "reading" is a standalone field with no kanji beside it, so it must spell out the WHOLE word, okurigana included: 歩く → "あるく" (NEVER "ある"), 待つ → "まつ" (NEVER "ま"), 新しい → "あたらしい" (NEVER "あたら"), 楽しい → "たのしい" (NEVER "たの"). Do not carry rule 2's kanji-only habit into this field. Check every reading by reading it aloud on its own: if it is not a pronounceable whole word, it is wrong. This applies identically to nextVocab[].reading and alternativeWords[].alternativeReading.
+CRITICAL — "reading" is NOT written the way <rt> is. <rt> carries the reading of the KANJI only, because the okurigana is already visible next to it (<ruby>歩<rt>ある</rt></ruby>きます). "reading" is a standalone field with no kanji beside it, so it must spell out the WHOLE word, okurigana included: 歩く → "あるく" (NEVER "ある"), 待つ → "まつ" (NEVER "ま"), 新しい → "あたらしい" (NEVER "あたら"), 楽しい → "たのしい" (NEVER "たの"). Do not carry rule 2's kanji-only habit into this field. Check every reading by reading it aloud on its own: if it is not a pronounceable whole word, it is wrong. This applies identically to nextVocab[].reading and alternativeWords[].alternativeReading.${vocabularyCap}
 
-${drillsRule}${miniLessonRule}13. nextVocab: suggest exactly 3 vocabulary words the learner could use in a future diary about the SAME topic. These must be one JLPT level above the learner's current level (${level} → one step up: N5→N4, N4→N3, N3→N2, N2→N1, N1/Natural→advanced N1). Choose words that fit naturally into the diary's specific topic/context. Do NOT pick words the learner already used. For each:
+${drillsRule}${miniLessonRule}13. nextVocab: suggest exactly ${suggestionCount} vocabulary words the learner could use in a future diary about the SAME topic. These must be one JLPT level above the learner's current level (${level} → one step up: N5→N4, N4→N3, N3→N2, N2→N1, N1/Natural→advanced N1). Choose words that fit naturally into the diary's specific topic/context. Do NOT pick words the learner already used. For each:
 - "word": kanji form as in a dictionary (e.g. "散策" not "さんさく")
 - "reading": complete hiragana reading including okurigana (e.g. "さんさく")
 - "meaning": a short definition in ${lang} (one short phrase, not a full sentence)
@@ -205,7 +215,7 @@ ${drillsRule}${miniLessonRule}13. nextVocab: suggest exactly 3 vocabulary words 
 - "explanation": a short, friendly explanation in ${lang} of what it means and when to use it (1–2 sentences)
 - "exampleRuby": a short Japanese sentence demonstrating the pattern in a context similar to the diary. Follow furigana rule 2 EXACTLY: <ruby>kanji<rt>reading</rt></ruby> on ALL kanji, okurigana OUTSIDE the tag, never wrap hiragana or katakana.
 
-15. alternativeWords: suggest exactly 3 natural synonym or paraphrase alternatives for words used in the learner's diary. IMPORTANT: focus on words a native Japanese speaker actually uses in casual conversation or diary writing. Avoid stiff, formal, or Sino-Japanese (漢語) vocabulary that sounds bookish or unnatural in everyday contexts (for example: do NOT suggest 疲労 for 疲れる, or 美味 / 美食 for おいしい — these are written-language words people rarely say out loud). Instead, prefer natural colloquial alternatives that feel like something a friend would actually say or write (e.g. へとへと / くたくた for 疲れる, わくわく for 楽しみにしている, うまい / 最高 for おいしい). Aim for natural variety in nuance or register, not artificial difficulty elevation. For each return:
+15. alternativeWords: suggest exactly ${suggestionCount} natural synonym or paraphrase alternatives for words used in the learner's diary. IMPORTANT: focus on words a native Japanese speaker actually uses in casual conversation or diary writing. Avoid stiff, formal, or Sino-Japanese (漢語) vocabulary that sounds bookish or unnatural in everyday contexts (for example: do NOT suggest 疲労 for 疲れる, or 美味 / 美食 for おいしい — these are written-language words people rarely say out loud). Instead, prefer natural colloquial alternatives that feel like something a friend would actually say or write (e.g. へとへと / くたくた for 疲れる, わくわく for 楽しみにしている, うまい / 最高 for おいしい). Aim for natural variety in nuance or register, not artificial difficulty elevation. For each return:
 - "original": the word exactly as it appears in the diary (plain form or conjugated is fine)
 - "alternative": the suggested replacement in dictionary/plain form
 - "alternativeReading": complete hiragana reading of the alternative
@@ -250,12 +260,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "ログインが必要です。" }, { status: 401 });
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("plan, preferred_language, timezone")
     .eq("id", user.id)
     .single();
   const plan = normalizePlan(profile?.plan);
+  /**
+   * ⚠️ Did the read FAIL, or did it succeed and say "free"?
+   *
+   * The two are indistinguishable in `plan`: one absent column errors the whole
+   * select, `profile` comes back null, and normalizePlan(undefined) answers
+   * "free" — the shape of the incident that once made every user Free. Until
+   * now that only cost a Free-shaped prompt to a paying learner, i.e. no drills
+   * and no mini-lesson. The output caps below would make the same failure
+   * quietly degrade every correction on the site, including the ones people are
+   * paying for, and nothing would raise.
+   *
+   * So the error is read rather than discarded, and the caps fail OPEN: an
+   * outage costs money, not the product. Nothing else here changes — `plan`,
+   * `limits`, and try_use_correction all keep the exact behaviour they had,
+   * because those are billing decisions and this is a prompt-shape decision.
+   */
+  if (profileError) {
+    console.error("[correct] profile read failed:", profileError.message, "code:", profileError.code);
+  }
 
   // Locale resolution mirrors (app)/layout.tsx: cookie-first → DB → "en"
   // The NEXT_LOCALE cookie is set immediately on every language switch,
@@ -272,6 +301,10 @@ export async function POST(request: Request) {
   // only, changes no plan logic. Keep these two in step — see systemPrompt().
   const includeDrills = plan !== "free";
   const includeMiniLesson = plan !== "free";
+  // Trim the sections Free already reads through glass — see systemPrompt().
+  // `!profileError` is the fail-open half: an unreadable profile gets the full
+  // prompt rather than a silently degraded one.
+  const lean = !profileError && plan === "free";
 
   // Character limit
   if (text.length > limits.maxChars) {
@@ -341,7 +374,7 @@ export async function POST(request: Request) {
       temperature: 0.3,
       maxTokens: 8000,
       messages: [
-        { role: "system", content: systemPrompt(level, style, lang, includeDrills, includeMiniLesson) },
+        { role: "system", content: systemPrompt(level, style, lang, includeDrills, includeMiniLesson, lean) },
         { role: "user", content: text },
       ],
     }));

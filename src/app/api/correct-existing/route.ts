@@ -20,6 +20,7 @@ function systemPrompt(
   lang: string,
   includeDrills: boolean,
   includeMiniLesson: boolean,
+  lean: boolean,
 ): string {
   // ドリルとミニレッスンは有料プランの機能。Free ではスキーマからもルールからも
   // 外すので、モデルは生成せず、出力トークンも払わない。
@@ -37,6 +38,15 @@ function systemPrompt(
   const miniLessonSchema = PROMPT.miniLessonSchema(includeMiniLesson);
   const drillsRule = PROMPT.drillsRule(includeDrills, lang);
   const miniLessonRule = PROMPT.miniLessonRule(includeMiniLesson, lang);
+  // Free の出力量を抑える断片。lean=false で全て空文字（または従来の数字）
+  // なので、有料プランのプロンプトはバイト単位で従来どおり。
+  // ⚠️ /api/correct と同じ断片を使うこと。ここに文字列を書き直すと、
+  // 「片方だけ直せない」ために作ったこのファイルの意味がなくなる。
+  const keyMistakesCap = PROMPT.keyMistakesCap(lean);
+  const vocabularyCap = PROMPT.vocabularyCap(lean);
+  const explanationCap = PROMPT.explanationCap(lean);
+  const correctionNoteCap = PROMPT.correctionNoteCap(lean);
+  const suggestionCount = PROMPT.suggestionCount(lean);
   return `You are a friendly Japanese teacher for Japanese learners.
 
 Do not behave like a strict proofreader. Behave like a Japanese teacher who understands that learners need confidence.
@@ -119,14 +129,14 @@ CRITICAL furigana rules:
 
 7b. originalTextRuby: the learner's ORIGINAL text, character-for-character identical to what they wrote — including any mistakes. Do NOT fix, reword, or improve anything here. Add ONLY furigana, following rule 2 exactly. This is purely a reading aid for the unedited original.
 
-8. correctionNote: if the original is NOT wrong but a more natural option exists, put a short note. If nothing to add, use "".
+8. correctionNote: if the original is NOT wrong but a more natural option exists, put a short note. If nothing to add, use "".${correctionNoteCap}${explanationCap}
 
-9. keyMistakes: include only important mistakes. If none, return [].
+9. keyMistakes: include only important mistakes. If none, return [].${keyMistakesCap}
 
-10. usefulVocabulary: pick words from or related to the diary, at the learner's level. "word": plain dictionary form with kanji as written (e.g. "公園", "歩く"). "reading": complete hiragana reading including okurigana (e.g. "こうえん", "あるく").
+10. usefulVocabulary: pick words from or related to the diary, at the learner's level. "word": plain dictionary form with kanji as written (e.g. "公園", "歩く"). "reading": complete hiragana reading including okurigana (e.g. "こうえん", "あるく").${vocabularyCap}
 CRITICAL — "reading" is NOT written the way <rt> is. <rt> carries the reading of the KANJI only, because the okurigana is already visible next to it (<ruby>歩<rt>ある</rt></ruby>きます). "reading" is a standalone field with no kanji beside it, so it must spell out the WHOLE word, okurigana included: 歩く → "あるく" (NEVER "ある"), 待つ → "まつ" (NEVER "ま"), 新しい → "あたらしい" (NEVER "あたら"). Do not carry rule 2's kanji-only habit into this field. Check every reading by reading it aloud on its own: if it is not a pronounceable whole word, it is wrong. This applies identically to alternativeWords[].alternativeReading.
 
-${drillsRule}${miniLessonRule}13. alternativeWords: suggest exactly 3 natural synonym alternatives for words used in the diary. Focus on words a native Japanese speaker actually uses in casual conversation. For each:
+${drillsRule}${miniLessonRule}13. alternativeWords: suggest exactly ${suggestionCount} natural synonym alternatives for words used in the diary. Focus on words a native Japanese speaker actually uses in casual conversation. For each:
 - "original": the word exactly as it appears in the diary
 - "alternative": the suggested replacement in dictionary/plain form
 - "alternativeReading": complete hiragana reading
@@ -203,12 +213,19 @@ export async function POST(request: Request) {
   const style = entry.correction_style ?? "Natural";
 
   // ---- Plan + usage limits ----
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("plan, preferred_language, timezone")
     .eq("id", user.id)
     .single();
   const plan = normalizePlan(profile?.plan);
+  // ⚠️ 読み取り失敗と「本当に free」を区別する。理由は /api/correct の同じ
+  // 箇所に書いた: 列が1つ欠けるだけで profile が null になり、全員が free
+  // 扱いになる。出力を削る判断だけは fail-open にして、有料ユーザーに劣化版を
+  // 返さない。plan / limits / try_use_correction は一切変えない。
+  if (profileError) {
+    console.error("[correct-existing] profile read failed:", profileError.message, "code:", profileError.code);
+  }
 
   const cookieStore = await cookies();
   const cookieLang = cookieStore.get(LOCALE_COOKIE)?.value;
@@ -221,6 +238,10 @@ export async function POST(request: Request) {
   // 止める。2つのフラグが連動する理由は systemPrompt のコメントに書いてある。
   const includeDrills = plan !== "free";
   const includeMiniLesson = plan !== "free";
+  // Free はここでも同じ形に削る。このルートは Free も到達する（添削なしで
+  // 保存した日記の GetCorrectionButton にプラン判定が無い）ので、片方だけ
+  // 削ると「保存してからボタンを押せばフル出力」という抜け道になる。
+  const lean = !profileError && plan === "free";
 
   // Resolve timezone (same logic as /api/correct)
   const rawTz = cookieStore.get("user_tz")?.value;
@@ -278,7 +299,7 @@ export async function POST(request: Request) {
       temperature: 0.3,
       maxTokens: 8000,
       messages: [
-        { role: "system", content: systemPrompt(level, style, lang, includeDrills, includeMiniLesson) },
+        { role: "system", content: systemPrompt(level, style, lang, includeDrills, includeMiniLesson, lean) },
         { role: "user", content: text },
       ],
     });
