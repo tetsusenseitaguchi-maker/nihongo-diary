@@ -267,3 +267,28 @@ ruby rt {
     opacity: 1;
   }
 }
+
+/* ── The streak flame, breathing ────────────────────────────────────────────
+   The emoji only. The number beside it holds still — a figure that scales is a
+   figure being re-read, and this is meant to be noticed rather than read.
+
+   --flame-start delays the first breath until the grid's wave has finished, so
+   the screen does exactly one thing at a time: numbers settle, wave crosses,
+   then the flame picks up. inline-block because transform does nothing to an
+   inline box. */
+@keyframes flame-breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.06); }
+}
+
+.flame-breathe {
+  display: inline-block;
+  animation: flame-breathe 2s ease-in-out infinite;
+  animation-delay: var(--flame-start, 0ms);
+}
+
+/* `animation: none`, not the global duration collapse — at 0.001ms an infinite
+   loop still runs, it just runs imperceptibly fast. Stop it outright. */
+@media (prefers-reduced-motion: reduce) {
+  .flame-breathe { animation: none; }
+}

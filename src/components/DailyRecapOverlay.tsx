@@ -293,7 +293,16 @@ export function DailyRecapOverlay({
 
             {showStreak && (
               <p className="font-serif text-2xl font-bold text-pine">
-                🔥 {t("recap.streak", { n: streak })}
+                {/* The emoji alone animates. Wrapping the whole line would
+                    scale the number too, and a figure that moves is a figure
+                    being re-read. */}
+                <span
+                  className={reduceMotion.current ? undefined : "flame-breathe"}
+                  style={{ ["--flame-start" as string]: `${COUNT_UP_MS + GRID_WAVE_MS}ms` } as React.CSSProperties}
+                >
+                  🔥
+                </span>{" "}
+                {t("recap.streak", { n: streak })}
               </p>
             )}
 
@@ -313,7 +322,12 @@ export function DailyRecapOverlay({
                     writtenDates={writtenDates}
                     endDate={todayStr}
                     animate
-                    cellPx={18}
+                    // Four weeks, not twelve. 84 cells at 375px measured 18px a
+                    // side and read as texture rather than as days; the card in
+                    // the calendar rail keeps the three-month shape, where there
+                    // is width for it.
+                    weeks={4}
+                    cellPx={30}
                     showLabels={false}
                     summaryLabel={t("recap.gridAria")}
                   />

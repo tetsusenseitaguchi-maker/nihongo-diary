@@ -1,7 +1,7 @@
 import { startOfWeek } from "@/lib/date-tz";
 
 /**
- * 12 weeks of "did I write", as 7×12 squares.
+ * Weeks of "did I write", as a 7-row grid of squares.
  *
  * ── Why a grid and not a line ─────────────────────────────────────────────
  * A line chart needs points to be a line. Measured across the 530 learners
@@ -29,14 +29,15 @@ import { startOfWeek } from "@/lib/date-tz";
  *
  * ── Colour ────────────────────────────────────────────────────────────────
  * Binary, so a two-step sequential ramp rather than a categorical palette:
- * paper with a hairline for a day that did not happen, pine for one that did.
- * Lightness is monotonic (0.945 → 0.334). The empty cell is deliberately quiet
- * — absence should not shout — and the grid stays legible because 84 of them
- * tile into a shape even when each is faint.
+ * mint for a day that did not happen, pine for one that did. Lightness is
+ * monotonic (0.945 → 0.334) and the empty step is deliberately quiet — absence
+ * should not shout — but it is a fill rather than an outline, so the grid keeps
+ * its shape on a white card.
  */
 
 const ROWS = 7;
-const WEEKS = 12;
+/** Columns, when the caller does not say. The dashboard card's width. */
+const DEFAULT_WEEKS = 12;
 
 /** Mon…Sun, matching the row order. Not the app's Sunday-first calendar. */
 const ROW_LABELS = ["月", "火", "水", "木", "金", "土", "日"];
@@ -51,11 +52,12 @@ export function ActivityGrid({
   writtenDates,
   endDate,
   animate = false,
+  weeks = DEFAULT_WEEKS,
   cellPx = 20,
   showLabels = true,
   summaryLabel,
 }: {
-  /** Every diary_date the learner has. Only the last 12 weeks are read. */
+  /** Every diary_date the learner has. Only the visible window is read. */
   writtenDates: Set<string>;
   /** "YYYY-MM-DD" — the week containing this date is the last column. */
   endDate: string;
@@ -64,14 +66,20 @@ export function ActivityGrid({
    * overlay animates, and only once a day.
    */
   animate?: boolean;
+  /**
+   * How many weeks wide. 12 in the dashboard card, where there is room for a
+   * three-month shape; 4 in the recap overlay, where 84 cells at 375px came out
+   * too small to read and the point is the last few weeks anyway.
+   */
+  weeks?: number;
   cellPx?: number;
   /** Hidden inside the overlay, where the panel is narrower and captionless. */
   showLabels?: boolean;
-  /** Read out in place of 84 cells. The grid is one image to a screen reader. */
+  /** Read out in place of the cells. The grid is one image to a screen reader. */
   summaryLabel: string;
 }) {
   // Column 0 is the oldest week; the last column contains endDate.
-  const firstMonday = addDays(startOfWeek(endDate), -7 * (WEEKS - 1));
+  const firstMonday = addDays(startOfWeek(endDate), -7 * (weeks - 1));
 
   return (
     <div
@@ -97,7 +105,7 @@ export function ActivityGrid({
               {ROW_LABELS[row]}
             </span>
           )}
-          {Array.from({ length: WEEKS }, (_, col) => {
+          {Array.from({ length: weeks }, (_, col) => {
             const date = addDays(firstMonday, col * 7 + row);
             const future = date > endDate;
             const on = !future && writtenDates.has(date);
@@ -116,11 +124,16 @@ export function ActivityGrid({
                     "--r": row,
                     width: cellPx,
                     height: cellPx,
-                    borderRadius: 4,
+                    borderRadius: 2,
                     display: "block",
                     flex: "none",
-                    background: on ? "var(--color-pine)" : "var(--color-paper)",
-                    boxShadow: on ? "none" : "inset 0 0 0 1px var(--color-line)",
+                    // ⚠️ The empty cell is a FILL, not an outline. It used to
+                    // be paper with a 1px hairline; dropping the hairline
+                    // without changing the fill would have made empty cells
+                    // white-on-white inside this card and erased the grid's
+                    // shape entirely, leaving dark squares floating in space.
+                    // Mint is the quietest step that still reads as a cell.
+                    background: on ? "var(--color-pine)" : "var(--color-mint)",
                     // A day that has not happened yet is not a day you missed.
                     opacity: future ? 0.35 : 1,
                   } as React.CSSProperties

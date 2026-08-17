@@ -49,7 +49,7 @@
   "recap.close": "Close",
   "dashboard.activityGrid": "Last 12 weeks",
   "dashboard.activityGridAria": "A grid of the last 12 weeks; filled squares are days you wrote.",
-  "recap.gridAria": "Your last 12 weeks of writing",
+  "recap.gridAria": "Your last 4 weeks of writing",
   "dashboard.cumulative.daysLabel": "Days written",
   "dashboard.cumulative.daysSub": "across {n} diaries",
   "dashboard.cumulative.charsLabel": "Characters written",

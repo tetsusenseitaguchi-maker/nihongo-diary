@@ -49,7 +49,7 @@
   "recap.close": "关闭",
   "dashboard.activityGrid": "最近 12 周",
   "dashboard.activityGridAria": "最近 12 周的网格，填充的方块是你写作的日子。",
-  "recap.gridAria": "你最近 12 周的记录",
+  "recap.gridAria": "你最近 4 周的记录",
   "dashboard.cumulative.daysLabel": "写作天数",
   "dashboard.cumulative.daysSub": "共 {n} 篇日记",
   "dashboard.cumulative.charsLabel": "写作字数",
