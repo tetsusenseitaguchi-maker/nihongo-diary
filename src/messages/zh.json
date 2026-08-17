@@ -46,6 +46,7 @@
   "recap.streak": "连续 {n} 天",
   "recap.chars": "至今 {n} 字",
   "recap.tapHint": "点击关闭",
+  "recap.close": "关闭",
   "dashboard.cumulative.daysLabel": "写作天数",
   "dashboard.cumulative.daysSub": "共 {n} 篇日记",
   "dashboard.cumulative.charsLabel": "写作字数",

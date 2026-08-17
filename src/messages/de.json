@@ -46,6 +46,7 @@
   "recap.streak": "{n} Tage in Folge",
   "recap.chars": "Bisher {n} Zeichen",
   "recap.tapHint": "Zum Schließen tippen",
+  "recap.close": "Schließen",
   "dashboard.cumulative.daysLabel": "Tage geschrieben",
   "dashboard.cumulative.daysSub": "in {n} Einträgen",
   "dashboard.cumulative.charsLabel": "Zeichen geschrieben",

@@ -46,6 +46,7 @@
   "recap.streak": "Racha de {n} días",
   "recap.chars": "{n} caracteres hasta ahora",
   "recap.tapHint": "Toca para cerrar",
+  "recap.close": "Cerrar",
   "dashboard.cumulative.daysLabel": "Días escritos",
   "dashboard.cumulative.daysSub": "en {n} diarios",
   "dashboard.cumulative.charsLabel": "Caracteres escritos",

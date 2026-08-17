@@ -34,43 +34,38 @@ import { useT } from "@/contexts/locale";
  * tap behaviour below.
  *
  * ── Tap ────────────────────────────────────────────────────────────────────
- * The whole surface is one target, and what it does depends on the state:
- * skip the animation and close, and — when no goal is set — scroll the goal
- * card into view on the way out. That card lives in the dashboard hero, so
- * there is nowhere to navigate to; closing IS arriving. The scroll matters
- * because at 375px the hero's profile card pushes the goal card below the
- * fold, and an overlay that closed onto empty screen would have promised
- * something it did not deliver.
+ * The whole surface is one target: it closes, and — when no goal is set —
+ * scrolls the goal card into view on the way out. That card lives in the
+ * dashboard hero, so there is nowhere to navigate to; closing IS arriving. The
+ * scroll matters because at 375px the hero's profile card pushes the goal card
+ * below the fold, and an overlay that closed onto empty screen would have
+ * promised something it did not deliver.
  *
- * The tap is a shortcut, never a requirement: the overlay auto-closes in every
- * state, so ignoring it costs nothing. That is the whole reason a
- * tap-to-navigate line can coexist with an auto-dismissing surface.
+ * The tap is now required, not a shortcut — see the timing note below for why
+ * the auto-close was removed. Escape and the × do the same thing.
  */
 
 /**
- * Count-up, then hold the final state, then fade.
+ * Count-up, then it waits.
  *
- * The first pass ran 400 + 1200 + 200 = 1.6s and was unreadable on a phone —
- * the numbers were gone before they could be taken in. The count-up is the
- * expensive part of that: while it runs the figure is still moving, so it does
- * not count as reading time, and a 400ms count read as a flicker rather than
- * as counting.
+ * ── Why there is no auto-close ─────────────────────────────────────────────
+ * There was, twice. 400 + 1200ms was unreadable on a phone; scaling the hold
+ * with the line count (up to 3.45s) was still not enough. The problem is not a
+ * number that can be tuned: a surface that leaves on its own has to be read in
+ * whatever time the slowest glance takes, and any value large enough to be safe
+ * for that is long enough to feel stuck for everyone else.
  *
- * The hold now scales with how much there is to read, because the recap is
- * between one and three lines depending on the learner. A fixed hold is either
- * long for the one-line version or short for the three-line one; this is the
- * cheapest way to be neither.
+ * So it waits for a tap. That inverts the earlier reasoning — the tap used to
+ * be a shortcut precisely BECAUSE the overlay always closed by itself — and the
+ * trade it buys is real: once a day, the dashboard costs one tap to reach.
+ * Worth it against a daily animation nobody can read.
  *
- *   1 line  (no goal set, or goal only)  ≈ 0.6 + 1.8 + 0.25 = 2.65s
- *   2 lines                              ≈ 0.6 + 2.2 + 0.25 = 3.05s
- *   3 lines (goal + streak + characters) ≈ 0.6 + 2.6 + 0.25 = 3.45s
- *
- * Tap still skips instantly, so the ceiling only costs the people who let it
- * play. Tune here.
+ * No safety timeout either. A surprise close at, say, 15s is exactly the
+ * behaviour this change exists to remove, and there is nothing here that can
+ * wedge: the surface is a single element with three ways out (anywhere on it,
+ * the ×, Escape).
  */
 const COUNT_UP_MS = 600;
-const HOLD_BASE_MS = 1400;
-const HOLD_PER_LINE_MS = 400;
 const FADE_MS = 250;
 
 /** The goal card's anchor in the dashboard hero. */
@@ -110,17 +105,15 @@ export function DailyRecapOverlay({
   const t = useT();
   const { isActive } = useTour();
 
-  // How many lines this learner will actually see. Derived from props so the
-  // auto-close timer can read it before anything renders — the same three
-  // conditions the markup below uses, kept in one place so they cannot drift.
+  // A line is drawn only when it has something to report. See the note above
+  // for why the streak is hidden at zero rather than shown as a 0.
   const noGoal = weeklyTarget === null;
   const showStreak = currentStreak > 0;
   const showChars = totalChars > 0;
-  const visibleLines = noGoal ? 1 : 1 + (showStreak ? 1 : 0) + (showChars ? 1 : 0);
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  // Set once on mount so the count-up and the auto-close agree about motion.
+  // Set once on mount, before anything can animate.
   const reduceMotion = useRef(false);
   const closedRef = useRef(false);
 
@@ -151,13 +144,15 @@ export function DailyRecapOverlay({
       typeof window !== "undefined" &&
       new URLSearchParams(window.location.search).get("recap") === "1";
 
-    const today = todayInTZ(getClientTZ());
-    if (forced) { setOpen(true); return; }
-    if (hasSeenRecapToday(today)) return;
-
+    // Resolved before either exit below: a forced view must honour the
+    // preference too, and it returns early.
     reduceMotion.current =
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+
+    const today = todayInTZ(getClientTZ());
+    if (forced) { setOpen(true); return; }
+    if (hasSeenRecapToday(today)) return;
 
     // Recorded on open, not on close: shown once is the promise, the same rule
     // the tour, the plan intro and the audio notice follow. Closing the tab
@@ -166,15 +161,23 @@ export function DailyRecapOverlay({
     setOpen(true);
   }, [isActive]);
 
-  // Auto-close. Skipped entirely once the learner has tapped.
+  // Let the count-up finish, then stop animating and wait. Nothing closes it.
   useEffect(() => {
     if (!open || closedRef.current) return;
-    const countUp = reduceMotion.current ? 0 : COUNT_UP_MS;
-    const hold = HOLD_BASE_MS + visibleLines * HOLD_PER_LINE_MS;
-    const settle = setTimeout(() => setDone(true), countUp);
-    const leave = setTimeout(() => close(), countUp + hold);
-    return () => { clearTimeout(settle); clearTimeout(leave); };
-  }, [open, visibleLines]);
+    const settle = setTimeout(() => setDone(true), reduceMotion.current ? 0 : COUNT_UP_MS);
+    return () => clearTimeout(settle);
+  }, [open]);
+
+  // Escape closes it too — a full-screen dialog that only answers to a tap is
+  // unusable with a keyboard.
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") close(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   // The page behind a full-screen surface should not scroll under the thumb.
   useEffect(() => {
@@ -216,6 +219,17 @@ export function DailyRecapOverlay({
         leaving ? "opacity-0" : "opacity-100"
       }`}
     >
+      {/* A visible way out. The whole surface closes, but a full-screen sheet
+          with no affordance reads as stuck rather than as tappable. */}
+      <button
+        type="button"
+        onClick={() => close(false)}
+        aria-label={t("recap.close")}
+        className="absolute right-4 top-4 rounded-full px-3 py-2 text-2xl leading-none text-muted transition-colors hover:text-ink"
+      >
+        ×
+      </button>
+
       <div className="w-full max-w-sm text-center">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-moss-600">
           {t("recap.title")}

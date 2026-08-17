@@ -46,6 +46,7 @@
   "recap.streak": "Serie di {n} giorni",
   "recap.chars": "{n} caratteri finora",
   "recap.tapHint": "Tocca per chiudere",
+  "recap.close": "Chiudi",
   "dashboard.cumulative.daysLabel": "Giorni scritti",
   "dashboard.cumulative.daysSub": "in {n} diari",
   "dashboard.cumulative.charsLabel": "Caratteri scritti",

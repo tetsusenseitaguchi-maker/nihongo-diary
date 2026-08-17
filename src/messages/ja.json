@@ -46,6 +46,7 @@
   "recap.streak": "連続 {n}日",
   "recap.chars": "これまで {n}文字",
   "recap.tapHint": "タップで閉じる",
+  "recap.close": "閉じる",
   "dashboard.cumulative.daysLabel": "書いた日数",
   "dashboard.cumulative.daysSub": "日記 {n} 件",
   "dashboard.cumulative.charsLabel": "書いた文字数",
