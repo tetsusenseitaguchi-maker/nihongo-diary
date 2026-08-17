@@ -236,38 +236,6 @@ ruby rt {
   }
 }
 
-/* ── ActivityGrid: the diagonal wave ────────────────────────────────────────
-   84 cells arrive top-left to bottom-right. The stagger is one calc() on
-   animation-delay, driven by --c/--r set on each cell — there is no JS loop at
-   runtime, and no per-frame work.
-
-   Total = largest delay + one cell's animation
-         = (11 + 6) × 12ms + 320ms = 524ms.
-   Measured, not estimated. DailyRecapOverlay's GRID_WAVE_MS must match.
-
-   `forwards` is what leaves a cell in its final state once the wave has passed
-   over it, rather than snapping back to opacity 0. */
-@keyframes activity-cell-in {
-  from { opacity: 0; transform: scale(0.4); }
-  to   { opacity: 1; transform: scale(1); }
-}
-
-.activity-grid-wave .activity-cell {
-  opacity: 0;
-  animation: activity-cell-in 320ms ease-out forwards;
-  animation-delay: calc((var(--c) + var(--r)) * 12ms + var(--wave-start, 0ms));
-}
-
-/* The global rule above collapses animation-DURATION but not the delay, so a
-   reduced-motion reader would still watch 84 cells pop in over 204ms. Zero the
-   delay too: the whole grid arrives at once, already in its final state. */
-@media (prefers-reduced-motion: reduce) {
-  .activity-grid-wave .activity-cell {
-    animation-delay: 0ms !important;
-    opacity: 1;
-  }
-}
-
 /* ── The streak flame, breathing ────────────────────────────────────────────
    The emoji only. The number beside it holds still — a figure that scales is a
    figure being re-read, and this is meant to be noticed rather than read.

@@ -6,7 +6,6 @@ import { hasSeenTour } from "@/lib/tour/seen";
 import { useTour } from "@/contexts/tour";
 import { getClientTZ, todayInTZ } from "@/lib/date-tz";
 import { useT } from "@/contexts/locale";
-import { ActivityGrid } from "@/components/ActivityGrid";
 
 /**
  * 「今日のあなた」 — a full-screen recap, once a day, that gets out of the way.
@@ -54,27 +53,20 @@ import { ActivityGrid } from "@/components/ActivityGrid";
  */
 
 /**
- * Count-up, then the grid's wave, then a hold, then it leaves.
+ * Count-up, then a hold, then it leaves.
  *
- * The order is the point: the numbers settle before the grid starts moving, so
- * the eye reads them and then travels down rather than choosing between two
- * things animating at once.
+ *   (1) goal + streak + characters   0.6 + 3.0 = 3.6s
+ *   (2) goal only                    0.6 + 3.0 = 3.6s
+ *   (3) no goal set, nothing to count  0 + 3.0 = 3.0s
  *
- *   (1) goal + streak + characters + grid   0.6 + 0.52 + 1.2 = 2.32s
- *   (2) goal only, no grid                  0.6 +  0   + 1.2 = 1.80s
- *   (3) no goal set, nothing to count       0   +  0   + 1.2 = 1.20s
- *
- * plus a 0.25s fade in each case. Two earlier attempts at this were too short
- * (1.6s flat, then 3.45s scaled by line count) — the difference now is that the
- * animation ends well before the hold does, so the whole hold is reading time.
- *
- * GRID_WAVE_MS is measured, not guessed: (11 + 6) × 12ms of stagger + 320ms for
- * one cell = 524ms, and globals.css carries the same arithmetic next to the
- * keyframes. If either moves, both move.
+ * plus a 0.25s fade. Three attempts got here: 1.6s flat was unreadable, 3.45s
+ * scaled by line count still was, and briefly there was no auto-close at all —
+ * which turned a once-a-day recap into a once-a-day obstacle. The hold is long
+ * now because the whole hold is reading time: the count-up ends at 0.6s and
+ * nothing moves after it except the flame.
  */
 const COUNT_UP_MS = 600;
-const GRID_WAVE_MS = 524;
-const HOLD_MS = 1200;
+const HOLD_MS = 3000;
 const FADE_MS = 250;
 
 /** The goal card's anchor in the dashboard hero. */
@@ -104,17 +96,12 @@ export function DailyRecapOverlay({
   daysThisWeek,
   currentStreak,
   totalChars,
-  writtenDates,
-  todayStr,
 }: {
   /** weekly_goals.target_days, or null when the learner has not set one. */
   weeklyTarget: number | null;
   daysThisWeek: number;
   currentStreak: number;
   totalChars: number;
-  /** Every diary_date the learner has — the same set the dashboard card uses. */
-  writtenDates: Set<string>;
-  todayStr: string;
 }) {
   const t = useT();
   const { isActive } = useTour();
@@ -124,16 +111,6 @@ export function DailyRecapOverlay({
   const noGoal = weeklyTarget === null;
   const showStreak = currentStreak > 0;
   const showChars = totalChars > 0;
-  /**
-   * The grid rides with pattern (1) only.
-   *
-   * 84 squares with nothing lit is the same mistake as a 0 next to a flame,
-   * with far more area to make it: at 84 days, 35.1% of active learners have
-   * three or more cells and 20.6% have five. showChars is the test because it
-   * is the one that answers "has this person ever written", which is exactly
-   * when a three-month grid has something to show.
-   */
-  const showGrid = !noGoal && showChars;
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -189,11 +166,10 @@ export function DailyRecapOverlay({
   useEffect(() => {
     if (!open || closedRef.current) return;
     const countUp = reduceMotion.current || noGoal ? 0 : COUNT_UP_MS;
-    const wave = reduceMotion.current || !showGrid ? 0 : GRID_WAVE_MS;
     const settle = setTimeout(() => setDone(true), countUp);
-    const leave = setTimeout(() => close(false), countUp + wave + HOLD_MS);
+    const leave = setTimeout(() => close(false), countUp + HOLD_MS);
     return () => { clearTimeout(settle); clearTimeout(leave); };
-  }, [open, noGoal, showGrid]);
+  }, [open, noGoal]);
 
   // Escape closes it too — a full-screen dialog that only answers to a tap is
   // unusable with a keyboard.
@@ -298,7 +274,7 @@ export function DailyRecapOverlay({
                     being re-read. */}
                 <span
                   className={reduceMotion.current ? undefined : "flame-breathe"}
-                  style={{ ["--flame-start" as string]: `${COUNT_UP_MS + GRID_WAVE_MS}ms` } as React.CSSProperties}
+                  style={{ ["--flame-start" as string]: `${COUNT_UP_MS}ms` } as React.CSSProperties}
                 >
                   🔥
                 </span>{" "}
@@ -312,28 +288,6 @@ export function DailyRecapOverlay({
               </p>
             )}
 
-            {showGrid && (
-              <div className="flex justify-center">
-                {/* --wave-start delays the whole grid until the numbers have
-                    settled, so the two never animate at once. Reduced motion
-                    zeroes both this and the per-cell stagger in globals.css. */}
-                <div style={{ ["--wave-start" as string]: `${reduceMotion.current ? 0 : COUNT_UP_MS}ms` } as React.CSSProperties}>
-                  <ActivityGrid
-                    writtenDates={writtenDates}
-                    endDate={todayStr}
-                    animate
-                    // Four weeks, not twelve. 84 cells at 375px measured 18px a
-                    // side and read as texture rather than as days; the card in
-                    // the calendar rail keeps the three-month shape, where there
-                    // is width for it.
-                    weeks={4}
-                    cellPx={30}
-                    showLabels={false}
-                    summaryLabel={t("recap.gridAria")}
-                  />
-                </div>
-              </div>
-            )}
           </div>
         )}
 

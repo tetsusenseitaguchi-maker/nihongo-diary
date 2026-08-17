@@ -20,7 +20,6 @@ import { AudioIntroModal } from "@/components/AudioIntroModal";
 import { WebPushBanner } from "@/components/WebPushBanner";
 import { WeeklyGoalCard } from "@/components/WeeklyGoalCard";
 import { DailyRecapOverlay } from "@/components/DailyRecapOverlay";
-import { ActivityGrid } from "@/components/ActivityGrid";
 
 export const dynamic = "force-dynamic";
 
@@ -192,18 +191,6 @@ export default async function DashboardPage() {
   ).size;
   const weeklyTarget = (weeklyGoal?.data?.target_days as number | null | undefined) ?? null;
 
-  /**
-   * Every day the learner has written on, for the 12-week grid.
-   *
-   * One Set, handed to both the card in the calendar rail and the recap
-   * overlay, for the same reason every figure above is passed rather than
-   * refetched: two surfaces on one screen must not be able to disagree.
-   *
-   * No new query and no date filter needed — the diary_entries read above has
-   * neither, so it already covers the last 84 days (and everything before
-   * them; the heaviest account in production is 54 entries).
-   */
-  const writtenDates = new Set(entries.map((e) => e.diary_date));
 
   const displayName = profile?.display_name || profile?.username || "Learner";
   const avatarUrl = profile?.avatar_url || "";
@@ -268,8 +255,6 @@ export default async function DashboardPage() {
         daysThisWeek={daysThisWeek}
         currentStreak={stats.currentStreak}
         totalChars={totalChars}
-        writtenDates={writtenDates}
-        todayStr={todayStr}
       />
 
       {/* Renders nothing unless this browser can subscribe, has not already,
@@ -627,25 +612,6 @@ export default async function DashboardPage() {
               <span className="text-sm font-medium text-muted">{monthLabel(year, month)}</span>
             </div>
             <MiniCalendar year={year} month={month} activeDays={stats.activeDaysThisMonth} today={today} />
-
-            {/* ── The same days, three months wide ──────────────────────────
-                Inside this card rather than beside it: the calendar answers
-                "which day did I write" and the grid answers "how much of the
-                last three months did I", and stacking them reads as one scale
-                widening rather than as two competing widgets. It also keeps the
-                left column from growing a third progress card.
-
-                ⚠️ The calendar above is Sunday-first and this is Monday-first.
-                Deliberate — see ActivityGrid for why — and nothing computes
-                across the two. */}
-            <div className="mt-4 border-t border-line pt-4">
-              <p className="mb-2 text-xs font-semibold text-muted">{t("dashboard.activityGrid")}</p>
-              <ActivityGrid
-                writtenDates={writtenDates}
-                endDate={todayStr}
-                summaryLabel={t("dashboard.activityGridAria")}
-              />
-            </div>
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
               <span className="flex items-center gap-1.5 text-sm font-medium text-ink/80">
