@@ -83,10 +83,14 @@ type CardAccent = "pine" | "apricot" | "none";
 export function Card({
   className = "",
   accent = "pine",
+  id,
   children,
 }: {
   className?: string;
   accent?: CardAccent;
+  /** Optional anchor. Added so DailyRecapOverlay can scroll the weekly goal
+   *  card into view; every other caller omits it and is unaffected. */
+  id?: string;
   children: ReactNode;
 }) {
   const accentClass =
@@ -97,6 +101,7 @@ export function Card({
         : "";
   return (
     <div
+      id={id}
       className={`rounded-[var(--radius-card)] border border-line bg-paper shadow-card ${accentClass} ${className}`}
     >
       {children}

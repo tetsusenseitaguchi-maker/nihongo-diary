@@ -24,6 +24,38 @@ export function previousDay(dateStr: string): string {
 }
 
 /**
+ * The learner's own IANA timezone, read in the browser.
+ *
+ * Moved here verbatim from write/page.tsx, where it had been a private
+ * function — the 「今日/昨日」 toggle and the daily recap overlay both need to
+ * agree on what "today" is, and a second copy is how two answers start.
+ * Behaviour is unchanged: same cookie, same validation, same fallback.
+ *
+ * Reads the user_tz cookie set by TimezoneSyncer, so it matches what
+ * lib/tz-server.ts resolves on the server for the same request. Falls back to
+ * the browser's own zone when the cookie is missing or unparseable.
+ *
+ * ⚠️ Browser only — it reads document.cookie. On the server use
+ * getTimezoneFromCookie() from lib/tz-server.ts instead.
+ *
+ * (The literal "user_tz" still appears in tz-server.ts and TimezoneSyncer.tsx.
+ * Consolidating those three is a separate change and deliberately not done
+ * here; this was a move, not a refactor.)
+ */
+export function getClientTZ(): string {
+  if (typeof document === "undefined") return "UTC";
+  const match = document.cookie.match(/(?:^|;\s*)user_tz=([^;]+)/);
+  const raw = match ? decodeURIComponent(match[1]) : null;
+  if (raw) {
+    try {
+      new Intl.DateTimeFormat("en-CA", { timeZone: raw });
+      return raw;
+    } catch { /* invalid cookie value */ }
+  }
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+}
+
+/**
  * The Monday of the week containing `dateStr`, as another "YYYY-MM-DD".
  *
  * Same shape as previousDay above and for the same reason: the string is read

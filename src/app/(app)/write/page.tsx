@@ -32,7 +32,7 @@ import { RECHECK_LIMITS } from "@/lib/recheck-limits";
 import { limitsFor, normalizePlan, PLAN_LABELS, PLAN_LIMITS, type Plan } from "@/lib/plans";
 import { PRESET_TAGS, PRESET_TAG_KEYS } from "@/lib/tags";
 import { useT } from "@/contexts/locale";
-import { todayInTZ, previousDay } from "@/lib/date-tz";
+import { todayInTZ, previousDay, getClientTZ } from "@/lib/date-tz";
 import { normalizeRubyText } from "@/lib/furigana";
 import { parseCorrectionPayload, correctionToDbColumns } from "@/lib/correction-payload";
 // Safe from a Client Component: plan-visibility.ts imports nothing, so this
@@ -117,20 +117,9 @@ function todayISO() {
   return new Date().toLocaleDateString("en-CA");
 }
 
-// Read the user_tz cookie (set by TimezoneSyncer) so date calculations stay in
-// sync with the same timezone used by layout.tsx and dashboard/page.tsx.
-// Falls back to the browser's own IANA timezone if the cookie isn't set yet.
-function getClientTZ(): string {
-  const match = document.cookie.match(/(?:^|;\s*)user_tz=([^;]+)/);
-  const raw = match ? decodeURIComponent(match[1]) : null;
-  if (raw) {
-    try {
-      new Intl.DateTimeFormat("en-CA", { timeZone: raw });
-      return raw;
-    } catch { /* invalid cookie value */ }
-  }
-  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-}
+// getClientTZ moved to lib/date-tz.ts — the daily recap overlay needs the
+// same answer to "what is today", and a second copy is how two answers start.
+// Imported above; behaviour unchanged.
 
 /**
  * 「保存した表現を日記で使えたか」の照合を投げるだけの関数。

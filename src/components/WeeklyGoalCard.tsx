@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui";
+import { WEEKLY_GOAL_ANCHOR_ID } from "@/components/DailyRecapOverlay";
 import { Icon } from "@/components/icons";
 import { useT } from "@/contexts/locale";
 
@@ -115,7 +116,7 @@ export function WeeklyGoalCard({
   );
 
   return (
-    <Card accent="apricot" className="col-span-2 p-4">
+    <Card accent="apricot" className="col-span-2 p-4" id={WEEKLY_GOAL_ANCHOR_ID}>
       {target === null || editing ? (
         <>
           <p className="font-serif text-base font-bold text-pine">{t("weeklyGoal.setTitle")}</p>

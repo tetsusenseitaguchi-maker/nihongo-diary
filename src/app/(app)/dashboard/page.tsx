@@ -19,6 +19,7 @@ import { getDueSummary } from "@/lib/srs-server";
 import { AudioIntroModal } from "@/components/AudioIntroModal";
 import { WebPushBanner } from "@/components/WebPushBanner";
 import { WeeklyGoalCard } from "@/components/WeeklyGoalCard";
+import { DailyRecapOverlay } from "@/components/DailyRecapOverlay";
 
 export const dynamic = "force-dynamic";
 
@@ -243,6 +244,17 @@ export default async function DashboardPage() {
       {/* One-time, and it holds its own screen back until the tour has been
           seen — see the comment in AudioIntroModal. */}
       <AudioIntroModal dictationDiaryId={dictationDiaryId} isNative={isNative} />
+
+      {/* 「今日のあなた」. Every figure is one the cards below are about to show
+          — passed down, never recomputed, so the overlay cannot disagree with
+          the page it is covering. Costs no query and no fetch. It defers to the
+          tour and shows at most once a day; see the component for both. */}
+      <DailyRecapOverlay
+        weeklyTarget={weeklyTarget}
+        daysThisWeek={daysThisWeek}
+        currentStreak={stats.currentStreak}
+        totalChars={totalChars}
+      />
 
       {/* Renders nothing unless this browser can subscribe, has not already,
           has not closed it, and belongs to someone who has written or finished
