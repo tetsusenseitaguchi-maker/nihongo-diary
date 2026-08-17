@@ -135,7 +135,24 @@ export function DailyRecapOverlay({
     // do not record today — this shows tomorrow instead, or later today.
     if (!hasSeenTour()) return;
 
+    /**
+     * /dashboard?recap=1 shows it again, whatever the flag says.
+     *
+     * Tuning the timings otherwise costs a day per attempt on a phone, where
+     * there is no console to clear localStorage from. Read off
+     * window.location rather than useSearchParams so this stays a plain
+     * client effect with no Suspense boundary to think about.
+     *
+     * Safe to ship: it re-renders the learner's own numbers, writes nothing,
+     * and costs no query — the figures are already props. It deliberately does
+     * NOT mark the day as seen, so a forced view cannot swallow the real one.
+     */
+    const forced =
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).get("recap") === "1";
+
     const today = todayInTZ(getClientTZ());
+    if (forced) { setOpen(true); return; }
     if (hasSeenRecapToday(today)) return;
 
     reduceMotion.current =
