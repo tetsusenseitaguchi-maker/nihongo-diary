@@ -4,6 +4,7 @@ import { useState } from "react";
 import { NativeGate } from "@/components/NativeGate";
 import { Furigana } from "@/components/Furigana";
 import { useT, useLocale } from "@/contexts/locale";
+import { normalizeRubyText } from "@/lib/furigana";
 import { safeRubyNotation } from "@/lib/reading-validation";
 
 /**
@@ -120,16 +121,29 @@ export function WordLookup({ onInsert }: { onInsert: (text: string) => void }) {
           className="mt-2.5 flex w-full flex-wrap items-baseline gap-x-2.5 gap-y-1 rounded-lg bg-mint/40 px-3 py-2 text-left transition-colors hover:bg-mint/70"
         >
           <span className="font-jp text-[17px] font-semibold text-pine">
-            {/* safeRubyNotation, not buildRubyNotation: this was the last
-                reading rendered with no check in front of it. It is also the
-                only one that leaves no trace — /api/word-lookup writes to
+            {/* Both guards, in the order they have to run.
+                buildRubyNotation was called bare here — the last reading
+                rendered with nothing in front of it. It is also the only one
+                that leaves no trace: /api/word-lookup writes to
                 word_lookup_cache only when isCacheableQuery() holds (ASCII
-                letters, at most three words), so a wrong reading from any other
-                query is shown once and never stored, which means it cannot be
-                found again afterwards. A reading that fails the check now
-                renders the bare word. */}
+                letters, at most three words), so a wrong reading from any
+                other query is shown once and never stored, and cannot be
+                found again afterwards. That is why this path gets checked
+                before it is drawn rather than audited later.
+
+                safeRubyNotation drops a reading that cannot belong to its
+                word (歩く/ある). normalizeRubyText then forces the words in
+                READING_DICTIONARY to their correct reading, which is what
+                catches へんしゅく — structurally sound, simply wrong, so the
+                first guard passes it through. Everywhere else these two
+                already run: normalizeRubyText at parse time in
+                parseCorrectionPayload, safe* at every other render.
+                Furigana itself only calls parseRubySegments, so wrapping has
+                to happen here.
+
+                Neither function is modified — this is the call site. */}
             {result.reading ? (
-              <Furigana text={safeRubyNotation(result.japanese, result.reading)} />
+              <Furigana text={normalizeRubyText(safeRubyNotation(result.japanese, result.reading))} />
             ) : (
               result.japanese
             )}
