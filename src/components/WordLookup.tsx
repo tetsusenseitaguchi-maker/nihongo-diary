@@ -4,7 +4,7 @@ import { useState } from "react";
 import { NativeGate } from "@/components/NativeGate";
 import { Furigana } from "@/components/Furigana";
 import { useT, useLocale } from "@/contexts/locale";
-import { buildRubyNotation } from "@/lib/furigana";
+import { safeRubyNotation } from "@/lib/reading-validation";
 
 /**
  * "How do I say this?" — an English word in, a Japanese one out, dropped into
@@ -120,8 +120,16 @@ export function WordLookup({ onInsert }: { onInsert: (text: string) => void }) {
           className="mt-2.5 flex w-full flex-wrap items-baseline gap-x-2.5 gap-y-1 rounded-lg bg-mint/40 px-3 py-2 text-left transition-colors hover:bg-mint/70"
         >
           <span className="font-jp text-[17px] font-semibold text-pine">
+            {/* safeRubyNotation, not buildRubyNotation: this was the last
+                reading rendered with no check in front of it. It is also the
+                only one that leaves no trace — /api/word-lookup writes to
+                word_lookup_cache only when isCacheableQuery() holds (ASCII
+                letters, at most three words), so a wrong reading from any other
+                query is shown once and never stored, which means it cannot be
+                found again afterwards. A reading that fails the check now
+                renders the bare word. */}
             {result.reading ? (
-              <Furigana text={buildRubyNotation(result.japanese, result.reading)} />
+              <Furigana text={safeRubyNotation(result.japanese, result.reading)} />
             ) : (
               result.japanese
             )}
