@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
-import { Obie } from "@/components/Obie";
 import { Card } from "@/components/ui";
 import { Icon, renderIcon } from "@/components/icons";
 import { PublicLangSwitcher } from "@/components/PublicLangSwitcher";
@@ -26,27 +25,16 @@ export function LandingPageNew({
    *  and the client-side <NativeGate/> below. */
   isNative?: boolean;
 }) {
-  // Hero features — displayed large
-  const heroFeatures: Array<{ icon: string; title: string; body: string }> = [
+  /** Three, and they are the three the diary loop is made of: write and it is
+   *  corrected (f1), other learners are doing it too (f3), what you got wrong
+   *  comes back (f4). The page used to carry ten — two large and eight in a
+   *  compact list — which asked the reader to weigh Weekly report against Vocab
+   *  notebook at the exact moment they only need to know what the app is. The
+   *  other seven are not sold here; they are found in the product. */
+  const features: Array<{ icon: string; title: string; body: string }> = [
     { icon: "sparkle", title: t("lp.features.f1.title"), body: t("lp.features.f1.body") },
     { icon: "feed",    title: t("lp.features.f3.title"), body: t("lp.features.f3.body") },
-  ];
-
-  // Supporting features — displayed compact
-  const extraFeatures: Array<{ icon: string; title: string; body: string }> = [
-    { icon: "mic",      title: t("lp.features.f2.title"),  body: t("lp.features.f2.body") },
-    { icon: "history",  title: t("lp.features.f4.title"),  body: t("lp.features.f4.body") },
-    { icon: "flame",    title: t("lp.features.f5.title"),  body: t("lp.features.f5.body") },
-    { icon: "book",     title: t("lp.features.f6.title"),  body: t("lp.features.f6.body") },
-    { icon: "arrow",    title: t("lp.features.f7.title"),  body: t("lp.features.f7.body") },
-    { icon: "calendar", title: t("lp.features.f8.title"),  body: t("lp.features.f8.body") },
-    { icon: "support",  title: t("lp.features.f9.title"),  body: t("lp.features.f9.body") },
-    { icon: "pen",      title: t("lp.features.f10.title"), body: t("lp.features.f10.body") },
-  ];
-
-  const pillars = [
-    { title: t("lp.solution.p1.title"), body: t("lp.solution.p1.body") },
-    { title: t("lp.solution.p2.title"), body: t("lp.solution.p2.body") },
+    { icon: "history", title: t("lp.features.f4.title"), body: t("lp.features.f4.body") },
   ];
 
   const steps = [
@@ -156,7 +144,14 @@ export function LandingPageNew({
                   </span>
                 </Link>
               </div>
-              <p className="mt-4 text-sm" style={{ color: "#8a948b" }}>{t("lp.hero.microcopy")}</p>
+              {/* Reassurance before the click, not after it. The page reads as
+                  built for people who can already write Japanese, and the doubt
+                  it has to answer — "my Japanese isn't good enough yet" — peaks
+                  with the cursor on the CTA, so it is answered here rather than
+                  in the h1. Same visual weight as the microcopy below because
+                  it does the same job: removing a reason not to press. */}
+              <p className="mt-4 text-sm font-medium text-pine/70">{t("lp.hero.reassure")}</p>
+              <p className="mt-1.5 text-sm" style={{ color: "#8a948b" }}>{t("lp.hero.microcopy")}</p>
             </div>
             <div className="mx-auto w-full max-w-sm lg:max-w-none">
               <DiaryCard />
@@ -186,73 +181,24 @@ export function LandingPageNew({
           <p className="mt-6 text-lg font-semibold leading-relaxed text-pine">
             {t("lp.problem.body3")}
           </p>
+          {/* All that survives of the old "So we built Nihongo Diary around
+              those exact two problems" section: one sentence, carrying the turn
+              from the problem to the three steps. The section itself restated
+              the two bullets above as cards 01 and 02 under new headings, which
+              made this the second of three times the page explained write →
+              correct → keep going. The key keeps its lp.solution.* name — it is
+              the same sentence, and renaming it would mean touching 8 locales
+              to say nothing new. */}
+          <p className="mt-8 border-l-2 border-moss/40 pl-5 text-lg leading-relaxed text-ink/75">
+            {t("lp.solution.intro")}
+          </p>
         </div>
       </section>
 
-      {/* ── 3. THE SOLUTION ─────────────────────────────── */}
-      <section className="bg-pine">
-        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="font-serif text-3xl font-extrabold tracking-tight text-cream sm:text-4xl">
-              {t("lp.solution.h2")}
-            </h2>
-            <p className="mt-4 text-lg text-cream/70">{t("lp.solution.intro")}</p>
-          </div>
-          <div className="mt-12 grid gap-5 sm:grid-cols-2">
-            {pillars.map((p, i) => (
-              <div
-                key={i}
-                className="rounded-[var(--radius-card)] bg-white/5 p-7 ring-1 ring-cream/10"
-              >
-                <p className="mb-3 font-serif text-3xl font-extrabold text-moss-300/60">
-                  {String(i + 1).padStart(2, "0")}
-                </p>
-                <h3 className="font-serif text-xl font-bold text-cream">{p.title}</h3>
-                <p className="mt-3 text-[15px] leading-relaxed text-cream/70">{p.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 4. FEATURES ─────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-        <h2 className="max-w-2xl font-serif text-3xl font-extrabold tracking-tight text-pine sm:text-4xl">
-          {t("lp.features.h2")}
-        </h2>
-        {/* Hero: 2 main features, large cards */}
-        <div className="mt-10 grid gap-5 sm:grid-cols-2">
-          {heroFeatures.map((f) => (
-            <Card key={f.title} className="flex flex-col p-7 transition-shadow hover:shadow-lift">
-              <span className="mb-4 grid h-12 w-12 place-items-center rounded-xl bg-mint text-pine">
-                {renderIcon(f.icon, "h-6 w-6")}
-              </span>
-              <h3 className="font-serif text-xl font-bold text-pine">{f.title}</h3>
-              <p className="mt-3 flex-1 text-[15px] leading-relaxed text-ink/70">{f.body}</p>
-            </Card>
-          ))}
-        </div>
-
-        {/* Supporting: compact 2-col list */}
-        <div className="mt-8">
-          <p className="mb-4 font-serif text-base font-semibold text-pine/60">{t("lp.features.moreH2")}</p>
-          <div className="grid gap-2.5 sm:grid-cols-2">
-            {extraFeatures.map((f) => (
-              <div key={f.title} className="flex items-start gap-3 rounded-xl bg-sand/40 px-4 py-3">
-                <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-mint text-pine">
-                  {renderIcon(f.icon, "h-3.5 w-3.5")}
-                </span>
-                <div>
-                  <p className="text-sm font-semibold text-pine">{f.title}</p>
-                  <p className="mt-0.5 text-xs leading-relaxed text-ink/65">{f.body}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 5. HOW IT WORKS ─────────────────────────────── */}
+      {/* ── 3. HOW IT WORKS ─────────────────────────────── */}
+      {/* Ahead of the features now. The problem section ends by naming what is
+          missing, so the next thing owed to the reader is how the app answers
+          it — not a list of what else it has. */}
       <section className="bg-sand/40">
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
           <h2 className="max-w-2xl font-serif text-3xl font-extrabold tracking-tight text-pine sm:text-4xl">
@@ -274,7 +220,25 @@ export function LandingPageNew({
         </div>
       </section>
 
-      {/* ── 6. TESTIMONIALS ─────────────────────────────── */}
+      {/* ── 4. FEATURES ─────────────────────────────────── */}
+      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+        <h2 className="max-w-2xl font-serif text-3xl font-extrabold tracking-tight text-pine sm:text-4xl">
+          {t("lp.features.h2")}
+        </h2>
+        <div className="mt-10 grid gap-5 md:grid-cols-3">
+          {features.map((f) => (
+            <Card key={f.title} className="flex flex-col p-7 transition-shadow hover:shadow-lift">
+              <span className="mb-4 grid h-12 w-12 place-items-center rounded-xl bg-mint text-pine">
+                {renderIcon(f.icon, "h-6 w-6")}
+              </span>
+              <h3 className="font-serif text-xl font-bold text-pine">{f.title}</h3>
+              <p className="mt-3 flex-1 text-[15px] leading-relaxed text-ink/70">{f.body}</p>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 5. TESTIMONIALS ─────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <h2 className="mx-auto max-w-2xl text-center font-serif text-3xl font-extrabold tracking-tight text-pine sm:text-4xl">
           {t("lp.testimonials.h2")}
@@ -307,7 +271,7 @@ export function LandingPageNew({
         </div>
       </section>
 
-      {/* ── 7. MEET YOUR TEACHER ────────────────────────── */}
+      {/* ── 6. MEET YOUR TEACHER ────────────────────────── */}
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <div className="grid items-start gap-10 lg:grid-cols-[1fr_1.6fr]">
           <div className="flex flex-col gap-4">
@@ -340,7 +304,7 @@ export function LandingPageNew({
         </div>
       </section>
 
-      {/* ── 8. PRICING ──────────────────────────────────── */}
+      {/* ── 7. PRICING ──────────────────────────────────── */}
       {/* Hidden inside the native iOS shell: shows hardcoded USD prices and
           links to the Stripe checkout flow (App Store Guideline 3.1.2).
           Two layers: `isNative` skips rendering it server-side (never sent to
@@ -422,12 +386,22 @@ export function LandingPageNew({
       </NativeGate>
       )}
 
-      {/* ── 9. FINAL CTA ────────────────────────────────── */}
+      {/* ── 8. FINAL CTA ────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-4 pb-24 pt-16 sm:px-6">
         <div className="relative overflow-hidden rounded-[var(--radius-card)] bg-pine p-10 text-center shadow-lift sm:p-16">
           <div className="genkou absolute inset-0 opacity-[0.07]" aria-hidden />
           <div className="relative">
-            <Obie size={56} className="mx-auto mb-5" />
+            {/* The real Obie, replacing the placeholder SVG the component
+                itself asks to be swapped out. Served as webp — the source png
+                is 640px and 556KB for a 56px slot, which is most of the page's
+                image weight spent below the fold. */}
+            <Image
+              src="/obie.webp"
+              alt=""
+              width={56}
+              height={56}
+              className="mx-auto mb-5 h-14 w-14 rounded-full object-cover ring-2 ring-cream/20"
+            />
             <h2 className="mx-auto max-w-2xl font-serif text-3xl font-extrabold tracking-tight text-cream sm:text-4xl">
               {t("lp.cta.h2")}
             </h2>
@@ -522,9 +496,15 @@ function DiaryCard() {
           className="flex items-center gap-2.5 rounded-xl bg-white p-3"
           style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.07)", border: "1px solid #f0ede6" }}
         >
-          <div
-            className="h-7 w-7 shrink-0 rounded-full"
-            style={{ background: "radial-gradient(circle at 35% 35%, #c9a97a, #8b5e34)" }}
+          {/* Obie himself, where a brown gradient circle used to stand in for
+              him. The file is an opaque square illustration, so the circle has
+              to come from object-cover inside a rounded box. */}
+          <Image
+            src="/obie-avatar.png"
+            alt=""
+            width={28}
+            height={28}
+            className="h-7 w-7 shrink-0 rounded-full object-cover"
           />
           {/* TODO i18n: lp.heroCard.streak */}
           <p className="text-xs" style={{ color: "#6b7280" }}>
