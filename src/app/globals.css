@@ -260,3 +260,50 @@ ruby rt {
 @media (prefers-reduced-motion: reduce) {
   .flame-breathe { animation: none; }
 }
+
+/* ── Scroll reveal — see src/components/Reveal.tsx ──────────────────────────
+   Transitions, not keyframes: each element moves once and stops, so there is
+   no infinite loop here to stop later.
+
+   The transition is declared on "in" only, never on "out". Hydration sets
+   "out" on everything still below the fold, and if the transition were already
+   in force that would be a 500ms fade-OUT running off screen for every card on
+   the page. Declared on the arriving state instead, the hide is instant and
+   only the arrival is animated. */
+[data-reveal="out"],
+[data-reveal-group="out"] > * {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+[data-reveal="in"],
+[data-reveal-group="in"] > * {
+  opacity: 1;
+  transform: none;
+  transition: opacity 500ms ease-out, transform 500ms ease-out;
+}
+
+/* The stagger, on direct children only so nothing inside a card inherits it.
+   Four steps covers the widest group on the page: three pricing cards when Pro
+   is on sale, and the problem section's three stages. */
+[data-reveal-group="in"] > *:nth-child(2) { transition-delay:  80ms; }
+[data-reveal-group="in"] > *:nth-child(3) { transition-delay: 160ms; }
+[data-reveal-group="in"] > *:nth-child(4) { transition-delay: 240ms; }
+
+/* ⚠️ The global guard above collapses animation- and transition-DURATION, and
+   nothing else. transition-DELAY goes straight through it, so a reader who has
+   asked for less motion would still sit through 240ms of staggered nothing
+   before the last card appeared — the same gap the activity grid's wave hit.
+   Zero the delay explicitly, and hold both states visible so there is no
+   motion left to reduce. !important because the nth-child rules above are more
+   specific than a bare attribute selector. */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal="out"],
+  [data-reveal="in"],
+  [data-reveal-group="out"] > *,
+  [data-reveal-group="in"] > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition-delay: 0ms !important;
+  }
+}

@@ -5,6 +5,7 @@ import { Card } from "@/components/ui";
 import { Icon, renderIcon } from "@/components/icons";
 import { PublicLangSwitcher } from "@/components/PublicLangSwitcher";
 import { NativeGate } from "@/components/NativeGate";
+import { Reveal, RevealGroup } from "@/components/Reveal";
 import { isProEnabled } from "@/lib/plan-visibility";
 import { type Locale } from "@/lib/i18n";
 
@@ -162,11 +163,21 @@ export function LandingPageNew({
 
       {/* ── 2. THE PROBLEM ──────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-        <div className="mx-auto max-w-3xl">
-          <h2 className="font-serif text-3xl font-extrabold leading-snug tracking-tight text-pine sm:text-4xl">
-            {t("lp.problem.h2")}
-          </h2>
-          <p className="mt-6 text-lg leading-relaxed text-ink/75">{t("lp.problem.body1")}</p>
+        {/* Three stages, not five. The two ✗ are one thought — the two things
+            that stop people — and dealing them out one at a time would tease a
+            reader with the reason they are stuck. They arrive together. The
+            closing line and the sentence that turns toward the steps are one
+            move as well, so the section reads: here is the problem, here is
+            what it costs you, here is where we go next.
+            The two grouping divs carry the margins that used to sit on the
+            paragraphs, so the spacing is unchanged. */}
+        <RevealGroup className="mx-auto max-w-3xl">
+          <div>
+            <h2 className="font-serif text-3xl font-extrabold leading-snug tracking-tight text-pine sm:text-4xl">
+              {t("lp.problem.h2")}
+            </h2>
+            <p className="mt-6 text-lg leading-relaxed text-ink/75">{t("lp.problem.body1")}</p>
+          </div>
           <ul className="mt-5 space-y-3">
             {[t("lp.problem.bullet1"), t("lp.problem.bullet2")].map((bullet, i) => (
               <li
@@ -178,7 +189,8 @@ export function LandingPageNew({
               </li>
             ))}
           </ul>
-          <p className="mt-6 text-lg font-semibold leading-relaxed text-pine">
+          <div className="mt-6">
+          <p className="text-lg font-semibold leading-relaxed text-pine">
             {t("lp.problem.body3")}
           </p>
           {/* All that survives of the old "So we built Nihongo Diary around
@@ -192,7 +204,8 @@ export function LandingPageNew({
           <p className="mt-8 border-l-2 border-moss/40 pl-5 text-lg leading-relaxed text-ink/75">
             {t("lp.solution.intro")}
           </p>
-        </div>
+          </div>
+        </RevealGroup>
       </section>
 
       {/* ── 3. HOW IT WORKS ─────────────────────────────── */}
@@ -201,10 +214,10 @@ export function LandingPageNew({
           it — not a list of what else it has. */}
       <section className="bg-sand/40">
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-          <h2 className="max-w-2xl font-serif text-3xl font-extrabold tracking-tight text-pine sm:text-4xl">
+          <Reveal as="h2" className="max-w-2xl font-serif text-3xl font-extrabold tracking-tight text-pine sm:text-4xl">
             {t("lp.steps.h2")}
-          </h2>
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
+          </Reveal>
+          <RevealGroup className="mt-10 grid gap-5 md:grid-cols-3">
             {steps.map((s, i) => (
               <Card key={i} className="p-7">
                 <span className="font-serif text-3xl font-extrabold text-moss/40">
@@ -213,19 +226,19 @@ export function LandingPageNew({
                 <p className="mt-4 text-[15px] leading-relaxed text-ink/80">{s}</p>
               </Card>
             ))}
-          </div>
-          <p className="mt-8 text-center font-semibold text-pine">
+          </RevealGroup>
+          <Reveal as="p" className="mt-8 text-center font-semibold text-pine">
             {t("lp.steps.closing")}
-          </p>
+          </Reveal>
         </div>
       </section>
 
       {/* ── 4. FEATURES ─────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-        <h2 className="max-w-2xl font-serif text-3xl font-extrabold tracking-tight text-pine sm:text-4xl">
+        <Reveal as="h2" className="max-w-2xl font-serif text-3xl font-extrabold tracking-tight text-pine sm:text-4xl">
           {t("lp.features.h2")}
-        </h2>
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
+        </Reveal>
+        <RevealGroup className="mt-10 grid gap-5 md:grid-cols-3">
           {features.map((f) => (
             <Card key={f.title} className="flex flex-col p-7 transition-shadow hover:shadow-lift">
               <span className="mb-4 grid h-12 w-12 place-items-center rounded-xl bg-mint text-pine">
@@ -235,15 +248,15 @@ export function LandingPageNew({
               <p className="mt-3 flex-1 text-[15px] leading-relaxed text-ink/70">{f.body}</p>
             </Card>
           ))}
-        </div>
+        </RevealGroup>
       </section>
 
       {/* ── 5. TESTIMONIALS ─────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-        <h2 className="mx-auto max-w-2xl text-center font-serif text-3xl font-extrabold tracking-tight text-pine sm:text-4xl">
+        <Reveal as="h2" className="mx-auto max-w-2xl text-center font-serif text-3xl font-extrabold tracking-tight text-pine sm:text-4xl">
           {t("lp.testimonials.h2")}
-        </h2>
-        <div className="mt-10 grid gap-5 sm:grid-cols-3">
+        </Reveal>
+        <RevealGroup className="mt-10 grid gap-5 sm:grid-cols-3">
           {testimonials.map((te, i) => (
             <Card key={i} className="flex flex-col p-6">
               {/* Quote */}
@@ -268,12 +281,12 @@ export function LandingPageNew({
               </div>
             </Card>
           ))}
-        </div>
+        </RevealGroup>
       </section>
 
       {/* ── 6. MEET YOUR TEACHER ────────────────────────── */}
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-        <div className="grid items-start gap-10 lg:grid-cols-[1fr_1.6fr]">
+        <RevealGroup className="grid items-start gap-10 lg:grid-cols-[1fr_1.6fr]">
           <div className="flex flex-col gap-4">
             <div className="relative aspect-[3/4] overflow-hidden rounded-2xl">
               <Image
@@ -301,7 +314,7 @@ export function LandingPageNew({
               </p>
             ))}
           </div>
-        </div>
+        </RevealGroup>
       </section>
 
       {/* ── 7. PRICING ──────────────────────────────────── */}
@@ -314,10 +327,10 @@ export function LandingPageNew({
       <NativeGate>
       <section className="bg-sand/30">
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-          <h2 className="mx-auto max-w-2xl text-center font-serif text-3xl font-extrabold tracking-tight text-pine sm:text-4xl">
+          <Reveal as="h2" className="mx-auto max-w-2xl text-center font-serif text-3xl font-extrabold tracking-tight text-pine sm:text-4xl">
             {t("lp.pricing.h2")}
-          </h2>
-          <div className="mt-10 grid gap-5 sm:grid-cols-3">
+          </Reveal>
+          <RevealGroup className="mt-10 grid gap-5 sm:grid-cols-3">
             <PricingCard
               name={t("lp.pricing.free.name")}
               price={t("lp.pricing.free.price")}
@@ -372,15 +385,15 @@ export function LandingPageNew({
               highlight={false}
             />
             )}
-          </div>
-          <p className="mt-8 text-center">
+          </RevealGroup>
+          <Reveal as="p" className="mt-8 text-center">
             <Link
               href="/upgrade"
               className="text-sm font-semibold text-pine underline-offset-2 hover:underline"
             >
               {t("lp.pricing.compare")}
             </Link>
-          </p>
+          </Reveal>
         </div>
       </section>
       </NativeGate>
@@ -388,7 +401,7 @@ export function LandingPageNew({
 
       {/* ── 8. FINAL CTA ────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-4 pb-24 pt-16 sm:px-6">
-        <div className="relative overflow-hidden rounded-[var(--radius-card)] bg-pine p-10 text-center shadow-lift sm:p-16">
+        <Reveal className="relative overflow-hidden rounded-[var(--radius-card)] bg-pine p-10 text-center shadow-lift sm:p-16">
           <div className="genkou absolute inset-0 opacity-[0.07]" aria-hidden />
           <div className="relative">
             {/* The real Obie, replacing the placeholder SVG the component
@@ -416,7 +429,7 @@ export function LandingPageNew({
             </div>
             <p className="mt-4 text-sm text-cream/40">{t("lp.cta.microcopy")}</p>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* ── FOOTER ──────────────────────────────────────── */}
