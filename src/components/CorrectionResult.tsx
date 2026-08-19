@@ -42,30 +42,74 @@ function SaveWordButton({
   onSave: (word: string, reading: string, jlptLevel?: string) => void;
 }) {
   const t = useT();
-  if (state === "saved" || state === "already_saved") {
-    return (
+  const done = state === "saved" || state === "already_saved";
+  const saving = state === "saving";
+  // "error" falls in with "idle" on purpose: a failed save has to stay
+  // pressable, which is how the old three-branch version behaved too.
+  const pressable = !done && !saving;
+
+  /* One 24×24 box, three layers cross-fading inside it.
+   *
+   * The three states used to be three different elements returned from three
+   * branches, and they were three different sizes: the + is a 24×24 circle,
+   * "Saving…" was 40.4×15 of text, the ✓ is 12.6×20. Sitting at the end of a
+   * flex row, that measured as the control jumping 16.4px left on press and
+   * then 27.8px right on success — 44px of travel in a 300px row, plus the
+   * row's own height moving 40 → 38.5px. Three suggestions on a correction
+   * means pressing this three times and watching the row twitch each time.
+   *
+   * So the box is fixed and only its contents change. All three layers stay
+   * mounted — a cross-fade needs both ends present — which makes the inactive
+   * ones a screen-reader problem rather than a layout one, hence aria-hidden
+   * on whichever is faded out, and disabled on the button so it also leaves
+   * the tab order.
+   *
+   * The spinner replaces the "Saving…" text because 40px of text cannot fit a
+   * 24px box, and it is the ring already used for every other in-flight state
+   * in the app. motion-safe: rather than a bare animate-spin — the guard in
+   * globals.css collapses animation-duration to 0.001ms, which does not stop
+   * an infinite loop, it just spins it too fast to see. Under reduced motion
+   * the ring holds still and its darker top segment still reads as waiting.
+   *
+   * No transition-delay anywhere here, so nothing needs the explicit zeroing
+   * the staggered reveals on the landing page needed.
+   */
+  return (
+    <span className="relative inline-flex h-6 w-6 shrink-0 items-center justify-center">
+      <button
+        type="button"
+        onClick={() => onSave(word, reading, jlptLevel)}
+        disabled={!pressable}
+        aria-hidden={!pressable}
+        title={t("vocab.addToVocab")}
+        aria-label={t("vocab.addToVocab")}
+        className={`absolute inset-0 flex items-center justify-center rounded-full border border-moss-600/40 text-sm font-bold text-moss-600 transition duration-150 hover:border-pine hover:bg-pine hover:text-cream ${
+          pressable ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      >
+        +
+      </button>
+
       <span
-        className="shrink-0 text-sm font-bold text-moss-600"
+        aria-hidden={!saving}
+        title={t("vocab.saving")}
+        className={`pointer-events-none absolute inset-0 flex items-center justify-center transition-opacity duration-150 ${
+          saving ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <span className="h-3.5 w-3.5 rounded-full border-2 border-moss/30 border-t-moss motion-safe:animate-spin" />
+      </span>
+
+      <span
+        aria-hidden={!done}
         title={t("vocab.saved")}
+        className={`pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-bold text-moss-600 transition-opacity duration-150 ${
+          done ? "opacity-100" : "opacity-0"
+        }`}
       >
         ✓
       </span>
-    );
-  }
-  if (state === "saving") {
-    return (
-      <span className="shrink-0 text-[10px] text-muted">{t("vocab.saving")}</span>
-    );
-  }
-  return (
-    <button
-      onClick={() => onSave(word, reading, jlptLevel)}
-      title={t("vocab.addToVocab")}
-      className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full border border-moss-600/40 text-sm font-bold text-moss-600 transition-colors hover:bg-pine hover:text-cream hover:border-pine"
-      aria-label={t("vocab.addToVocab")}
-    >
-      +
-    </button>
+    </span>
   );
 }
 
