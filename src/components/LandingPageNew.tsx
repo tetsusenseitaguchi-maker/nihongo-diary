@@ -86,11 +86,23 @@ export function LandingPageNew({
             >
               {t("lp.nav.login")}
             </Link>
+            {/* Nav CTA, not the hero CTA — it gets a shorter string of its own.
+                At 375px the header row has 343px of usable width, and the logo
+                (119px) + language switcher (129px) + gap leave the button just
+                55px of text. The hero's "Start writing — free" needs 131px, so
+                it used to shrink to min-content and wrap onto three lines
+                inside a fixed h-9 (36px) box: 48px of text in a 36px pill, the
+                first and last line clipped above and below. Hence three guards
+                that have to hold together — a short verb-only string, nowrap +
+                shrink-0 so it can never wrap again, and min-h in place of the
+                fixed height so a long future translation grows the pill instead
+                of spilling out of it. "free" lives in the hero CTA and the
+                microcopy below it, both above the fold at 375px. */}
             <Link
               href="/signup"
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-pine px-4 text-sm font-semibold text-cream transition hover:bg-pine/90"
+              className="inline-flex min-h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-pine px-3 py-2 text-sm font-semibold text-cream transition hover:bg-pine/90 sm:px-4"
             >
-              {t("lp.nav.cta")}
+              {t("lp.nav.ctaShort")}
             </Link>
           </div>
         </div>
