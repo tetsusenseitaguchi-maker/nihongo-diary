@@ -1684,8 +1684,13 @@ export default function WritePage() {
       )}
 
       {/* AI Teacher's Feedback */}
+      {/* correction-settle: the skeletons above are replaced by this in a
+          single frame otherwise, which is a hard cut at the one moment in the
+          app the learner has been waiting for. See globals.css for why it
+          fades up from 0.35 and not from nothing. Presentation only — the
+          streaming that fills `result` is untouched. */}
       {result && (
-        <section className="space-y-4 border-t border-line pt-8">
+        <section className="correction-settle space-y-4 border-t border-line pt-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <span>🌸</span>

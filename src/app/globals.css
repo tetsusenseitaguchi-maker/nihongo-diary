@@ -261,6 +261,40 @@ ruby rt {
   .flame-breathe { animation: none; }
 }
 
+/* ── The correction landing ─────────────────────────────────────────────────
+   Runs once, when the finished correction mounts in place of the streaming
+   partial. Both are sections in normal flow and the finished one is much the
+   taller, so they cannot be cross-faded over each other without taking one of
+   them out of flow — that is a structural change to a pair of blocks that
+   already duplicate their heading, and not something to do from here.
+
+   From 0.35 rather than 0, which is the whole point. The heading and the
+   original/natural pair are on screen in both states (the partial renders
+   them inline, the finished one through CorrectionTopBlock, same classes), so
+   starting at zero would blank out things the reader is already looking at
+   and hand them an empty gap at the exact moment their correction arrives.
+   From 0.35 the shared parts firm up instead of leaving and coming back, and
+   the new material below resolves with them.
+
+   No transform: the heading is already in position, and sliding an element
+   that did not move is a worse lie than not animating it at all.
+
+   `both` holds the end state, so the global reduced-motion collapse to 0.001ms
+   already lands this on opacity 1. The rule below says so outright anyway —
+   this file has one of these for every animation it defines. */
+@keyframes correction-settle {
+  from { opacity: 0.35; }
+  to   { opacity: 1; }
+}
+
+.correction-settle {
+  animation: correction-settle 260ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .correction-settle { animation: none; }
+}
+
 /* ── Scroll reveal — see src/components/Reveal.tsx ──────────────────────────
    Transitions, not keyframes: each element moves once and stops, so there is
    no infinite loop here to stop later.
