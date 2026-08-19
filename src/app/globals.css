@@ -295,6 +295,61 @@ ruby rt {
   .correction-settle { animation: none; }
 }
 
+/* ── Obie, after a diary is saved — see src/components/SaveCelebration.tsx ──
+   Runs once, on mount, and ends invisible. No state, no timer, no cleanup: the
+   element is inert once the animation has played out.
+
+   The 300ms head start is the point of the delay, not politeness. Auto-save
+   fires straight after setResult(), so this and .correction-settle (260ms) are
+   triggered within a network round trip of each other and would otherwise
+   start together. One thing moves at a time.
+
+   The travel is 24px, and to the LEFT, because the artwork runs leftward —
+   Obie faces left with the speed lines trailing off to his right. Sliding him
+   in from the right edge is the direction he is already going. Sliding the
+   other way would be a dog running backwards.
+
+   ⚠️ Reduced motion gets its own keyframe rather than `animation: none`. None
+   would leave him parked on screen forever with nothing to remove him: the
+   whole thing is a one-shot that ends at opacity 0, so switching it off does
+   not stop an effect, it strands one. The replacement keeps the fade and drops
+   every pixel of movement. The delay is zeroed by hand as well — the global
+   guard collapses duration and leaves delay alone. */
+@keyframes obie-arrive {
+  0%   { opacity: 0; transform: translateX(24px); }
+  15%  { opacity: 1; transform: translateX(0); }
+  85%  { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(0); }
+}
+
+@keyframes obie-arrive-still {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.obie-arrive {
+  animation: obie-arrive 2600ms ease-out 300ms both;
+}
+
+/* ⚠️ !important, and it is the one place in this file that needs it. The
+   global guard collapses animation-duration to 0.001ms for everything, which
+   for ordinary decoration is exactly right — but here the animation is not
+   decoration laid over an element, it IS the element's whole life. It brings
+   Obie in and it takes him away again. Collapsed to a microsecond the
+   fallback ran to completion before a frame was drawn and he never appeared
+   at all: reduced motion turned into deleted content. Measured, not guessed —
+   the first version of this rule shipped without !important and computed to
+   `obie-arrive-still 1e-06s`.
+   The bare `*` guard is specificity 0,0,0 and this is 0,1,0, so with both
+   marked important this one wins. */
+@media (prefers-reduced-motion: reduce) {
+  .obie-arrive {
+    animation: obie-arrive-still 2600ms ease-out 0ms both !important;
+  }
+}
+
 /* ── Scroll reveal — see src/components/Reveal.tsx ──────────────────────────
    Transitions, not keyframes: each element moves once and stops, so there is
    no infinite loop here to stop later.

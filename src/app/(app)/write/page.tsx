@@ -20,6 +20,7 @@ import { WritingPromptCard } from "@/components/WritingPromptCard";
 import { TrainDiagram } from "@/components/TrainDiagram";
 import { HintsSection } from "@/components/HintsSection";
 import { SavedWordsRow, type SavedWord } from "@/components/SavedWordsRow";
+import { SaveCelebration } from "@/components/SaveCelebration";
 import { WordLookup } from "@/components/WordLookup";
 import { DictationLink } from "@/components/DictationLink";
 import { ShadowingStep, type ShadowingOutcome } from "@/components/ShadowingStep";
@@ -1016,6 +1017,11 @@ export default function WritePage() {
 
   return (
     <div className="space-y-6">
+      {/* Mounts the moment the diary is stored and animates itself out. Keyed
+          on the id so a second correction in the same session — which clears
+          savedEntryId and sets it again — gets its own run rather than a node
+          that has already finished playing. */}
+      {savedEntryId && <SaveCelebration key={savedEntryId} />}
       <div className="flex items-center gap-2">
         <h1 className="font-serif text-3xl font-bold tracking-tight text-pine">
           <Furigana text="日記(にっき)を書(か)く" />
