@@ -1397,8 +1397,34 @@ export default function WritePage() {
                     onClick={handleCorrect}
                     disabled={!text.trim() || overLimit || loading || seekingPeer || justSaving || remaining <= 0}
                   >
+                    {/* The longest wait in the app — a whole correction comes
+                        back through here — and until now it was announced by
+                        the label changing to "Correcting…" and nothing else.
+                        Disabled dims the button to 60%, which reads as "not
+                        available" rather than "working": the same thing the
+                        button looks like when there is no text to correct yet.
+                        The ring is the one every other in-flight state in the
+                        app already uses, cream-on-dark like the rest of them,
+                        and Button's own gap-2 spaces it.
+
+                        motion-safe: because globals.css collapses
+                        animation-duration to 0.001ms under reduced motion,
+                        which does not stop an infinite spin — it just makes it
+                        too fast to see. Held still, the ring's lighter arc
+                        still marks this out as the working state.
+
+                        Width needs nothing: w-full below sm, and at sm and up
+                        min-w-[16rem] is 256px against a 186px idle label and a
+                        143px working one, so the button is already the same
+                        size in every state. */}
                     {loading ? (
-                      t("write.correcting")
+                      <>
+                        <span
+                          aria-hidden
+                          className="h-3.5 w-3.5 rounded-full border-2 border-cream/30 border-t-cream motion-safe:animate-spin"
+                        />
+                        {t("write.correcting")}
+                      </>
                     ) : remaining <= 0 ? (
                       t("write.limitTitle")
                     ) : (
