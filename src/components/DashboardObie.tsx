@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { ObieSprite } from "@/components/ObieSprite";
 import { obieArtFor, obieMotionFor, obieSpriteFor, type ObieMood } from "@/lib/obie-mood";
 
 /**
@@ -46,13 +47,7 @@ export function DashboardObie({
      aria-hidden says the same thing. What it buys is that the second frame
      cannot arrive late, because it was never a second request. */
   if (sprite) {
-    return (
-      <div
-        aria-hidden
-        className={`${size} obie-frames-${sprite.frames} ${sprite.motion}`}
-        style={{ backgroundImage: `url(/obie/obie-${art}-${sprite.frames}f.webp)` }}
-      />
-    );
+    return <ObieSprite art={art} frames={sprite.frames} motion={sprite.motion} className={size} />;
   }
 
   return (

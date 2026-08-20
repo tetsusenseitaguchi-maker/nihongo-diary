@@ -8,6 +8,7 @@ import { FeedTimeline, type FeedItem } from "@/components/FeedTimeline";
 import { DiscoveryTimeline } from "@/components/DiscoveryTimeline";
 import { DiscoveryIntroModal } from "@/components/DiscoveryIntroModal";
 import { FeedTabs } from "@/components/FeedTabs";
+import { ObieSprite } from "@/components/ObieSprite";
 import { UserSearch } from "@/components/UserSearch";
 import { getServerT } from "@/lib/i18n-server";
 import { DiscoveryFilters } from "@/components/DiscoveryFilters";
@@ -284,11 +285,19 @@ export default async function FeedPage({
     return (
       <div className="space-y-5">
         <DiscoveryIntroModal />
-        <div>
-          <p className="text-sm font-medium text-muted">{t("discovery.subtitle")}</p>
-          <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-pine">
-            {t("feed.title")}
-          </h1>
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-muted">{t("discovery.subtitle")}</p>
+            <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-pine">
+              {t("feed.title")}
+            </h1>
+          </div>
+          {/* Same rule on the other tab: he shows when this list has something
+              in it. Applying it per tab rather than only to Following keeps him
+              from blinking out on a tab switch. */}
+          {discoveryItems.length > 0 && (
+            <ObieSprite art="tailwag" frames={2} motion="obie-wag-burst" className="h-14 w-14 shrink-0" />
+          )}
         </div>
 
         {tabs}
@@ -464,11 +473,30 @@ export default async function FeedPage({
       {/* On both tabs, because whichever one the user lands on is the one that
           has to carry the notice. It shows once per browser either way. */}
       <DiscoveryIntroModal />
-      <div>
-        <p className="text-sm font-medium text-muted">{t("feed.subtitle")}</p>
-        {/* Fallback anchor for the tour: the timeline element does not exist
-            when the feed is empty. */}
-        <h1 data-tour="feed-heading" className="mt-1 font-serif text-3xl font-bold tracking-tight text-pine">{t("feed.title")}</h1>
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-muted">{t("feed.subtitle")}</p>
+          {/* Fallback anchor for the tour: the timeline element does not exist
+              when the feed is empty. */}
+          <h1 data-tour="feed-heading" className="mt-1 font-serif text-3xl font-bold tracking-tight text-pine">{t("feed.title")}</h1>
+        </div>
+        {/* Obie in the header, but only once the feed has something in it.
+            When it is empty FeedTimeline draws him asleep in the middle of the
+            card instead — one Obie per section, and the state decides which one
+            and where, rather than two of him on the same screen saying
+            different things.
+
+            ⚠️ h-14 against a header block that is a text-sm line plus a
+            text-3xl heading, so Obie is the shorter of the two and cannot set
+            the row's height. That matters more than it looks: the two feed tabs
+            are separate routes with separate headers, and if this changed the
+            height then switching tabs would jerk the tab bar — the same failure
+            the header comments on this page and on the history tabs already
+            guard against. Being short by construction means it holds whether he
+            is there or not. */}
+        {initialItems.length > 0 && (
+          <ObieSprite art="tailwag" frames={2} motion="obie-wag-burst" className="h-14 w-14 shrink-0" />
+        )}
       </div>
 
       {tabs}
