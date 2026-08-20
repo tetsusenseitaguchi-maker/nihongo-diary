@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Card, LinkButton } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { DiaryHistoryList } from "@/components/DiaryHistoryList";
@@ -134,7 +135,23 @@ export function HistoryWithTabs({
         {tab === "diary" ? (
           entries.length === 0 ? (
             <Card className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-              <span className="text-3xl">🌱</span>
+              {/* Was a 🌱. The sprout was an abstraction — something that will
+                  grow later — shown to the one reader who has done nothing yet
+                  and needs to know what doing something looks like. Obie at a
+                  desk with a pencil is the action itself. Same slot, same
+                  layout, and the only empty state on the first screen a learner
+                  with no entries can reach.
+                  alt="" because the heading and body underneath already say
+                  this in words; a described illustration would say it a third
+                  time to a screen reader. */}
+              <Image
+                src="/obie/obie-writing.webp"
+                alt=""
+                width={120}
+                height={120}
+                className="obie-settle-in h-30 w-30"
+                priority
+              />
               <p className="font-serif text-lg font-bold text-pine">
                 {t("history.emptyTitle")}
               </p>

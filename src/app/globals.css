@@ -295,6 +295,29 @@ ruby rt {
   .correction-settle { animation: none; }
 }
 
+/* ── Obie in an empty state ─────────────────────────────────────────────────
+   Once, on mount, and then it is over. Deliberately not a loop: an empty
+   state is a screen someone sits and reads, and a thing that keeps moving in
+   the corner of the eye while they read the instructions is an interruption
+   rather than a welcome. Eight pixels and 400ms — enough that he arrives
+   rather than being already there, quiet enough not to be an event.
+
+   `both` holds the end state, so the global reduced-motion collapse to
+   0.001ms already lands this at its finished position. The rule below says so
+   outright anyway, in keeping with every other animation in this file. */
+@keyframes obie-settle-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.obie-settle-in {
+  animation: obie-settle-in 400ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .obie-settle-in { animation: none; }
+}
+
 /* ── Obie, after a diary is saved — see src/components/SaveCelebration.tsx ──
    Runs once, on mount, and ends invisible. No state, no timer, no cleanup: the
    element is inert once the animation has played out.
