@@ -318,6 +318,38 @@ ruby rt {
   .obie-settle-in { animation: none; }
 }
 
+/* ── Obie on the dashboard, the week's goal met ─────────────────────────────
+   The only animated state on that page, and it stays that way on purpose. The
+   dashboard is opened every day and often more than once, so a 400ms arrival
+   on the ordinary states — waiting, wrote today — would play well past a
+   thousand times in a year and stop being an arrival long before that. Those
+   states are drawn still. This one fires when the week's promise has been
+   kept, which happens at most once a week, and is worth the movement.
+
+   Two hops, 5px then 3px, decaying like the save celebration and for the same
+   reason. Rise ease-out, fall ease-in, per keyframe, so there is weight at the
+   bottom of each. Once, and then it is over.
+
+   `both` holds the end state, so the global reduced-motion collapse already
+   lands this in its finished position; the rule below is written out anyway,
+   as everywhere else in this file. */
+@keyframes obie-cheer {
+  0%        { opacity: 0; transform: translateY(6px); }
+  20%       { opacity: 1; transform: translateY(0);    animation-timing-function: ease-out; }
+  35%       {             transform: translateY(-5px); animation-timing-function: ease-in; }
+  50%       {             transform: translateY(0);    animation-timing-function: ease-out; }
+  65%       {             transform: translateY(-3px); animation-timing-function: ease-in; }
+  80%, 100% {             transform: translateY(0); }
+}
+
+.obie-cheer {
+  animation: obie-cheer 1100ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .obie-cheer { animation: none; }
+}
+
 /* ── Obie asleep, in the quiet feed ─────────────────────────────────────────
    The one loop among these, and it earns it: the picture is a sleeping dog,
    and for a sleeping dog breathing is not decoration laid on top, it is the

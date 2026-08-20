@@ -6,6 +6,9 @@ import { Card, LinkButton } from "@/components/ui";
 import { Icon, renderIcon } from "@/components/icons";
 import { MiniCalendar } from "@/components/MiniCalendar";
 import { Furigana, NoRuby } from "@/components/Furigana";
+import { Avatar } from "@/components/ObiePhoto";
+import { DashboardObie } from "@/components/DashboardObie";
+import { obieMood } from "@/lib/obie-mood";
 import { templates } from "@/lib/mock-data";
 import { computeStats, type DiaryRow } from "@/lib/diary";
 import { daysToNextMilestone } from "@/lib/streak";
@@ -194,7 +197,25 @@ export default async function DashboardPage() {
 
   const displayName = profile?.display_name || profile?.username || "Learner";
   const avatarUrl = profile?.avatar_url || "";
+  // Same derivation the app header uses, so the two never disagree.
+  const initials = displayName.slice(0, 2).toUpperCase();
   const recent = entries.slice(0, 4);
+
+  /**
+   * Which Obie stands in the hero today.
+   *
+   * Every input is already above: stats.today is today's entry or null,
+   * currentStreak is read and never recomputed, and daysThisWeek and
+   * weeklyTarget were worked out for the weekly goal card. No query, no new
+   * column, and no fourth definition of a day — see lib/obie-mood.ts for the
+   * ordering and for why there is no "you have been away" state.
+   */
+  const obie = obieMood({
+    wroteToday: stats.today !== null,
+    currentStreak: stats.currentStreak,
+    daysThisWeek,
+    weeklyTarget,
+  });
 
   // ── Yesterday's sentence, offered again today ────────────────────────────
   // The other half of the two-day loop. The push notification does the same job
@@ -307,20 +328,33 @@ export default async function DashboardPage() {
                 <Icon.pen className="h-4 w-4" /> {t("dashboard.writeCTA")}
               </LinkButton>
             </div>
-            <Link
-              href="/profile-setup"
-              className="group relative h-36 w-36 shrink-0 self-center overflow-hidden rounded-2xl bg-paper/70 ring-1 ring-line sm:h-44 sm:w-44"
-              aria-label={t("dashboard.changePhoto")}
-            >
-              {avatarUrl ? (
-                <Image src={avatarUrl} alt={displayName} fill className="object-cover" sizes="(min-width: 640px) 176px, 144px" />
-              ) : (
-                <Image src="/obie.png" alt="Obie" fill className="object-cover opacity-90" sizes="(min-width: 640px) 176px, 144px" />
-              )}
-              <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-pine/70 py-1.5 text-[11px] font-semibold text-cream opacity-0 transition-opacity group-hover:opacity-100">
-                <Icon.camera className="h-3.5 w-3.5" /> {t("dashboard.changePhoto")}
-              </span>
-            </Link>
+            {/* Obie and the learner, side by side and doing different jobs.
+                Obie changes with the day; the frame next to him is the
+                learner's own and still opens the photo form. */}
+            <div className="flex shrink-0 items-center gap-3 self-center sm:gap-4">
+              <DashboardObie mood={obie} todayStr={todayStr} />
+              <Link
+                href="/profile-setup"
+                className="group relative h-32 w-32 shrink-0 overflow-hidden rounded-2xl bg-paper/70 ring-1 ring-line sm:h-40 sm:w-40"
+                aria-label={t("dashboard.changePhoto")}
+              >
+                {avatarUrl ? (
+                  <Image src={avatarUrl} alt={displayName} fill className="object-cover" sizes="(min-width: 640px) 160px, 128px" />
+                ) : (
+                  /* Was /obie.png. The frame is the learner's, so its empty
+                     state should stand in for them and not put a second Obie
+                     a few pixels from the first. Initials are what the header
+                     and the feed already show for a missing photo, so this is
+                     the app's own answer rather than a new one. */
+                  <span className="grid h-full w-full place-items-center">
+                    <Avatar initials={initials} size={64} />
+                  </span>
+                )}
+                <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-pine/70 py-1.5 text-[11px] font-semibold text-cream opacity-0 transition-opacity group-hover:opacity-100">
+                  <Icon.camera className="h-3.5 w-3.5" /> {t("dashboard.changePhoto")}
+                </span>
+              </Link>
+            </div>
           </div>
         </Card>
 
