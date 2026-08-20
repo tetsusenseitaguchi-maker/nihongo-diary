@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Card, Button, LinkButton } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { Furigana, NoRuby } from "@/components/Furigana";
@@ -354,8 +355,21 @@ function EmptyState({ summary }: { summary: DueSummary }) {
   if (!summary.hasReviewable) {
     return (
       <Wrapper>
-        <div className="rounded-[var(--radius-card)] border border-dashed border-line bg-paper p-8 text-center">
-          <p className="text-2xl">📖</p>
+        <div className="flex flex-col items-center rounded-[var(--radius-card)] border border-dashed border-line bg-paper p-8 text-center">
+          {/* Was a 📖. The book was the object; Obie reading one is the habit
+              the empty vocabulary book is waiting for, and it matches the
+              writing Obie on the history tab rather than sitting in a
+              different visual language two taps away.
+              alt="" — the heading, the body and the button below all say this
+              already. */}
+          <Image
+            src="/obie/obie-reading.webp"
+            alt=""
+            width={120}
+            height={120}
+            className="obie-settle-in h-30 w-30"
+            priority
+          />
           <h2 className="mt-2 font-serif text-lg font-bold text-pine">
             {t("flashcards.emptyNoWords.title")}
           </h2>
