@@ -1136,7 +1136,18 @@ export function CorrectionResult({
                 className={`h-4 w-4 shrink-0 text-cream/70 transition-transform ${lessonOpen ? "rotate-90" : ""}`}
               />
             </button>
-            <a href="/support?tab=lessons" className="shrink-0 text-xs font-semibold text-cream/80 hover:text-cream">
+            {/* ⚠️ Two different actions share one bar, and only one of them
+                used to do anything. Measured at 375px before this pill existed:
+                the link's hit area was 57×16px inside a 66px-tall bar, eight
+                pixels from a button that fills the rest of it. Aim for "See
+                all", land a few pixels high or low, and the panel opens
+                instead of the page changing. The pill gives the link its own
+                surface — so it reads as a separate control rather than more
+                header — and pads the target out to the height of the bar. */}
+            <a
+              href="/support?tab=lessons"
+              className="-my-3 flex shrink-0 items-center rounded-full px-3 py-3 text-xs font-semibold text-cream/80 ring-1 ring-cream/20 hover:bg-cream/10 hover:text-cream"
+            >
               📚 {t("correction.seeAll")}
             </a>
           </div>

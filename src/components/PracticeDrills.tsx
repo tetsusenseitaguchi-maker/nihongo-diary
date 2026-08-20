@@ -173,9 +173,18 @@ export function PracticeDrills({ drills }: { drills?: PracticeDrill[] }) {
             <span className="block font-serif text-lg font-bold text-pine">
               {t("drills.practiceTitle")}
             </span>
+            {/* The count and nothing else. The mini lesson beside this can name
+                its grammar on the same line; a drill cannot. PracticeDrill
+                carries type / question / choices / answer / englishExplanation
+                and no topic, and the prompt generates the two drills from
+                "the learner's mistakes OR the relatedMiniLesson topic" — so
+                even the lesson title next door is not reliably what these
+                drill. The old "練習してみよう" that used to sit here was a
+                nudge, and a nudge on the one line that has to show a paying
+                subscriber what is behind the fold is worse than nothing: it
+                takes the room without adding a fact. */}
             <span className="mt-0.5 block text-xs text-muted">
               {t("drills.count", { n: drills.length })}
-              <span className="font-jp"> · 練習(れんしゅう)してみよう</span>
             </span>
           </span>
           <Icon.arrow
