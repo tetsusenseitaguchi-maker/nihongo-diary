@@ -315,11 +315,29 @@ ruby rt {
    not stop an effect, it strands one. The replacement keeps the fade and drops
    every pixel of movement. The delay is zeroed by hand as well — the global
    guard collapses duration and leaves delay alone. */
+/* Slide in, three decaying hops, then hold still and go. The hops are there
+   because the artwork is mid-stride: arriving and then standing perfectly
+   still reads as a sticker being pasted on, and a running dog that lands
+   without settling reads as a bug.
+   6px, 4px, 2.5px. Small enough to be a settle rather than a bounce — past
+   about 8px it stops being a dog arriving and becomes a cartoon boing — and
+   decaying, because momentum runs out. Each rise is ease-out and each fall
+   ease-in, declared per keyframe, so the hop has weight at the bottom instead
+   of drifting symmetrically.
+   The total is unchanged at 2600ms: 645ms of hopping is taken out of the hold,
+   not added to the end. Nothing here loops — the last hop lands at 40% and
+   everything after it is stillness and then the fade. */
 @keyframes obie-arrive {
-  0%   { opacity: 0; transform: translateX(24px); }
-  15%  { opacity: 1; transform: translateX(0); }
-  85%  { opacity: 1; transform: translateX(0); }
-  100% { opacity: 0; transform: translateX(0); }
+  0%     { opacity: 0; transform: translate(24px, 0); }
+  15.4%  { opacity: 1; transform: translate(0, 0);      animation-timing-function: ease-out; }
+  19.2%  {             transform: translate(0, -6px);   animation-timing-function: ease-in; }
+  23.7%  {             transform: translate(0, 0);      animation-timing-function: ease-out; }
+  27.5%  {             transform: translate(0, -4px);   animation-timing-function: ease-in; }
+  31.9%  {             transform: translate(0, 0);      animation-timing-function: ease-out; }
+  35.8%  {             transform: translate(0, -2.5px); animation-timing-function: ease-in; }
+  40.2%  { opacity: 1; transform: translate(0, 0); }
+  84.6%  { opacity: 1; transform: translate(0, 0); }
+  100%   { opacity: 0; transform: translate(0, 0); }
 }
 
 @keyframes obie-arrive-still {
