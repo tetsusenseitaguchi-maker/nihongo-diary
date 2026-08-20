@@ -415,7 +415,7 @@ export function LandingPageNew({
                 is 640px and 556KB for a 56px slot, which is most of the page's
                 image weight spent below the fold. */}
             <Image
-              src="/obie.webp"
+              src="/obie/obie-face-sitting.webp"
               alt=""
               width={56}
               height={56}
@@ -519,7 +519,7 @@ function DiaryCard() {
               him. The file is an opaque square illustration, so the circle has
               to come from object-cover inside a rounded box. */}
           <Image
-            src="/obie-avatar.png"
+            src="/obie/obie-face-sitting.webp"
             alt=""
             width={28}
             height={28}
