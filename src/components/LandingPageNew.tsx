@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
+import { Avatar } from "@/components/ObiePhoto";
 import { Card } from "@/components/ui";
 import { Icon, renderIcon } from "@/components/icons";
 import { PublicLangSwitcher } from "@/components/PublicLangSwitcher";
@@ -44,10 +45,19 @@ export function LandingPageNew({
     t("lp.steps.s3"),
   ];
 
+  /* Initials, not portraits. These three quotes carry real first names, and
+     what sat here was Obie — the app's own mascot, cropped to a circle in the
+     place a face goes. Nothing labelled it as a mascot, so it read as a
+     photograph of Simone, of Matthew, of Jamie. That is a claim the page has
+     no business making, and it is not fixed by finding better artwork: the
+     honest answer is to stop implying a photograph exists. Avatar is the same
+     initials circle the app already shows for a learner with no picture.
+     Two letters, matching how (app)/layout.tsx derives them, so a learner who
+     has seen their own avatar recognises the shape. */
   const testimonials = [
-    { body: t("lp.testimonials.t1.body"), name: t("lp.testimonials.t1.name"), flag: "🇩🇪", status: t("lp.testimonials.t1.status"), avatarSrc: "/testimonial-obie-1.png" },
-    { body: t("lp.testimonials.t2.body"), name: t("lp.testimonials.t2.name"), flag: "🇺🇸", status: t("lp.testimonials.t2.status"), avatarSrc: "/testimonial-obie-2.png" },
-    { body: t("lp.testimonials.t3.body"), name: t("lp.testimonials.t3.name"), flag: "🇺🇸", status: t("lp.testimonials.t3.status"), avatarSrc: "/testimonial-obie-3.png" },
+    { body: t("lp.testimonials.t1.body"), name: t("lp.testimonials.t1.name"), flag: "🇩🇪", status: t("lp.testimonials.t1.status") },
+    { body: t("lp.testimonials.t2.body"), name: t("lp.testimonials.t2.name"), flag: "🇺🇸", status: t("lp.testimonials.t2.status") },
+    { body: t("lp.testimonials.t3.body"), name: t("lp.testimonials.t3.name"), flag: "🇺🇸", status: t("lp.testimonials.t3.status") },
   ];
 
   const teacherBody = [
@@ -265,13 +275,9 @@ export function LandingPageNew({
               </p>
               {/* Attribution */}
               <div className="mt-5 flex items-center gap-3 border-t border-line pt-4">
-                <Image
-                  src={te.avatarSrc}
-                  width={40}
-                  height={40}
-                  className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-mint"
-                  alt={te.name}
-                />
+                {/* No ring: it was there to separate a photograph from the
+                    card, and Avatar is already a filled mint circle. */}
+                <Avatar initials={te.name.slice(0, 2).toUpperCase()} size={40} />
                 <div>
                   <p className="text-sm font-semibold text-pine">
                     {te.name} <span className="ml-0.5">{te.flag}</span>
