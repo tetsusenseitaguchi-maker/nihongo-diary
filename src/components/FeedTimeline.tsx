@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { ObieSprite } from "@/components/ObieSprite";
+import Image from "next/image";
 import { Card } from "@/components/ui";
 import { Avatar } from "@/components/ObiePhoto";
 import { ReactionBar } from "@/components/ReactionBar";
@@ -304,7 +304,14 @@ export function FeedTimeline({
             why a loop is right here and nowhere else.
             alt="" as with the history empty state: the heading and the line
             under it already carry the meaning. */}
-        <ObieSprite art="sleeping" frames={2} motion="obie-breathe-2f" className="h-30 w-30" />
+        <Image
+          src="/obie/obie-sleeping.webp"
+          alt=""
+          width={120}
+          height={120}
+          className="obie-breathe h-30 w-30"
+          priority
+        />
         <p className="font-serif text-lg font-bold text-pine">{t("feed.empty")}</p>
         <p className="mx-auto max-w-sm text-sm text-ink/70">{t("feed.emptyDesc")}</p>
       </Card>

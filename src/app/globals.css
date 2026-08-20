@@ -378,7 +378,7 @@ ruby rt {
    With one step per interval the frame order is whatever the keyframes say. A
    run cycle needing four frames writes four positions here and changes nothing
    else. */
-@keyframes obie-wag-burst {
+@keyframes obie-frames-burst {
   0%,      20%  { background-position-x:   0%; }
   20.01%,  40%  { background-position-x: 100%; }
   40.01%,  60%  { background-position-x:   0%; }
@@ -386,8 +386,25 @@ ruby rt {
   80.01%, 100%  { background-position-x:   0%; }
 }
 
+/* A wag: five flips at 160ms, about 6fps. */
 .obie-wag-burst {
-  animation: obie-wag-burst 800ms steps(1) 1 both;
+  animation: obie-frames-burst 800ms steps(1) 1 both;
+}
+
+/* A walk, on the same five-segment keyframe but slower — 240ms a frame, near
+   4fps. A tail and a stride are not the same tempo, and running both at one
+   speed would make one of them wrong. Ends on frame 1 like the wag: a dog that
+   walks in and then stands there, rather than one marching on the spot for as
+   long as the page is open. */
+.obie-walk-burst {
+  animation: obie-frames-burst 1200ms steps(1) 1 both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .obie-walk-burst {
+    animation: none;
+    background-position-x: 0%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -426,28 +443,6 @@ ruby rt {
 
 @media (prefers-reduced-motion: reduce) {
   .obie-wag-loop {
-    animation: none;
-    background-position-x: 0%;
-  }
-}
-
-/* Breathing, drawn rather than scaled — the experiment the transform version
-   was standing in for. The two drawings differ by how far the body is
-   compressed, which is what a breath actually looks like; scaling the whole
-   picture 1.5% was only ever an approximation of it.
-   3s a cycle, 1.5s a frame, so twenty breaths a minute — a resting rate for a
-   dog rather than the slower human-paced one the scale version used, because a
-   hard cut has to be believable as a breath at the moment it happens and a cut
-   every 2.25s is a long time to hold a still frame.
-   ⚠️ Whether a hard cut can read as breathing at all is the open question this
-   is here to answer. If it reads as the picture glitching rather than the dog
-   inhaling, the answer is the scale transform, and this comes out. */
-.obie-breathe-2f {
-  animation: obie-frames-cycle 3000ms steps(2, jump-none) infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .obie-breathe-2f {
     animation: none;
     background-position-x: 0%;
   }

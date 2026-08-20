@@ -107,11 +107,11 @@ const MOTION: Record<string, string> = {
   surprised: "obie-cheer",
   // doing something
   tailwag: "",   // has a sprite — see SPRITES below
-  walking: "obie-bob",
+  walking: "",   // has a sprite — see SPRITES below
   shoes: "obie-bob",
   // at rest
   sitting: "obie-breathe-soft",
-  thinking: "",   // has a sprite — see SPRITES below
+  thinking: "obie-breathe-soft",
   drinking: "obie-breathe-soft",
   listening: "obie-breathe-soft",
   eating: "obie-breathe-soft",
@@ -137,9 +137,7 @@ export function obieMotionFor(art: string): string {
  */
 const SPRITES: Record<string, { frames: number; motion: string }> = {
   tailwag: { frames: 2, motion: "obie-wag-burst" },
-  // Breathing as two drawings instead of one scaled. On trial: see the note on
-  // .obie-breathe-2f in globals.css for what it is being judged against.
-  thinking: { frames: 2, motion: "obie-breathe-2f" },
+  walking: { frames: 2, motion: "obie-walk-burst" },
 };
 
 export function obieSpriteFor(art: string): { frames: number; motion: string } | null {
