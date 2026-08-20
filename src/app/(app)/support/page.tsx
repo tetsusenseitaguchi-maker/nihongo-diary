@@ -77,7 +77,27 @@ export default function SupportPage() {
       {/* Obie banner */}
       <Card accent="none" className="gloss-green relative overflow-hidden p-0">
         <div className="flex flex-col items-center gap-5 p-6 sm:flex-row sm:p-7">
-          <ObiePhoto size={84} className="ring-4 ring-cream/20" />
+          {/* The card speaks to the reader, so the drawing looks back: sitting
+              is the front-facing pose with open eyes. It replaces obie-avatar,
+              which is a different hand from the twenty-three.
+
+              ⚠️ Square, not cropped to a circle. That was tried and does not
+              work: a full-body figure inside an 84px circle shrinks to nothing
+              and floats with empty ring around it. The circle suited a face;
+              this is a whole dog.
+
+              ⚠️ The cutouts carry no ground shadow — it was removed so they
+              could sit on dark surfaces at all — and this card is gloss-green.
+              A drop-shadow puts it back in CSS, following the alpha silhouette.
+              A cream tile behind him was the other candidate and reads as a
+              sticker pasted on: too much contrast against this green. */}
+          <Image
+            src="/obie/obie-sitting.webp"
+            alt=""
+            width={96}
+            height={96}
+            className="h-24 w-24 shrink-0 drop-shadow-[0_4px_10px_rgba(0,0,0,0.45)]"
+          />
           <div>
             <Badge tone="apricot" className="mb-2">
               <Icon.sparkle className="h-3.5 w-3.5" /> {t("support.obieSays")}
