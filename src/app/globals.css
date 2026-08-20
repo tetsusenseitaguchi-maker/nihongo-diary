@@ -340,26 +340,64 @@ ruby rt {
    collapses duration only, which neither stops a loop nor is the right answer
    for a one-shot that ends where it started. */
 
-/* A wag, from the hindquarters. Four decaying sways; the whole rear end swings
-   the way a real one does rather than the tail moving on its own, which is not
-   something a still image can do. ±2deg moves the top of an 80px drawing by
-   about 2.5px. */
-@keyframes obie-wag {
-  0%   { transform: rotate(0deg); }
-  15%  { transform: rotate(-2deg); }
-  35%  { transform: rotate(1.6deg); }
-  55%  { transform: rotate(-1.1deg); }
-  75%  { transform: rotate(0.6deg); }
-  100% { transform: rotate(0deg); }
+/* ── Flip-book frames ───────────────────────────────────────────────────────
+   Two drawings of the same pose in one file, side by side, shown one at a time.
+   Rotating a single drawing made the IMAGE move; swapping drawings makes what
+   is drawn move, which is the difference between a picture being animated and
+   a character being alive.
+
+   One file, so the second frame cannot arrive late — the reason this is a
+   sprite and not two stacked <img>. background-image is set inline per pose so
+   one class serves every two-frame illustration.
+
+   ⚠️ steps(N, jump-none), never a bare steps(N). The default is jump-end,
+   which for two frames visits 0% and 50% — and 50% of a two-frame sprite is
+   the right half of one drawing beside the left half of the other. jump-none
+   visits 0% and 100%, which are the two frames. */
+.obie-frames-2 {
+  background-repeat: no-repeat;
+  background-size: 200% 100%;
+  background-position-x: 0%;
 }
 
-.obie-wag {
-  transform-origin: 50% 90%;
-  animation: obie-wag 900ms ease-out both;
+/* A wag: five flips over 800ms — about 6fps, a sticker rather than film — and
+   it ENDS ON FRAME 1. Not a loop: the dashboard is opened every day, and a tail
+   going forever in the corner is the opposite failure to the ornament this
+   replaced. A dog wags when you walk in and then settles, which is the whole
+   shape of this.
+
+   ⚠️ steps(1) here, NOT steps(1, jump-none). jump-none divides the range into
+   n-1 intervals and so requires n >= 2; at n = 1 the function is invalid and
+   the browser drops the whole animation shorthand, which is not a parse error
+   anyone sees — the rule ships, the CSS file contains it, and the element
+   simply computes animation-name: none. Measured that way before it was
+   caught. jump-none is right for the plain N-frame ramp above, where n is the
+   frame count; it is wrong for this one, where each keyframe already names its
+   own frame and the single step only has to stop interpolation between them.
+
+   With one step per interval the frame order is whatever the keyframes say. A
+   run cycle needing four frames writes four positions here and changes nothing
+   else. */
+@keyframes obie-wag-burst {
+  0%,      20%  { background-position-x:   0%; }
+  20.01%,  40%  { background-position-x: 100%; }
+  40.01%,  60%  { background-position-x:   0%; }
+  60.01%,  80%  { background-position-x: 100%; }
+  80.01%, 100%  { background-position-x:   0%; }
+}
+
+.obie-wag-burst {
+  animation: obie-wag-burst 800ms steps(1) 1 both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .obie-wag { animation: none; }
+  .obie-wag-burst {
+    animation: none;
+    /* Redundant today, since none leaves the class's own 0% in place, but
+       written out so that changing the keyframe's opening frame later cannot
+       silently strand a reduced-motion reader on the wrong drawing. */
+    background-position-x: 0%;
+  }
 }
 
 /* Two bobs for the poses that are on their way somewhere — walking, and

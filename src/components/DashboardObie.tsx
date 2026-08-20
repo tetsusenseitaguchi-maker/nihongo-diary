@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { obieArtFor, obieMotionFor, type ObieMood } from "@/lib/obie-mood";
+import { obieArtFor, obieMotionFor, obieSpriteFor, type ObieMood } from "@/lib/obie-mood";
 
 /**
  * Obie's place on the dashboard, and the one that changes.
@@ -36,7 +36,25 @@ export function DashboardObie({
   todayStr: string;
 }) {
   const art = obieArtFor(mood, todayStr);
-  const motion = obieMotionFor(art);
+  const size = "h-20 w-20 shrink-0 sm:h-28 sm:w-28";
+  const sprite = obieSpriteFor(art);
+
+  /* A pose with frames is drawn as a background rather than an <img>: one file
+     holding both drawings, shown one at a time. That costs next/image's
+     optimisation — the asset is already webp at the size it is drawn, so there
+     is little left to optimise — and it costs alt, which was alt="" anyway, so
+     aria-hidden says the same thing. What it buys is that the second frame
+     cannot arrive late, because it was never a second request. */
+  if (sprite) {
+    return (
+      <div
+        aria-hidden
+        className={`${size} obie-frames-${sprite.frames} ${sprite.motion}`}
+        style={{ backgroundImage: `url(/obie/obie-${art}-${sprite.frames}f.webp)` }}
+      />
+    );
+  }
+
   return (
     <Image
       // The pools hold bare pose names; the files carry an obie- prefix.
@@ -44,7 +62,7 @@ export function DashboardObie({
       alt=""
       width={112}
       height={112}
-      className={`h-20 w-20 shrink-0 sm:h-28 sm:w-28 ${motion}`}
+      className={`${size} ${obieMotionFor(art)}`}
       priority
     />
   );

@@ -106,7 +106,7 @@ const MOTION: Record<string, string> = {
   gift: "obie-cheer",
   surprised: "obie-cheer",
   // doing something
-  tailwag: "obie-wag",
+  tailwag: "",   // has a sprite — see SPRITES below
   walking: "obie-bob",
   shoes: "obie-bob",
   // at rest
@@ -119,4 +119,26 @@ const MOTION: Record<string, string> = {
 
 export function obieMotionFor(art: string): string {
   return MOTION[art] ?? "";
+}
+
+/**
+ * Poses drawn as a flip-book rather than moved with a transform.
+ *
+ * The split is the one the transforms were already reaching for and could not
+ * reach: a wag is the drawing changing, not the drawing tilting. Anything in
+ * here renders as a background sprite and takes its motion from the frames;
+ * anything not in here keeps its transform. Positional motion — the save
+ * celebration sliding in from the right — stays a transform either way, since
+ * no number of frames moves a character across a screen.
+ *
+ * `frames` must match the file: obie-<pose>-<frames>f.webp, built by
+ * scripts/obie-sprite.mjs, which prints the background-size and steps() that go
+ * with whatever it just wrote.
+ */
+const SPRITES: Record<string, { frames: number; motion: string }> = {
+  tailwag: { frames: 2, motion: "obie-wag-burst" },
+};
+
+export function obieSpriteFor(art: string): { frames: number; motion: string } | null {
+  return SPRITES[art] ?? null;
 }
