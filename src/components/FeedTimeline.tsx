@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 import { Card } from "@/components/ui";
 import { Avatar } from "@/components/ObiePhoto";
 import { ReactionBar } from "@/components/ReactionBar";
@@ -294,9 +295,25 @@ export function FeedTimeline({
 
   if (items.length === 0) {
     return (
-      <Card className="p-8 text-center">
+      <Card className="flex flex-col items-center gap-3 p-8 text-center">
+        {/* This state had no illustration at all, and it is one every new
+            learner reaches: the feed is built from people you follow, and on
+            day one you follow nobody. Obie asleep says the same thing the
+            heading does — quiet, not broken — without blaming the reader for
+            it. He is the only one of these that breathes; see globals.css for
+            why a loop is right here and nowhere else.
+            alt="" as with the history empty state: the heading and the line
+            under it already carry the meaning. */}
+        <Image
+          src="/obie/obie-sleeping.webp"
+          alt=""
+          width={120}
+          height={120}
+          className="obie-breathe h-30 w-30"
+          priority
+        />
         <p className="font-serif text-lg font-bold text-pine">{t("feed.empty")}</p>
-        <p className="mx-auto mt-2 max-w-sm text-sm text-ink/70">{t("feed.emptyDesc")}</p>
+        <p className="mx-auto max-w-sm text-sm text-ink/70">{t("feed.emptyDesc")}</p>
       </Card>
     );
   }

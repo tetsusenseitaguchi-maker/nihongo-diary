@@ -318,6 +318,39 @@ ruby rt {
   .obie-settle-in { animation: none; }
 }
 
+/* ── Obie asleep, in the quiet feed ─────────────────────────────────────────
+   The one loop among these, and it earns it: the picture is a sleeping dog,
+   and for a sleeping dog breathing is not decoration laid on top, it is the
+   difference between asleep and a still photograph. Everything else Obie does
+   runs once and stops.
+
+   4500ms and 1.025. The period is the whole argument — around thirteen breaths
+   a minute, which is a resting rate. Faster and the same 2.5% stops reading as
+   sleep and starts reading as panting, which is a different and much less
+   restful animal. The amplitude is small for the same reason: at 120px this
+   moves the silhouette by about three pixels, which is felt more than seen,
+   and the empty feed is a screen people can sit on for a while.
+
+   transform-origin at the bottom so the body swells upward off the ground
+   instead of the whole dog pulsing about its middle.
+
+   ⚠️ An infinite animation needs `animation: none` written out. The global
+   guard collapses duration to 0.001ms, which does not stop a loop — it spins
+   it too fast to see. Third time in this file. */
+@keyframes obie-breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.025); }
+}
+
+.obie-breathe {
+  transform-origin: bottom center;
+  animation: obie-breathe 4500ms ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .obie-breathe { animation: none; }
+}
+
 /* ── Obie, after a diary is saved — see src/components/SaveCelebration.tsx ──
    Runs once, on mount, and ends invisible. No state, no timer, no cleanup: the
    element is inert once the animation has played out.
