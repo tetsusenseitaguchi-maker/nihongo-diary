@@ -296,7 +296,7 @@ export default async function FeedPage({
               in it. Applying it per tab rather than only to Following keeps him
               from blinking out on a tab switch. */}
           {discoveryItems.length > 0 && (
-            <ObieSprite art="tailwag" frames={2} motion="obie-wag-burst" className="h-14 w-14 shrink-0" />
+            <ObieSprite art="tailwag" frames={2} motion="obie-wag-loop" className="h-14 w-14 shrink-0" />
           )}
         </div>
 
@@ -495,7 +495,7 @@ export default async function FeedPage({
             guard against. Being short by construction means it holds whether he
             is there or not. */}
         {initialItems.length > 0 && (
-          <ObieSprite art="tailwag" frames={2} motion="obie-wag-burst" className="h-14 w-14 shrink-0" />
+          <ObieSprite art="tailwag" frames={2} motion="obie-wag-loop" className="h-14 w-14 shrink-0" />
         )}
       </div>
 

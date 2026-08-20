@@ -400,6 +400,59 @@ ruby rt {
   }
 }
 
+/* The plain N-frame cycle: walk the background from the first frame to the
+   last and repeat. Used by everything that runs continuously rather than in a
+   burst; the duration and the step count are set per class below.
+
+   ⚠️ steps(N, jump-none) is correct HERE, where N is the frame count — the
+   opposite of the burst above, which needs steps(1) because its keyframes
+   already name their own frames. jump-none visits both ends; a bare steps(2)
+   would visit 0% and 50%, and 50% of a two-frame sprite is half of each
+   drawing. */
+@keyframes obie-frames-cycle {
+  from { background-position-x: 0%; }
+  to   { background-position-x: 100%; }
+}
+
+/* A tail that never stops, for the feed header. The dashboard keeps the burst:
+   there Obie is the size of a face in the middle of the hero, here he is 56px
+   at the end of a heading, and a tail moving at the edge of a page someone is
+   reading is closer to a blinking cursor than to something demanding attention.
+   320ms holds the burst's own pace — 160ms a frame — so the two read as the
+   same dog at the same speed, one of whom settles and one of whom does not. */
+.obie-wag-loop {
+  animation: obie-frames-cycle 320ms steps(2, jump-none) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .obie-wag-loop {
+    animation: none;
+    background-position-x: 0%;
+  }
+}
+
+/* Breathing, drawn rather than scaled — the experiment the transform version
+   was standing in for. The two drawings differ by how far the body is
+   compressed, which is what a breath actually looks like; scaling the whole
+   picture 1.5% was only ever an approximation of it.
+   3s a cycle, 1.5s a frame, so twenty breaths a minute — a resting rate for a
+   dog rather than the slower human-paced one the scale version used, because a
+   hard cut has to be believable as a breath at the moment it happens and a cut
+   every 2.25s is a long time to hold a still frame.
+   ⚠️ Whether a hard cut can read as breathing at all is the open question this
+   is here to answer. If it reads as the picture glitching rather than the dog
+   inhaling, the answer is the scale transform, and this comes out. */
+.obie-breathe-2f {
+  animation: obie-frames-cycle 3000ms steps(2, jump-none) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .obie-breathe-2f {
+    animation: none;
+    background-position-x: 0%;
+  }
+}
+
 /* Two bobs for the poses that are on their way somewhere — walking, and
    lacing a shoe. Decaying, and over in well under a second. */
 @keyframes obie-bob {
