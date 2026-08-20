@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { obieArtFor, type ObieMood } from "@/lib/obie-mood";
+import { obieArtFor, obieMotionFor, type ObieMood } from "@/lib/obie-mood";
 
 /**
  * Obie's place on the dashboard, and the one that changes.
@@ -16,9 +16,13 @@ import { obieArtFor, type ObieMood } from "@/lib/obie-mood";
  * who has uploaded one. Obie needed a slot that is his.
  *
  * ── Motion ────────────────────────────────────────────────────────────────
- * Still, except when the week's goal has been met. See globals.css: this page
- * is opened daily, and an arrival animation on the everyday states would play
- * thousands of times a year.
+ * Chosen by the illustration, not by the mood — a wagging Obie wags whichever
+ * state put him there. Poses that are doing something get a one-shot and then
+ * hold still; poses at rest breathe. See globals.css for the amplitudes and
+ * for why the breath is gentler than the sleeping Obie in the empty feed.
+ *
+ * Standing completely still was the first attempt and it read as an ornament
+ * in what is meant to be a character's own place.
  *
  * alt="" because the state is already in words on the same screen — the streak
  * line above, the write CTA below, the weekly goal card further down. Obie
@@ -32,6 +36,7 @@ export function DashboardObie({
   todayStr: string;
 }) {
   const art = obieArtFor(mood, todayStr);
+  const motion = obieMotionFor(art);
   return (
     <Image
       // The pools hold bare pose names; the files carry an obie- prefix.
@@ -39,7 +44,7 @@ export function DashboardObie({
       alt=""
       width={112}
       height={112}
-      className={`h-20 w-20 shrink-0 sm:h-28 sm:w-28 ${mood === "goalMet" ? "obie-cheer" : ""}`}
+      className={`h-20 w-20 shrink-0 sm:h-28 sm:w-28 ${motion}`}
       priority
     />
   );

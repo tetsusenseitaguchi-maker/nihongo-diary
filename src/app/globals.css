@@ -318,6 +318,85 @@ ruby rt {
   .obie-settle-in { animation: none; }
 }
 
+/* ── Obie on the dashboard, moving like whatever he is doing ────────────────
+   Standing perfectly still in the hero made him an ornament rather than a
+   character, so each pose gets the motion its own picture implies. Which class
+   lands on which illustration is in lib/obie-mood.ts, keyed on the artwork and
+   not on the mood — the drawing is what the movement has to agree with.
+
+   The split is between poses that are DOING something and poses that are
+   RESTING. Doing gets a one-shot: a wag or a bob happens, finishes, and leaves
+   a still dog behind, which is what a dog actually does when you walk in. That
+   suits a screen opened several times a day far better than a loop would.
+   Resting gets a breath, because a resting animal that does not breathe is a
+   photograph, and that was the original complaint.
+
+   The breathing here is gentler than the sleeping Obie in the empty feed —
+   5500ms against 4500, 1.5% against 2.5% — because this one is seen every day
+   and that one is seen almost never. The feed's numbers were named as the
+   ceiling and this sits under them.
+
+   ⚠️ Every block below gets its own animation: none. The global guard
+   collapses duration only, which neither stops a loop nor is the right answer
+   for a one-shot that ends where it started. */
+
+/* A wag, from the hindquarters. Four decaying sways; the whole rear end swings
+   the way a real one does rather than the tail moving on its own, which is not
+   something a still image can do. ±2deg moves the top of an 80px drawing by
+   about 2.5px. */
+@keyframes obie-wag {
+  0%   { transform: rotate(0deg); }
+  15%  { transform: rotate(-2deg); }
+  35%  { transform: rotate(1.6deg); }
+  55%  { transform: rotate(-1.1deg); }
+  75%  { transform: rotate(0.6deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.obie-wag {
+  transform-origin: 50% 90%;
+  animation: obie-wag 900ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .obie-wag { animation: none; }
+}
+
+/* Two bobs for the poses that are on their way somewhere — walking, and
+   lacing a shoe. Decaying, and over in well under a second. */
+@keyframes obie-bob {
+  0%   { transform: translateY(0); }
+  25%  { transform: translateY(-4px); }
+  50%  { transform: translateY(0); }
+  72%  { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
+
+.obie-bob {
+  animation: obie-bob 700ms ease-in-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .obie-bob { animation: none; }
+}
+
+/* Sitting, thinking, drinking, listening, eating — none of them going
+   anywhere. 1.5% over 5.5s is about a pixel of travel on the phone size, felt
+   rather than watched, and it is the only loop on the page. */
+@keyframes obie-breathe-soft {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.015); }
+}
+
+.obie-breathe-soft {
+  transform-origin: bottom center;
+  animation: obie-breathe-soft 5500ms ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .obie-breathe-soft { animation: none; }
+}
+
 /* ── Obie on the dashboard, the week's goal met ─────────────────────────────
    The only animated state on that page, and it stays that way on purpose. The
    dashboard is opened every day and often more than once, so a 400ms arrival

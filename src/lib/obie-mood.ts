@@ -85,3 +85,38 @@ export function obieArtFor(mood: ObieMood, todayStr: string): string {
   const i = Number.isFinite(day) ? ((day % pool.length) + pool.length) % pool.length : 0;
   return pool[i];
 }
+
+/**
+ * The motion each illustration gets, keyed on the artwork rather than on the
+ * mood, because the drawing is what the movement has to agree with. A wagging
+ * Obie wags whichever state put him there; a sitting one breathes.
+ *
+ * Doing → a one-shot that finishes and leaves a still dog. Resting → a slow
+ * breath, the only loop on this page. Nothing here is bigger than the sleeping
+ * Obie in the empty feed, which is the ceiling for a screen opened daily; the
+ * breath is deliberately under it.
+ *
+ * Unmapped names fall back to no class at all rather than to a default motion:
+ * a new illustration should be given its own answer, not inherit someone
+ * else's by accident.
+ */
+const MOTION: Record<string, string> = {
+  // finished the week — the existing cheer, two hops and done
+  laughing: "obie-cheer",
+  gift: "obie-cheer",
+  surprised: "obie-cheer",
+  // doing something
+  tailwag: "obie-wag",
+  walking: "obie-bob",
+  shoes: "obie-bob",
+  // at rest
+  sitting: "obie-breathe-soft",
+  thinking: "obie-breathe-soft",
+  drinking: "obie-breathe-soft",
+  listening: "obie-breathe-soft",
+  eating: "obie-breathe-soft",
+};
+
+export function obieMotionFor(art: string): string {
+  return MOTION[art] ?? "";
+}
