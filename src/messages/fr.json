@@ -301,6 +301,7 @@
   "drills.correct": "✓ Correct !",
   "drills.answerLabel": "Réponse :",
   "drills.practiceTitle": "📝 Pratique de cette correction",
+  "drills.count": "{n} exercices",
   "pricing.mostPopular": "Le plus populaire",
   "pricing.comingSoon": "Bientôt disponible",
   "pricing.currentPlan": "Plan actuel",

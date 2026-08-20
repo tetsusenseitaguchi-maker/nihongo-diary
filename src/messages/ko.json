@@ -301,6 +301,7 @@
   "drills.correct": "✓ 정답!",
   "drills.answerLabel": "정답:",
   "drills.practiceTitle": "📝 이번 교정 연습",
+  "drills.count": "{n}문제",
   "pricing.mostPopular": "가장 인기",
   "pricing.comingSoon": "곧 출시",
   "pricing.currentPlan": "현재 플랜",

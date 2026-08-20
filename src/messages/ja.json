@@ -301,6 +301,7 @@
   "drills.correct": "✓ 正解！",
   "drills.answerLabel": "答え：",
   "drills.practiceTitle": "📝 この添削の練習問題",
+  "drills.count": "{n}問",
   "pricing.mostPopular": "人気ナンバーワン",
   "pricing.comingSoon": "近日公開",
   "pricing.currentPlan": "現在のプラン",

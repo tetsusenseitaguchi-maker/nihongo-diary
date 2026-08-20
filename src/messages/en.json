@@ -330,6 +330,7 @@
   "drills.correct": "✓ Correct!",
   "drills.answerLabel": "Answer:",
   "drills.practiceTitle": "📝 Practice from This Correction",
+  "drills.count": "{n} drills",
   "pricing.mostPopular": "Most popular",
   "pricing.comingSoon": "Coming soon",
   "pricing.currentPlan": "Current plan",

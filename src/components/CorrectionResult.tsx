@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useId } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import type { Correction } from "@/lib/types";
 import { ObiePhoto } from "@/components/ObiePhoto";
 import { Furigana, NoRuby } from "@/components/Furigana";
+import { Icon } from "@/components/icons";
+import { isSectionOpen, setSectionOpen, MINI_LESSON_OPEN_KEY } from "@/lib/correction-sections/open";
 import { AudioLimitNotice, PlayButton, type PlayButtonKind } from "@/components/PlayButton";
 import { NativeGate } from "@/components/NativeGate";
 import { naturalAudioChoice } from "@/lib/natural-audio";
@@ -375,6 +377,22 @@ export function CorrectionResult({
 
   // Vocabulary saving state
   const [wordStates, setWordStates] = useState<Map<string, SaveState>>(new Map());
+  /* Closed on first paint, then opened if this browser asked for it. Read in
+     an effect and never during render: the server has no localStorage and
+     would produce different markup. See @/lib/correction-sections/open. */
+  const [lessonOpen, setLessonOpen] = useState(false);
+  const lessonBaseId = useId();
+  const lessonPanelId = `${lessonBaseId}-lesson-panel`;
+  const lessonHeaderId = `${lessonBaseId}-lesson-header`;
+  useEffect(() => {
+    if (isSectionOpen(MINI_LESSON_OPEN_KEY)) setLessonOpen(true);
+  }, []);
+  function toggleLesson() {
+    setLessonOpen((wasOpen) => {
+      setSectionOpen(MINI_LESSON_OPEN_KEY, !wasOpen);
+      return !wasOpen;
+    });
+  }
   const [showVocabUpgrade, setShowVocabUpgrade] = useState(false);
   const [isIosApp, setIsIosApp] = useState(false);
 
@@ -1081,13 +1099,49 @@ export function CorrectionResult({
       {/* Mini Lesson Preview */}
       {miniLesson && (
         <div className="gloss-card overflow-hidden rounded-[var(--radius-card)]">
+          {/* ⚠️ The second line is the whole point of closing this. A mini
+              lesson is a paid feature, so while it is shut, "Lesson 16 ·
+              〜ている & 〜てある" is the only thing a subscriber can see of what
+              they are paying for — it has to name the grammar, not just say
+              that a lesson exists.
+
+              The button is not the whole bar: "See all" is a link and cannot
+              live inside it. The arrow hugs the text rather than being pushed
+              to the far edge, which keeps it away from the link beside it. */}
           <div className="flex items-center justify-between gap-2 bg-pine px-5 py-3">
-            <p className="font-serif text-base font-bold text-cream">📘 {t("correction.miniLesson")}</p>
-            <a href="/support?tab=lessons" className="text-xs font-semibold text-cream/80 hover:text-cream">
+            <button
+              type="button"
+              id={lessonHeaderId}
+              aria-expanded={lessonOpen}
+              aria-controls={lessonPanelId}
+              onClick={toggleLesson}
+              className="flex min-w-0 flex-1 items-center gap-2 text-left"
+            >
+              <span className="min-w-0">
+                <span className="block font-serif text-base font-bold text-cream">
+                  📘 {t("correction.miniLesson")}
+                </span>
+                {/* line-clamp-2, not truncate: measured against all twenty real
+                    lesson titles, one line cut off three of them in English and
+                    six in Japanese — "〜てみる / 〜ておく / 〜てしまう" lost half its
+                    grammar. Truncating the one line that justifies the
+                    subscription is the one thing this line must not do. Two
+                    lines clear every title at 375px with room over. */}
+                <span className="mt-0.5 block line-clamp-2 text-xs text-cream/75">
+                  {t("correction.lesson", { n: miniLesson.order })} ·{" "}
+                  <NoRuby text={miniLesson.title} />
+                </span>
+              </span>
+              <Icon.arrow
+                className={`h-4 w-4 shrink-0 text-cream/70 transition-transform ${lessonOpen ? "rotate-90" : ""}`}
+              />
+            </button>
+            <a href="/support?tab=lessons" className="shrink-0 text-xs font-semibold text-cream/80 hover:text-cream">
               📚 {t("correction.seeAll")}
             </a>
           </div>
-          <div className="space-y-3 p-5">
+          {lessonOpen && (
+          <div id={lessonPanelId} role="region" aria-labelledby={lessonHeaderId} className="panel-in space-y-3 p-5">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-moss-600">
                 {t("correction.lesson", { n: miniLesson.order })}
@@ -1132,6 +1186,7 @@ export function CorrectionResult({
               <p className="text-sm leading-relaxed text-ink/75">💡 <NoRuby text={miniLesson.shortNote} /></p>
             )}
           </div>
+          )}
         </div>
       )}
 

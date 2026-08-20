@@ -301,6 +301,7 @@
   "drills.correct": "✓ Richtig!",
   "drills.answerLabel": "Antwort:",
   "drills.practiceTitle": "📝 Übung aus dieser Korrektur",
+  "drills.count": "{n} Aufgaben",
   "pricing.mostPopular": "Am beliebtesten",
   "pricing.comingSoon": "Demnächst verfügbar",
   "pricing.currentPlan": "Aktueller Plan",

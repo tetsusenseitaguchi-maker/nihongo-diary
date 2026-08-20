@@ -295,6 +295,33 @@ ruby rt {
   .correction-settle { animation: none; }
 }
 
+/* ── A collapsible panel opening ────────────────────────────────────────────
+   Opacity only, and deliberately not height. The two panels this is for — the
+   practice drills and the mini lesson on a correction — are long: several
+   drill cards, or an explanation plus a visual plus a list of points. A height
+   transition on that relayouts every child on every frame, and the panels are
+   the reason the page was being folded up in the first place.
+
+   So the height lands at once and the contents arrive over 150ms. The page
+   settles immediately, which is what a reader tapping "open" is asking for,
+   and nothing snaps into being.
+
+   The arrow beside the heading turns with a plain transition-transform, which
+   the global reduced-motion guard already collapses. This is a keyframe, so it
+   gets its own rule. */
+@keyframes panel-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.panel-in {
+  animation: panel-in 150ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-in { animation: none; }
+}
+
 /* ── Obie in an empty state ─────────────────────────────────────────────────
    Once, on mount, and then it is over. Deliberately not a loop: an empty
    state is a screen someone sits and reads, and a thing that keeps moving in

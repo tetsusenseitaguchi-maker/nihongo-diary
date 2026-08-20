@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Furigana, NoRuby } from "@/components/Furigana";
+import { Icon } from "@/components/icons";
+import { isSectionOpen, setSectionOpen, PRACTICE_OPEN_KEY } from "@/lib/correction-sections/open";
 import { useT } from "@/contexts/locale";
 import type { PracticeDrill, DrillType } from "@/lib/types";
 
@@ -119,21 +121,76 @@ function DrillCard({ drill, index }: { drill: PracticeDrill; index: number }) {
 
 // ── PracticeDrills (used in CorrectionResult) ──────────────────────────────
 
+/**
+ * Closed to begin with, because a correction is long and these sit near the
+ * bottom of it — but ⚠️ they are also a paid feature, so while it is closed
+ * the second line of the heading is the only thing telling a subscriber what
+ * they are paying for. "2 drills" is not decoration; it is the receipt. It
+ * uses drills.count rather than review.drillsCount, which reads identically
+ * today but belongs to the SRS review screen and would carry any wording
+ * change there onto this one.
+ *
+ * The open state is remembered per browser — see @/lib/correction-sections/open
+ * for why a preference and not a per-correction fact.
+ *
+ * ⚠️ Read after mount, never during render. The server has no localStorage, so
+ * reading it while rendering would produce markup the client disagrees with.
+ * Closed is the first paint either way; a remembered "open" arrives a frame
+ * later, far enough down the page that nobody is looking at it.
+ */
 export function PracticeDrills({ drills }: { drills?: PracticeDrill[] }) {
   const t = useT();
+  const [open, setOpen] = useState(false);
+  const baseId = useId();
+  useEffect(() => {
+    if (isSectionOpen(PRACTICE_OPEN_KEY)) setOpen(true);
+  }, []);
+
   if (!drills?.length) return null;
+
+  const panelId = `${baseId}-drills-panel`;
+  const headerId = `${baseId}-drills-header`;
+
+  function toggle() {
+    setOpen((wasOpen) => {
+      setSectionOpen(PRACTICE_OPEN_KEY, !wasOpen);
+      return !wasOpen;
+    });
+  }
 
   return (
     <div className="space-y-3">
-      <div className="flex items-baseline gap-2">
-        <h3 className="font-serif text-lg font-bold text-pine">{t("drills.practiceTitle")}</h3>
-        <span className="font-jp text-xs text-muted">練習(れんしゅう)してみよう</span>
-      </div>
-      <div className="space-y-3">
-        {drills.map((d, i) => (
-          <DrillCard key={i} drill={d} index={i} />
-        ))}
-      </div>
+      <h3>
+        <button
+          type="button"
+          id={headerId}
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={toggle}
+          className="flex w-full items-center gap-3 text-left"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block font-serif text-lg font-bold text-pine">
+              {t("drills.practiceTitle")}
+            </span>
+            <span className="mt-0.5 block text-xs text-muted">
+              {t("drills.count", { n: drills.length })}
+              <span className="font-jp"> · 練習(れんしゅう)してみよう</span>
+            </span>
+          </span>
+          <Icon.arrow
+            className={`h-5 w-5 shrink-0 text-moss-600 transition-transform ${open ? "rotate-90" : ""}`}
+          />
+        </button>
+      </h3>
+
+      {open && (
+        <div id={panelId} role="region" aria-labelledby={headerId} className="panel-in space-y-3">
+          {drills.map((d, i) => (
+            <DrillCard key={i} drill={d} index={i} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

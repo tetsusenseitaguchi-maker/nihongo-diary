@@ -301,6 +301,7 @@
   "drills.correct": "✓ 正确！",
   "drills.answerLabel": "答案：",
   "drills.practiceTitle": "📝 本次添削的练习",
+  "drills.count": "{n}道题",
   "pricing.mostPopular": "最受欢迎",
   "pricing.comingSoon": "即将推出",
   "pricing.currentPlan": "当前计划",
