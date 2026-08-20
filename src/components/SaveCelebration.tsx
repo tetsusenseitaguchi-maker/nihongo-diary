@@ -10,37 +10,46 @@ import Image from "next/image";
  * starting another correction clears savedEntryId, and the next save sets it
  * again.
  *
+ * ── Why the top and not the bottom ────────────────────────────────────────
+ * He used to sit at bottom-24 and landed on top of the footer disclaimer —
+ * "AI corrections may not be perfect…" — which is the one piece of text on the
+ * page that should never be covered. That was not a tuning problem: the footer
+ * is the last thing in <main>, so anything pinned to the bottom of the viewport
+ * meets it the moment the page is scrolled to the end, and a correction is long
+ * enough that the end is where people are.
+ *
+ * The top-right is out of the footer's reach by construction, and is where a
+ * confirmation is expected to appear anyway. The offset is measured from
+ * env(safe-area-inset-top) so a notch pushes him down with the header rather
+ * than under it, and z-10 keeps him beneath the sticky header at z-20 — if the
+ * two ever meet, the header should win.
+ *
+ * ── No tile ──────────────────────────────────────────────────────────────
+ * The artwork is a cutout now, so Obie stands on whatever is behind him. The
+ * white card this used to need read as a sticker on the real device: #ffffff
+ * on the page's warmer ground was brighter than everything around it. The
+ * drop-shadow follows the alpha silhouette instead of tracing a square.
+ *
  * Decorative, and only decorative. The save is already stated in words next to
  * the heading ("✓ Saved"), so this is aria-hidden rather than a second
- * announcement of the same fact to a screen reader. pointer-events-none because
- * it floats over the page and must never take a tap meant for what is under it.
- *
- * Sits above the bottom nav on mobile (which is h-[env(safe-area-inset-bottom)]
- * plus its own height, hence bottom-24) and drops to a normal corner offset once
- * that nav is gone at lg.
+ * announcement of the same fact. pointer-events-none because it floats over the
+ * page and must never take a tap meant for what is under it.
  */
 export function SaveCelebration() {
   return (
     <div
       aria-hidden
-      className="obie-arrive pointer-events-none fixed bottom-24 right-4 z-20 lg:bottom-8 lg:right-8"
+      className="obie-arrive pointer-events-none fixed right-4 z-10 lg:right-8"
+      style={{ top: "calc(env(safe-area-inset-top) + 5rem)" }}
     >
-      {/* ⚠️ Rounded, and that is not decoration. The artwork is an opaque PNG
-          on white, and #ffffff against the page's #fafafa is a visible square
-          — the drop-shadow was outlining it rather than lifting Obie off the
-          page. Predicted invisible, looked at, and it was not.
-          So the square becomes a deliberate one: bg-paper is the same #ffffff
-          the file already carries, so the image melts into the tile and what
-          is left reads as a small card that slid in. The real fix is cutting
-          the background out of all 23 files at once, which is its own job. */}
       <Image
         src="/obie/obie-running.webp"
         alt=""
         width={112}
         height={112}
-        className="h-28 w-28 rounded-2xl bg-paper shadow-lift"
+        className="h-28 w-28 drop-shadow-[0_6px_12px_rgba(35,61,48,0.22)]"
         // On screen for 2.6s total, so lazy-loading would spend a chunk of
-        // that fetching. It is 9KB.
+        // that fetching. It is 17KB.
         priority
       />
     </div>
