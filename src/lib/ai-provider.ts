@@ -14,13 +14,45 @@ export interface ChatMessage {
   content: string;
 }
 
+/**
+ * One piece of a system prompt that is sent as several blocks instead of one
+ * string, so a prompt-caching breakpoint can be placed between them.
+ *
+ * ⚠️ Blocks are concatenated with NO separator — see the note on splitSystem
+ * below for why. Each block must carry its own trailing newlines. That is not
+ * a wart: it is what makes `blocks.map(b => b.text).join("")` identical to the
+ * single string the same prompt would have been, which is how a caller can
+ * prove a split changed the layout and nothing else.
+ */
+export interface SystemBlock {
+  text: string;
+  /**
+   * Marks the end of the cacheable prefix. Anthropic only — OpenAI caches
+   * prefixes automatically and has no equivalent marker, so the flag is
+   * simply ignored there and the same blocks are sent as one string.
+   *
+   * A cached prefix has to be long enough to qualify: measured against
+   * claude-haiku-4-5 on 2026-08-21, a 6,065-token block was cached
+   * (cache_creation_input_tokens=6065) and a 1,278-token one was not
+   * (0, billed as ordinary input). Below the minimum this flag costs
+   * nothing and does nothing — it does not fail, it just never caches.
+   */
+  cache?: boolean;
+}
+
 interface ChatCompletionParams {
   messages: ChatMessage[];
+  /**
+   * System prompt as ordered blocks. When set, `messages` must carry no
+   * system message — this replaces it. Callers that do not need a caching
+   * breakpoint keep passing a plain system message and ignore this.
+   */
+  systemBlocks?: SystemBlock[];
   temperature?: number;
   maxTokens: number;
   /** Set to false for plain-text output (e.g. translation). Defaults to true. */
   jsonMode?: boolean;
-  /** Short tag (e.g. "correct", "mini-lesson-drills") prefixed to the stop-reason server log. */
+  /** Short tag (e.g. "correct", "mini-lesson-drills") prefixed to the stop-reason log. */
   label?: string;
 }
 
@@ -80,6 +112,40 @@ function splitSystem(messages: ChatMessage[]): {
   const rest = messages
     .filter((m): m is { role: "user" | "assistant"; content: string } => m.role !== "system");
   return { system, rest };
+}
+
+/**
+ * What Anthropic's `system` field gets: the joined string as before, or the
+ * blocks with a cache_control breakpoint on the ones that asked for it.
+ *
+ * ttl "1h" rather than the default "5m" is the whole reason this exists.
+ * Corrections arrive about 70 times a day, median gap 13 minutes — measured
+ * over 2,202 of them on 2026-08-21. At 5 minutes the prefix is re-read 24% of
+ * the time, and a 5-minute write costs 1.25x input against a 0.1x read, so the
+ * writes eat the savings and the whole change is worth under 2%. At an hour
+ * the same prefix is re-read 91.6% of the time; the write costs 2x instead of
+ * 1.25x and it still pays for itself several times over.
+ */
+function anthropicSystem(
+  blocks: SystemBlock[] | undefined,
+  joined: string,
+): string | { type: "text"; text: string; cache_control?: { type: "ephemeral"; ttl: "1h" } }[] {
+  if (!blocks) return joined;
+  return blocks.map((b) => ({
+    type: "text" as const,
+    text: b.text,
+    ...(b.cache ? { cache_control: { type: "ephemeral" as const, ttl: "1h" as const } } : {}),
+  }));
+}
+
+/** OpenAI has no block form: the same blocks go back to being one string.
+ *  Joined with "" because each block already ends with its own newlines. */
+function openaiMessages(params: ChatCompletionParams): ChatMessage[] {
+  if (!params.systemBlocks) return params.messages;
+  return [
+    { role: "system", content: params.systemBlocks.map((b) => b.text).join("") },
+    ...params.messages,
+  ];
 }
 
 /**
@@ -181,7 +247,7 @@ export async function createChatCompletion(
     const response = await client.messages.create({
       model,
       max_tokens: params.maxTokens,
-      system,
+      system: anthropicSystem(params.systemBlocks, system),
       messages: rest,
     });
 
@@ -205,7 +271,7 @@ export async function createChatCompletion(
     temperature: params.temperature,
     max_tokens: params.maxTokens,
     ...(params.jsonMode === false ? {} : { response_format: { type: "json_object" as const } }),
-    messages: params.messages,
+    messages: openaiMessages(params),
   });
 
   const finishReason = completion.choices[0]?.finish_reason ?? null;
@@ -260,7 +326,7 @@ export async function createChatCompletionStream(
     const rawStream = await client.messages.create({
       model,
       max_tokens: params.maxTokens,
-      system,
+      system: anthropicSystem(params.systemBlocks, system),
       messages: rest,
       stream: true,
     });
@@ -323,7 +389,7 @@ export async function createChatCompletionStream(
     temperature: params.temperature,
     max_tokens: params.maxTokens,
     response_format: { type: "json_object" },
-    messages: params.messages,
+    messages: openaiMessages(params),
   });
 
   const stream = new ReadableStream<Uint8Array>({

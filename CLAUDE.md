@@ -4,7 +4,9 @@
 
 Japanese diary app with AI corrections. Users write diary entries in Japanese, receive AI corrections, and can browse a social feed.
 
-**Stack:** Next.js 15.5 App Router · TypeScript · Tailwind CSS · Supabase (auth + DB) · OpenAI GPT-4.1-mini · Capacitor (iOS) · Deployed on Vercel
+**Stack:** Next.js 15.5 App Router · TypeScript · Tailwind CSS · Supabase (auth + DB) · Anthropic Claude Haiku 4.5 · Capacitor (iOS) · Deployed on Vercel
+
+**AI プロバイダ:** `src/lib/ai-provider.ts` が切り替える。`AI_PROVIDER=openai` のときだけ OpenAI（`gpt-4.1-mini`）で、**既定は Anthropic（`claude-haiku-4-5`）**。Vercel も Anthropic（2026-08-21 確認）。`OPENAI_API_KEY` は今も残っているが、既定の経路では使われない。
 
 ## Commands
 

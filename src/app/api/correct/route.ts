@@ -14,45 +14,32 @@ export const runtime = "nodejs";
 // /api/correct-existing が同じ関数を呼ぶので、片方だけ直すことができない。
 import * as PROMPT from "@/lib/correction-prompt";
 
-function systemPrompt(
-  level: string,
-  style: string,
-  lang: string,
-  includeDrills: boolean,
-  includeMiniLesson: boolean,
-  lean: boolean,
-): string {
-  // Practice drills and the mini-lesson preview are paid-plan features. For
-  // Free we drop each from the prompt entirely — the JSON schema, rule 1's
-  // field list, and the rule itself — so the model never generates them and
-  // the request doesn't pay output tokens for a section that is never shown.
-  // The client already guards both (PracticeDrills renders null for an empty
-  // array; buildMiniLessonFromAI returns null for a missing payload).
-  //
-  // ⚠️ The two flags must move together. Rule 11 tells the model to base
-  // drills on "the relatedMiniLesson topic", so includeDrills without
-  // includeMiniLesson would point the prompt at a field it no longer asks
-  // for. /api/correct sets both from the same plan test; if a caller ever
-  // needs to split them, rule 11's two references have to be conditional too.
-  //
-  // With both flags true the assembled prompt is byte-for-byte identical to
-  // the previous unconditional one, so paid-plan corrections are unaffected.
-  const drillsSchema = PROMPT.drillsSchema(includeDrills);
-  const drillsInRule1 = PROMPT.drillsInRule1(includeDrills);
-  const miniLessonInRule1 = PROMPT.miniLessonInRule1(includeMiniLesson);
-  const miniLessonSchema = PROMPT.miniLessonSchema(includeMiniLesson);
-  const drillsRule = PROMPT.drillsRule(includeDrills, lang);
-  const miniLessonRule = PROMPT.miniLessonRule(includeMiniLesson, lang);
-  // Free only. Every one of these is "" (or the pre-existing digit) when lean
-  // is false, so the paid prompt is byte-for-byte what it was — the same
-  // property the two flags above are held to. See correction-prompt.ts for why
-  // the number is 2 rather than 1, and why keyMistakes says "at most".
-  const keyMistakesCap = PROMPT.keyMistakesCap(lean);
-  const vocabularyCap = PROMPT.vocabularyCap(lean);
-  const explanationCap = PROMPT.explanationCap(lean);
-  const correctionNoteCap = PROMPT.correctionNoteCap(lean);
-  const suggestionCount = PROMPT.suggestionCount(lean);
-  return `You are a friendly Japanese teacher for Japanese learners.
+/**
+ * Block 1 of the system prompt: every line that is the same on every single
+ * correction — the opening, the "Rules:" heading, and rules 2 through 7b.
+ *
+ * It is hoisted to the front so it can be a prompt-caching prefix. A cache
+ * breakpoint only ever covers a prefix, so the constant part has to come
+ * first. Measured before this was written, the old order left 120 of ~8,600
+ * input tokens ahead of the first interpolation — 1.4% of the prompt. This
+ * block is ~6,065 tokens, about 71% of it.
+ *
+ * ⚠️ NOT ONE CHARACTER of the furigana rules changed. Whole spans of lines
+ * were moved and nothing else; the move was done by script and asserted
+ * line-for-line against the previous prompt.
+ *
+ * ⚠️ The rules now read 2,3,4,5,6,7,7b then 1 then 8,9,10… They are
+ * deliberately NOT renumbered. Renumbering is a text change, and rule 1's
+ * "the *Ruby fields named in rule 2" still resolves — rule 2 simply arrives
+ * first now. Renumber and the cached prefix changes, which means every diary
+ * has to be compared again.
+ *
+ * ⚠️ Ends with a blank line, on purpose. Anthropic puts NO separator between
+ * system blocks — see the note on splitSystem in @/lib/ai-provider. Without
+ * that trailing newline, rule 7b's last line would run straight into "This
+ * learner's level is:".
+ */
+const CACHED_RULES = `You are a friendly Japanese teacher for Japanese learners.
 
 Do not behave like a strict proofreader. Behave like a Japanese teacher who understands that learners need confidence.
 
@@ -63,47 +50,7 @@ Before correcting anything, ask yourself:
 4. Will the correction change the nuance?
 If the sentence is already understandable and natural enough, do not change it.
 
-This learner's level is: ${level}
-The correction style is: ${style}
-
-You must return ONLY valid JSON. No markdown. No text outside the JSON. Do NOT wrap the JSON in a markdown code block (no \`\`\`json, no \`\`\`).
-
-Return this JSON structure:
-{
-  "original": "",
-  "originalTextRuby": "",
-  "correctedJapaneseRuby": "",
-  "naturalJapaneseRuby": "",
-  "englishExplanation": "",
-  "correctionNote": "",
-  "keyMistakes": [
-    { "mistake": "", "mistakeRuby": "", "correctionRuby": "", "explanation": "" }
-  ],
-  "usefulVocabulary": [
-    { "word": "", "reading": "", "meaning": "", "exampleRuby": "" }
-  ],
-  "practiceSentenceRuby": "",
-${miniLessonSchema}${drillsSchema}  "nextVocab": [
-    { "word": "", "reading": "", "meaning": "", "level": "" }
-  ],
-  "nextGrammar": [
-    { "pattern": "", "explanation": "", "exampleRuby": "" }
-  ],
-  "alternativeWords": [
-    { "original": "", "alternative": "", "alternativeReading": "" }
-  ],
-  "diaryTitleRuby": "",
-  "obieCheerRuby": ""
-}
-
 Rules:
-
-1. Write ALL explanatory text in ${lang}. This includes: englishExplanation, correctionNote, every keyMistakes[].explanation, every usefulVocabulary[].meaning, every nextVocab[].meaning, every nextGrammar[].explanation${drillsInRule1}${miniLessonInRule1}. Never explain grammar in Japanese.
-   Keep ALL Japanese-language fields in Japanese: correctedJapaneseRuby, naturalJapaneseRuby, all *Ruby fields, word, reading, question, answer. Those are learning targets — never translate them.
-   NEVER put a <ruby> tag in ANY of the explanatory fields listed above. Furigana belongs ONLY in the *Ruby fields named in rule 2. When an explanation quotes Japanese, write it as plain kanji and kana: 「今日は」, NEVER 「<ruby>今日<rt>きょう</rt></ruby>は」. The same holds for nextGrammar[].pattern and alternativeWords[].original — those are plain Japanese labels, never furigana markup.
-   NEVER name a JSON field in ANY explanatory text. Field names (naturalJapaneseRuby, correctedJapaneseRuby, correctedJapanese, keyMistakes, usefulVocabulary, practiceSentenceRuby, and every other key in the structure above) belong to this response format alone. The learner never sees the JSON — to them these names are meaningless jargon. Refer to each part the way a teacher would, in ${lang}: "the natural version" (NOT naturalJapaneseRuby), "the correction" (NOT correctedJapaneseRuby), "the practice sentence" (NOT practiceSentenceRuby), "the words below" (NOT usefulVocabulary).
-   Wrong: "In the naturalJapaneseRuby, I've combined some ideas."
-   Right: "In the natural version, I've combined some ideas."
 
 2. Furigana: add furigana to ALL kanji in originalTextRuby, correctedJapaneseRuby, naturalJapaneseRuby, mistakeRuby, correctionRuby, exampleRuby, and practiceSentenceRuby. Use this exact format:
 <ruby>漢字<rt>かんじ</rt></ruby>
@@ -196,6 +143,86 @@ If the learner's original already matches one of the correct forms above, it is 
 7. correctedJapaneseRuby keeps the learner's structure (just fixes mistakes); naturalJapaneseRuby sounds more natural. For N5/N4 keep both simple even if a native might say something more advanced.
 
 7b. originalTextRuby: the learner's ORIGINAL text, character-for-character identical to what they wrote — including any mistakes. Do NOT fix, reword, or improve anything here. Add ONLY furigana, following rule 2 exactly. This is purely a reading aid for the unedited original.
+
+`;
+
+function variablePrompt(
+  level: string,
+  style: string,
+  lang: string,
+  includeDrills: boolean,
+  includeMiniLesson: boolean,
+  lean: boolean,
+): string {
+  // Practice drills and the mini-lesson preview are paid-plan features. For
+  // Free we drop each from the prompt entirely — the JSON schema, rule 1's
+  // field list, and the rule itself — so the model never generates them and
+  // the request doesn't pay output tokens for a section that is never shown.
+  // The client already guards both (PracticeDrills renders null for an empty
+  // array; buildMiniLessonFromAI returns null for a missing payload).
+  //
+  // ⚠️ The two flags must move together. Rule 11 tells the model to base
+  // drills on "the relatedMiniLesson topic", so includeDrills without
+  // includeMiniLesson would point the prompt at a field it no longer asks
+  // for. /api/correct sets both from the same plan test; if a caller ever
+  // needs to split them, rule 11's two references have to be conditional too.
+  //
+  // With both flags true the assembled prompt is byte-for-byte identical to
+  // the previous unconditional one, so paid-plan corrections are unaffected.
+  const drillsSchema = PROMPT.drillsSchema(includeDrills);
+  const drillsInRule1 = PROMPT.drillsInRule1(includeDrills);
+  const miniLessonInRule1 = PROMPT.miniLessonInRule1(includeMiniLesson);
+  const miniLessonSchema = PROMPT.miniLessonSchema(includeMiniLesson);
+  const drillsRule = PROMPT.drillsRule(includeDrills, lang);
+  const miniLessonRule = PROMPT.miniLessonRule(includeMiniLesson, lang);
+  // Free only. Every one of these is "" (or the pre-existing digit) when lean
+  // is false, so the paid prompt is byte-for-byte what it was — the same
+  // property the two flags above are held to. See correction-prompt.ts for why
+  // the number is 2 rather than 1, and why keyMistakes says "at most".
+  const keyMistakesCap = PROMPT.keyMistakesCap(lean);
+  const vocabularyCap = PROMPT.vocabularyCap(lean);
+  const explanationCap = PROMPT.explanationCap(lean);
+  const correctionNoteCap = PROMPT.correctionNoteCap(lean);
+  const suggestionCount = PROMPT.suggestionCount(lean);
+  return `This learner's level is: ${level}
+The correction style is: ${style}
+
+You must return ONLY valid JSON. No markdown. No text outside the JSON. Do NOT wrap the JSON in a markdown code block (no \`\`\`json, no \`\`\`).
+
+Return this JSON structure:
+{
+  "original": "",
+  "originalTextRuby": "",
+  "correctedJapaneseRuby": "",
+  "naturalJapaneseRuby": "",
+  "englishExplanation": "",
+  "correctionNote": "",
+  "keyMistakes": [
+    { "mistake": "", "mistakeRuby": "", "correctionRuby": "", "explanation": "" }
+  ],
+  "usefulVocabulary": [
+    { "word": "", "reading": "", "meaning": "", "exampleRuby": "" }
+  ],
+  "practiceSentenceRuby": "",
+${miniLessonSchema}${drillsSchema}  "nextVocab": [
+    { "word": "", "reading": "", "meaning": "", "level": "" }
+  ],
+  "nextGrammar": [
+    { "pattern": "", "explanation": "", "exampleRuby": "" }
+  ],
+  "alternativeWords": [
+    { "original": "", "alternative": "", "alternativeReading": "" }
+  ],
+  "diaryTitleRuby": "",
+  "obieCheerRuby": ""
+}
+
+1. Write ALL explanatory text in ${lang}. This includes: englishExplanation, correctionNote, every keyMistakes[].explanation, every usefulVocabulary[].meaning, every nextVocab[].meaning, every nextGrammar[].explanation${drillsInRule1}${miniLessonInRule1}. Never explain grammar in Japanese.
+   Keep ALL Japanese-language fields in Japanese: correctedJapaneseRuby, naturalJapaneseRuby, all *Ruby fields, word, reading, question, answer. Those are learning targets — never translate them.
+   NEVER put a <ruby> tag in ANY of the explanatory fields listed above. Furigana belongs ONLY in the *Ruby fields named in rule 2. When an explanation quotes Japanese, write it as plain kanji and kana: 「今日は」, NEVER 「<ruby>今日<rt>きょう</rt></ruby>は」. The same holds for nextGrammar[].pattern and alternativeWords[].original — those are plain Japanese labels, never furigana markup.
+   NEVER name a JSON field in ANY explanatory text. Field names (naturalJapaneseRuby, correctedJapaneseRuby, correctedJapanese, keyMistakes, usefulVocabulary, practiceSentenceRuby, and every other key in the structure above) belong to this response format alone. The learner never sees the JSON — to them these names are meaningless jargon. Refer to each part the way a teacher would, in ${lang}: "the natural version" (NOT naturalJapaneseRuby), "the correction" (NOT correctedJapaneseRuby), "the practice sentence" (NOT practiceSentenceRuby), "the words below" (NOT usefulVocabulary).
+   Wrong: "In the naturalJapaneseRuby, I've combined some ideas."
+   Right: "In the natural version, I've combined some ideas."
 
 8. correctionNote: if the original is NOT wrong but a more natural option exists, put a short, friendly English note here, e.g. "This isn't a mistake, but 〜 sounds a little more natural." If there is nothing to add, use an empty string "".${correctionNoteCap}${explanationCap}
 
@@ -373,10 +400,15 @@ export async function POST(request: Request) {
       label: "correct",
       temperature: 0.3,
       maxTokens: 8000,
-      messages: [
-        { role: "system", content: systemPrompt(level, style, lang, includeDrills, includeMiniLesson, lean) },
-        { role: "user", content: text },
+      // Two blocks, not one string: the caching breakpoint sits between them.
+      // CACHED_RULES is byte-identical on every correction, so all 44
+      // (level, style, language, plan) combinations that exist in production
+      // share one cache entry — checked against the API before this landed.
+      systemBlocks: [
+        { text: CACHED_RULES, cache: true },
+        { text: variablePrompt(level, style, lang, includeDrills, includeMiniLesson, lean) },
       ],
+      messages: [{ role: "user", content: text }],
     }));
   } catch (err) {
     console.error("[correct] AI error:", err);
