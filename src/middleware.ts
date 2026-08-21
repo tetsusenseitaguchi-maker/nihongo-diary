@@ -1,5 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, after, type NextRequest } from "next/server";
+import { todayInTZ } from "@/lib/date-tz";
+import { validateTZ } from "@/lib/tz-server";
+
+/** Marks "this account's /write visit is already recorded for this day". */
+const FUNNEL_COOKIE = "nd_funnel";
 
 const PROTECTED = [
   "/dashboard",
@@ -77,7 +82,77 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  recordWriteOpened(request, response, supabase, user?.id);
+
   return response;
+}
+
+/* ── funnel: did this account ever reach the writing screen? ───────────────
+ *
+ * 435 people have signed in and never written a diary, and nothing in the
+ * database says whether they got as far as /write. This is the one row that
+ * answers it. See supabase/funnel-events.sql for the table.
+ *
+ * Here rather than in the page for three reasons:
+ *   1. /write is a Client Component and /upgrade (stage two) is a Server
+ *      Component. Middleware instruments both the same way.
+ *   2. getUser() has already run above, so the account id costs nothing extra.
+ *   3. ⚠️ A component would be mounted twice on some layouts and would fire
+ *      twice. NotificationBell already is: layout.tsx renders one and TopBar
+ *      renders another, and the responsive classes only hide one with CSS —
+ *      both are in the DOM and both run their effects. Middleware runs once
+ *      per request, so the hazard does not exist here.
+ */
+function recordWriteOpened(
+  request: NextRequest,
+  response: NextResponse,
+  supabase: ReturnType<typeof createServerClient>,
+  userId: string | undefined,
+): void {
+  if (!userId) return;
+  // Exact match. /write/anything-else is not the writing screen.
+  if (request.nextUrl.pathname !== "/write") return;
+
+  /* ⚠️ THE GUARD THIS WHOLE THING DEPENDS ON.
+   *
+   * BottomNav links to /write with a plain <Link> and sits on every
+   * authenticated page, so Next prefetches /write as soon as the nav scrolls
+   * into view — for everyone, on every page, without anyone going there.
+   * Record those and the answer becomes "100% reached /write", which is
+   * exactly the thing this instrumentation exists to find out.
+   *
+   * A prefetch carries Next-Router-Prefetch. A real client-side navigation
+   * carries RSC but NOT that header, so only the prefetch header may be
+   * tested — filtering on RSC would throw away every in-app navigation and
+   * leave only full page loads.
+   */
+  if (request.headers.get("next-router-prefetch")) return;
+
+  const tz = validateTZ(decodeURIComponent(request.cookies.get("user_tz")?.value ?? ""));
+  const day = todayInTZ(tz);
+
+  // One row per account per day, so the cookie can answer "already counted"
+  // without a round trip. The table's primary key enforces the same thing —
+  // the cookie only saves the request, it is not what makes it correct.
+  if (request.cookies.get(FUNNEL_COOKIE)?.value === day) return;
+  response.cookies.set(FUNNEL_COOKIE, day, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 2,
+    sameSite: "lax",
+    httpOnly: true,
+  });
+
+  // after() so the insert never delays the writing screen.
+  after(async () => {
+    try {
+      // Duplicates come back as an error rather than throwing, and a missing
+      // table would too — before the SQL is run this is simply a no-op. Both
+      // are ignored on purpose: a funnel row is never worth a failed request.
+      await supabase.from("funnel_events").insert({ user_id: userId, kind: "write_opened", day });
+    } catch {
+      // Same reasoning.
+    }
+  });
 }
 
 export const config = {
