@@ -28,6 +28,7 @@ export default function PrivacyPage() {
               <li><strong className="text-ink">Diary content</strong> — the text, photos, and audio recordings you create and attach to your entries.</li>
               <li><strong className="text-ink">Location data (optional)</strong> — if you use the Map feature to attach a place to a diary entry, we collect the location you choose (by search, map tap, or your device&apos;s GPS). If you never use the Map feature, no location data is collected.</li>
               <li><strong className="text-ink">Push notification token</strong> — if you enable push notifications, we store a device token used to send you reminders.</li>
+              <li><strong className="text-ink">Usage data</strong> — which screens you open inside the app (currently: the writing screen and the plans screen). We record this once per day per screen, linked to your account, so we can see where people get stuck. We do not record what you type, how long you stay, your IP address, or your device identifiers, and we do not share this with anyone.</li>
             </ul>
           </section>
 
@@ -38,6 +39,7 @@ export default function PrivacyPage() {
               <li>Diary text you submit for correction is sent to Anthropic&apos;s API to generate corrections, explanations, and practice suggestions.</li>
               <li>To send optional push notification reminders.</li>
               <li>To process subscription payments (see Payments below).</li>
+              <li>To understand which parts of the app people reach and where they stop, so we can improve onboarding.</li>
             </ul>
           </section>
 
@@ -66,7 +68,7 @@ export default function PrivacyPage() {
               <strong className="text-ink">Profile → Danger Zone → Delete Account</strong> in the
               app. Deleting your account removes your diary entries, photos, audio, vocabulary
               list, writing streak/history, followers and following relationships, comments,
-              peer corrections, and notifications. This action is immediate and irreversible.
+              peer corrections, notifications, and usage records. This action is immediate and irreversible.
               If you have an active paid subscription, you&apos;ll need to cancel it first.
             </p>
           </section>
