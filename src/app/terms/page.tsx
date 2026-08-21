@@ -14,7 +14,7 @@ export default function TermsPage() {
         </Link>
 
         <h1 className="mt-6 font-serif text-3xl font-bold text-pine">Terms of Service</h1>
-        <p className="mt-2 text-sm text-muted">Last updated: July 28, 2026</p>
+        <p className="mt-2 text-sm text-muted">Last updated: August 21, 2026</p>
         <p className="mt-2 text-sm text-muted">
           Nihongo Diary is operated by Tetta Taguchi, a sole proprietor (individual business)
           based in Sapporo, Japan.
@@ -61,7 +61,7 @@ export default function TermsPage() {
             <h2 className="font-serif text-xl font-bold text-pine">5. AI-Generated Corrections</h2>
             <p className="mt-3">
               Corrections, explanations, and suggestions are generated automatically using AI
-              (via OpenAI&apos;s API) and may occasionally contain errors or inaccuracies. They
+              (via Anthropic&apos;s API) and may occasionally contain errors or inaccuracies. They
               are provided for language-learning purposes only and are not a substitute for
               professional instruction or certification.
             </p>

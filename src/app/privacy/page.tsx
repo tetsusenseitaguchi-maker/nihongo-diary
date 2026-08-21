@@ -14,7 +14,7 @@ export default function PrivacyPage() {
         </Link>
 
         <h1 className="mt-6 font-serif text-3xl font-bold text-pine">Privacy Policy</h1>
-        <p className="mt-2 text-sm text-muted">Last updated: July 2, 2026</p>
+        <p className="mt-2 text-sm text-muted">Last updated: August 21, 2026</p>
         <p className="mt-2 text-sm text-muted">
           Nihongo Diary is operated by Tetta Taguchi, a sole proprietor (individual business)
           based in Sapporo, Japan.
@@ -35,7 +35,7 @@ export default function PrivacyPage() {
             <h2 className="font-serif text-xl font-bold text-pine">2. How We Use Your Information</h2>
             <ul className="mt-3 list-disc space-y-2 pl-5">
               <li>To provide the core diary-writing and AI correction service.</li>
-              <li>Diary text you submit for correction is sent to OpenAI&apos;s API to generate corrections, explanations, and practice suggestions.</li>
+              <li>Diary text you submit for correction is sent to Anthropic&apos;s API to generate corrections, explanations, and practice suggestions.</li>
               <li>To send optional push notification reminders.</li>
               <li>To process subscription payments (see Payments below).</li>
             </ul>
@@ -45,7 +45,7 @@ export default function PrivacyPage() {
             <h2 className="font-serif text-xl font-bold text-pine">3. Third-Party Service Providers</h2>
             <ul className="mt-3 list-disc space-y-2 pl-5">
               <li><strong className="text-ink">Supabase</strong> — authentication, database, and file storage for diary photos, audio, and avatars.</li>
-              <li><strong className="text-ink">OpenAI</strong> — processes diary text to generate AI corrections.</li>
+              <li><strong className="text-ink">Anthropic</strong> — processes diary text to generate AI corrections.</li>
               <li><strong className="text-ink">Stripe</strong> — processes subscription payments.</li>
             </ul>
           </section>
