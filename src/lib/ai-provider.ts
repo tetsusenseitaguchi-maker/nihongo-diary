@@ -350,6 +350,24 @@ export async function createChatCompletionStream(
     resolveStopReason = resolve;
     rejectStopReason = reject;
   });
+  /**
+   * ⚠️ 捨てる用のハンドラを1本、ここで張る。消さないこと。
+   *
+   * ストリームが途中で切れると下の start() が rejectStopReason(err) と
+   * controller.error(err) の両方を呼ぶ。呼び出し側が reader 側で先に例外を
+   * 捕まえて抜けると、この promise の reject に誰もハンドラを持たないまま
+   * 残る。Node の既定は --unhandled-rejections=throw なので、それは
+   * uncaught exception に化けてプロセスが落ちる（Vercel なら関数インスタンス
+   * ごと）。2026-09-05 に検証ハーネスが実際にこれで死んだ。
+   *
+   * 「呼び出し側が必ずハンドラを付ける」という規約では守れない。守れて
+   * いることを検証する手段が無いし、現に破ったものが出た。ここで握る。
+   *
+   * 返すのは元の promise のまま。ハンドラは何本でも付くので、
+   * correct/route.ts:425 の .then().catch()（返金判定）はこれまでどおり
+   * reject を受け取る。挙動は変わらず、落ちなくなるだけ。
+   */
+  stopReason.catch(() => {});
 
   if (provider === "anthropic") {
     const { apiKey, model, temperatureSupported } = PROVIDER_CONFIG.anthropic;
