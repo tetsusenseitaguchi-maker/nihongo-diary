@@ -66,10 +66,24 @@ const PROVIDER_CONFIG = {
   openai: {
     apiKey: process.env.OPENAI_API_KEY,
     model: "gpt-4.1-mini",
+    temperatureSupported: true,
   },
   anthropic: {
     apiKey: process.env.ANTHROPIC_API_KEY,
     model: "claude-haiku-4-5",
+    /**
+     * ⚠️ このフラグは model と必ず一緒に動かすこと。
+     *
+     * Anthropic の temperature は Claude Opus 4.6 より後のモデルでは
+     * 非対応で、1.0 以外を送ると 400 で落ちる。claude-haiku-4-5 は
+     * それ以前の世代なので受け付ける。
+     *
+     * つまりモデルを上げるとき、model だけ書き換えると10ルート全部が
+     * 400 になる。上げるなら同時にここを false にして、呼び出し側の
+     * temperature 指定が何を意味するかを決め直すこと（既定は 1.0 相当で、
+     * 現に 2026-09-05 まで全ルートがその値で動いていた）。
+     */
+    temperatureSupported: true,
   },
 } as const;
 
@@ -136,6 +150,25 @@ function anthropicSystem(
     text: b.text,
     ...(b.cache ? { cache_control: { type: "ephemeral" as const, ttl: "1h" as const } } : {}),
   }));
+}
+
+/**
+ * temperature を送るときだけキーを作る。両プロバイダで同じものを使う。
+ *
+ * ⚠️ `{ temperature: params.temperature }` をそのまま展開してはいけない。
+ * 呼び出し側が指定していないとき `temperature: undefined` を送ることになり、
+ * 「指定なし（＝プロバイダの既定）」と「明示的に既定値」を区別できなくなる。
+ *
+ * 2026-09-05 まで、Anthropic 分岐はこれを一切送っていなかった。10ルートが
+ * 0.2〜0.7 を宣言しているのに全部がプロバイダ既定の 1.0 で動いていて、
+ * OpenAI 分岐だけが宣言どおりだった、という非対称が2つの経路
+ * （createChatCompletion / createChatCompletionStream）の両方にあった。
+ * 添削のふりがなが同じ応答の中で欄ごとに割れる症状の調査で見つかったもの。
+ * 片方だけ直せる形にしないため、送出はこの1関数に集約してある。
+ */
+function samplingParams(params: ChatCompletionParams, supported: boolean) {
+  if (!supported || params.temperature === undefined) return {};
+  return { temperature: params.temperature };
 }
 
 /** OpenAI has no block form: the same blocks go back to being one string.
@@ -239,7 +272,7 @@ export async function createChatCompletion(
   const provider = getProvider();
 
   if (provider === "anthropic") {
-    const { apiKey, model } = PROVIDER_CONFIG.anthropic;
+    const { apiKey, model, temperatureSupported } = PROVIDER_CONFIG.anthropic;
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set");
     const client = new Anthropic({ apiKey });
     const { system, rest } = splitSystem(params.messages);
@@ -247,6 +280,7 @@ export async function createChatCompletion(
     const response = await client.messages.create({
       model,
       max_tokens: params.maxTokens,
+      ...samplingParams(params, temperatureSupported),
       system: anthropicSystem(params.systemBlocks, system),
       messages: rest,
     });
@@ -268,7 +302,7 @@ export async function createChatCompletion(
 
   const completion = await client.chat.completions.create({
     model,
-    temperature: params.temperature,
+    ...samplingParams(params, PROVIDER_CONFIG.openai.temperatureSupported),
     max_tokens: params.maxTokens,
     ...(params.jsonMode === false ? {} : { response_format: { type: "json_object" as const } }),
     messages: openaiMessages(params),
@@ -318,7 +352,7 @@ export async function createChatCompletionStream(
   });
 
   if (provider === "anthropic") {
-    const { apiKey, model } = PROVIDER_CONFIG.anthropic;
+    const { apiKey, model, temperatureSupported } = PROVIDER_CONFIG.anthropic;
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set");
     const client = new Anthropic({ apiKey });
     const { system, rest } = splitSystem(params.messages);
@@ -326,6 +360,7 @@ export async function createChatCompletionStream(
     const rawStream = await client.messages.create({
       model,
       max_tokens: params.maxTokens,
+      ...samplingParams(params, temperatureSupported),
       system: anthropicSystem(params.systemBlocks, system),
       messages: rest,
       stream: true,
@@ -386,7 +421,7 @@ export async function createChatCompletionStream(
     // final chunk whose `choices` is empty — the loop below already reads that
     // array optionally, so the text and finish_reason paths are unaffected.
     stream_options: { include_usage: true },
-    temperature: params.temperature,
+    ...samplingParams(params, PROVIDER_CONFIG.openai.temperatureSupported),
     max_tokens: params.maxTokens,
     response_format: { type: "json_object" },
     messages: openaiMessages(params),
