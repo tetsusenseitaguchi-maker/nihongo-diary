@@ -398,6 +398,30 @@ export async function POST(request: Request) {
   try {
     ({ stream, stopReason } = await createChatCompletionStream({
       label: "correct",
+      /**
+       * 実測で選んだ値。2026-09-06、日記25本 × 2プラン × 5反復 ×
+       * {1.0, 0.3, 0.0} = 750回（scripts/measure-temperature.mjs）。
+       *
+       * 2026-09-05 まで、ai-provider が Anthropic 分岐で temperature を
+       * 渡していなかったので、ここは実際には既定の 1.0 で動いていた。
+       *
+       *   正規化後の語単位の不一致（同じ語が1応答内で違う読みになる。
+       *   2026-08-22 に 珍(ちん)しく と 珍(めずら)しく が同じ応答の
+       *   3欄に割れた、あの症状）
+       *     1.0 → 5.2% / 0.3 → 2.4% / 0.0 → 0.0%
+       *
+       * 0.0 が正しさでは最良だが、文面が定型化する。英語説明の書き出し
+       * （先頭25字）の異なりが 80件中 40 → 17 → 9 まで落ち、0.0 では
+       * 最頻の書き出しだけで 30/80 を占める。Obie も「お疲れ様」が
+       * 7→20 に増え「だね」が 21→10 に減って、プロンプト17 が求める
+       * puppy-like から大人の定型に寄る。0.3 はその手前。
+       *
+       * ⚠️ 根っこは temperature ではない。この1回の呼び出しが
+       * analytical な仕事（ふりがな・文法／ばらつきは害）と creative な
+       * 仕事（タイトル・Obie・言い換え／ばらつきは価値）を同時にやって
+       * いて、temperature は1つしか指定できない。どの値を選んでも
+       * 片方を犠牲にする。直すなら呼び出しを分けることになる。
+       */
       temperature: 0.3,
       maxTokens: 8000,
       // Two blocks, not one string: the caching breakpoint sits between them.

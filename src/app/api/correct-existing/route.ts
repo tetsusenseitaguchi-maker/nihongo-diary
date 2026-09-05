@@ -296,6 +296,9 @@ export async function POST(request: Request) {
   try {
     const result = await createChatCompletion({
       label: "correct-existing",
+      // temperature は /api/correct と必ず揃えること。書き込み先が同じ
+      // （correctionToDbColumns）で、再添削が同じ列を上書きする以上、
+      // 別の温度で動くのは筋が悪い。選定の根拠は /api/correct 側に書いた。
       temperature: 0.3,
       maxTokens: 8000,
       messages: [

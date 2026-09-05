@@ -135,7 +135,12 @@ export async function POST(req: Request) {
       label: "translate",
       jsonMode: false,
       maxTokens: 400,
-      temperature: 0.3,
+      // ⚠️ 1.0 は「据え置き」であって選んだ値ではない。
+      // ai-provider の Anthropic 分岐が temperature を渡していなかったため、
+      // ここは 0.3 と書かれていたが実際には既定の 1.0 で動いていた（fd99873 で
+      // 転送するようにした）。下げると本番の挙動が変わるので、このルートを
+      // 実測するまで実効値のまま置く。correct は 750回の測定を経て 0.3。
+      temperature: 1.0,
       messages: [
         {
           role: "system",
