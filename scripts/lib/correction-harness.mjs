@@ -32,6 +32,7 @@
  * このモジュールは ai-provider を経由するので、3つとも本番と同じになる。
  * 「検証で通ったが本番では別の条件だった」を作らないための造り。
  */
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { pathToFileURL, fileURLToPath } from "node:url";
 
@@ -94,6 +95,33 @@ const ROUTE_PATH = "src/app/api/correct/route.ts";
 const BLOCK1_ANCHOR = "const CACHED_RULES =";
 const BLOCK2_ANCHOR = "return `This learner's level is:";
 
+/** 339eed1 より前の、1本のテンプレートだった頃の目印。 */
+export const OLD_PROMPT_REV = "339eed1^";
+const OLD_ANCHOR = "return `You are a friendly Japanese teacher";
+
+/** ルール1・11〜16 に差し込まれる断片。新旧どちらのテンプレートでも同じ。 */
+function promptLocals({ level, style, lang, includeDrills, includeMiniLesson, lean }, PROMPT) {
+  return {
+    level, style, lang,
+    drillsSchema: PROMPT.drillsSchema(includeDrills),
+    drillsInRule1: PROMPT.drillsInRule1(includeDrills),
+    miniLessonInRule1: PROMPT.miniLessonInRule1(includeMiniLesson),
+    miniLessonSchema: PROMPT.miniLessonSchema(includeMiniLesson),
+    drillsRule: PROMPT.drillsRule(includeDrills, lang),
+    miniLessonRule: PROMPT.miniLessonRule(includeMiniLesson, lang),
+    keyMistakesCap: PROMPT.keyMistakesCap(lean),
+    vocabularyCap: PROMPT.vocabularyCap(lean),
+    explanationCap: PROMPT.explanationCap(lean),
+    correctionNoteCap: PROMPT.correctionNoteCap(lean),
+    suggestionCount: PROMPT.suggestionCount(lean),
+  };
+}
+
+function evalTemplate(tplSrc, locals) {
+  const names = Object.keys(locals);
+  return new Function(...names, `return ${tplSrc};`)(...names.map((n) => locals[n]));
+}
+
 /** route.ts が実際に送っている2ブロックを組み立てる。
  *
  *  返り値の blocks は ai-provider の systemBlocks とそのまま同じ形。
@@ -108,27 +136,35 @@ export function buildPrompt({ level, style, lang, includeDrills, includeMiniLess
 
   // 差し込みゼロのブロック。new Function で評価するのは、\` や \${ の
   // エスケープを route.ts と同じ規則で解くため。
-  const cachedRules = new Function(`return ${block1Src};`)();
-
-  const locals = {
-    level, style, lang,
-    drillsSchema: PROMPT.drillsSchema(includeDrills),
-    drillsInRule1: PROMPT.drillsInRule1(includeDrills),
-    miniLessonInRule1: PROMPT.miniLessonInRule1(includeMiniLesson),
-    miniLessonSchema: PROMPT.miniLessonSchema(includeMiniLesson),
-    drillsRule: PROMPT.drillsRule(includeDrills, lang),
-    miniLessonRule: PROMPT.miniLessonRule(includeMiniLesson, lang),
-    keyMistakesCap: PROMPT.keyMistakesCap(lean),
-    vocabularyCap: PROMPT.vocabularyCap(lean),
-    explanationCap: PROMPT.explanationCap(lean),
-    correctionNoteCap: PROMPT.correctionNoteCap(lean),
-    suggestionCount: PROMPT.suggestionCount(lean),
-  };
-  const names = Object.keys(locals);
-  const variable = new Function(...names, `return ${block2Src};`)(...names.map((n) => locals[n]));
+  const cachedRules = evalTemplate(block1Src, {});
+  const variable = evalTemplate(
+    block2Src,
+    promptLocals({ level, style, lang, includeDrills, includeMiniLesson, lean }, PROMPT),
+  );
 
   const blocks = [{ text: cachedRules, cache: true }, { text: variable }];
   return { blocks, joined: cachedRules + variable, cachedRules, variable };
+}
+
+/**
+ * 339eed1 より前のプロンプトを git から組み立てる。
+ *
+ * 並べ替えの回帰と temperature の効果を切り分けるための対照。
+ * 当時の本番を再現するので、ブロックには**分けず**、cache_control も付けない
+ * （キャッシュは 339eed1 で入ったもの）。temperature も当時は届いていなかった
+ * ので、この腕は 1.0 で回すことに意味がある。
+ *
+ * ⚠️ ワーキングツリーではなく git から読む。ここをファイルから読むと
+ * 「旧」が旧でなくなる。
+ */
+export function buildOldPrompt(opts, PROMPT) {
+  const oldSrc = execFileSync("git", ["show", `${OLD_PROMPT_REV}:${ROUTE_PATH}`], {
+    cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 24,
+  });
+  const tpl = templateLiteralAt(oldSrc, OLD_ANCHOR, `旧テンプレート(${OLD_PROMPT_REV})`);
+  const joined = evalTemplate(tpl, promptLocals(opts, PROMPT));
+  // 1ブロック・キャッシュ無し = 339eed1 以前の送り方そのもの。
+  return { blocks: [{ text: joined }], joined, cachedRules: "", variable: joined };
 }
 
 /**
@@ -138,18 +174,32 @@ export function buildPrompt({ level, style, lang, includeDrills, includeMiniLess
  * 前者すら確かめていなかったので、ここは後者まで見る。
  * 失敗したら例外 — 警告にすると読み飛ばされる。
  */
-export function assertPromptWellFormed({ blocks, joined, cachedRules, variable }, { includeDrills, includeMiniLesson }) {
+export function assertPromptWellFormed({ blocks, joined, cachedRules, variable }, { includeDrills, includeMiniLesson, old = false }) {
   const problems = [];
 
   if (joined.includes("${")) problems.push("未評価の ${...} が残っている");
-  if (!cachedRules.startsWith("You are a friendly Japanese teacher")) {
-    problems.push("ブロック1が想定の書き出しで始まっていない");
+  if (!joined.startsWith("You are a friendly Japanese teacher")) {
+    problems.push("プロンプトが想定の書き出しで始まっていない");
   }
-  // ai-provider.ts:38-41 — 区切りが入らないので、ブロック1は自前で
-  // 空行で終わっていなければ 7b の最終行が "This learner's..." に直結する。
-  if (!cachedRules.endsWith("\n\n")) problems.push("ブロック1が空行で終わっていない（7bと次行が直結する）");
-  if (!variable.startsWith("This learner's level is:")) {
-    problems.push("ブロック2が想定の書き出しで始まっていない");
+  if (old) {
+    // 339eed1 以前は1ブロック・キャッシュ無し。分かれていたら「旧」ではない。
+    if (blocks.length !== 1) problems.push(`旧プロンプトが ${blocks.length} ブロックに分かれている`);
+    if (blocks[0]?.cache) problems.push("旧プロンプトに cache_control が付いている");
+    if (!joined.includes("This learner's level is:")) problems.push("level の行がない");
+  } else {
+    if (blocks.length !== 2) problems.push(`新プロンプトが ${blocks.length} ブロックではない`);
+    if (!blocks[0]?.cache) problems.push("ブロック1に cache_control が付いていない");
+    // ai-provider.ts:38-41 — 区切りが入らないので、ブロック1は自前で
+    // 空行で終わっていなければ 7b の最終行が "This learner's..." に直結する。
+    if (!cachedRules.endsWith("\n\n")) problems.push("ブロック1が空行で終わっていない（7bと次行が直結する）");
+    if (!variable.startsWith("This learner's level is:")) {
+      problems.push("ブロック2が想定の書き出しで始まっていない");
+    }
+    // ふりがな規則はキャッシュされる側に無ければならない。ブロック2へ
+    // 移ると毎回課金され、339eed1 の目的そのものが失われる。
+    if (!cachedRules.includes("<rt> must never ABSORB the okurigana")) {
+      problems.push("ふりがな規則がキャッシュ対象のブロック1に無い");
+    }
   }
 
   // 番号つきルールが行頭に1回ずつ出ること。並べ替えは 2〜7b → 1 → 8 なので
@@ -174,12 +224,14 @@ export function assertPromptWellFormed({ blocks, joined, cachedRules, variable }
   if (!includeMiniLesson && startsRule("12")) problems.push("ミニレッスン無しのはずがルール12がある");
 
   // ふりがな規則の中核。ここが落ちていたら測る意味がない。
+  // 旧プロンプトでは cachedRules が空なので joined を見る。ここが落ちていたら
+  // どちらの腕でも測る意味がない。
   for (const needle of [
     "<rt> must never ABSORB the okurigana",
     "it MUST use its kun'yomi (訓読み) reading",
     "<ruby>珍<rt>ちん</rt></ruby>しい",
   ]) {
-    if (!cachedRules.includes(needle)) problems.push(`ブロック1に ${JSON.stringify(needle)} がない`);
+    if (!joined.includes(needle)) problems.push(`ふりがな規則に ${JSON.stringify(needle)} がない`);
   }
 
   if (problems.length) {
@@ -228,6 +280,15 @@ export async function generate({ blocks, text, temperature, label = "correct" },
       systemBlocks: blocks,
       messages: [{ role: "user", content: text }],
     });
+    // ⚠️ stopReason に即座にハンドラを付けること。
+    //
+    // ai-provider はストリームが途中で切れたとき rejectStopReason(err) と
+    // controller.error(err) の両方を呼ぶ。reader.read() の側で先に捕まえて
+    // 抜けると、stopReason の reject が誰にも await されないまま残り、
+    // Node が unhandledRejection でプロセスごと落とす。
+    // 2026-09-05 のパイロット試走が 40/64 でこれで死んだ（ECONNRESET）。
+    // 本番は refund 判定で必ず await するので起きない、ハーネス固有の穴。
+    const settledStop = stopReason.catch(() => null);
     const chunks = [];
     const reader = stream.getReader();
     for (;;) {
@@ -235,7 +296,7 @@ export async function generate({ blocks, text, temperature, label = "correct" },
       if (done) break;
       chunks.push(value);
     }
-    out = { raw: Buffer.concat(chunks.map(Buffer.from)).toString("utf8"), stop: await stopReason };
+    out = { raw: Buffer.concat(chunks.map(Buffer.from)).toString("utf8"), stop: await settledStop };
   } finally {
     console.log = realLog;
   }
@@ -249,6 +310,30 @@ export async function generate({ blocks, text, temperature, label = "correct" },
     ? { input: num("input"), output: num("output"), cacheRead: num("cache_read"), cacheWrite: num("cache_write") }
     : null;
   return out;
+}
+
+/**
+ * generate() を、一時的なネットワーク断で再試行する。
+ *
+ * ストリームが始まったあとに切れると SDK の内蔵リトライは効かない
+ * （ECONNRESET / terminated）。長い生成を数百回まわすと必ず何回か起きるので、
+ * ハーネス側で吸収する。恒久的なエラー（400 など）は再試行しても無駄なので、
+ * メッセージで振り分ける。
+ */
+export async function generateWithRetry(args, provider, attempts = 3) {
+  let last;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await generate(args, provider);
+    } catch (e) {
+      last = e;
+      const msg = String(e?.message ?? e);
+      const transient = /terminated|ECONNRESET|ETIMEDOUT|socket hang up|fetch failed|overloaded|rate.?limit|429|50\d/i.test(msg);
+      if (!transient || i === attempts - 1) throw e;
+      await new Promise((r) => setTimeout(r, 3000 * (i + 1)));
+    }
+  }
+  throw last;
 }
 
 export function parseJson(raw) {

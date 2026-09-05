@@ -21,11 +21,10 @@
  *
  * 実行: node --experimental-strip-types scripts/check-correction-harness.mjs
  */
-import { execFileSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import {
   ROOT, HarnessError, loadEnv, buildPrompt, assertPromptWellFormed,
-  templateLiteralAt, countTokens, generate, parseJson,
+  buildOldPrompt, countTokens, generate, parseJson,
 } from "./lib/correction-harness.mjs";
 
 loadEnv();
@@ -59,30 +58,14 @@ if (!built.paid) { console.log("\n組み立てに失敗。以降は測れない�
 // 「ふりがな規則が動いただけか」なので条件を固定して見る。
 console.log("\n[1] 旧プロンプト（339eed1^）との行の多重集合比較");
 try {
-  const oldSrc = execFileSync("git", ["show", "339eed1^:src/app/api/correct/route.ts"], {
-    cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 24,
-  });
-  const oldTpl = templateLiteralAt(oldSrc, "return `You are a friendly Japanese teacher", "旧テンプレート");
-  const flags = ARMS.paid;
-  const locals = {
-    ...BASE, level: BASE.level, style: BASE.style, lang: BASE.lang,
-    drillsSchema: PROMPT.drillsSchema(flags.includeDrills),
-    drillsInRule1: PROMPT.drillsInRule1(flags.includeDrills),
-    miniLessonInRule1: PROMPT.miniLessonInRule1(flags.includeMiniLesson),
-    miniLessonSchema: PROMPT.miniLessonSchema(flags.includeMiniLesson),
-    drillsRule: PROMPT.drillsRule(flags.includeDrills, BASE.lang),
-    miniLessonRule: PROMPT.miniLessonRule(flags.includeMiniLesson, BASE.lang),
-    keyMistakesCap: PROMPT.keyMistakesCap(flags.lean),
-    vocabularyCap: PROMPT.vocabularyCap(flags.lean),
-    explanationCap: PROMPT.explanationCap(flags.lean),
-    correctionNoteCap: PROMPT.correctionNoteCap(flags.lean),
-    suggestionCount: PROMPT.suggestionCount(flags.lean),
-  };
-  const names = Object.keys(locals);
-  const oldPrompt = new Function(...names, `return ${oldTpl};`)(...names.map((n) => locals[n]));
+  // buildOldPrompt を使う。パイロットの腕Aが依存する関数なので、
+  // ここで一緒に叩いておく（比較の独立性は「別のリビジョンを読む」ことで担保される）。
+  const oldBuilt = buildOldPrompt({ ...BASE, ...ARMS.paid }, PROMPT);
+  assertPromptWellFormed(oldBuilt, { ...ARMS.paid, old: true });
+  ok("旧プロンプトの組み立て", `1ブロック・キャッシュ無し・${oldBuilt.joined.length}文字`);
 
   const bag = (s) => { const m = new Map(); for (const l of s.split("\n")) m.set(l, (m.get(l) ?? 0) + 1); return m; };
-  const a = bag(oldPrompt), b = bag(built.paid.joined);
+  const a = bag(oldBuilt.joined), b = bag(built.paid.joined);
   const diffs = [];
   for (const k of new Set([...a.keys(), ...b.keys()])) {
     const d = (b.get(k) ?? 0) - (a.get(k) ?? 0);
@@ -112,26 +95,48 @@ try {
 // ハーネスが「何も見ていないから通っている」のではないことを示す。
 console.log("\n[3] 壊し戻しテスト（わざと壊して、気づくか）");
 const sabotage = [
+  // ⚠️ サボタージュは joined も一緒に壊すこと。本物の変更は必ず両方に出る。
+  //    片方だけ壊すと「チェックが見ていない側」を突いてしまい、
+  //    チェックの強さではなくサボタージュの作りを測ることになる。
   {
-    name: "目印を消す",
-    mutate: (p) => ({ ...p, joined: p.joined, cachedRules: p.cachedRules.replace("You are a friendly", "X") }),
+    name: "書き出しを変える",
+    mutate: (p) => {
+      const c = p.cachedRules.replace("You are a friendly", "X");
+      return { ...p, cachedRules: c, joined: c + p.variable, blocks: [{ text: c, cache: true }, { text: p.variable }] };
+    },
   },
   {
     name: "ブロック1末尾の空行を削る",
-    mutate: (p) => ({ ...p, cachedRules: p.cachedRules.replace(/\n+$/, "\n"), joined: p.joined }),
+    mutate: (p) => {
+      const c = p.cachedRules.replace(/\n+$/, "\n");
+      return { ...p, cachedRules: c, joined: c + p.variable, blocks: [{ text: c, cache: true }, { text: p.variable }] };
+    },
+  },
+  {
+    name: "cache_control を落とす",
+    mutate: (p) => ({ ...p, blocks: [{ text: p.cachedRules }, { text: p.variable }] }),
+  },
+  {
+    name: "ふりがな規則をブロック2へ移す（キャッシュから外れる）",
+    mutate: (p) => {
+      const line = p.cachedRules.match(/^- The mirror of the rule above.*$/m)[0];
+      const c = p.cachedRules.replace(line, "");
+      const v = p.variable + "\n" + line;
+      return { ...p, cachedRules: c, variable: v, joined: c + v, blocks: [{ text: c, cache: true }, { text: v }] };
+    },
   },
   {
     name: "ルール2の飲み込み禁止を削る",
     mutate: (p) => {
       const c = p.cachedRules.replace(/^- The mirror of the rule above.*$/m, "");
-      return { ...p, cachedRules: c, joined: c + p.variable };
+      return { ...p, cachedRules: c, joined: c + p.variable, blocks: [{ text: c, cache: true }, { text: p.variable }] };
     },
   },
   {
     name: "ルール10を消す",
     mutate: (p) => {
       const v = p.variable.replace(/^10\. /m, "XX. ");
-      return { ...p, variable: v, joined: p.cachedRules + v };
+      return { ...p, variable: v, joined: p.cachedRules + v, blocks: [{ text: p.cachedRules, cache: true }, { text: v }] };
     },
   },
 ];
