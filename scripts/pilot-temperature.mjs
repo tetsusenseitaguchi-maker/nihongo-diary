@@ -30,9 +30,11 @@ import { writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import {
   ROOT, loadEnv, buildPrompt, buildOldPrompt, assertPromptWellFormed, generateWithRetry, parseJson,
+  installLogCapture,
 } from "./lib/correction-harness.mjs";
 
 loadEnv();
+const LOG = installLogCapture();
 const PROMPT = await import(pathToFileURL(ROOT + "src/lib/correction-prompt.ts").href);
 const provider = await import(pathToFileURL(ROOT + "src/lib/ai-provider.ts").href);
 
@@ -176,7 +178,7 @@ for (const arm of ARMS) {
 console.error(`${jobs.length} 回 / 並列 ${CONCURRENCY} / 反復 ${REPS}`);
 
 const results = [];
-let done = 0, inTok = 0, outTok = 0, cacheRead = 0, cacheWrite = 0;
+let done = 0;
 let cursor = 0;
 async function worker() {
   for (;;) {
@@ -190,10 +192,6 @@ async function worker() {
       }, provider);
     } catch (e) { err = String(e.message).slice(0, 120); }
     const j = r ? parseJson(r.raw) : null;
-    inTok += r?.usage?.input ?? 0;
-    outTok += r?.usage?.output ?? 0;
-    cacheRead += r?.usage?.cacheRead ?? 0;
-    cacheWrite += r?.usage?.cacheWrite ?? 0;
     results.push({
       arm: job.arm.id, plan: job.plan, diary: job.diary.id, kind: job.diary.kind, rep: job.rep,
       err, parsed: !!j, stop: r?.stop ?? null, m: measure(job.diary, j),
@@ -293,7 +291,8 @@ if (errs.length) {
   for (const e of errs.slice(0, 5)) console.log(`  [${e.arm} ${e.plan} ${e.diary}] ${e.err}`);
 }
 
-const cost = inTok / 1e6 + cacheRead * 0.1 / 1e6 + cacheWrite * 2 / 1e6 + outTok * 5 / 1e6;
-console.log(`\ntokens: input=${inTok} cache_read=${cacheRead} cache_write=${cacheWrite} output=${outTok}`);
+const t = LOG.totals;
+const cost = t.input / 1e6 + t.cacheRead * 0.1 / 1e6 + t.cacheWrite * 2 / 1e6 + t.output * 5 / 1e6;
+console.log(`\ntokens: input=${t.input} cache_read=${t.cacheRead} cache_write=${t.cacheWrite} output=${t.output}`);
 console.log(`cost≈$${cost.toFixed(2)} (haiku-4-5)  1回あたり $${(cost / jobs.length).toFixed(4)}`);
 console.log(`生データ: scripts/logs/pilot-temperature.json`);

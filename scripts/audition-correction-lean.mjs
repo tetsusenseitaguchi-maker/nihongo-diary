@@ -28,9 +28,10 @@
  * 実行: node --experimental-strip-types scripts/audition-correction-lean.mjs
  */
 import { pathToFileURL } from "node:url";
-import { ROOT, loadEnv, buildPrompt, assertPromptWellFormed, generate, parseJson } from "./lib/correction-harness.mjs";
+import { ROOT, loadEnv, buildPrompt, assertPromptWellFormed, generate, parseJson, installLogCapture } from "./lib/correction-harness.mjs";
 
 loadEnv();
+const LOG = installLogCapture();
 const PROMPT = await import(pathToFileURL(ROOT + "src/lib/correction-prompt.ts").href);
 const provider = await import(pathToFileURL(ROOT + "src/lib/ai-provider.ts").href);
 
@@ -116,7 +117,6 @@ function check(arm, caseName, j) {
 
 // ── run ────────────────────────────────────────────────────────────────────
 const results = [];
-let inTok = 0, outTok = 0, cacheRead = 0;
 for (const c of CASES) {
   for (const arm of c.arms) {
     const flags = ARMS[arm];
@@ -125,17 +125,13 @@ for (const c of CASES) {
     // 表に出さないため。
     assertPromptWellFormed(built, flags);
     for (let rep = 1; rep <= REPS; rep++) {
-      const { raw, usage, stop } = await generate(
+      const { raw, stop } = await generate(
         { blocks: built.blocks, text: c.text, temperature: TEMPERATURE }, provider,
       );
       const j = parseJson(raw);
-      inTok += usage?.input ?? 0;
-      outTok += usage?.output ?? 0;
-      cacheRead += usage?.cacheRead ?? 0;
       const fails = check(arm, c.name, j);
       results.push({
         case: c.name, arm, rep, fails, stop,
-        out: usage?.output ?? 0,
         km: Array.isArray(j?.keyMistakes) ? j.keyMistakes.length : -1,
         uv: Array.isArray(j?.usefulVocabulary) ? j.usefulVocabulary.length : -1,
         expSent: sentences(j?.englishExplanation),
@@ -153,14 +149,14 @@ for (const r of results) {
   (by[k] ??= []).push(r);
 }
 const avg = (a, f) => +(a.reduce((s, x) => s + f(x), 0) / a.length).toFixed(1);
-console.log("\ncase                     arm           pass   out_tok  keyMist  vocab  expl(sent/chars)");
+console.log("\ncase                     arm           pass   keyMist  vocab  expl(sent/chars)");
 console.log("─".repeat(92));
 for (const [k, a] of Object.entries(by)) {
   const [c, arm] = k.split(" | ");
   const pass = a.filter((r) => !r.fails.length).length;
   console.log(
     `${c.padEnd(24)} ${arm.padEnd(13)} ${String(pass + "/" + a.length).padEnd(6)} ` +
-    `${String(avg(a, (r) => r.out)).padStart(7)}  ${String(avg(a, (r) => r.km)).padStart(7)}  ` +
+    `${String(avg(a, (r) => r.km)).padStart(7)}  ` +
     `${String(avg(a, (r) => r.uv)).padStart(5)}  ${avg(a, (r) => r.expSent)} / ${avg(a, (r) => r.expChars)}`
   );
 }
@@ -174,4 +170,5 @@ if (failed.length) {
 // 条件は必ず印字する。過去に「本番と違う temperature で回した100回」を
 // 本番の保証として読んでしまった事故がある。
 console.log(`\n条件: temperature=${TEMPERATURE} reps=${REPS} 経路=ai-provider(stream) provider=${process.env.AI_PROVIDER ?? "anthropic(既定)"}`);
-console.log(`tokens: input=${inTok} cache_read=${cacheRead} output=${outTok}  cost≈$${(inTok / 1e6 + cacheRead * 0.1 / 1e6 + outTok * 5 / 1e6).toFixed(2)} (haiku-4-5)`);
+const t = LOG.totals;
+console.log(`tokens: input=${t.input} cache_read=${t.cacheRead} output=${t.output}  cost≈$${(t.input / 1e6 + t.cacheRead * 0.1 / 1e6 + t.output * 5 / 1e6).toFixed(2)} (haiku-4-5)`);

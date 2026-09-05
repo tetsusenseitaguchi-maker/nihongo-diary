@@ -261,55 +261,65 @@ export async function countTokens(blocks, userText) {
 }
 
 /**
+ * ai-provider のログを1回だけ横取りして、トークン使用量を積む。
+ *
+ * ⚠️ プロセスで1回だけ呼ぶこと。generate() ごとに console.log を差し替える
+ * 実装にしていたが、並列で走ると復元が互いを上書きする:
+ *   A: realLog=元, log=capA / B: realLog=capA, log=capB
+ *   → B が先に戻すと log=capA のまま残り、以降すべて握り潰される。
+ *     順序が逆なら逆に、他のワーカーのログが素通りして stdout を汚す。
+ * 実際に本測定の試走で応答 JSON が丸ごと画面に漏れた。
+ * 使用量は合計しか要らないので、1回だけ張って積むのが正しい。
+ */
+export function installLogCapture() {
+  const real = console.log;
+  const totals = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, calls: 0 };
+  console.log = (...args) => {
+    const line = args.join(" ");
+    // ai-provider.ts:194-208 の logStopReason / logRawContent の書式に合わせる
+    if (line.includes(" stop_reason=") && line.includes(" input=")) {
+      const num = (k) => Number(line.match(new RegExp(`${k}=(\\d+)`))?.[1] ?? 0);
+      totals.input += num("input");
+      totals.output += num("output");
+      totals.cacheRead += num("cache_read");
+      totals.cacheWrite += num("cache_write");
+      totals.calls++;
+      return;
+    }
+    if (/^\[[^\]]+\] raw content \(len=/.test(line)) return;
+    real(...args);
+  };
+  return { totals, restore: () => { console.log = real; } };
+}
+
+/**
  * ai-provider 経由で1件生成する。本番 /api/correct と同じ呼び出し。
  *
- * usage は ai-provider が console.log にしか出さないので、その行を拾う。
- * 行の形は ai-provider.ts:194-208 の logStopReason に合わせてある。
- * 迂回に見えるが、ログ経路そのものが本番と同じであることの確認も兼ねる。
+ * ログには触らない。使用量が要るなら installLogCapture() を先に呼ぶこと。
  */
 export async function generate({ blocks, text, temperature, label = "correct" }, provider) {
-  const captured = [];
-  const realLog = console.log;
-  console.log = (...args) => { captured.push(args.join(" ")); };
-  let out;
-  try {
-    const { stream, stopReason } = await provider.createChatCompletionStream({
-      label,
-      temperature,
-      maxTokens: 8000,
-      systemBlocks: blocks,
-      messages: [{ role: "user", content: text }],
-    });
-    // ⚠️ stopReason に即座にハンドラを付けること。
-    //
-    // ai-provider はストリームが途中で切れたとき rejectStopReason(err) と
-    // controller.error(err) の両方を呼ぶ。reader.read() の側で先に捕まえて
-    // 抜けると、stopReason の reject が誰にも await されないまま残り、
-    // Node が unhandledRejection でプロセスごと落とす。
-    // 2026-09-05 のパイロット試走が 40/64 でこれで死んだ（ECONNRESET）。
-    // 本番は refund 判定で必ず await するので起きない、ハーネス固有の穴。
-    const settledStop = stopReason.catch(() => null);
-    const chunks = [];
-    const reader = stream.getReader();
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value);
-    }
-    out = { raw: Buffer.concat(chunks.map(Buffer.from)).toString("utf8"), stop: await settledStop };
-  } finally {
-    console.log = realLog;
+  const { stream, stopReason } = await provider.createChatCompletionStream({
+    label,
+    temperature,
+    maxTokens: 8000,
+    systemBlocks: blocks,
+    messages: [{ role: "user", content: text }],
+  });
+  // ⚠️ stopReason に即座にハンドラを付ける。ai-provider 側にも同じ保険を
+  // 入れた（75c8d5a）が、ハーネスは git から古い版を読むこともあるので
+  // 多重防御として残す。
+  const settledStop = stopReason.catch(() => null);
+  const chunks = [];
+  const reader = stream.getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
   }
-
-  const usageLine = captured.find((l) => l.includes(" stop_reason=") && l.includes(" input="));
-  const num = (k) => {
-    const m = usageLine?.match(new RegExp(`${k}=(\\d+)`));
-    return m ? Number(m[1]) : null;
+  return {
+    raw: Buffer.concat(chunks.map(Buffer.from)).toString("utf8"),
+    stop: await settledStop,
   };
-  out.usage = usageLine
-    ? { input: num("input"), output: num("output"), cacheRead: num("cache_read"), cacheWrite: num("cache_write") }
-    : null;
-  return out;
 }
 
 /**

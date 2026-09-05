@@ -24,10 +24,11 @@
 import { pathToFileURL } from "node:url";
 import {
   ROOT, HarnessError, loadEnv, buildPrompt, assertPromptWellFormed,
-  buildOldPrompt, countTokens, generate, parseJson,
+  buildOldPrompt, countTokens, generate, parseJson, installLogCapture,
 } from "./lib/correction-harness.mjs";
 
 loadEnv();
+const LOG = installLogCapture();
 const PROMPT = await import(pathToFileURL(ROOT + "src/lib/correction-prompt.ts").href);
 
 const ARMS = {
@@ -168,7 +169,8 @@ try {
     const missing = want.filter((k) => j[k] === undefined);
     if (missing.length) bad("生成", `欠けている欄: ${missing.join(", ")}`);
     else ok("生成", `stop=${r.stop} ${((Date.now() - t0) / 1000).toFixed(1)}s`);
-    if (r.usage) ok("usage をログから回収", `input=${r.usage.input} output=${r.usage.output} cache_read=${r.usage.cacheRead} cache_write=${r.usage.cacheWrite}`);
+    const t = LOG.totals;
+    if (t.calls > 0) ok("usage をログから回収", `input=${t.input} output=${t.output} cache_read=${t.cacheRead} cache_write=${t.cacheWrite}`);
     else bad("usage をログから回収", "ai-provider のログ行を拾えなかった（ログの書式が変わった？）");
     console.log(`      title: ${String(j.diaryTitleRuby).slice(0, 60)}`);
   }
@@ -192,7 +194,6 @@ try {
       label: "probe", temperature: 2, maxTokens: 8, jsonMode: false,
       messages: [{ role: "user", content: "Say OK." }],
     };
-    const realLog = console.log; console.log = () => {};
     let threw = null;
     try {
       if (streamed) {
@@ -202,7 +203,7 @@ try {
       } else {
         await provider.createChatCompletion(args);
       }
-    } catch (e) { threw = e; } finally { console.log = realLog; }
+    } catch (e) { threw = e; }
 
     if (threw) ok(`${path} temperature が届いている`, `範囲外の 2 が拒否された: ${String(threw.message).slice(0, 80)}`);
     else bad(`${path} temperature が届いていない`, "範囲外の 2 を投げたのに 200 が返った → ai-provider の Anthropic 分岐が渡していない");
