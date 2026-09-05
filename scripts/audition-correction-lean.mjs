@@ -2,88 +2,41 @@
  * Free 出力削減の検証ハーネス。
  *
  * 2026-08-08 の並べ替え回帰（correction-prompt.ts:45-72）を繰り返さないため、
- * temperature 0 で同一条件を5回ずつ回し、回帰の有無を機械的に判定する。
+ * 同一条件を5回ずつ回し、回帰の有無を機械的に判定する。
  *
  * ⚠️ プロンプトはコピーせず、route.ts のテンプレートリテラルを読み出して
  *    その場で組み立てる。ハーネス側にプロンプトを写すと、本体を直したのに
  *    ハーネスが古い文面を検証し続ける、という一番たちの悪いずれ方をする。
+ *    取り出しは scripts/lib/correction-harness.mjs に一本化した。
+ *
+ * ⚠️ 回す前に scripts/check-correction-harness.mjs を通すこと。
+ *    このハーネスは 2026-08-21〜09-05 のあいだ壊れていた（339eed1 で
+ *    取り出しの目印が消え、import 文を new Function に渡していた）。
+ *    ハーネスが正しいことは、ハーネス自身では証明できない。
  *
  * 3つの腕:
  *   paid        … 有料。今回の変更前と同一であるべき（バイト一致は別途検証済み）
  *   free-before … 変更前の Free（ドリル/ミニレッスンだけ無し）
  *   free-after  … 変更後の Free（今回の削減が効いている）
  *
- * 実行: ANTHROPIC_API_KEY を .env.local から読む。
- *   node --experimental-strip-types scripts/audition-correction-lean.mjs
+ * temperature は本番 /api/correct が宣言している 0.3 を既定にする（route.ts:401）。
+ * 環境変数 HARNESS_TEMPERATURE で上書きできる。以前はここが 0 固定で、
+ * 本番（ai-provider が Anthropic に渡していなかったため既定の 1.0）と
+ * 食い違ったまま100回規模の検証を通していた。同じことを繰り返さないため、
+ * 実際に使った値を必ず出力の末尾に印字する。
+ *
+ * 実行: node --experimental-strip-types scripts/audition-correction-lean.mjs
  */
-import { readFileSync } from "node:fs";
-import { pathToFileURL, fileURLToPath } from "node:url";
+import { pathToFileURL } from "node:url";
+import { ROOT, loadEnv, buildPrompt, assertPromptWellFormed, generate, parseJson } from "./lib/correction-harness.mjs";
 
-// fileURLToPath, not .pathname — the repo path contains a space, which stays
-// percent-encoded in a URL's pathname and makes every read ENOENT.
-const ROOT = fileURLToPath(new URL("..", import.meta.url));
-const env = Object.fromEntries(
-  readFileSync(ROOT + ".env.local", "utf8")
-    .split("\n").filter((l) => l.includes("=") && !l.trim().startsWith("#"))
-    .map((l) => [l.slice(0, l.indexOf("=")).trim(), l.slice(l.indexOf("=") + 1).trim()])
-);
-const KEY = env.ANTHROPIC_API_KEY;
-const MODEL = "claude-haiku-4-5";
-const REPS = 5;
-
+loadEnv();
 const PROMPT = await import(pathToFileURL(ROOT + "src/lib/correction-prompt.ts").href);
+const provider = await import(pathToFileURL(ROOT + "src/lib/ai-provider.ts").href);
 
-/** Pull the template literal out of route.ts and evaluate it with real fragments. */
-function buildPrompt({ level, style, lang, includeDrills, includeMiniLesson, lean }) {
-  const src = readFileSync(ROOT + "src/app/api/correct/route.ts", "utf8");
-  const i = src.indexOf("return `You are a friendly Japanese teacher");
-  const j = src.indexOf("`;", i);
-  const body = src.slice(i + "return ".length, j + 1);
-  const locals = {
-    level, style, lang,
-    drillsSchema: PROMPT.drillsSchema(includeDrills),
-    drillsInRule1: PROMPT.drillsInRule1(includeDrills),
-    miniLessonInRule1: PROMPT.miniLessonInRule1(includeMiniLesson),
-    miniLessonSchema: PROMPT.miniLessonSchema(includeMiniLesson),
-    drillsRule: PROMPT.drillsRule(includeDrills, lang),
-    miniLessonRule: PROMPT.miniLessonRule(includeMiniLesson, lang),
-    keyMistakesCap: PROMPT.keyMistakesCap(lean),
-    vocabularyCap: PROMPT.vocabularyCap(lean),
-    explanationCap: PROMPT.explanationCap(lean),
-    correctionNoteCap: PROMPT.correctionNoteCap(lean),
-    suggestionCount: PROMPT.suggestionCount(lean),
-  };
-  const names = Object.keys(locals);
-  return new Function(...names, `return ${body};`)(...names.map((n) => locals[n]));
-}
-
-async function generate(system, text) {
-  for (let attempt = 0; ; attempt++) {
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "x-api-key": KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({
-        model: MODEL, max_tokens: 8000, temperature: 0,
-        system, messages: [{ role: "user", content: text }],
-      }),
-    });
-    if (r.ok) {
-      const d = await r.json();
-      const raw = (d.content ?? []).filter((b) => b.type === "text").map((b) => b.text).join("");
-      return { raw, usage: d.usage, stop: d.stop_reason };
-    }
-    if ((r.status === 429 || r.status >= 500) && attempt < 4) {
-      await new Promise((s) => setTimeout(s, 2000 * (attempt + 1)));
-      continue;
-    }
-    throw new Error(`${r.status}: ${await r.text()}`);
-  }
-}
-
-const parse = (raw) => {
-  const s = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/, "");
-  try { return JSON.parse(s); } catch { return null; }
-};
+const REPS = Number(process.env.HARNESS_REPS ?? 5);
+/** 本番 /api/correct が宣言している値。route.ts:401 と揃える。 */
+const TEMPERATURE = Number(process.env.HARNESS_TEMPERATURE ?? 0.3);
 
 // ── test diaries ───────────────────────────────────────────────────────────
 // canary: 2026-08-08 の回帰そのもの。N5 + Light で「あめ」が「雨」に化けたら
@@ -163,18 +116,26 @@ function check(arm, caseName, j) {
 
 // ── run ────────────────────────────────────────────────────────────────────
 const results = [];
-let inTok = 0, outTok = 0;
+let inTok = 0, outTok = 0, cacheRead = 0;
 for (const c of CASES) {
   for (const arm of c.arms) {
-    const system = buildPrompt({ level: c.level, style: c.style, lang: "English", ...ARMS[arm] });
+    const flags = ARMS[arm];
+    const built = buildPrompt({ level: c.level, style: c.style, lang: "English", ...flags }, PROMPT);
+    // 組み立てが想定と違えば、そこで止まる。壊れたプロンプトで測った数字を
+    // 表に出さないため。
+    assertPromptWellFormed(built, flags);
     for (let rep = 1; rep <= REPS; rep++) {
-      const { raw, usage, stop } = await generate(system, c.text);
-      const j = parse(raw);
-      inTok += usage?.input_tokens ?? 0; outTok += usage?.output_tokens ?? 0;
+      const { raw, usage, stop } = await generate(
+        { blocks: built.blocks, text: c.text, temperature: TEMPERATURE }, provider,
+      );
+      const j = parseJson(raw);
+      inTok += usage?.input ?? 0;
+      outTok += usage?.output ?? 0;
+      cacheRead += usage?.cacheRead ?? 0;
       const fails = check(arm, c.name, j);
       results.push({
         case: c.name, arm, rep, fails, stop,
-        out: usage?.output_tokens ?? 0,
+        out: usage?.output ?? 0,
         km: Array.isArray(j?.keyMistakes) ? j.keyMistakes.length : -1,
         uv: Array.isArray(j?.usefulVocabulary) ? j.usefulVocabulary.length : -1,
         expSent: sentences(j?.englishExplanation),
@@ -210,4 +171,7 @@ if (failed.length) {
 } else {
   console.log(`\nall ${results.length} generations passed`);
 }
-console.log(`\ntokens: input=${inTok} output=${outTok}  cost≈$${(inTok / 1e6 + outTok * 5 / 1e6).toFixed(2)} (haiku-4-5)`);
+// 条件は必ず印字する。過去に「本番と違う temperature で回した100回」を
+// 本番の保証として読んでしまった事故がある。
+console.log(`\n条件: temperature=${TEMPERATURE} reps=${REPS} 経路=ai-provider(stream) provider=${process.env.AI_PROVIDER ?? "anthropic(既定)"}`);
+console.log(`tokens: input=${inTok} cache_read=${cacheRead} output=${outTok}  cost≈$${(inTok / 1e6 + cacheRead * 0.1 / 1e6 + outTok * 5 / 1e6).toFixed(2)} (haiku-4-5)`);
