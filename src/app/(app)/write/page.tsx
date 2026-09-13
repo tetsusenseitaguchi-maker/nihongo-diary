@@ -13,6 +13,7 @@ import { RecheckResult } from "@/components/RecheckResult";
 import { PublicToggle } from "@/components/PublicToggle";
 import { Furigana } from "@/components/Furigana";
 import { Bilingual } from "@/components/Bilingual";
+import { ObiePhoto } from "@/components/ObiePhoto";
 import { templates, sampleDraft } from "@/lib/mock-data";
 import type { Level, CorrectionStyle, Correction, DiaryPlace, MistakeItem, RecheckResult as RecheckResultData } from "@/lib/types";
 import { GrammarReviewCard } from "@/components/GrammarReviewCard";
@@ -1279,7 +1280,57 @@ export default function WritePage() {
                 <Selector label={t("write.weather")} value={weathers[weather]} onClick={() => cycle(setWeather, weathers.length)} />
               </div>
 
+              {/*
+                Obie's line — directly above the cursor, only while the page
+                is blank.
+
+                This used to be a card at the top of the right rail, which on
+                a desktop sits beside the editor and on a phone sits three
+                cards below it (notebook → attachments → location → rail).
+                The phone is where most diaries are written, so the one
+                reassurance the app made before writing was, there, made after
+                the correct button. Nothing else in the 1,131 keys says that a
+                mistake is fine either: "one sentence" is said in six places,
+                "wrong is okay" in none — and this is the only surface where
+                the learner knows a correction is coming and has not yet typed.
+
+                Gone once the first character lands. It is an encouragement
+                for the blank page, not a caption for the diary, and someone
+                who writes every day should meet it for a beat and not again
+                until tomorrow. The rail card is removed rather than kept:
+                6c7ab40 already ruled that the same reassurance twice on one
+                page is noise, and this is that rule applied to its own card.
+
+                Obie's face rather than the 🐾 glyph the rail card used: the
+                words are his ("my job"), and a dog saying them reads as
+                encouragement where a system note would read as instruction.
+
+                The Japanese line stays in the TSX rather than moving into the
+                catalogue — every ruby line in the app is written this way,
+                because the Japanese is the thing being learned and does not
+                change with the interface language. `write.obieNote.en` is the
+                interface-language line beneath it.
+              */}
+              {text.length === 0 && (
+                <div className="mb-3 flex items-start gap-3">
+                  <ObiePhoto size={36} className="shrink-0" />
+                  <Bilingual
+                    jp="まちがえて大丈夫(だいじょうぶ)。直(なお)すのがぼくの仕事(しごと)だから。一文(いちぶん)でいいよ。"
+                    en={t("write.obieNote.en")}
+                    jpClassName="text-sm text-ink/80"
+                  />
+                </div>
+              )}
+
               {/* notebook paper textarea */}
+              {/* The placeholder is Japanese on purpose and is not in the
+                  catalogue: it is the first two words of a diary, the thing
+                  being typed, not interface text. An unused `write.placeholder`
+                  key ("Write in Japanese (or try your best!)…") sat in every
+                  locale for months without being wired here; it is deleted
+                  rather than wired, because switching what the blank page
+                  shows would land in the same release as Obie's line above and
+                  make the two impossible to tell apart. */}
               <textarea
                 ref={editorRef}
                 data-tour="write-editor"
@@ -1527,10 +1578,10 @@ export default function WritePage() {
               <Icon.mapPin className="h-5 w-5 shrink-0 text-moss-600" />
               <div className="flex-1">
                 <p className="text-sm font-semibold text-pine">
-                  場所を追加 · Add location
+                  {t("map.heading")}
                   {places.length > 0 && (
                     <span className="ml-2 text-xs font-normal text-muted">
-                      {places.length} ヶ所選択中
+                      {t("map.selectedCount", { n: places.length })}
                     </span>
                   )}
                 </p>
@@ -1579,47 +1630,13 @@ export default function WritePage() {
         {/* Right rail */}
         <div className="space-y-4">
           {/*
-            Obie's note — the first thing in the rail, and the last thing read
-            before writing starts.
-
-            It used to be "Today's goal: 日記を書こう（50文字〜）" over a ring
-            that filled at fifty characters. Two problems, and the second is
-            the one that mattered. The ring showed "0%" the moment the page
-            loaded, which is the scolding dashboard/page.tsx already refuses to
-            draw next to a zero streak; and the fifty was contradicted by
-            every other surface the learner passes through — the tour says one
-            sentence is plenty, the dashboard empty state says even one
-            sentence counts, the evening push says one sentence keeps it going.
-            The sticky note two cards below this one said "短くてもいいよ" in
-            so many words. Only this card disagreed, and it is the one standing
-            closest to the cursor.
-
-            So the number is gone rather than lowered. Any ring needs a
-            denominator and any denominator reads as a target; fifteen would
-            have been a smaller target, not an absent one. What replaces it is
-            the half the old card never had: what the learner gets back. 🐾 is
-            a static glyph, keeping the flex/gap-4 shape the ring left behind
-            without reintroducing a percentage.
-
-            The Japanese line stays in the TSX rather than moving into the
-            catalogue. Every ruby line in the app is written this way — there
-            is not one 漢字(かな) value among the 1070 keys — because the
-            Japanese is the thing being learned and does not change with the
-            interface language.
+            Obie's note used to open this rail. It is now the line above the
+            editor, shown while the page is blank — see the comment there.
+            Nothing in the rail says "short is fine" any more, and that is
+            the point: on a phone the rail renders after the attachments and
+            the map, so a reassurance here was one the learner met after
+            pressing the correct button, not before writing.
           */}
-          <div className="flex items-center gap-4 rounded-[var(--radius-card)] border border-line bg-paper p-5 shadow-card">
-            <span className="grid h-[60px] w-[60px] shrink-0 place-items-center rounded-full bg-mint text-2xl" aria-hidden>
-              🐾
-            </span>
-            <div>
-              <p className="font-serif font-bold text-pine">{t("write.obieNote.title")}</p>
-              <Bilingual
-                jp="一文(いちぶん)でいいよ。ちゃんと直(なお)すから。"
-                en={t("write.obieNote.en")}
-                jpClassName="text-sm text-ink/70"
-              />
-            </div>
-          </div>
 
           {/* Writing tips */}
           <div className="rounded-[var(--radius-card)] border border-line bg-paper p-5 shadow-card">
@@ -1637,13 +1654,11 @@ export default function WritePage() {
           </div>
 
           {/* The Obie sticky note that used to sit here is gone. It said
-              「短くてもいいよ。続けることがいちばん！」— which is now the job
-              of the card at the top of this rail, said before the learner
-              starts rather than after two other cards. Keeping both would have
-              put the same reassurance in the rail twice while the thing it was
-              reassuring against had already been removed. The "keep it up"
-              half moved to where it lands better: the line under the
-              correction result, where something has just been finished.
+              「短くてもいいよ。続けることがいちばん！」— the "short is fine"
+              half is now Obie's line above the editor, said before the
+              learner starts; the "keep it up" half moved to where it lands
+              better: the line under the correction result, where something
+              has just been finished.
 
               dashboard.obieTip is still used by /dashboard — the key stays. */}
         </div>
