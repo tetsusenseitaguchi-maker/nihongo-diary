@@ -6,7 +6,7 @@ import dynamicLoad from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui";
 import { Icon } from "@/components/icons";
-import { Attachments } from "@/components/Attachments";
+import { Attachments, type AttachmentsHandle } from "@/components/Attachments";
 import { CorrectionResult } from "@/components/CorrectionResult";
 import { CorrectionTopBlock } from "@/components/CorrectionTopBlock";
 import { RecheckResult } from "@/components/RecheckResult";
@@ -98,6 +98,18 @@ const DATE_CHOICES = [
 
 const DEFAULT_MOODS = ["😊 Happy", "🙂 Okay", "😌 Calm", "😴 Tired", "😣 Tough"];
 const DEFAULT_WEATHERS = ["☀️ Sunny", "☁️ Cloudy", "🌧️ Rainy"];
+
+/**
+ * Starters for a diary that begins with a photo: what is in it, where it
+ * was, when it was. Same 漢字(かな) notation as `templates` in mock-data,
+ * and stripped the same way before insertion. Learning content — never
+ * translated.
+ */
+const PHOTO_STARTERS = [
+  "この写真(しゃしん)は、",
+  "ここは、",
+  "この日(ひ)は、",
+];
 
 const tips = [
   { jp: "使(つか)った単語(たんご)をチェックしよう", en: "Check the words you used" },
@@ -263,6 +275,20 @@ export default function WritePage() {
   const [confirmSample, setConfirmSample] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
+  // The chosen photo is shown inside the notebook, above the text, so the
+  // notebook needs its own object URL for it. Attachments keeps one too, for
+  // its card, but that card no longer renders the photo (hidePhotoPreview).
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!photoFile) {
+      setPhotoPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(photoFile);
+    setPhotoPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photoFile]);
+  const attachmentsRef = useRef<AttachmentsHandle>(null);
   const [places, setPlaces] = useState<DiaryPlace[]>([]);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [grammarReview, setGrammarReview] = useState<MistakeItem | null>(null);
@@ -1260,7 +1286,9 @@ export default function WritePage() {
                 because the two are the same kind of help — the last things
                 read before the cursor, both deliberately outside the fold.
               */}
-              {prompt && (
+              {/* Not while a photo is chosen: the photo is the prompt then,
+                  and two answers to "what do I write about" is one too many. */}
+              {prompt && !photoFile && (
                 <WritingPromptCard
                   prompt={prompt}
                   onAnother={() => setPrompt((p) => randomPromptExcept(p?.id))}
@@ -1314,11 +1342,99 @@ export default function WritePage() {
               {text.length === 0 && (
                 <div className="mb-3 flex items-start gap-3">
                   <ObiePhoto size={36} className="shrink-0" />
-                  <Bilingual
-                    jp="まちがえて大丈夫(だいじょうぶ)。直(なお)すのがぼくの仕事(しごと)だから。一文(いちぶん)でいいよ。"
-                    en={t("write.obieNote.en")}
-                    jpClassName="text-sm text-ink/80"
+                  <div className="min-w-0">
+                    <Bilingual
+                      jp="まちがえて大丈夫(だいじょうぶ)。直(なお)すのがぼくの仕事(しごと)だから。一文(いちぶん)でいいよ。"
+                      en={t("write.obieNote.en")}
+                      jpClassName="text-sm text-ink/80"
+                    />
+                    {/*
+                      Start with a photo — the one way in that is not a blank
+                      line. Apple's Journal opens on candidates (a photo, a
+                      place) rather than an empty page, and the diary here
+                      could already carry a photo; it just asked for it after
+                      the writing, two cards below the editor. This chip is
+                      the same picker, the same File state and the same upload
+                      at save — only the order changes. It shares the blank-
+                      page rule with Obie's line above: once there is a
+                      character, or a photo, it is gone. It opens the picker
+                      only on a tap and moves focus nowhere; nothing about
+                      the photo is required, and typing past it is the other
+                      way in.
+                    */}
+                    {!photoFile && (
+                      <button
+                        type="button"
+                        onClick={() => attachmentsRef.current?.openPhotoPicker()}
+                        className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-line bg-paper px-3 py-1 text-xs font-semibold text-pine transition-colors hover:border-moss hover:bg-mint/60"
+                      >
+                        <Icon.camera className="h-3.5 w-3.5" />
+                        {t("write.startWithPhoto")}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/*
+                The chosen photo, in the notebook rather than in the
+                attachments card. When the photo comes first it is what the
+                sentence is about, so it sits where the prompt card sits —
+                the last thing read before the cursor — with three starters
+                that point at it (this photo / this place / this day). The
+                starters go through insertAtCursor like the ones under the
+                editor, for the reason documented there: a starter is as
+                useful at the head of the second sentence as the first.
+
+                The Japanese lines are learning content and stay in the TSX;
+                write.photoPrompt is the interface-language line under the
+                ruby one. Remove clears the File — Attachments watches for
+                that and resets its input — and Change opens the same picker
+                again.
+              */}
+              {photoFile && photoPreviewUrl && (
+                <div className="mb-3 flex items-start gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photoPreviewUrl}
+                    alt=""
+                    className="h-24 w-24 shrink-0 rounded-xl object-cover"
                   />
+                  <div className="min-w-0 flex-1">
+                    <Bilingual
+                      jp="この写真(しゃしん)のこと、一文(いちぶん)で。"
+                      en={t("write.photoPrompt")}
+                      jpClassName="text-sm text-ink/80"
+                    />
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {PHOTO_STARTERS.map((starter) => (
+                        <button
+                          key={starter}
+                          type="button"
+                          onClick={() => insertAtCursor(starter.replace(/[（(][ぁ-んァ-ヶー]+[）)]/g, ""))}
+                          className="rounded-full border border-line bg-paper px-2.5 py-0.5 font-jp text-sm text-pine hover:border-moss hover:bg-mint/60"
+                        >
+                          <Furigana text={starter} />
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-2 flex gap-3 text-xs font-medium text-muted">
+                      <button
+                        type="button"
+                        onClick={() => attachmentsRef.current?.openPhotoPicker()}
+                        className="hover:text-pine"
+                      >
+                        {t("write.changePhoto")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPhotoFile(null)}
+                        className="hover:text-apricot"
+                      >
+                        {t("attach.remove")}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -1336,7 +1452,7 @@ export default function WritePage() {
                 data-tour="write-editor"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="今日は、…"
+                placeholder={photoFile ? "この写真は、…" : "今日は、…"}
                 rows={7}
                 className="notebook block w-full resize-none rounded-lg bg-transparent px-3 pt-[7px] font-jp text-lg leading-[34px] text-ink placeholder:text-muted/60 focus:outline-none"
               />
@@ -1561,11 +1677,17 @@ export default function WritePage() {
           </div>
 
           {/* attachments */}
+          {/* hidePhotoPreview: the photo is shown in the notebook above the
+              text. The card keeps its "Add photo" button and the picker
+              itself — the notebook's chip opens that same picker through
+              the ref. */}
           <Attachments
+            ref={attachmentsRef}
             photoFile={photoFile}
             audioFile={audioFile}
             onPhotoChange={setPhotoFile}
             onAudioChange={setAudioFile}
+            hidePhotoPreview
           />
 
           {/* location picker */}

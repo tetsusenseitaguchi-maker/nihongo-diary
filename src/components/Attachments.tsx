@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 import { Icon } from "@/components/icons";
 import { useT } from "@/contexts/locale";
 
@@ -68,6 +68,16 @@ function extFromMime(mime: string): string {
 
 // ── Props ──────────────────────────────────────────────────────────────────
 
+/**
+ * What a caller can ask of a mounted Attachments — currently one thing: open
+ * the photo picker. /write's notebook has a "start with a photo" chip above
+ * the editor, and it opens the same hidden input the "Add photo" button
+ * here does, so there is one picker, one accept list and one validation.
+ */
+export interface AttachmentsHandle {
+  openPhotoPicker: () => void;
+}
+
 export interface AttachmentsProps {
   photoFile: File | null;
   audioFile: File | null;
@@ -75,8 +85,15 @@ export interface AttachmentsProps {
   onAudioChange: (file: File | null) => void;
   /** Hide the entire photo section (buttons + preview). Used when caller renders the existing photo separately. */
   hidePhoto?: boolean;
+  /**
+   * Keep the photo button and input, but do not render the chosen photo
+   * here — the caller shows it somewhere closer to the text (the /write
+   * notebook). Distinct from hidePhoto, which removes the input too.
+   */
+  hidePhotoPreview?: boolean;
   /** Hide the entire audio section (buttons + recording UI + preview). */
   hideAudio?: boolean;
+  ref?: Ref<AttachmentsHandle>;
 }
 
 // ── Attachments ────────────────────────────────────────────────────────────
@@ -87,7 +104,9 @@ export function Attachments({
   onPhotoChange,
   onAudioChange,
   hidePhoto = false,
+  hidePhotoPreview = false,
   hideAudio = false,
+  ref,
 }: AttachmentsProps) {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
@@ -124,6 +143,25 @@ export function Attachments({
   }, []);
 
   // ── Photo ───────────────────────────────────────────────────────────────
+
+  useImperativeHandle(ref, () => ({
+    openPhotoPicker: () => photoInputRef.current?.click(),
+  }), []);
+
+  /**
+   * The caller may clear the photo from outside (the notebook's own remove
+   * button on /write). Drop the stale preview and reset the input, or a
+   * second pick of the same file would not fire onChange — the browser only
+   * fires it when the input's value changes.
+   */
+  useEffect(() => {
+    if (photoFile) return;
+    if (photoPreviewUrl) {
+      URL.revokeObjectURL(photoPreviewUrl);
+      setPhotoPreviewUrl(null);
+    }
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  }, [photoFile, photoPreviewUrl]);
 
   function handlePhotoInput(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -414,9 +452,9 @@ export function Attachments({
       )}
 
       {/* Previews */}
-      {((!hidePhoto && photoFile) || (!hideAudio && audioFile)) && (
+      {((!hidePhoto && !hidePhotoPreview && photoFile) || (!hideAudio && audioFile)) && (
         <div className="mt-4 space-y-3">
-          {!hidePhoto && photoFile && photoPreviewUrl && (
+          {!hidePhoto && !hidePhotoPreview && photoFile && photoPreviewUrl && (
             <div className="flex items-start gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
