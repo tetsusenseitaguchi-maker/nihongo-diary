@@ -108,6 +108,17 @@ export interface AttachmentsProps {
    * notebook). Distinct from hidePhoto, which removes the input too.
    */
   hidePhotoPreview?: boolean;
+  /**
+   * The photo error's twin of hidePhotoPreview: keep validating, but do not
+   * render the message here — the caller shows it through onPhotoError,
+   * next to wherever it put the preview. Without this the /write notebook's
+   * chip failed three cards above the message that said why.
+   */
+  hidePhotoError?: boolean;
+  /** Every change of the photo error, null when it clears. */
+  onPhotoError?: (message: string | null) => void;
+  /** True while the picked photo is being shrunk, false when that ends. */
+  onPhotoPreparing?: (preparing: boolean) => void;
   /** Hide the entire audio section (buttons + recording UI + preview). */
   hideAudio?: boolean;
   ref?: Ref<AttachmentsHandle>;
@@ -122,6 +133,9 @@ export function Attachments({
   onAudioChange,
   hidePhoto = false,
   hidePhotoPreview = false,
+  hidePhotoError = false,
+  onPhotoError,
+  onPhotoPreparing,
   hideAudio = false,
   ref,
 }: AttachmentsProps) {
@@ -130,10 +144,21 @@ export function Attachments({
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
   const t = useT();
-  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoError, setPhotoErrorState] = useState<string | null>(null);
   // True while shrinkPhoto runs — up to a second or two for a 48 MP photo on
   // a phone. Without it the button looks ignored for exactly that long.
-  const [photoPreparing, setPhotoPreparing] = useState(false);
+  const [photoPreparing, setPhotoPreparingState] = useState(false);
+  // Both go to the caller as well as to local state, at the point of change
+  // rather than from an effect, so a caller passing an inline callback cannot
+  // set up a re-render loop.
+  function setPhotoError(message: string | null) {
+    setPhotoErrorState(message);
+    onPhotoError?.(message);
+  }
+  function setPhotoPreparing(preparing: boolean) {
+    setPhotoPreparingState(preparing);
+    onPhotoPreparing?.(preparing);
+  }
   const [audioError, setAudioError] = useState<string | null>(null);
 
   // Recording state
@@ -487,7 +512,7 @@ export function Attachments({
       )}
 
       {/* Validation errors */}
-      {photoError && (
+      {photoError && !hidePhotoError && (
         <p className="mt-2 rounded-lg bg-apricot/10 px-3 py-1.5 text-xs text-apricot">
           {photoError}
         </p>

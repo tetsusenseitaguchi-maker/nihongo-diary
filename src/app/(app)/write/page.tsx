@@ -279,6 +279,12 @@ export default function WritePage() {
   // notebook needs its own object URL for it. Attachments keeps one too, for
   // its card, but that card no longer renders the photo (hidePhotoPreview).
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+  // Same reasoning for the two below: the chip that opens the picker is in
+  // the notebook, so what the picker says back has to land in the notebook
+  // too. Attachments still owns the validation and the shrink; it only
+  // reports these out (hidePhotoError / onPhotoError / onPhotoPreparing).
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoPreparing, setPhotoPreparing] = useState(false);
   useEffect(() => {
     if (!photoFile) {
       setPhotoPreviewUrl(null);
@@ -1366,10 +1372,11 @@ export default function WritePage() {
                       <button
                         type="button"
                         onClick={() => attachmentsRef.current?.openPhotoPicker()}
-                        className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-line bg-paper px-3 py-1 text-xs font-semibold text-pine transition-colors hover:border-moss hover:bg-mint/60"
+                        disabled={photoPreparing}
+                        className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-line bg-paper px-3 py-1 text-xs font-semibold text-pine transition-colors hover:border-moss hover:bg-mint/60 disabled:opacity-60"
                       >
                         <Icon.camera className="h-3.5 w-3.5" />
-                        {t("write.startWithPhoto")}
+                        {photoPreparing ? t("attach.preparingPhoto") : t("write.startWithPhoto")}
                       </button>
                     )}
                   </div>
@@ -1392,6 +1399,23 @@ export default function WritePage() {
                 that and resets its input — and Change opens the same picker
                 again.
               */}
+              {/*
+                Where the preview would have gone, when there is none: the
+                picker's error. It was rendered inside the attachments card,
+                which on a phone is three cards below this notebook — so a
+                tap on the chip above that failed validation looked like a
+                tap that did nothing. The card no longer shows it
+                (hidePhotoError); this is the one place it appears. Not
+                inside the blank-page block above, because "Add photo" in the
+                card can fail after the first character too, and the answer
+                belongs next to the text either way.
+              */}
+              {photoError && !photoFile && (
+                <p className="mb-3 rounded-lg bg-apricot/10 px-3 py-1.5 text-xs text-apricot">
+                  {photoError}
+                </p>
+              )}
+
               {photoFile && photoPreviewUrl && (
                 <div className="mb-3 flex items-start gap-3">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1677,7 +1701,8 @@ export default function WritePage() {
           </div>
 
           {/* attachments */}
-          {/* hidePhotoPreview: the photo is shown in the notebook above the
+          {/* hidePhotoPreview / hidePhotoError: the photo, and whatever the
+              picker has to say about it, are shown in the notebook above the
               text. The card keeps its "Add photo" button and the picker
               itself — the notebook's chip opens that same picker through
               the ref. */}
@@ -1688,6 +1713,9 @@ export default function WritePage() {
             onPhotoChange={setPhotoFile}
             onAudioChange={setAudioFile}
             hidePhotoPreview
+            hidePhotoError
+            onPhotoError={setPhotoError}
+            onPhotoPreparing={setPhotoPreparing}
           />
 
           {/* location picker */}
