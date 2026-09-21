@@ -29,19 +29,39 @@ async function getApnsJwt(): Promise<string> {
 }
 
 /**
+ * What a notification carries besides its words.
+ *
+ * `url` is where a tap should take the learner — a path from
+ * notificationHref(). It travels OUTSIDE `aps`, as a top-level custom key,
+ * which is where APNs puts anything that is not its own; the device hands it
+ * back untouched in userInfo, and the Capacitor plugin exposes that as
+ * notification.data on the pushNotificationActionPerformed event.
+ */
+export interface PushData {
+  url?: string;
+}
+
+/**
  * Send an APNs push notification.
  * Never throws — failure is logged but must not break the caller.
+ *
+ * `data` is optional and additive. Without it — or with no url in it — the
+ * payload is byte-for-byte what it was before the parameter existed: the
+ * spread of an empty object adds no key, and `aps` itself is not touched.
+ * Every existing three-argument call therefore sends exactly what it sent.
  */
 export async function sendPush(
   deviceToken: string,
   title: string,
   body: string,
+  data?: PushData,
 ): Promise<void> {
   try {
     const jwt = await getApnsJwt();
     const bundleId = process.env.APNS_BUNDLE_ID ?? "";
     const payloadStr = JSON.stringify({
       aps: { alert: { title, body }, sound: "default" },
+      ...(data?.url ? { url: data.url } : {}),
     });
 
     await new Promise<void>((resolve, reject) => {
