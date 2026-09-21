@@ -540,6 +540,8 @@
   "attach.photoTooLarge": "La foto debe ser menor de {maxMB}MB (actual: {sizeMB}MB).",
   "attach.audioInvalidType": "Formatos admitidos: {exts}",
   "attach.audioTooLarge": "El audio debe ser menor de {maxMB}MB (actual: {sizeMB}MB).",
+  "attach.preparingPhoto": "Preparando la foto…",
+  "attach.photoUnreadable": "No se pudo leer esa foto. Prueba con otra.",
   "shadowing.heading": "Léelo en voz alta",
   "shadowing.leadIn": "Antes de ver tu corrección, practiquemos un poco el habla.",
   "shadowing.intro": "Di en voz alta la frase corregida y grábate. No se corrige ni se puntúa: el ejercicio es oírte decirla.",

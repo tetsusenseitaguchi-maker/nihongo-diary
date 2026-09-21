@@ -540,6 +540,8 @@
   "attach.photoTooLarge": "照片须小于 {maxMB}MB（当前：{sizeMB}MB）。",
   "attach.audioInvalidType": "支持的格式：{exts}",
   "attach.audioTooLarge": "音频须小于 {maxMB}MB（当前：{sizeMB}MB）。",
+  "attach.preparingPhoto": "正在准备照片…",
+  "attach.photoUnreadable": "无法读取这张照片，请换一张试试。",
   "shadowing.heading": "朗读一遍",
   "shadowing.leadIn": "在看批改结果之前，我们先练习一下开口说。",
   "shadowing.intro": "把修改后的句子大声读出来，并录下自己的声音。不评分也不批改——听见自己说出来，就是这个练习的全部。",

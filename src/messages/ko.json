@@ -540,6 +540,8 @@
   "attach.photoTooLarge": "사진은 {maxMB}MB 미만이어야 합니다 (현재: {sizeMB}MB).",
   "attach.audioInvalidType": "지원 형식: {exts}",
   "attach.audioTooLarge": "오디오는 {maxMB}MB 미만이어야 합니다 (현재: {sizeMB}MB).",
+  "attach.preparingPhoto": "사진 준비 중…",
+  "attach.photoUnreadable": "이 사진을 읽을 수 없습니다. 다른 사진을 선택해 주세요.",
   "shadowing.heading": "소리 내어 읽기",
   "shadowing.leadIn": "첨삭을 보기 전에, 조금만 소리 내어 말하는 연습을 해 봐요.",
   "shadowing.intro": "고쳐진 문장을 소리 내어 읽고 녹음해 보세요. 채점도 첨삭도 하지 않습니다. 직접 소리 내어 말해 보는 것이 목적입니다.",

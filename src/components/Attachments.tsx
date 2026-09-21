@@ -3,11 +3,22 @@
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 import { Icon } from "@/components/icons";
 import { useT } from "@/contexts/locale";
+import { shrinkPhoto } from "@/lib/photo-shrink";
 
 // ── Validation ─────────────────────────────────────────────────────────────
 
 const PHOTO_ACCEPT = "image/jpeg,image/png,image/webp";
-const PHOTO_MAX_MB = 5;
+/**
+ * Checked AFTER shrinkPhoto, against what will actually be sent.
+ *
+ * 4, not 5: the photo goes through a Vercel Function, which returns 413 for
+ * any request body over 4.5 MB, and the multipart wrapping adds a little on
+ * top of the file. The old 5 let a 4.5–5 MB photo pass here and fail on the
+ * server — after the correction had been spent and the diary row inserted.
+ * A shrunk photo is well under a megabyte, so in practice this now only
+ * catches a file the browser could not re-encode.
+ */
+const PHOTO_MAX_MB = 4;
 const PHOTO_MAX_BYTES = PHOTO_MAX_MB * 1024 * 1024;
 const PHOTO_EXTS = ["jpg", "jpeg", "png", "webp"];
 
@@ -20,10 +31,16 @@ const AUDIO_EXTS = ["mp3", "m4a", "wav", "webm"];
 
 type ValidationResult = { key: string; vars?: Record<string, string | number> } | null;
 
-function validatePhoto(file: File): ValidationResult {
+// Split in two because shrinkPhoto sits between them: the type is judged
+// on the picked file, the size on the file that will be sent.
+function validatePhotoType(file: File): ValidationResult {
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   if (!PHOTO_EXTS.includes(ext))
     return { key: "attach.photoInvalidType", vars: { exts: PHOTO_EXTS.join(" / ") } };
+  return null;
+}
+
+function validatePhotoSize(file: File): ValidationResult {
   if (file.size > PHOTO_MAX_BYTES)
     return { key: "attach.photoTooLarge", vars: { maxMB: PHOTO_MAX_MB, sizeMB: (file.size / 1024 / 1024).toFixed(1) } };
   return null;
@@ -114,6 +131,9 @@ export function Attachments({
   const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
   const t = useT();
   const [photoError, setPhotoError] = useState<string | null>(null);
+  // True while shrinkPhoto runs — up to a second or two for a 48 MP photo on
+  // a phone. Without it the button looks ignored for exactly that long.
+  const [photoPreparing, setPhotoPreparing] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
 
   // Recording state
@@ -163,16 +183,42 @@ export function Attachments({
     if (photoInputRef.current) photoInputRef.current.value = "";
   }, [photoFile, photoPreviewUrl]);
 
-  function handlePhotoInput(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const err = validatePhoto(file);
-    if (err) {
-      setPhotoError(t(err.key, err.vars));
-      e.target.value = "";
+  async function handlePhotoInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const input = e.target;
+    const picked = input.files?.[0];
+    if (!picked) return;
+    const typeErr = validatePhotoType(picked);
+    if (typeErr) {
+      setPhotoError(t(typeErr.key, typeErr.vars));
+      input.value = "";
       return;
     }
     setPhotoError(null);
+
+    // Shrink before judging the size — see photo-shrink.ts for why the
+    // server cannot be the one to do this. A file the browser cannot decode
+    // is reported rather than sent on for sharp to reject with a 500 after
+    // the correction has already been spent.
+    setPhotoPreparing(true);
+    let file: File;
+    try {
+      file = await shrinkPhoto(picked);
+    } catch {
+      // Only PhotoUnreadableError reaches here — every other failure inside
+      // shrinkPhoto resolves to the original file instead of throwing.
+      setPhotoError(t("attach.photoUnreadable"));
+      input.value = "";
+      return;
+    } finally {
+      setPhotoPreparing(false);
+    }
+
+    const sizeErr = validatePhotoSize(file);
+    if (sizeErr) {
+      setPhotoError(t(sizeErr.key, sizeErr.vars));
+      input.value = "";
+      return;
+    }
     if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
     setPhotoPreviewUrl(URL.createObjectURL(file));
     onPhotoChange(file);
@@ -322,10 +368,11 @@ export function Attachments({
           <button
             type="button"
             onClick={() => photoInputRef.current?.click()}
-            className="inline-flex items-center gap-2 rounded-full bg-mint px-4 py-2 text-sm font-semibold text-pine transition-colors hover:bg-moss/20"
+            disabled={photoPreparing}
+            className="inline-flex items-center gap-2 rounded-full bg-mint px-4 py-2 text-sm font-semibold text-pine transition-colors hover:bg-moss/20 disabled:opacity-60"
           >
             <Icon.camera className="h-4 w-4" />
-            {t("attach.addPhoto")}
+            {photoPreparing ? t("attach.preparingPhoto") : t("attach.addPhoto")}
           </button>
         )}
 
