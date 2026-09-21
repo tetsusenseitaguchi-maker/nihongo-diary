@@ -23,6 +23,7 @@ import { HintsSection } from "@/components/HintsSection";
 import { SavedWordsRow, type SavedWord } from "@/components/SavedWordsRow";
 import { SaveCelebration } from "@/components/SaveCelebration";
 import { WordLookup } from "@/components/WordLookup";
+import { setDraftInProgress } from "@/lib/push-tap";
 import { DictationLink } from "@/components/DictationLink";
 import { ShadowingStep, type ShadowingOutcome } from "@/components/ShadowingStep";
 import { shadowingLimitFor } from "@/lib/shadowing-limits";
@@ -249,6 +250,14 @@ export default function WritePage() {
     const s = new URLSearchParams(window.location.search).get("starter");
     if (s) setText((prev) => (prev ? prev : s));
   }, []);
+
+  // Tell the push-tap handler (PushRegistrar, in the layout) whether there
+  // is a sentence here to lose. While there is, a tapped notification does
+  // not navigate away — see lib/push-tap.ts. Cleared on unmount.
+  useEffect(() => {
+    setDraftInProgress(text.trim().length > 0);
+    return () => setDraftInProgress(false);
+  }, [text]);
 
   // Detect Capacitor native iOS shell — upgrade CTAs are hidden inside the app store build
   useEffect(() => {

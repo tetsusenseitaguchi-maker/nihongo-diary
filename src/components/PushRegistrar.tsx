@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import type { PluginListenerHandle } from "@capacitor/core";
+import { pushTapHref, isDraftInProgress } from "@/lib/push-tap";
 
 // Runs only inside the Capacitor iOS native app.
 // On mount:
+//   0. Subscribe to notification taps, so a tapped push opens its page.
 //   1. If permission is already granted → register token silently.
 //   2. If not yet determined (first visit) → request permission once,
 //      then register on grant. Never re-prompts after the first attempt.
@@ -11,14 +15,32 @@ import { useEffect } from "react";
 // "iOS" here is enforced, not assumed — see the platform check in
 // registerPush() for why Android must not reach this code.
 export function PushRegistrar() {
+  const router = useRouter();
+
   useEffect(() => {
-    void registerPush();
-  }, []);
+    let tapListener: PluginListenerHandle | undefined;
+    let unmounted = false;
+    void registerPush((url) => router.push(url)).then((handle) => {
+      // The listener is what makes a cold-start tap land (see registerPush),
+      // so it is only removed when this layout actually goes away — which,
+      // for the (app) layout, is logout.
+      if (unmounted) void handle?.remove();
+      else tapListener = handle;
+    });
+    return () => {
+      unmounted = true;
+      void tapListener?.remove();
+    };
+  }, [router]);
 
   return null;
 }
 
-async function registerPush() {
+/**
+ * Resolves to the tap listener's handle once it is attached, undefined
+ * when this is not the iOS shell (or the plugin failed to load).
+ */
+async function registerPush(navigate: (url: string) => void): Promise<PluginListenerHandle | undefined> {
   console.log("[Push] registerPush() started");
 
   // Only run inside Capacitor native shell
@@ -61,9 +83,43 @@ async function registerPush() {
     return;
   }
 
+  let tapListener: PluginListenerHandle | undefined;
   try {
     const { PushNotifications } = await import("@capacitor/push-notifications");
     console.log("[Push] plugin imported");
+
+    /**
+     * Where a tapped notification goes. Attached BEFORE the permission
+     * checks below, on purpose: everything after this point can return
+     * early, and a listener placed past an early return is a listener that
+     * is sometimes not there.
+     *
+     * Works from a cold start too. The native side raises this event with
+     * retainUntilConsumed, so a tap that launched the app is held by the
+     * plugin until the first subscriber appears — which, with the WebView
+     * loading from nihongodiary.app, is this call, seconds later. The event
+     * is then delivered exactly once.
+     *
+     * notification.data is the APNs userInfo: `aps` plus whatever the sender
+     * added beside it. sendPush() (lib/apns.ts) puts the destination in
+     * `url`. A push without one — every push sent before that key existed,
+     * or a type with no page — resolves to /dashboard through pushTapHref,
+     * which also refuses anything that is not a path on this origin.
+     *
+     * router.push, never with router.refresh (CLAUDE.md). Skipped while
+     * /write holds text: a banner tapped mid-sentence must not take the
+     * sentence with it.
+     */
+    tapListener = await PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
+      const data = action.notification.data as Record<string, unknown> | undefined;
+      const url = pushTapHref(data?.url, window.location.origin);
+      if (isDraftInProgress()) {
+        console.log("[Push] tap ignored — a diary is being written; destination was", url);
+        return;
+      }
+      console.log("[Push] tap →", url);
+      navigate(url);
+    });
 
     // Check current permission status
     let { receive: status } = await PushNotifications.checkPermissions();
@@ -77,7 +133,7 @@ async function registerPush() {
 
     if (status !== "granted") {
       console.log("[Push] not granted — stopping");
-      return;
+      return tapListener;
     }
 
     // ★ Add listeners BEFORE calling register() to avoid missing the event
@@ -107,4 +163,5 @@ async function registerPush() {
   } catch (e) {
     console.error("[Push] outer catch:", e);
   }
+  return tapListener;
 }
