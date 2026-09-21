@@ -48,6 +48,12 @@ export function notificationHref(n: NotificationTarget): string {
       return n.diaryEntryId ? `/diary/${n.diaryEntryId}` : "/feed";
     case "obie_write":
       return "/write";
+    // Same value as the default, spelled out so it is a decision: a streak
+    // milestone and a welcome-back have no page of their own, and the
+    // dashboard is where both the streak and the greeting live.
+    case "obie_streak":
+    case "obie_welcome_back":
+      return "/dashboard";
     default:
       return "/dashboard";
   }

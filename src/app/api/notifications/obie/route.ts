@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { todayInTZ } from "@/lib/date-tz";
 import { validateTZ } from "@/lib/tz-server";
 import { sendPush } from "@/lib/apns";
+import { notificationHref } from "@/lib/notification-href";
 
 export const runtime = "nodejs";
 
@@ -69,7 +70,9 @@ export async function POST() {
       .from("notifications")
       .insert({ user_id: user.id, type: "obie_write" });
     if (pushToken) {
-      await sendPush(pushToken, "今日の日記を書こう 📝", "毎日続けることが上達の近道です。");
+      await sendPush(pushToken, "今日の日記を書こう 📝", "毎日続けることが上達の近道です。", {
+        url: notificationHref({ type: "obie_write" }),
+      });
     }
   }
 
@@ -107,7 +110,9 @@ export async function POST() {
         .from("notifications")
         .insert({ user_id: user.id, type: "obie_streak", metadata: { streak } });
       if (pushToken) {
-        await sendPush(pushToken, `🎉 ${streak}日連続達成！`, "すばらしい！この調子で続けよう。");
+        await sendPush(pushToken, `🎉 ${streak}日連続達成！`, "すばらしい！この調子で続けよう。", {
+          url: notificationHref({ type: "obie_streak" }),
+        });
       }
     }
   }
@@ -146,7 +151,9 @@ export async function POST() {
         .from("notifications")
         .insert({ user_id: user.id, type: "obie_welcome_back" });
       if (pushToken) {
-        await sendPush(pushToken, "おかえり！👋", "久しぶりですね。また一緒に日本語を練習しましょう。");
+        await sendPush(pushToken, "おかえり！👋", "久しぶりですね。また一緒に日本語を練習しましょう。", {
+          url: notificationHref({ type: "obie_welcome_back" }),
+        });
       }
     }
   }

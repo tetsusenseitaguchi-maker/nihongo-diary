@@ -258,7 +258,10 @@ export async function POST(req: Request) {
     // lock screen, often in front of other people, and a learner's diary is
     // theirs to show. The copy also does not scold: someone who skipped
     // yesterday is being invited, not chased.
-    await sendPush(row.push_token, t("notification.dailyReview.title"), t("notification.dailyReview.body"));
+    // The same destination the web rail below already sends.
+    await sendPush(row.push_token, t("notification.dailyReview.title"), t("notification.dailyReview.body"), {
+      url: notificationHref({ type: "daily_review", diaryEntryId: row.diary_entry_id }),
+    });
     sent++;
   }
 

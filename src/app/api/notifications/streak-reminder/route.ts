@@ -263,7 +263,8 @@ export async function POST(req: Request) {
     const title = streak === 1 ? t("notification.streak.titleDayOne") : t("notification.streak.title", { n: streak });
     const body = streak === 1 ? t("notification.streak.bodyDayOne") : t("notification.streak.body");
 
-    await sendPush(row.push_token, title, body);
+    // The same destination the web rail below already sends.
+    await sendPush(row.push_token, title, body, { url: notificationHref({ type: "streak_reminder" }) });
     sent++;
   }
 

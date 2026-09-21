@@ -116,6 +116,16 @@ export async function POST(req: Request) {
   const title = "Nihongo Diary";
   const body = t(copyKey, { name: actorName });
 
+  // Computed once, above the branch, so both rails point at the same page.
+  // It used to be built only on the web path; the APNs path returned first
+  // and carried no destination, which is why a tapped iOS notification
+  // opened the app and nothing else.
+  const url = notificationHref({
+    type,
+    diaryEntryId: record?.diary_entry_id ?? null,
+    actorUsername,
+  });
+
   /**
    * ⚠️ ONE if/else, and it is the only thing preventing the same person from
    * being notified twice for the same event.
@@ -141,17 +151,12 @@ export async function POST(req: Request) {
   if (pushToken) {
     // APNs — unchanged, and the only path for anyone with a registered device.
     // sendPush never throws; a push failure must not fail the webhook.
-    await sendPush(pushToken, title, body);
+    await sendPush(pushToken, title, body, { url });
     return NextResponse.json({ ok: true, rail: "apns" });
   }
 
   // No device registered. Browsers, if this learner subscribed any — a path
   // that reaches everybody the App Store never did. Same contract: no throw.
-  const url = notificationHref({
-    type,
-    diaryEntryId: record?.diary_entry_id ?? null,
-    actorUsername,
-  });
   await sendWebPush(recipientId, { title, body, url });
 
   return NextResponse.json({ ok: true, rail: "web" });
