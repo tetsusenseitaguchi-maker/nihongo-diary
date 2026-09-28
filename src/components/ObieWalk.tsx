@@ -268,8 +268,8 @@ export async function ObieWalk({
 /**
  * The road ahead: one pale footprint per diary still to write (up to five,
  * then a dotted gap), so "5 more" is five marks on the road; then the next
- * place and, smaller, the one after — both standing on a level road with their
- * names above them. Only the size says which is further away; a road that
+ * place with its name above it and, smaller and nameless, the one after — both
+ * standing on a level road. Only the size says which is further away; a road that
  * climbed read as a slope rather than as distance.
  */
 function Ahead({
@@ -288,20 +288,14 @@ function Ahead({
   const ghosts = Math.min(remaining, MAX_GHOSTS);
   const dotted = remaining > MAX_GHOSTS;
   const nextX = 2 + ghosts * GHOST + (dotted ? 8 : 0) + 2;
-  // Both names sit above their signs at nearly the same height, so the one
-  // after must start where the next one's name ends, not where its sign ends.
   const nextMid = nextX + NEXT_W / 2;
-  const afterX = after
-    ? Math.max(
-        nextX + NEXT_W + 4,
-        nextMid + nameWidth(next.name, 11) / 2 + 4 + nameWidth(after.name, 9) / 2 - AFTER_W / 2,
-      )
-    : 0;
+  // The one after has no name, so it can stand right beside the next sign:
+  // its picture sits below the height of the next one's name.
+  const afterX = nextX + NEXT_W + 4;
   const w = Math.ceil(
     Math.max(
       (after ? afterX + AFTER_W : nextX + NEXT_W) + 2,
       nextMid + nameWidth(next.name, 11) / 2 + 2,
-      after ? afterX + AFTER_W / 2 + nameWidth(after.name, 9) / 2 + 2 : 0,
     ),
   );
   // Level, narrowing a little toward the far end.
@@ -339,7 +333,7 @@ function Ahead({
       </div>
       {after && (
         <div className="absolute flex justify-center" style={{ left: afterX, width: AFTER_W, bottom: ROAD_TOP - 3 }}>
-          <Landmark dest={after} reached={false} size={20} small />
+          <Landmark dest={after} reached={false} size={20} showName={false} />
         </div>
       )}
     </div>
@@ -356,20 +350,24 @@ function Landmark({
   dest,
   reached,
   size,
-  small = false,
+  showName = true,
 }: {
   dest: Destination;
   reached: boolean;
   size: number;
-  small?: boolean;
+  /**
+   * False for the place after next: a small sign with no name. The name is
+   * not needed yet — it becomes the next place soon enough — and the width it
+   * took was worth two footprints behind Obie on a phone.
+   */
+  showName?: boolean;
 }) {
   const src = walkArtFor(dest.slug);
   return (
     <div className="flex flex-col items-center">
-      <Furigana
-        text={dest.name}
-        className={`mb-0.5 whitespace-nowrap font-jp leading-none ${small ? "text-[9px] text-muted" : "text-[11px] font-semibold text-pine"}`}
-      />
+      {showName && (
+        <Furigana text={dest.name} className="mb-0.5 whitespace-nowrap font-jp text-[11px] font-semibold leading-none text-pine" />
+      )}
       <span className="block" style={{ opacity: reached ? 1 : 0.35 }}>
         {src ? (
           // A plain <img>: the files are already small and drawn at a fixed
