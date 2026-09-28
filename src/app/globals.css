@@ -701,8 +701,17 @@ ruby rt {
    add a loop here: the global reduced-motion guard only shortens durations,
    so an infinite animation keeps running, just too fast to see.
 
-   Season tints are for the road under each diary's footprint, by diary_date. */
+   Season tints are for the road under each diary's footprint, by diary_date.
+
+   The left edge fades out. The scroller starts at its right end, and what
+   lands at the left edge depends on the phone's width, so a destination there
+   is often cut in half, name and all. Starting further left to avoid that
+   would push the road ahead off the right edge, and choosing the position
+   would need a script measuring the screen after paint; a fade makes the cut
+   read as road continuing into the past instead. Static — nothing animates. */
 .walk-scene {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 28px);
+  mask-image: linear-gradient(to right, transparent 0, #000 28px);
   --walk-spring: #f5dfe5;
   --walk-summer: #dbeacf;
   --walk-autumn: #f2dcc2;

@@ -171,10 +171,12 @@ export async function ObieWalk({
         tabIndex={0}
         className="walk-scene flex flex-row-reverse overflow-x-auto overscroll-x-contain pb-2"
       >
-        {/* mr-auto: when everything fits (a new learner), the strip sits at
-            the left rather than floating to the right edge. When it does not
-            fit, the margin is zero and row-reverse starts at the right. */}
-        <div className="mr-auto flex shrink-0 pl-3">
+        {/* mx-auto: when everything fits (a new learner), the strip is
+            centred instead of leaving the right third of the card empty.
+            When it does not fit, auto margins are zero and row-reverse starts
+            at the right. pl-5 leaves the oldest footprint clear of the left
+            fade (walk-scene in globals.css) once scrolled all the way back. */}
+        <div className="mx-auto flex shrink-0 pl-5">
           {plan.legs.map((leg, k) => {
             const start = offset;
             offset += leg.steps.length;
@@ -227,7 +229,7 @@ export async function ObieWalk({
                     className="absolute flex justify-center"
                     style={{ left: leg.steps.length * STEP, width: markW, bottom: ROAD_TOP - 4 }}
                   >
-                    <Landmark dest={leg.reached} reached size={40} />
+                    <Landmark dest={leg.reached} opacity={1} size={40} />
                   </div>
                 )}
               </div>
@@ -286,8 +288,12 @@ function Ahead({
   if (!next) return <div className="shrink-0" style={{ width: 24, height: H }} />;
 
   const ghosts = Math.min(remaining, MAX_GHOSTS);
+  // One to go is the moment this whole feature is for — the learner who has
+  // written once — so that single pale footprint is drawn at the real
+  // footprint's size rather than as a small mark that is easy to miss.
+  const ghost = remaining === 1 ? 16 : GHOST;
   const dotted = remaining > MAX_GHOSTS;
-  const nextX = 2 + ghosts * GHOST + (dotted ? 8 : 0) + 2;
+  const nextX = 2 + ghosts * ghost + (dotted ? 8 : 0) + 2;
   const nextMid = nextX + NEXT_W / 2;
   // The one after has no name, so it can stand right beside the next sign:
   // its picture sits below the height of the next one's name.
@@ -314,10 +320,10 @@ function Ahead({
           aria-hidden
           className="walk-paw-ghost absolute block"
           style={{
-            left: 2 + i * GHOST,
-            width: GHOST,
-            height: GHOST,
-            bottom: ROAD_BOTTOM + ROAD_H / 2 - GHOST / 2 + (i % 2 ? 2 : -2),
+            left: 2 + i * ghost,
+            width: ghost,
+            height: ghost,
+            bottom: ROAD_BOTTOM + ROAD_H / 2 - ghost / 2 + (i % 2 ? 2 : -2),
           }}
         />
       ))}
@@ -329,11 +335,11 @@ function Ahead({
         />
       )}
       <div className="absolute flex justify-center" style={{ left: nextX, width: NEXT_W, bottom: ROAD_TOP - 4 }}>
-        <Landmark dest={next} reached={false} size={32} />
+        <Landmark dest={next} opacity={0.6} size={32} />
       </div>
       {after && (
         <div className="absolute flex justify-center" style={{ left: afterX, width: AFTER_W, bottom: ROAD_TOP - 3 }}>
-          <Landmark dest={after} reached={false} size={20} showName={false} />
+          <Landmark dest={after} opacity={0.35} size={20} showName={false} />
         </div>
       )}
     </div>
@@ -345,15 +351,18 @@ function Ahead({
  *
  * Reached and not-yet-reached differ by opacity alone, on the picture only —
  * the name stays readable either way. The pictures keep their own colours.
+ * Reached is 1; the next place 0.6, because at 0.35 the one place a new
+ * learner is heading for read as faded rather than as a destination; the
+ * place after it stays at 0.35.
  */
 function Landmark({
   dest,
-  reached,
+  opacity,
   size,
   showName = true,
 }: {
   dest: Destination;
-  reached: boolean;
+  opacity: number;
   size: number;
   /**
    * False for the place after next: a small sign with no name. The name is
@@ -368,7 +377,7 @@ function Landmark({
       {showName && (
         <Furigana text={dest.name} className="mb-0.5 whitespace-nowrap font-jp text-[11px] font-semibold leading-none text-pine" />
       )}
-      <span className="block" style={{ opacity: reached ? 1 : 0.35 }}>
+      <span className="block" style={{ opacity }}>
         {src ? (
           // A plain <img>: the files are already small and drawn at a fixed
           // size, and next/image would add an optimisation request per picture.
