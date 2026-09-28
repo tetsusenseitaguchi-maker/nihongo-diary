@@ -377,6 +377,20 @@ export default async function DashboardPage() {
             sub={`${stats.monthDelta >= 0 ? "+" : ""}${stats.monthDelta}`}
             subAccent
           />
+          {/* ── Obie's walk ─────────────────────────────────────────────
+              Directly under Total Diaries, because the walk moves by that
+              same number — one footprint per diary, in total, not the streak
+              (the 🔥 stays in the hero). Here it is also where a learner with
+              a single diary meets it, above the day's review cards.
+
+              Shown from zero diaries, without a number. id and diary_date
+              only, oldest first. min-w-0 because the road is far wider than
+              the card and scrolls inside it. */}
+          <ObieWalk
+            steps={entries.map(({ id, diary_date }) => ({ id, diary_date })).reverse()}
+            todayStr={todayStr}
+            className="col-span-2 min-w-0"
+          />
           {/* ── What has piled up ────────────────────────────────────────
               The third card, full width under the two counts it belongs with:
               Total Diaries counts entries, This Month counts entries in a
@@ -502,16 +516,6 @@ export default async function DashboardPage() {
           </div>
         </Card>
       )}
-
-      {/* ── Obie's walk ───────────────────────────────────────────────────
-          One footprint per diary, in total — not the streak, which keeps its
-          🔥 in the hero. Under the two cards above because those expire or
-          come due and this does not. Shown from zero diaries, without a
-          number. id and diary_date only; oldest first. */}
-      <ObieWalk
-        steps={entries.map(({ id, diary_date }) => ({ id, diary_date })).reverse()}
-        todayStr={todayStr}
-      />
 
       {/* Main + rail */}
       <div className="grid gap-5 lg:grid-cols-12">
