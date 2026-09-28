@@ -8,6 +8,7 @@ import { MiniCalendar } from "@/components/MiniCalendar";
 import { Furigana, NoRuby } from "@/components/Furigana";
 import { Avatar } from "@/components/ObiePhoto";
 import { DashboardObie } from "@/components/DashboardObie";
+import { ObieWalk } from "@/components/ObieWalk";
 import { obieMood } from "@/lib/obie-mood";
 import { templates } from "@/lib/mock-data";
 import { computeStats, type DiaryRow } from "@/lib/diary";
@@ -92,6 +93,10 @@ export default async function DashboardPage() {
       // natural_japanese is appended, never in place of anything: one absent
       // column errors the whole query, and that is how every user once became
       // Free. It feeds hasDictation() for the audio announcement's "try it".
+      //
+      // ⚠️ No .limit(), and Obie's walk depends on that: it draws one footprint
+      // per row returned, so a limit here would stop the road at that number.
+      // Give the walk its own count before ever adding one.
       .select(
         "id, diary_date, original_text, corrected_japanese, english_explanation, level, correction_style, natural_japanese",
       )
@@ -497,6 +502,16 @@ export default async function DashboardPage() {
           </div>
         </Card>
       )}
+
+      {/* ── Obie's walk ───────────────────────────────────────────────────
+          One footprint per diary, in total — not the streak, which keeps its
+          🔥 in the hero. Under the two cards above because those expire or
+          come due and this does not. Shown from zero diaries, without a
+          number. id and diary_date only; oldest first. */}
+      <ObieWalk
+        steps={entries.map(({ id, diary_date }) => ({ id, diary_date })).reverse()}
+        todayStr={todayStr}
+      />
 
       {/* Main + rail */}
       <div className="grid gap-5 lg:grid-cols-12">
