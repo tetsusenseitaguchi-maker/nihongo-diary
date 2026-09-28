@@ -38,16 +38,16 @@ export const DESTINATIONS: readonly Destination[] = [
   { at: 1, slug: "genkan", name: "玄関(げんかん)" },
   { at: 2, slug: "denchu", name: "電柱(でんちゅう)" },
   { at: 5, slug: "koen", name: "公園(こうえん)" },
-  { at: 10, slug: "odori-koen", name: "大通公園(おおどおりこうえん)" },
+  { at: 10, slug: "odoripark", name: "大通公園(おおどおりこうえん)" },
   { at: 20, slug: "tokeidai", name: "時計台(とけいだい)" },
-  { at: 30, slug: "jingu-torii", name: "北海道神宮(ほっかいどうじんぐう)の鳥居(とりい)" },
+  { at: 30, slug: "torii", name: "北海道神宮(ほっかいどうじんぐう)の鳥居(とりい)" },
   { at: 45, slug: "hitsujigaoka", name: "羊ヶ丘展望台(ひつじがおかてんぼうだい)" },
   { at: 60, slug: "shikotsuko", name: "支笏湖(しこつこ)" },
   { at: 80, slug: "hakodate", name: "函館(はこだて)の夜景(やけい)" },
-  { at: 100, slug: "fujisan", name: "富士山(ふじさん)" },
-  { at: 130, slug: "senbon-torii", name: "京都(きょうと)の千本鳥居(せんぼんとりい)" },
-  { at: 160, slug: "nara-shika", name: "奈良(なら)の鹿(しか)" },
-  { at: 200, slug: "okinawa-umi", name: "沖縄(おきなわ)の海(うみ)" },
+  { at: 100, slug: "fuji", name: "富士山(ふじさん)" },
+  { at: 130, slug: "senbontorii", name: "京都(きょうと)の千本鳥居(せんぼんとりい)" },
+  { at: 160, slug: "nara", name: "奈良(なら)の鹿(しか)" },
+  { at: 200, slug: "okinawa", name: "沖縄(おきなわ)の海(うみ)" },
 ];
 
 export type Season = "spring" | "summer" | "autumn" | "winter";
