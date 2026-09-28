@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { hasSeenRecapToday } from "@/lib/daily-recap/seen";
 import { hasSeenTour } from "@/lib/tour/seen";
 import { useTour } from "@/contexts/tour";
@@ -47,9 +47,44 @@ import { getClientTZ, todayInTZ } from "@/lib/date-tz";
  * no second render — and globals.css does the rest in 1.2s regardless of the
  * count. With prefers-reduced-motion the same attribute lands on the finished
  * road: the rules there are guarded individually.
+ *
+ * ── Checking it on a phone ─────────────────────────────────────────────────
+ * It plays at most once a day, so a real device would otherwise cost a day
+ * per attempt. Same idea as /dashboard?recap=1:
+ *
+ *   ?walk=replay  plays it now, whatever the conditions. Writes nothing.
+ *                 Opened by typing a URL it is a reload, so the finished road
+ *                 shows for a moment before it plays — fine for a check.
+ *   ?walk=debug   shows, under the card, what is stored, how THIS view would
+ *                 decide, and how the LAST ordinary view decided — including
+ *                 where the card was on screen. Writes nothing.
+ *
+ * The last ordinary decision is recorded on every view (LAST_KEY), because the
+ * view worth diagnosing is the one reached from the bottom nav after writing,
+ * and typing ?walk=debug is always a reload, never that.
+ *
+ * ⚠️ The iOS app has no address bar, so neither can be typed there. Both work
+ * in Safari on the phone, which runs the same code with its own storage.
  */
 
 const STORAGE_KEY = "nihongo-diary-walk-seen";
+const LAST_KEY = "nihongo-diary-walk-last";
+
+/** How one dashboard view decided. Kept only for ?walk=debug. */
+interface Decision {
+  at: string;
+  total: number;
+  today: string;
+  stored: Seen | null;
+  byNavigation: boolean;
+  tourRunning: boolean;
+  tourSeen: boolean;
+  recapComing: boolean;
+  play: boolean;
+  /** The card's top edge, and the viewport height, when the decision ran. */
+  cardTop: number;
+  viewportHeight: number;
+}
 
 interface Seen {
   /** The diary count the dashboard last showed on this browser. */
@@ -77,6 +112,34 @@ function writeSeen(v: Seen): void {
   }
 }
 
+function readLast(): Decision | null {
+  try {
+    const raw = window.localStorage.getItem(LAST_KEY);
+    return raw ? (JSON.parse(raw) as Decision) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLast(v: Decision): void {
+  try {
+    window.localStorage.setItem(LAST_KEY, JSON.stringify(v));
+  } catch {
+    // Diagnostics only.
+  }
+}
+
+/** Plain key=value lines: a developer readout, not interface copy. */
+function describe(label: string, d: Decision): string {
+  const visible = d.cardTop < d.viewportHeight;
+  return [
+    `${label} @ ${d.at}`,
+    `  total=${d.total} today=${d.today} stored=${JSON.stringify(d.stored)}`,
+    `  byNavigation=${d.byNavigation} tourRunning=${d.tourRunning} tourSeen=${d.tourSeen} recapComing=${d.recapComing}`,
+    `  play=${d.play} cardTop=${Math.round(d.cardTop)} viewportHeight=${d.viewportHeight} cardOnScreen=${visible}`,
+  ].join("\n");
+}
+
 const noSubscribe = () => () => {};
 
 /**
@@ -102,10 +165,18 @@ export function WalkArrival({
   const ref = useRef<HTMLDivElement>(null);
   const byNavigation = useRenderedByNavigation();
   const { isActive: tourRunning } = useTour();
+  const [debug, setDebug] = useState<string | null>(null);
 
   useLayoutEffect(() => {
+    const mode = new URLSearchParams(window.location.search).get("walk");
+    if (mode === "replay") {
+      ref.current?.setAttribute("data-walk-arrive", "");
+      return;
+    }
+
     const seen = readSeen();
-    const recapComing = hasSeenTour() && !hasSeenRecapToday(todayInTZ(getClientTZ()));
+    const tourSeen = hasSeenTour();
+    const recapComing = tourSeen && !hasSeenRecapToday(todayInTZ(getClientTZ()));
 
     const play =
       seen !== null &&
@@ -113,15 +184,49 @@ export function WalkArrival({
       seen.playedOn !== todayStr &&
       byNavigation &&
       !tourRunning &&
-      hasSeenTour() &&
+      tourSeen &&
       !recapComing;
+
+    const decision: Decision = {
+      at: new Date().toISOString(),
+      total,
+      today: todayStr,
+      stored: seen,
+      byNavigation,
+      tourRunning,
+      tourSeen,
+      recapComing,
+      play,
+      cardTop: ref.current?.getBoundingClientRect().top ?? -1,
+      viewportHeight: window.innerHeight,
+    };
+
+    if (mode === "debug") {
+      // Read-only: this view is a reload by construction, so it must not
+      // overwrite the record of the view that is actually being diagnosed.
+      const last = readLast();
+      setDebug(
+        [describe("this view (not played, not recorded)", decision), last ? describe("last ordinary view", last) : "last ordinary view: none recorded"].join("\n\n"),
+      );
+      return;
+    }
 
     if (play) ref.current?.setAttribute("data-walk-arrive", "");
     writeSeen({ total, playedOn: play ? todayStr : (seen?.playedOn ?? null) });
+    writeLast(decision);
     // Once per mount: this is about how the page was arrived at, not about
     // anything that changes while it is open.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <div ref={ref}>{children}</div>;
+  return (
+    <div ref={ref}>
+      {children}
+      {debug && (
+        <pre className="mx-3 mb-3 overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-sand/60 p-2 font-mono text-[10px] leading-snug text-ink/80">
+          {debug}
+        </pre>
+      )}
+    </div>
+  );
 }
