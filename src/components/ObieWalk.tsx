@@ -21,10 +21,9 @@ import { walkArtFor } from "@/lib/walk-art";
  * and its size is known from its count, so off-screen stretches cost nothing
  * to paint and nothing jumps when they come into view.
  *
- * The future is NOT to scale. It is a fixed strip under 100px — see Ahead —
- * and the count of the places beyond it is in the header, so that on a 343px
- * phone card Obie, the road ahead and at least eight footprints are on screen
- * together.
+ * The future is NOT to scale. It is a short fixed strip — see Ahead — and the
+ * count of the places beyond it is in the header, so that the road ahead
+ * takes as little of a 343px phone card as it can and the rest is footprints.
  *
  * The scroller is flex-row-reverse, which makes browsers start it at the right
  * edge: Obie and the road ahead are what is on screen, with no script moving
@@ -52,12 +51,19 @@ const ROAD_TOP = ROAD_BOTTOM + ROAD_H;
 const STEP = 22;
 const ZIGZAG = 5;
 const MARK_W = 64; // a destination reached, inside the past
-const OBIE_W = 56;
-const GHOST = 16;
-const NEXT_W = 52;
-const AFTER_W = 36;
-/** How far up the road the place after next stands — further means higher. */
-const AFTER_RISE = 40;
+/**
+ * Obie's slot is narrower than his 56px sprite: the drawing has ~9px of
+ * transparent margin on each side (45/288 of the frame), so the slot holds
+ * what is drawn and the margins overhang harmlessly.
+ */
+const OBIE_W = 44;
+const OBIE_SIZE = 56;
+const OBIE_MARGIN = 9; // transparent px around the drawing at 56px, incl. under the feet
+/** Pale footprints ahead: one per diary still to write, up to MAX_GHOSTS. */
+const GHOST = 11;
+const MAX_GHOSTS = 5;
+const NEXT_W = 40;
+const AFTER_W = 26;
 
 /**
  * Roughly how wide a destination's name is drawn, in px — its visible
@@ -168,7 +174,7 @@ export async function ObieWalk({
         {/* mr-auto: when everything fits (a new learner), the strip sits at
             the left rather than floating to the right edge. When it does not
             fit, the margin is zero and row-reverse starts at the right. */}
-        <div className="mr-auto flex shrink-0 pl-3 pr-1">
+        <div className="mr-auto flex shrink-0 pl-3">
           {plan.legs.map((leg, k) => {
             const start = offset;
             offset += leg.steps.length;
@@ -237,7 +243,12 @@ export async function ObieWalk({
               className={`absolute ${plan.legs.length === 0 ? "rounded-l-full" : ""}`}
               style={{ left: 0, right: 0, bottom: ROAD_BOTTOM, height: ROAD_H, background: SEASON_TINT[seasonOf(todayStr)] }}
             />
-            <span className="absolute -scale-x-100" style={{ left: 0, bottom: ROAD_BOTTOM + 2 }}>
+            {/* Feet on the middle of the road: the sprite's own bottom margin is
+                subtracted so it is the drawn paws that land, not the image box. */}
+            <span
+              className="absolute -scale-x-100"
+              style={{ left: (OBIE_W - OBIE_SIZE) / 2, bottom: ROAD_BOTTOM + ROAD_H / 2 - OBIE_MARGIN }}
+            >
               <ObieSprite art="walking" frames={2} motion="obie-walk-burst" className="h-14 w-14" />
             </span>
           </div>
@@ -255,14 +266,11 @@ export async function ObieWalk({
 }
 
 /**
- * The road ahead, in under 100px: one pale footprint (and a dotted gap if
- * there are more to go), the next place standing on the road with its name
- * underneath, and the place after it smaller and further up the road, where
- * the road narrows into the distance.
- *
- * The next place's name goes under the road so that the one after can stand
- * above it without the two names colliding — that overlap is what lets the
- * whole thing fit beside Obie and eight footprints on a phone.
+ * The road ahead: one pale footprint per diary still to write (up to five,
+ * then a dotted gap), so "5 more" is five marks on the road; then the next
+ * place and, smaller, the one after — both standing on a level road with their
+ * names above them. Only the size says which is further away; a road that
+ * climbed read as a slope rather than as distance.
  */
 function Ahead({
   next,
@@ -277,55 +285,61 @@ function Ahead({
 }) {
   if (!next) return <div className="shrink-0" style={{ width: 24, height: H }} />;
 
-  const dotted = remaining > 1;
-  const nextX = 2 + GHOST + (dotted ? 10 : 0);
+  const ghosts = Math.min(remaining, MAX_GHOSTS);
+  const dotted = remaining > MAX_GHOSTS;
+  const nextX = 2 + ghosts * GHOST + (dotted ? 8 : 0) + 2;
+  // Both names sit above their signs at nearly the same height, so the one
+  // after must start where the next one's name ends, not where its sign ends.
   const nextMid = nextX + NEXT_W / 2;
-  const afterX = nextX + 30;
+  const afterX = after
+    ? Math.max(
+        nextX + NEXT_W + 4,
+        nextMid + nameWidth(next.name, 11) / 2 + 4 + nameWidth(after.name, 9) / 2 - AFTER_W / 2,
+      )
+    : 0;
   const w = Math.ceil(
     Math.max(
-      (after ? afterX + AFTER_W : nextX + NEXT_W) + 4,
+      (after ? afterX + AFTER_W : nextX + NEXT_W) + 2,
       nextMid + nameWidth(next.name, 11) / 2 + 2,
       after ? afterX + AFTER_W / 2 + nameWidth(after.name, 9) / 2 + 2 : 0,
     ),
   );
-  // Flat to the middle of the next place, then climbing and narrowing to the
-  // foot of the one after.
+  // Level, narrowing a little toward the far end.
   const top = H - ROAD_TOP;
   const bottom = H - ROAD_BOTTOM;
-  const farTop = H - (ROAD_TOP + AFTER_RISE) + 1;
-  const road = after
-    ? `0,${top} ${nextMid},${top} ${w},${farTop} ${w},${farTop + 3} ${nextMid},${bottom} 0,${bottom}`
-    : `0,${top} ${w},${top + 3} ${w},${bottom - 3} 0,${bottom}`;
+  const road = `0,${top} ${w},${top + 3} ${w},${bottom - 3} 0,${bottom}`;
 
   return (
     <div className="relative shrink-0" style={{ width: w, height: H }}>
       <svg aria-hidden className="absolute inset-0" width={w} height={H} viewBox={`0 0 ${w} ${H}`}>
         <polygon points={road} fill={tint} />
       </svg>
-      <span
-        aria-hidden
-        className="walk-paw-ghost absolute block h-4 w-4"
-        style={{ left: 2, bottom: ROAD_BOTTOM + ROAD_H / 2 - 8 }}
-      />
+      {Array.from({ length: ghosts }, (_, i) => (
+        <span
+          key={i}
+          aria-hidden
+          className="walk-paw-ghost absolute block"
+          style={{
+            left: 2 + i * GHOST,
+            width: GHOST,
+            height: GHOST,
+            bottom: ROAD_BOTTOM + ROAD_H / 2 - GHOST / 2 + (i % 2 ? 2 : -2),
+          }}
+        />
+      ))}
       {dotted && (
         <span
           aria-hidden
-          className="absolute block w-2 border-t-2 border-dotted border-muted/50"
-          style={{ left: 2 + GHOST, bottom: ROAD_BOTTOM + ROAD_H / 2 }}
+          className="absolute block w-1.5 border-t-2 border-dotted border-muted/50"
+          style={{ left: 3 + ghosts * GHOST, bottom: ROAD_BOTTOM + ROAD_H / 2 }}
         />
       )}
       <div className="absolute flex justify-center" style={{ left: nextX, width: NEXT_W, bottom: ROAD_TOP - 4 }}>
-        <Landmark dest={next} reached={false} size={40} showName={false} />
+        <Landmark dest={next} reached={false} size={32} />
       </div>
-      <span className="absolute bottom-0.5 -translate-x-1/2 whitespace-nowrap" style={{ left: nextMid }}>
-        <Furigana text={next.name} className="font-jp text-[11px] font-semibold leading-none text-pine" />
-      </span>
       {after && (
-        <div
-          className="absolute flex justify-center"
-          style={{ left: afterX, width: AFTER_W, bottom: ROAD_TOP + AFTER_RISE - 4 }}
-        >
-          <Landmark dest={after} reached={false} size={22} small />
+        <div className="absolute flex justify-center" style={{ left: afterX, width: AFTER_W, bottom: ROAD_TOP - 3 }}>
+          <Landmark dest={after} reached={false} size={20} small />
         </div>
       )}
     </div>
@@ -343,24 +357,19 @@ function Landmark({
   reached,
   size,
   small = false,
-  showName = true,
 }: {
   dest: Destination;
   reached: boolean;
   size: number;
   small?: boolean;
-  /** False when the caller draws the name somewhere else. */
-  showName?: boolean;
 }) {
   const src = walkArtFor(dest.slug);
   return (
     <div className="flex flex-col items-center">
-      {showName && (
-        <Furigana
-          text={dest.name}
-          className={`mb-0.5 whitespace-nowrap font-jp leading-none ${small ? "text-[9px] text-muted" : "text-[11px] font-semibold text-pine"}`}
-        />
-      )}
+      <Furigana
+        text={dest.name}
+        className={`mb-0.5 whitespace-nowrap font-jp leading-none ${small ? "text-[9px] text-muted" : "text-[11px] font-semibold text-pine"}`}
+      />
       <span className="block" style={{ opacity: reached ? 1 : 0.35 }}>
         {src ? (
           // A plain <img>: the files are already small and drawn at a fixed
