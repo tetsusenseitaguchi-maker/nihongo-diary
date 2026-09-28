@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui";
 import { Furigana } from "@/components/Furigana";
 import { ObieSprite } from "@/components/ObieSprite";
+import { WalkArrival } from "@/components/WalkArrival";
 import { getLocaleFromCookie, getServerT } from "@/lib/i18n-server";
 import { planWalk, seasonOf, type Destination, type Season, type WalkStep } from "@/lib/walk";
 import { walkArtFor } from "@/lib/walk-art";
@@ -30,8 +31,9 @@ import { walkArtFor } from "@/lib/walk-art";
  * the scroll position after the page has painted.
  *
  * ── Motion ────────────────────────────────────────────────────────────────
- * Obie's existing one-shot walk (obie-walk-burst) and nothing else. No loop,
- * no keyframe of its own, no smooth scrolling.
+ * Obie's existing one-shot walk (obie-walk-burst), and once a day, when the
+ * count has gone up, the newest footprint fading in while Obie steps one STEP
+ * forward — see WalkArrival. No loop, no smooth scrolling.
  */
 
 const H = 120; // scene height
@@ -165,6 +167,9 @@ export async function ObieWalk({
         </p>
       </div>
 
+      {/* The only client code in the walk: decides once, on arrival, whether
+          the newest footprint and Obie play their 1.2s step. */}
+      <WalkArrival total={plan.total} todayStr={todayStr}>
       <div
         role="region"
         aria-label={t("dashboard.walk.scrollLabel")}
@@ -214,7 +219,7 @@ export async function ObieWalk({
                         href={`/diary/${s.id}`}
                         prefetch={false}
                         aria-label={t("dashboard.walk.footprint", { date: dateLabel(s.diary_date) })}
-                        className="walk-paw absolute block h-9 rounded-full"
+                        className={`walk-paw absolute block h-9 rounded-full ${n === plan.total - 1 ? "walk-paw-newest" : ""}`}
                         style={{
                           left: i * STEP,
                           width: STEP,
@@ -248,7 +253,7 @@ export async function ObieWalk({
             {/* Feet on the middle of the road: the sprite's own bottom margin is
                 subtracted so it is the drawn paws that land, not the image box. */}
             <span
-              className="absolute -scale-x-100"
+              className="walk-obie absolute -scale-x-100"
               style={{ left: (OBIE_W - OBIE_SIZE) / 2, bottom: ROAD_BOTTOM + ROAD_H / 2 - OBIE_MARGIN }}
             >
               <ObieSprite art="walking" frames={2} motion="obie-walk-burst" className="h-14 w-14" />
@@ -263,6 +268,7 @@ export async function ObieWalk({
           />
         </div>
       </div>
+      </WalkArrival>
     </Card>
   );
 }

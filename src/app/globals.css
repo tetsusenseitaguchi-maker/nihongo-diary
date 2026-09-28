@@ -747,6 +747,48 @@ ruby rt {
   opacity: 0.55;
 }
 
+/* ── The arrival: a new diary since the last visit — see WalkArrival.tsx ──────
+   WalkArrival sets data-walk-arrive on the walk at most once a day. Two things
+   move, both for 1.2s whatever the count: the newest footprint fades in, and
+   Obie steps forward one footprint's width (22px, STEP in ObieWalk.tsx). The
+   road, the seasons and the destinations hold still — including on the day a
+   destination is reached. Obie's legs are his existing 1.2s walk-burst, which
+   runs on mount, so the stride and the step end together.
+
+   `translate`, not `transform`: the Obie wrapper is mirrored with Tailwind's
+   -scale-x-100, and a transform would be applied inside that mirror and move
+   him backwards. The individual property sits outside it.
+
+   `both` so the first frame is the starting position — the attribute lands
+   before the browser paints, and nothing should flash in its finished place. */
+@keyframes walk-paw-arrive {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes walk-obie-arrive {
+  from { translate: -22px 0; }
+  to   { translate: 0 0; }
+}
+
+[data-walk-arrive] .walk-paw-newest {
+  animation: walk-paw-arrive 1200ms ease-out both;
+}
+
+[data-walk-arrive] .walk-obie {
+  animation: walk-obie-arrive 1200ms ease-in-out both;
+}
+
+/* ⚠️ Written out, not left to the global guard: that one only shortens
+   durations. With motion reduced there is no arrival at all — the footprint is
+   simply there and Obie stands where he ends up. */
+@media (prefers-reduced-motion: reduce) {
+  [data-walk-arrive] .walk-paw-newest,
+  [data-walk-arrive] .walk-obie {
+    animation: none;
+  }
+}
+
 /* A destination with no picture in public/walk/ yet: a signpost. Opacity for
    reached / not reached is set by the caller, the same as for a picture. */
 .walk-sign {
