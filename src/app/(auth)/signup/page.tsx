@@ -6,7 +6,42 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, Button } from "@/components/ui";
 import { useT, useLocale } from "@/contexts/locale";
-import { authErrorMessage } from "@/lib/auth-errors";
+import { authErrorKey, authErrorMessage } from "@/lib/auth-errors";
+
+/**
+ * What to say when signUp came back 5xx.
+ *
+ * The 5xx itself cannot tell us why. auth-js never reads the body of a 5xx
+ * (lib/fetch.js throws before error.json()), and even the body would only say
+ * "Database error saving new user" — not which constraint. The one we know
+ * about is profiles.username being `unique`: handle_new_user() inserts the
+ * chosen username, a taken one raises, the whole signup rolls back, and the
+ * learner was told "the server is busy" however many times they retried.
+ *
+ * So ask afterwards. profiles is readable by anon, and `eq` is the same
+ * case-sensitive comparison the unique constraint makes. Read-only: the
+ * signup request above is exactly what it was.
+ *
+ *   taken          → say so, definitively
+ *   lookup failed  → say the username *may* be the problem
+ *   not taken      → the username was not it; keep the old message
+ */
+async function serverErrorKey(
+  supabase: ReturnType<typeof createClient>,
+  username: string,
+): Promise<string> {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", username)
+      .limit(1);
+    if (error) return "signup.usernameMaybeTaken";
+    return data.length > 0 ? "signup.usernameTaken" : "authError.serverBusy";
+  } catch {
+    return "signup.usernameMaybeTaken";
+  }
+}
 
 export default function SignupPage() {
   const router = useRouter();
@@ -58,7 +93,12 @@ export default function SignupPage() {
       // This is the line the German review was looking at. A 5xx from Supabase
       // Auth — "Error sending confirmation email" being the common one here —
       // arrives with error.message set to the string "{}". See lib/auth-errors.ts.
-      setError(authErrorMessage(error, t));
+      // A taken username is the other common one — see serverErrorKey above.
+      if (authErrorKey(error) === "authError.serverBusy") {
+        setError(t(await serverErrorKey(supabase, username)));
+      } else {
+        setError(authErrorMessage(error, t));
+      }
       setLoading(false);
       return;
     }

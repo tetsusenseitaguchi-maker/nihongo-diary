@@ -446,6 +446,8 @@
   "authError.confirm_link": "This confirmation link could not be opened. It may have expired, or it was opened in a different browser from the one that signed up.",
   "authError.requestNewLink": "Request a new link",
   "signup.confirmEmail": "请查看您的电子邮件以确认账户，然后登录。",
+  "signup.usernameTaken": "该用户名已被使用，请换一个用户名。",
+  "signup.usernameMaybeTaken": "无法创建账户。用户名可能已被使用，请换一个试试。如果仍然不行，请稍后再试。",
   "invite.sectionTitle": "👥 邀请好友",
   "invite.sectionDesc": "通过您的链接注册的人将自动互相关注。",
   "invite.share": "📤 分享",

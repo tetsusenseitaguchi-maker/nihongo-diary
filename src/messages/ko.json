@@ -446,6 +446,8 @@
   "authError.confirm_link": "This confirmation link could not be opened. It may have expired, or it was opened in a different browser from the one that signed up.",
   "authError.requestNewLink": "Request a new link",
   "signup.confirmEmail": "이메일을 확인하여 계정을 인증한 후 로그인해 주세요.",
+  "signup.usernameTaken": "이미 사용 중인 사용자 이름입니다. 다른 이름을 입력해 주세요.",
+  "signup.usernameMaybeTaken": "계정을 만들 수 없습니다. 사용자 이름이 이미 사용 중일 수 있으니 다른 이름으로 시도해 주세요. 그래도 안 되면 잠시 후 다시 시도해 주세요.",
   "invite.sectionTitle": "👥 친구 초대",
   "invite.sectionDesc": "내 링크로 가입한 사람과 자동으로 서로 팔로우됩니다.",
   "invite.share": "📤 공유",

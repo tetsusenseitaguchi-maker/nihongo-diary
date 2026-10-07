@@ -503,6 +503,8 @@
   "authError.confirm_link": "This confirmation link could not be opened. It may have expired, or it was opened in a different browser from the one that signed up.",
   "authError.requestNewLink": "Request a new link",
   "signup.confirmEmail": "Check your email to confirm your account, then log in.",
+  "signup.usernameTaken": "That username is already taken. Please choose a different one.",
+  "signup.usernameMaybeTaken": "We couldn't create your account. The username may already be taken — please try a different one. If that doesn't help, wait a moment and try again.",
   "invite.sectionTitle": "👥 Invite Friends",
   "invite.sectionDesc": "People who sign up via your link will automatically follow each other.",
   "invite.share": "📤 Share",

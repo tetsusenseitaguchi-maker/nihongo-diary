@@ -446,6 +446,8 @@
   "authError.confirm_link": "This confirmation link could not be opened. It may have expired, or it was opened in a different browser from the one that signed up.",
   "authError.requestNewLink": "Request a new link",
   "signup.confirmEmail": "Vérifiez votre e-mail pour confirmer votre compte, puis connectez-vous.",
+  "signup.usernameTaken": "Ce nom d'utilisateur est déjà pris. Veuillez en choisir un autre.",
+  "signup.usernameMaybeTaken": "Impossible de créer votre compte. Ce nom d'utilisateur est peut-être déjà pris — essayez-en un autre. Si le problème persiste, patientez un instant et réessayez.",
   "invite.sectionTitle": "👥 Inviter des amis",
   "invite.sectionDesc": "Les personnes qui s'inscrivent via votre lien se suivront mutuellement.",
   "invite.share": "📤 Partager",

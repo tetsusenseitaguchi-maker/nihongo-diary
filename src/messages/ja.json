@@ -446,6 +446,8 @@
   "authError.confirm_link": "This confirmation link could not be opened. It may have expired, or it was opened in a different browser from the one that signed up.",
   "authError.requestNewLink": "Request a new link",
   "signup.confirmEmail": "メールを確認してアカウントを認証してから、ログインしてください。",
+  "signup.usernameTaken": "このユーザー名はすでに使われています。別のユーザー名をお試しください。",
+  "signup.usernameMaybeTaken": "登録できませんでした。ユーザー名がすでに使われている可能性があります。別のユーザー名をお試しください。それでも解決しない場合は、少し時間をおいてからもう一度お試しください。",
   "invite.sectionTitle": "👥 友達を招待",
   "invite.sectionDesc": "このリンクから登録した人と自動的に相互フォローになります。",
   "invite.share": "📤 シェア",
